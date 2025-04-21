@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="C4iSytemsMobApp.LogActivity"
+          >
+
+
+
+    
+
+        <!-- Main Grid to overlay toast message -->
+        <Grid x:Name="MainGrid">
+
+            <!-- Main Content -->
+            <StackLayout Padding="5,0,5,10">
+
+                <Grid ColumnDefinitions="*, Auto, Auto" Padding="2" Margin="0">
+                    <!-- Title -->
+                    <Label Text="Log Activity"
+                       FontSize="14"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"
+                       HorizontalOptions="Start"
+                       TextColor="Black"
+                       Padding="2"/>
+
+                    <!-- Home Button -->
+                    <ImageButton
+                    Source="home.png"
+                    Clicked="OnHomeClicked"
+                    HeightRequest="30"
+                    WidthRequest="30"
+                    BackgroundColor="Transparent"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center"
+                    Grid.Column="2"/>
+                </Grid>
+
+                <ScrollView>
+                    <VerticalStackLayout x:Name="ButtonContainer" />
+                </ScrollView>
+
+                <Entry x:Name="CustomLogEntry"
+                   Placeholder="Enter Custom log entry..."
+                   Margin="0,10"
+                   FontSize="18"
+                   HeightRequest="50"
+                   VerticalOptions="Center" />
+
+                <Button Text="Add Custom Log Entry"
+                    Clicked="OnAddLogEntryClicked"
+                    BackgroundColor="#28a745"
+                    TextColor="White"
+                    FontSize="18"
+                    HeightRequest="50"
+                    CornerRadius="10"
+                    VerticalOptions="Center" />
+            </StackLayout>
+
+        </Grid>
+
+   
+
+
+</ContentPage>
+

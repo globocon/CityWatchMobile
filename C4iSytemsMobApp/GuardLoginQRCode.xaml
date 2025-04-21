@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="C4iSytemsMobApp.GuardLoginQRCode"
+             Title="GuardLoginQRCode">
+    <Grid RowDefinitions="*,Auto" Padding="20">
+
+        <!-- Main Content -->
+        <VerticalStackLayout Spacing="15" Grid.Row="0">
+
+            <!-- Logged-in User -->
+            <HorizontalStackLayout HorizontalOptions="StartAndExpand" Spacing="10">
+                <Label x:Name="lblLoggedInUser"
+                   Text="Welcome, "
+                   FontAttributes="Bold"
+                   FontSize="18"
+                   TextColor="Blue"
+                   HorizontalOptions="Start"/>
+            </HorizontalStackLayout>
+
+            <!-- License Input -->
+            <HorizontalStackLayout Spacing="10">
+                <Entry x:Name="txtLicenseNumber"
+                   Placeholder="Enter License Number"
+                   WidthRequest="250"/>
+                <Button Text="Login"
+                    Clicked="OnReadClicked"/>
+            </HorizontalStackLayout>
+
+            <!-- Guard Name Label (Initially Hidden) -->
+            <Label x:Name="lblGuardName"
+               Text=""
+               TextColor="Red"
+               FontAttributes="Bold"
+               IsVisible="False"/>
+
+            <!-- Instructional Text inside a bordered frame -->
+            <Frame BackgroundColor="LightGray"
+               Padding="15"
+               CornerRadius="8"
+               Margin="0,10,0,10"
+               BorderColor="DarkGray">
+                <VerticalStackLayout x:Name="instructionalTextContainer">
+                    <!-- Instructional Message -->
+                    <Label Text="The C4i System acts as your Virtual Supervisor. Sign-On is to occur within 15 min prior to shift start. Check equipment is ok, and WiFi &amp; Dropbox Sync are on with no RED X. Complete IR each shift you notice an issue, even if already reported, repeat report until issue fixed. Quality and Integrity of your field-generated DATA is more important than the quantity of data sets. At end of shift, leave Smart WAND &amp; any computers ON with WiFi connected."
+                       FontSize="14"
+                       TextColor="Black"
+                       LineBreakMode="WordWrap"/>
+
+                    <!-- Safety Warning Message in Orange-Red Frame -->
+                    <Frame BackgroundColor="#ea6326"
+                       Padding="10"
+                       CornerRadius="5"
+                       Margin="0,10,0,10">
+                        <Label Text="⚠ SAFETY IS NO ACCIDENT... STAY ALERT, DON'T GET HURT"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="White"
+                           HorizontalTextAlignment="Center"/>
+                    </Frame>
+
+                    <!-- Declaration Message -->
+                    <Label Text="Users signing into C4i System are declaring fitness for duty with a BAC 0.00%, are not under the influence of drugs, use fatigue management strategies, had at least 8 hrs rest since last shift, follow SOPs including regularly and consistently generating data while on duty, and are aware of the 12-hour shift limit. HR Record Management is the individual user's responsibility."
+                       FontSize="14"
+                       TextColor="Black"
+                       LineBreakMode="WordWrap"/>
+
+                    <!-- Privacy Notice -->
+                    <Frame BackgroundColor="LightGray"
+                       Padding="10"
+                       CornerRadius="5"
+                       Margin="0,15,0,0"
+                       BorderColor="DarkGray">
+                        <Label Text="Data, communication, IP address, location, and audio calls are recorded by this system. 
+The data recorded and stored is handled in accordance with local privacy laws and is used for legitimate business purposes, including training, compliance, and quality control.
+
+By logging into this system, you explicitly consent to the recording and storing of data, communications, and audio calls in accordance with these purposes. 
+End-users also agree to use the system honestly and refrain from any actions that could sabotage or compromise the integrity of the data."
+                           FontSize="14"
+                           TextColor="Black"
+                           LineBreakMode="WordWrap"/>
+                    </Frame>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Loading Indicator -->
+            <ActivityIndicator x:Name="activityIndicator"
+                           IsVisible="False"
+                           IsRunning="False"
+                           Color="Blue"/>
+
+        </VerticalStackLayout>
+
+        <!-- Footer Logo -->
+        <Image Source="c4ilogo.jpg"
+           Aspect="AspectFit"
+           HeightRequest="50"
+           HorizontalOptions="Center"
+           VerticalOptions="End"
+           Grid.Row="1"/>
+
+    </Grid>
+
+</ContentPage>
