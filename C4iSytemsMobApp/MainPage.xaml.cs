@@ -8,6 +8,8 @@ namespace C4iSytemsMobApp
     {
         private readonly HttpClient _httpClient;
         private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
+        private int _counter = 0;
+        private int _totalpatrons = 0;
 
         public MainPage()
         {
@@ -334,10 +336,23 @@ namespace C4iSytemsMobApp
            
         }
 
+        private void OnIncrementClicked(object sender, EventArgs e)
+        {
+            _totalpatrons++;
+            _counter++;
+            CounterLabel.Text = _counter.ToString("0000");
+            totalpatronsLabel.Text = _totalpatrons.ToString("000000");
+        }
 
+        private void OnDecrementClicked(object sender, EventArgs e)
+        {
+            if (_counter > 0)
+            {
+                _counter--;
+            }            
+            CounterLabel.Text = _counter.ToString("0000");
+        }
 
-       
-       
 
     }
 }

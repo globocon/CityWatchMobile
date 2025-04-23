@@ -15,7 +15,10 @@ public static class MauiProgram
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-			});
+                fonts.AddFont("fa-solid-900.ttf", "FontAwesome");
+                fonts.AddFont("fa-regular-400.ttf", "FontAwesomeRegular");
+                fonts.AddFont("fa-brands-400.ttf", "FontAwesomeBrands");
+            });
         // Register HttpClient as a singleton service
         builder.Services.AddSingleton<HttpClient>();
         // Register LoginPage with HttpClient dependency
