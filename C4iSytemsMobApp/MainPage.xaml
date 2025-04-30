@@ -227,6 +227,9 @@
                                       Offset="1.0" />
                     </LinearGradientBrush>
                 </Frame.Background>
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="ToggleCounterDisplay" />
+                </Frame.GestureRecognizers>
 
                 <!-- Grid with overlapping elements -->
                 <Grid>
@@ -245,7 +248,7 @@
                     </ImageButton>
 
                     <!-- Label centered in the whole grid cell -->
-                    <Label x:Name="totalpatronsLabel"
+                    <Label x:Name="total_current_patronsLabel"
                            Text="000000"
                            TextColor="White"
                            FontSize="18"
