@@ -254,11 +254,13 @@ public partial class GuardLoginPage : ContentPage
         {
             instructionalFrame.IsVisible = false;
             instructionalTextContainer.IsVisible = false;
+            ConsentSection.IsVisible = false; // Hide the consent section
         }
         else
         {
             instructionalFrame.IsVisible = true;
             instructionalTextContainer.IsVisible = true;
+            ConsentSection.IsVisible = true;
         }
     }
 

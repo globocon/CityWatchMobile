@@ -9,57 +9,77 @@
     
 
         <!-- Main Grid to overlay toast message -->
-        <Grid x:Name="MainGrid">
+    <Grid x:Name="MainGrid" RowSpacing="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Header and Buttons -->
+            <RowDefinition Height="Auto"/>
+            <!-- Fixed "Today's Logs" label -->
+            <RowDefinition Height="*"/>
+            <!-- Scrollable log content -->
+        </Grid.RowDefinitions>
 
-            <!-- Main Content -->
-            <StackLayout Padding="5,0,5,10">
+        <!-- Header and Buttons -->
+        <StackLayout Grid.Row="0" Padding="5,0,5,10">
+            <Grid ColumnDefinitions="*, Auto, Auto" Padding="2" Margin="0">
+                <Label Text="Log Activity"
+                   FontSize="14"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Start"
+                   TextColor="Black"
+                   Padding="2"/>
+                <ImageButton
+                Source="home.png"
+                Clicked="OnHomeClicked"
+                HeightRequest="30"
+                WidthRequest="30"
+                BackgroundColor="Transparent"
+                HorizontalOptions="End"
+                VerticalOptions="Center"
+                Grid.Column="2"/>
+            </Grid>
 
-                <Grid ColumnDefinitions="*, Auto, Auto" Padding="2" Margin="0">
-                    <!-- Title -->
-                    <Label Text="Log Activity"
-                       FontSize="14"
-                       FontAttributes="Bold"
-                       VerticalOptions="Center"
-                       HorizontalOptions="Start"
-                       TextColor="Black"
-                       Padding="2"/>
+            <!-- Dynamic Activity Buttons -->
+            <ScrollView>
+                <VerticalStackLayout x:Name="ButtonContainer" />
+            </ScrollView>
 
-                    <!-- Home Button -->
-                    <ImageButton
-                    Source="home.png"
-                    Clicked="OnHomeClicked"
-                    HeightRequest="30"
-                    WidthRequest="30"
-                    BackgroundColor="Transparent"
-                    HorizontalOptions="End"
-                    VerticalOptions="Center"
-                    Grid.Column="2"/>
-                </Grid>
+            <!-- Custom Log Entry -->
+            <Entry x:Name="CustomLogEntry"
+               Placeholder="Enter Custom log entry..."
+               Margin="0,10"
+               FontSize="18"
+               HeightRequest="50"
+               VerticalOptions="Center" />
 
-                <ScrollView>
-                    <VerticalStackLayout x:Name="ButtonContainer" />
-                </ScrollView>
+            <Button Text="Add Custom Log Entry"
+                Clicked="OnAddLogEntryClicked"
+                BackgroundColor="#28a745"
+                TextColor="White"
+                FontSize="18"
+                HeightRequest="50"
+                CornerRadius="10"
+                VerticalOptions="Center" />
+        </StackLayout>
 
-                <Entry x:Name="CustomLogEntry"
-                   Placeholder="Enter Custom log entry..."
-                   Margin="0,10"
-                   FontSize="18"
-                   HeightRequest="50"
-                   VerticalOptions="Center" />
+        <!-- Fixed Title -->
+        <Label Grid.Row="1"
+           Text="Today's Logs:"
+           FontSize="14"
+           FontAttributes="Bold"
+           TextColor="Black"
+           Padding="10,5,0,5" />
 
-                <Button Text="Add Custom Log Entry"
-                    Clicked="OnAddLogEntryClicked"
-                    BackgroundColor="#28a745"
-                    TextColor="White"
-                    FontSize="18"
-                    HeightRequest="50"
-                    CornerRadius="10"
-                    VerticalOptions="Center" />
-            </StackLayout>
+        <!-- Scrollable Logs -->
+        <ScrollView Grid.Row="2" Padding="5">
+            <VerticalStackLayout x:Name="LogDisplayArea" Spacing="5" />
+        </ScrollView>
+    </Grid>
 
-        </Grid>
 
-   
+
+
 
 
 </ContentPage>

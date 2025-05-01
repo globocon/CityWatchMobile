@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CommunityToolkit.Maui;
+using Microsoft.Extensions.Logging;
 using ZXing.Net.Maui.Controls;
 
 namespace C4iSytemsMobApp;
@@ -10,6 +11,10 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+           
+            .UseMauiCommunityToolkitMediaElement()      // 👈 Required
+                                                        // Initialize the .NET MAUI Community Toolkit MediaElement by adding the below line of code
+            .UseMauiCommunityToolkitMediaElement()
             .UseBarcodeReader() // Register ZXing Barcode Scanner
             .ConfigureFonts(fonts =>
 			{
@@ -21,6 +26,7 @@ public static class MauiProgram
             });
         // Register HttpClient as a singleton service
         builder.Services.AddSingleton<HttpClient>();
+
         // Register LoginPage with HttpClient dependency
         builder.Services.AddTransient<LoginPage>();
 

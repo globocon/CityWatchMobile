@@ -7,12 +7,44 @@ namespace C4iSytemsMobApp;
 public partial class LogActivity : ContentPage
 {
     private readonly HttpClient _httpClient = new();
-
+    private System.Timers.Timer _logRefreshTimer;
+    private List<int> _lastLogIds = new();
     public LogActivity()
     {
         InitializeComponent();
         NavigationPage.SetHasNavigationBar(this, false);
         LoadActivities();
+        //LoadLogs();
+    }
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        LoadLogs(); // Call when the page is about to appear
+
+        // Set up a timer for periodic refresh (if needed)
+        _logRefreshTimer = new System.Timers.Timer(30000); // 30 seconds
+        _logRefreshTimer.Elapsed += async (s, e) =>
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                LoadLogs(); // Refresh logs every second (or change the interval)
+            });
+        };
+        _logRefreshTimer.AutoReset = true;
+        _logRefreshTimer.Start();
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        if (_logRefreshTimer != null)
+        {
+            _logRefreshTimer.Stop();
+            _logRefreshTimer.Dispose();
+            _logRefreshTimer = null;
+        }
     }
 
     private async void LoadActivities()
@@ -39,7 +71,7 @@ public partial class LogActivity : ContentPage
                 var button = new Button
                 {
                     Text = activity.Name,
-                   // BackgroundColor = Colors.Blue,
+                    // BackgroundColor = Colors.Blue,
                     TextColor = Colors.White,
                     Margin = new Thickness(5)
                 };
@@ -54,13 +86,119 @@ public partial class LogActivity : ContentPage
         }
     }
 
+
+    private async void LoadLogs()
+    {
+        try
+        {
+            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+            if (guardId <= 0 || clientSiteId <= 0 || userId <= 0)
+                return;
+
+            LogDisplayArea.Children.Clear();
+
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={clientSiteId}";
+            var response = await _httpClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await DisplayAlert("Error", "Failed to load site logs.", "OK");
+                return;
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            var logs = JsonSerializer.Deserialize<List<GuardLogDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (logs == null || logs.Count == 0)
+            {
+                LogDisplayArea.Children.Add(new Label
+                {
+                    Text = "No logs available for today.",
+                    TextColor = Colors.Gray,
+                    FontSize = 12
+                });
+                return;
+            }
+
+            foreach (var log in logs)
+            {
+                var contentLayout = new VerticalStackLayout
+                {
+                    Spacing = 3,
+                    Children =
+                {
+                    new Label
+                    {
+                        Text = $"{log.GuardInitials} - {log.EventDateTimeLocal}",
+                        FontAttributes = FontAttributes.Bold,
+                        TextColor = Colors.DarkSlateGray,
+                        FontSize = 12,
+                        Margin = new Thickness(0, 0, 0, 2)
+                    },
+                    new Label
+                    {
+                        Text = log.Notes ?? "",
+                        LineBreakMode = LineBreakMode.WordWrap,
+                        TextColor = Colors.Black,
+                        FontSize = 12,
+                        Margin = new Thickness(0, 2, 0, 0)
+                    }
+                }
+                };
+
+                foreach (var imageUrl in log.ImageUrls ?? Enumerable.Empty<string>())
+                {
+                    if (!string.IsNullOrWhiteSpace(imageUrl))
+                    {
+                        try
+                        {
+                            contentLayout.Children.Add(new Image
+                            {
+                                Source = ImageSource.FromUri(new Uri(imageUrl)),
+                                HeightRequest = 130,
+                                Margin = new Thickness(0, 4, 0, 4)
+                            });
+                        }
+                        catch
+                        {
+                            contentLayout.Children.Add(new Label
+                            {
+                                Text = "(Image could not be loaded)",
+                                TextColor = Colors.Red,
+                                FontSize = 11
+                            });
+                        }
+                    }
+                }
+
+                var logCard = new Frame
+                {
+                    CornerRadius = 8,
+                    Padding = 6,
+                    Margin = new Thickness(2, 4),
+                    BackgroundColor = Colors.LightGray,
+                    Content = contentLayout
+                };
+
+                LogDisplayArea.Children.Add(logCard);
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"An error occurred while loading logs: {ex.Message}", "OK");
+        }
+    }
+
+
+
+
     private async Task LogActivityTask(string activityDescription)
     {
         var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
         if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
         var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}&activityString={Uri.EscapeDataString(activityDescription)}";
 
-        
+
         try
         {
             try
@@ -209,4 +347,15 @@ public class ActivityModel
 {
     public int Id { get; set; }
     public string Name { get; set; }
+}
+
+public class GuardLogDto
+{
+    public int Id { get; set; }
+    public DateTime EventDateTime { get; set; }
+    public string EventDateTimeLocal { get; set; }
+    public string EventDateTimeZoneShort { get; set; }
+    public string Notes { get; set; }
+    public List<string> ImageUrls { get; set; }
+    public string GuardInitials { get; set; }
 }

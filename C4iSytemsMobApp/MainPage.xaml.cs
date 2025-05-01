@@ -69,7 +69,9 @@ namespace C4iSytemsMobApp
 
         private async void OnMultimediaClicked(object sender, EventArgs e)
         {
-            //await Navigation.PushAsync(new Multimedia()); // Redirect to MultimediaPage
+
+            Application.Current.MainPage = new NavigationPage(new MultiMedia());
+           
         }
 
         private CancellationTokenSource _countdownCts;

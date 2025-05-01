@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:media="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="C4iSytemsMobApp.MultiMedia">
+
+    <Grid RowDefinitions="Auto, *">
+        <!-- Header Row -->
+        <Grid ColumnDefinitions="*, Auto" Padding="2">
+            <Label Text="MultiMedia"
+                   FontSize="14"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Start"
+                   TextColor="Black"/>
+
+            <ImageButton
+                Source="home.png"
+                Clicked="OnBackButtonClicked"
+                HeightRequest="30"
+                WidthRequest="30"
+                BackgroundColor="Transparent"
+                HorizontalOptions="End"
+                VerticalOptions="Center"
+                Grid.Column="1"/>
+        </Grid>
+
+        <!-- Video list styled like MP3 list -->
+        <ListView x:Name="VideoListView"
+                  Grid.Row="1"
+                  SeparatorVisibility="None"
+                  HasUnevenRows="True"
+                  ItemsSource="{Binding VideoFiles}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <StackLayout Padding="5">
+                            <Button Text="{Binding Label}"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="Blue"
+                                    TextColor="White"
+                                    Clicked="OnVideoButtonClicked"
+                                    CommandParameter="{Binding}" />
+                        </StackLayout>
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Fullscreen player overlay -->
+        <Grid x:Name="FullscreenPlayer"
+              IsVisible="False"
+              BackgroundColor="Black"
+              Grid.RowSpan="2">
+
+            <media:MediaElement
+                x:Name="VideoPlayer"
+                Aspect="AspectFill"
+                HorizontalOptions="FillAndExpand"
+                VerticalOptions="FillAndExpand"
+                ShouldLoopPlayback="True"
+                ShouldAutoPlay="True"/>
+
+            <Button Text="✕"
+                    Clicked="OnStopVideoClicked"
+                    BackgroundColor="Red"
+                    TextColor="White"
+                    FontSize="20"
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    Margin="10"
+                    CornerRadius="25" />
+        </Grid>
+    </Grid>
+</ContentPage>
+
+
+
+
+
+
+
+

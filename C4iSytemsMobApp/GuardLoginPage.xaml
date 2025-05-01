@@ -167,53 +167,72 @@
                IsVisible="False"/>
 
             <!-- Instructional Text inside a bordered frame -->
-            <Frame x:Name="instructionalFrame" BackgroundColor="LightGray"
-               Padding="15"
-               CornerRadius="8"
-               Margin="0,10,0,10"
-               BorderColor="DarkGray">
-                <VerticalStackLayout x:Name="instructionalTextContainer">
+            <Frame x:Name="instructionalFrame"
+       BackgroundColor="Black"
+       Padding="10"
+       CornerRadius="0"
+       Margin="0,8,0,4" 
+                BorderColor="White"
+       HasShadow="False">
+                <VerticalStackLayout x:Name="instructionalTextContainer"
+                         Spacing="6">
+
                     <!-- Instructional Message -->
                     <Label Text="The C4i System acts as your Virtual Supervisor. Sign-On is to occur within 15 min prior to shift start. Check equipment is ok, and WiFi &amp; Dropbox Sync are on with no RED X. Complete IR each shift you notice an issue, even if already reported, repeat report until issue fixed. Quality and Integrity of your field-generated DATA is more important than the quantity of data sets. At end of shift, leave Smart WAND &amp; any computers ON with WiFi connected."
-                       FontSize="12"
-                       TextColor="Black"
-                       LineBreakMode="WordWrap"/>
+               FontSize="10"
+               TextColor="White"
+               LineBreakMode="WordWrap"
+               Margin="0,0,0,4" />
 
                     <!-- Safety Warning Message in Orange-Red Frame -->
                     <Frame BackgroundColor="#ea6326"
-                       Padding="10"
-                       CornerRadius="5"
-                       Margin="0,10,0,10">
+               Padding="4"
+               CornerRadius="0"
+               Margin="0,4,0,4"
+               BorderColor="White">
                         <Label Text="⚠ SAFETY IS NO ACCIDENT... STAY ALERT, DON'T GET HURT"
-                           FontAttributes="Bold"
-                           FontSize="14"
-                           TextColor="White"
-                           HorizontalTextAlignment="Center"/>
+                   FontAttributes="Bold"
+                   FontSize="9"
+                   TextColor="White"
+                   HorizontalTextAlignment="Center"
+                   LineBreakMode="WordWrap" />
                     </Frame>
 
                     <!-- Declaration Message -->
                     <Label Text="Users signing into C4i System are declaring fitness for duty with a BAC 0.00%, are not under the influence of drugs, use fatigue management strategies, had at least 8 hrs rest since last shift, follow SOPs including regularly and consistently generating data while on duty, and are aware of the 12-hour shift limit. HR Record Management is the individual user's responsibility."
-                       FontSize="12"
-                       TextColor="Black"
-                       LineBreakMode="WordWrap"/>
+               FontSize="10"
+               TextColor="White"
+               LineBreakMode="WordWrap"
+               Margin="0,0,0,4" />
 
-                    <!-- Privacy Notice -->
-                    <Frame BackgroundColor="LightGray"
-                       Padding="10"
-                       CornerRadius="5"
-                       Margin="0,15,0,0"
-                       BorderColor="DarkGray">
-                        <Label Text="Data, communication, IP address, location, and audio calls are recorded by this system. 
-The data recorded and stored is handled in accordance with local privacy laws and is used for legitimate business purposes, including training, compliance, and quality control.
-
-By logging into this system, you explicitly consent to the recording and storing of data, communications, and audio calls in accordance with these purposes. 
-End-users also agree to use the system honestly and refrain from any actions that could sabotage or compromise the integrity of the data."
-                           FontSize="12"
-                           TextColor="Black"
-                           LineBreakMode="WordWrap"/>
-                    </Frame>
                 </VerticalStackLayout>
             </Frame>
+
+            <!-- Privacy Notice -->
+            <StackLayout x:Name="ConsentSection" >
+                <Label Text="Data, communication, IP address, location, and audio calls are recorded by this system. 
+The data recorded and stored is handled in accordance with local privacy laws and is used for legitimate business purposes, including training, compliance, and quality control."
+           FontSize="10"
+           LineBreakMode="WordWrap"
+           Margin="0,2,0,2" 
+           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+                <Label Text="By logging into this system, you explicitly consent to the recording and storing of data, communications, and audio calls in accordance with these purposes. 
+End-users also agree to use the system honestly and refrain from any actions that could sabotage or compromise the integrity of the data."
+           FontSize="10"
+           LineBreakMode="WordWrap"
+           Margin="0,0,0,4"  
+           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+            </StackLayout>
+
+
+
+
+
+
+
+
+
 
             <!-- Pickers (Initially Hidden) -->
             <Picker x:Name="pickerClientType"
