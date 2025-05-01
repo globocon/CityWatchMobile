@@ -9,7 +9,10 @@ namespace C4iSytemsMobApp
         private readonly HttpClient _httpClient;
         private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
         private int _counter = 0;
+        private int _CurrentCounter = 0;
         private int _totalpatrons = 0;
+        private bool _CcounterShown = false;
+        private bool _TcounterShown = true;
 
         public MainPage()
         {
@@ -17,6 +20,7 @@ namespace C4iSytemsMobApp
             NavigationPage.SetHasNavigationBar(this, false);
             LoadLoggedInUser();
             LoadSecureData();
+            InitializePatronsCounterDisplay();
             // Start checking duress status on app load
             duressCheckTimer.Elapsed += async (s, e) => await CheckDuressStatus();
             duressCheckTimer.AutoReset = true;
@@ -342,8 +346,17 @@ namespace C4iSytemsMobApp
         {
             _totalpatrons++;
             _counter++;
+            _CurrentCounter++;
             CounterLabel.Text = _counter.ToString("0000");
-            totalpatronsLabel.Text = _totalpatrons.ToString("000000");
+            if (_CcounterShown)
+            {
+                total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
+            }
+            else
+            {
+                total_current_patronsLabel.Text = $"T{_totalpatrons.ToString("000000")}";
+            }
+               
         }
 
         private void OnDecrementClicked(object sender, EventArgs e)
@@ -351,8 +364,36 @@ namespace C4iSytemsMobApp
             if (_counter > 0)
             {
                 _counter--;
+                _CurrentCounter--;
             }            
             CounterLabel.Text = _counter.ToString("0000");
+        }
+
+        private void InitializePatronsCounterDisplay()
+        {
+            if (_CcounterShown)
+            {
+                total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
+            }
+            else
+            {
+                total_current_patronsLabel.Text = $"T{_totalpatrons.ToString("000000")}";
+            }
+        }
+        private void ToggleCounterDisplay(object sender, EventArgs e)
+        {
+            if (_CcounterShown)
+            {
+                total_current_patronsLabel.Text = $"T{_totalpatrons.ToString("000000")}";
+                _CcounterShown = false;
+                _TcounterShown = true;
+            }
+            else
+            {
+                total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
+                _CcounterShown = true;
+                _TcounterShown = false;
+            }
         }
 
 
