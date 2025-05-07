@@ -367,6 +367,10 @@ namespace C4iSytemsMobApp
                 _CurrentCounter--;
             }            
             CounterLabel.Text = _counter.ToString("0000");
+            if (_CcounterShown)
+            {
+                total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
+            }
         }
 
         private void InitializePatronsCounterDisplay()
