@@ -235,23 +235,25 @@
                 <Grid>
                     <!-- Icon aligned to the left -->
                     <ImageButton BackgroundColor="Transparent"
-                                 WidthRequest="60"
-                                 HeightRequest="60"
+                                 Padding="8,3,3,3"
+                                 WidthRequest="40"
+                                 HeightRequest="40"
                                  HorizontalOptions="Start"
                                  VerticalOptions="Center">
                         <ImageButton.Source>
                             <FontImageSource Glyph=""
                                              FontFamily="FontAwesome"
                                              Color="White"
-                                             Size="30" />
+                                             Size="20" />
                         </ImageButton.Source>
                     </ImageButton>
 
                     <!-- Label centered in the whole grid cell -->
                     <Label x:Name="total_current_patronsLabel"
-                           Text="000000"
+                           Padding="8,3,3,3"
+                           Text="T000000"
                            TextColor="White"
-                           FontSize="18"
+                           FontSize="20"
                            HorizontalOptions="Center"
                            VerticalOptions="Center" />
                 </Grid>
@@ -274,37 +276,62 @@
                                       Offset="1.0" />
                     </LinearGradientBrush>
                 </Frame.Background>
-                <StackLayout Orientation="Horizontal"
-                             HorizontalOptions="Center"
-                             VerticalOptions="Center">
-                    <ImageButton BackgroundColor="Transparent"
-                                 WidthRequest="60"
-                                 HeightRequest="60"
-                                 Clicked="OnDecrementClicked">
+
+                <!-- Grid Layout for Buttons and Label -->
+                <Grid ColumnSpacing="10"
+                      VerticalOptions="Center"
+                      HorizontalOptions="FillAndExpand">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Decrement Button -->
+                    <ImageButton Grid.Column="0"
+                                 Padding="5"
+                                 BackgroundColor="Transparent"
+                                 WidthRequest="40"
+                                 HeightRequest="40"
+                                 Clicked="OnDecrementClicked"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center">
                         <ImageButton.Source>
                             <FontImageSource Glyph=""
                                              FontFamily="FontAwesome"
                                              Color="White"
-                                             Size="30" />
+                                             Size="20" />
                         </ImageButton.Source>
                     </ImageButton>
-                    <Label x:Name="CounterLabel"
+
+                    <!-- Counter Label -->
+                    <Label Grid.Column="1"
+                           x:Name="CounterLabel"
                            Text="0000"
                            FontSize="18"
+                           HorizontalTextAlignment="Center"
+                           VerticalTextAlignment="Center"
                            HorizontalOptions="FillAndExpand"
-                           VerticalOptions="Center" />
-                    <ImageButton BackgroundColor="Transparent"
-                                 WidthRequest="60"
-                                 HeightRequest="60"
-                                 Clicked="OnIncrementClicked">
+                           VerticalOptions="Center"
+                           TextColor="White" />
+
+                    <!-- Increment Button -->
+                    <ImageButton Grid.Column="2"
+                                 Padding="5"
+                                 BackgroundColor="Transparent"
+                                 WidthRequest="40"
+                                 HeightRequest="40"
+                                 Clicked="OnIncrementClicked"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center">
                         <ImageButton.Source>
                             <FontImageSource Glyph=""
                                              FontFamily="FontAwesome"
                                              Color="White"
-                                             Size="30" />
+                                             Size="20" />
                         </ImageButton.Source>
                     </ImageButton>
-                </StackLayout>
+                </Grid>
             </Frame>
 
             <!-- Footer Image -->
