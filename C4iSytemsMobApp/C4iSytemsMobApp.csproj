@@ -27,7 +27,7 @@
 		<ApplicationId>com.C4isystem.c4isystemsmobapp</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.3</ApplicationDisplayVersion>
+		<ApplicationDisplayVersion>1.4</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>

@@ -133,7 +133,7 @@ public partial class LoginPage : ContentPage
     private string GetAppVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version?.ToString() ?? "1.3.0";
+        return version?.ToString() ?? "1.4.0";
     }
 
 

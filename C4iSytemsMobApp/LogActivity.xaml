@@ -67,8 +67,7 @@
         <Label Grid.Row="1"
            Text="Today's Logs:"
            FontSize="14"
-           FontAttributes="Bold"
-           TextColor="Black"
+           FontAttributes="Bold"           
            Padding="10,5,0,5" />
 
         <!-- Scrollable Logs -->

@@ -127,22 +127,38 @@ public partial class LogActivity : ContentPage
                     Spacing = 3,
                     Children =
                 {
-                    new Label
+                new Label
+        {
+            FormattedText = new FormattedString
+            {
+                Spans =
+                {
+                    new Span
                     {
-                        Text = $"{log.GuardInitials} - {log.EventDateTimeLocal}",
+                        Text = log.GuardInitials,
                         FontAttributes = FontAttributes.Bold,
-                        TextColor = Colors.DarkSlateGray,
-                        FontSize = 12,
-                        Margin = new Thickness(0, 0, 0, 2)
+                        TextColor = Colors.Teal,
+                        FontSize = 13
                     },
-                    new Label
+                    new Span
                     {
-                        Text = log.Notes ?? "",
-                        LineBreakMode = LineBreakMode.WordWrap,
-                        TextColor = Colors.Black,
-                        FontSize = 12,
-                        Margin = new Thickness(0, 2, 0, 0)
+                        Text = $"  {log.EventDateTimeLocal:HH:mm}",
+                        FontSize = 11,
+                        TextColor = Colors.Gray
                     }
+                }
+            },
+            Margin = new Thickness(0, 0, 0, 2)
+        },
+        new Label
+        {
+            Text = log.Notes ?? "",
+            LineBreakMode = LineBreakMode.WordWrap,
+            TextColor = Colors.Black,
+            FontSize = 12,
+            Margin = new Thickness(0, 0, 0, 10)
+        }
+
                 }
                 };
 
@@ -176,7 +192,7 @@ public partial class LogActivity : ContentPage
                     CornerRadius = 8,
                     Padding = 6,
                     Margin = new Thickness(2, 4),
-                    BackgroundColor = Colors.LightGray,
+                    BackgroundColor = Color.FromArgb("#F2F2F2"),
                     Content = contentLayout
                 };
 
