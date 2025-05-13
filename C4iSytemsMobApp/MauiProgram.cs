@@ -11,10 +11,11 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
-           
+            // Initialize the .NET MAUI Community Toolkit by adding the below line of code
+            .UseMauiCommunityToolkit()   // 👈 Add this
             .UseMauiCommunityToolkitMediaElement()      // 👈 Required
                                                         // Initialize the .NET MAUI Community Toolkit MediaElement by adding the below line of code
-            .UseMauiCommunityToolkitMediaElement()
+            //.UseMauiCommunityToolkitMediaElement()
             .UseBarcodeReader() // Register ZXing Barcode Scanner
             .ConfigureFonts(fonts =>
 			{

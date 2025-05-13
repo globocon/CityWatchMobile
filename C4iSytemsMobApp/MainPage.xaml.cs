@@ -1,10 +1,12 @@
-﻿using System.Diagnostics;
-using System.Net.Http;
+﻿using C4iSytemsMobApp.Models;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace C4iSytemsMobApp
 {
-    public partial class MainPage : ContentPage
+    public partial class MainPage : ContentPage, INotifyPropertyChanged
     {
         private readonly HttpClient _httpClient;
         private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
@@ -13,10 +15,33 @@ namespace C4iSytemsMobApp
         private int _totalpatrons = 0;
         private bool _CcounterShown = false;
         private bool _TcounterShown = true;
+        private bool _IsCrowdControlCounterEnabled = false;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public bool ShowCounters
+        {
+            get => _IsCrowdControlCounterEnabled;
+            set
+            {
+                if (_IsCrowdControlCounterEnabled != value)
+                {
+                    _IsCrowdControlCounterEnabled = value;
+                    OnPropertyChanged(nameof(ShowCounters));
+                }
+            }
+        }
+
+        
 
         public MainPage()
         {
             InitializeComponent();
+            BindingContext = this;
             NavigationPage.SetHasNavigationBar(this, false);
             LoadLoggedInUser();
             LoadSecureData();
@@ -348,11 +373,11 @@ namespace C4iSytemsMobApp
             _counter++;
             _CurrentCounter++;
             CounterLabel.Text = _counter.ToString("0000");
-            if (_CcounterShown)
+            if (_CcounterShown && _IsCrowdControlCounterEnabled)
             {
                 total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
             }
-            else
+            else if (_TcounterShown && _IsCrowdControlCounterEnabled)
             {
                 total_current_patronsLabel.Text = $"T{_totalpatrons.ToString("000000")}";
             }
@@ -367,32 +392,60 @@ namespace C4iSytemsMobApp
                 _CurrentCounter--;
             }            
             CounterLabel.Text = _counter.ToString("0000");
-            if (_CcounterShown)
+            if (_CcounterShown && _IsCrowdControlCounterEnabled)
             {
                 total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
             }
         }
 
-        private void InitializePatronsCounterDisplay()
+        private async void InitializePatronsCounterDisplay()
         {
-            if (_CcounterShown)
+            // Validate Client Site ID
+            var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+            if (clientSiteId == null) return;
+            string apiUrl = $"{AppConfig.ApiBaseUrl}CrowdCount/GetCrowdCountControlSettings?siteId={clientSiteId}";
+
+            //var response = await _httpClient.GetFromJsonAsync<ClientSiteMobileAppSettings>(apiUrl);
+
+            using (HttpClient client = new HttpClient())
+            {
+                var response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var settings = await response.Content.ReadFromJsonAsync<ClientSiteMobileAppSettings>();
+                    if (settings != null)
+                    {
+                        _IsCrowdControlCounterEnabled = settings.IsCrowdCountEnabled;
+                        ShowCounters = _IsCrowdControlCounterEnabled;
+                        OnPropertyChanged(nameof(ShowCounters));
+                    }
+                }
+                else
+                {
+                    string errorMessage = await response.Content.ReadAsStringAsync();
+                    // Handle error (log or show message)
+                }
+            }
+
+
+            if (_CcounterShown && _IsCrowdControlCounterEnabled)
             {
                 total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
             }
-            else
+            else if (_TcounterShown && _IsCrowdControlCounterEnabled)
             {
                 total_current_patronsLabel.Text = $"T{_totalpatrons.ToString("000000")}";
             }
         }
         private void ToggleCounterDisplay(object sender, EventArgs e)
         {
-            if (_CcounterShown)
+            if (_CcounterShown && _IsCrowdControlCounterEnabled)
             {
                 total_current_patronsLabel.Text = $"T{_totalpatrons.ToString("000000")}";
                 _CcounterShown = false;
                 _TcounterShown = true;
             }
-            else
+            else if(_TcounterShown && _IsCrowdControlCounterEnabled)
             {
                 total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
                 _CcounterShown = true;

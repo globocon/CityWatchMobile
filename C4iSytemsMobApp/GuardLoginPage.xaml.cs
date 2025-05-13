@@ -57,7 +57,7 @@ public partial class GuardLoginPage : ContentPage
         BindingContext = this;
         LoadLoggedInUser();
         LoadDropdownData();
-        if (AppConfig.ApiBaseUrl.Contains("test"))
+        if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost"))
         {
             // Set default license number for test environment
             txtLicenseNumber.Text = "569-829-xxx";
@@ -157,8 +157,10 @@ public partial class GuardLoginPage : ContentPage
     }
 
     public event PropertyChangedEventHandler PropertyChanged;
-    protected void OnPropertyChanged(string propertyName) =>
+    protected void OnPropertyChanged(string propertyName)
+    {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 
     protected override bool OnBackButtonPressed()
     {

@@ -1,12 +1,5 @@
 using System.Diagnostics;
 using System.Net.Http.Json;
-using System.Net.Http;
-using System;
-using System.Diagnostics;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
-using Microsoft.Maui.Controls;
 using System.Reflection;
 
 namespace C4iSytemsMobApp;
@@ -29,7 +22,7 @@ public partial class LoginPage : ContentPage
             string savedUsername = await SecureStorage.GetAsync("SavedUsername");
             string savedPassword = await SecureStorage.GetAsync("SavedPassword");
 
-            if (AppConfig.ApiBaseUrl.Contains("test"))
+            if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost"))
             {
                 // Apply default test credentials if the API base URL is for testing
                 usernameEntry.Text = savedUsername ?? "martha_cove";
