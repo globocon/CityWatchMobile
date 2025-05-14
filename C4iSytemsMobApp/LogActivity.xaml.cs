@@ -66,12 +66,14 @@ public partial class LogActivity : ContentPage
 
             if (activities == null) return;
 
-            foreach (var activity in activities)
+            // Sort by numeric prefix in Label (e.g., "01", "02", etc.)
+            var sortedActivities = activities.OrderBy(a => ExtractLabelPrefix(a.Label)).ToList();
+
+            foreach (var activity in sortedActivities)
             {
                 var button = new Button
                 {
                     Text = activity.Name,
-                    // BackgroundColor = Colors.Blue,
                     TextColor = Colors.White,
                     Margin = new Thickness(5)
                 };
@@ -85,6 +87,17 @@ public partial class LogActivity : ContentPage
             await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
         }
     }
+
+    private int ExtractLabelPrefix(string label)
+    {
+        if (string.IsNullOrWhiteSpace(label)) return int.MaxValue;
+
+        var parts = label.Split(' ');
+        if (parts.Length == 0) return int.MaxValue;
+
+        return int.TryParse(parts[0], out int result) ? result : int.MaxValue;
+    }
+
 
 
     private async void LoadLogs()
@@ -211,8 +224,23 @@ public partial class LogActivity : ContentPage
     private async Task LogActivityTask(string activityDescription)
     {
         var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+
+        string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+
+        if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        {
+            await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+            return;
+        }
+
+
         if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
-        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}&activityString={Uri.EscapeDataString(activityDescription)}";
+        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
+             $"?guardId={guardId}" +
+             $"&clientsiteId={clientSiteId}" +
+             $"&userId={userId}" +
+             $"&activityString={Uri.EscapeDataString(activityDescription)}" +
+             $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
 
 
         try
@@ -249,6 +277,13 @@ public partial class LogActivity : ContentPage
         if (string.IsNullOrWhiteSpace(CustomLogEntry.Text))
         {
             await DisplayAlert("Error", "Log entry cannot be empty", "OK");
+            return;
+        }
+
+        string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+        if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        {
+            await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
             return;
         }
 
@@ -363,6 +398,8 @@ public class ActivityModel
 {
     public int Id { get; set; }
     public string Name { get; set; }
+
+    public string Label { get; set; }
 }
 
 public class GuardLogDto

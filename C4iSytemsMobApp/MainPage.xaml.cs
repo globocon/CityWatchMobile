@@ -121,6 +121,10 @@ namespace C4iSytemsMobApp
 
         private async Task ActivateDuress()
         {
+                                     
+            
+
+           string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
 
 
             // Validate Guard ID
@@ -135,10 +139,15 @@ namespace C4iSytemsMobApp
             var userId = await TryGetSecureId("UserId", "User ID is invalid. Please log in again.");
             if (userId == null) return;
 
+            if (string.IsNullOrWhiteSpace(gpsCoordinates))
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                return;
+            }
 
-           
 
-            string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SaveClientSiteDuress?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
+
+            string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SaveClientSiteDuress?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}&gps={Uri.EscapeDataString(gpsCoordinates)}";
 
             using (HttpClient client = new HttpClient())
             {
@@ -177,7 +186,7 @@ namespace C4iSytemsMobApp
         }
 
 
-
+        
 
         //private async void OnDuressClicked(object sender, EventArgs e)
         //{
@@ -402,4 +411,7 @@ namespace C4iSytemsMobApp
 
 
     }
+
+
+   
 }
