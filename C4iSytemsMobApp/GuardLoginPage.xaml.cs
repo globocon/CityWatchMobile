@@ -185,7 +185,8 @@ public partial class GuardLoginPage : ContentPage
             ClientSites.Clear();
             foreach (var site in response ?? new List<DropdownItem>())
             {
-                ClientSites.Add(site);
+                if(site.Name != "Select")
+                    ClientSites.Add(site);
             }
         }
         catch (Exception ex)
@@ -380,8 +381,20 @@ public partial class GuardLoginPage : ContentPage
                 return;
             }
 
+            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+
+            if (string.IsNullOrWhiteSpace(gpsCoordinates))
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                return;
+            }
+
             // API URL
-            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin" +
+                         $"?guardId={guardId}" +
+                         $"&clientsiteId={clientSiteId}" +      
+                         $"&userId={userId}" +
+                         $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
 
             //string apiUrl = $"https://cws-ir.com/api/GuardSecurityNumber/EnterGuardLogin?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
 

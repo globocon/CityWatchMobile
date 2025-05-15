@@ -15,7 +15,10 @@ public partial class LogActivity : ContentPage
         NavigationPage.SetHasNavigationBar(this, false);
         LoadActivities();
         //LoadLogs();
+       
     }
+
+   
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -289,7 +292,12 @@ public partial class LogActivity : ContentPage
 
         var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
         if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
-        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}&activityString={Uri.EscapeDataString(CustomLogEntry.Text.Trim())}";
+        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
+      $"?guardId={guardId}" +
+      $"&clientsiteId={clientSiteId}" +
+      $"&userId={userId}" +
+      $"&activityString={Uri.EscapeDataString(CustomLogEntry.Text.Trim())}" +
+      $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
 
 
 
