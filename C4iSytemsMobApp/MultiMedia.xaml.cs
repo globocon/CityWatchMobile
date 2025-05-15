@@ -125,11 +125,25 @@ public partial class MultiMedia : ContentPage
 
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
+
+        // If video is playing in fullscreen, hide it and stop playback
+        // Pause the video
+        VideoPlayer.Pause();
+
+        // Hide the fullscreen player
+        FullscreenPlayer.IsVisible = false;
+
         Application.Current.MainPage = new NavigationPage(new MainPage());
     }
 
     protected override bool OnBackButtonPressed()
     {
+
+        // Pause the video
+        VideoPlayer.Pause();
+
+        // Hide the fullscreen player
+        FullscreenPlayer.IsVisible = false;
         Application.Current.MainPage = new NavigationPage(new MainPage());
         return true;
     }

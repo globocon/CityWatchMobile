@@ -242,6 +242,10 @@ End-users also agree to use the system honestly and refrain from any actions tha
                 SelectedItem="{Binding SelectedClientType, Mode=TwoWay}"
                 IsVisible="False"/>
 
+            <Entry x:Name="textBoxSelectedClientType" 
+       Placeholder="Client Type" 
+       IsReadOnly="True" IsVisible="False" />
+
             <Picker x:Name="pickerClientSite"
                 Title="Select Client Site"
                 ItemsSource="{Binding ClientSites}"
