@@ -135,7 +135,7 @@ public partial class LoginPage : ContentPage
     private string GetAppVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version?.ToString() ?? "1.5.0";
+        return version?.ToString() ?? "1.6.0";
     }
 
 
