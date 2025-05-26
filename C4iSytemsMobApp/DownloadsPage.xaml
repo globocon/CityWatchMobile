@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="C4iSytemsMobApp.DownloadsPage"
+             Title="Downloads">
+
+    <VerticalStackLayout Padding="20" Spacing="10">
+
+        <!-- Title -->
+        <Label x:Name="TitleLabel"
+               FontSize="24"
+               FontAttributes="Bold"
+               HorizontalOptions="Center" />
+
+        <!-- Row with Back (left) and Home (right) -->
+        <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+            <!-- Back Button -->
+            <Button Text="← Back"
+                    Clicked="OnBackClicked"
+                    BackgroundColor="Transparent"
+                    TextColor="Blue"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Start"
+                    Grid.Column="0" />
+
+            <!-- Spacer -->
+            <BoxView WidthRequest="0" Grid.Column="1" />
+
+            <!-- Home Button -->
+            <ImageButton Source="home.png"
+                         Clicked="OnHomeClicked"
+                         HeightRequest="30"
+                         WidthRequest="30"
+                         BackgroundColor="Transparent"
+                         HorizontalOptions="End"
+                         VerticalOptions="Center"
+                         Grid.Column="2" />
+        </Grid>
+
+        <!-- File List -->
+        <CollectionView ItemsSource="{Binding StaffDocuments}"
+                Margin="10"
+                VerticalOptions="FillAndExpand">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <!-- Add spacing around each card -->
+                        <Frame HasShadow="False"
+                       BackgroundColor="#f0f0f0"
+                       CornerRadius="8"
+                       Padding="10"
+                       Margin="0,5,0,5">
+                            <!-- Top & Bottom spacing -->
+
+                            <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="10"
+                          VerticalOptions="Center">
+
+                                <!-- File Name -->
+                                <Label Text="{Binding FileName}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="DarkSlateGray"
+                               LineBreakMode="WordWrap"
+                               MaxLines="2"
+                               Grid.Column="0"
+                               VerticalOptions="Center"
+                               HorizontalOptions="StartAndExpand" />
+
+                                <!-- Download Button -->
+                                <ImageButton Source="download_icon.png"
+                                     CommandParameter="{Binding FilePath}"
+                                     Clicked="OnDownloadClicked"
+                                     BackgroundColor="Transparent"
+                                     WidthRequest="30"
+                                     HeightRequest="30"
+                                     Grid.Column="1"
+                                     VerticalOptions="Center"
+                                     HorizontalOptions="End" />
+                            </Grid>
+                        </Frame>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+
+
+
+
+
+    </VerticalStackLayout>
+</ContentPage>
+

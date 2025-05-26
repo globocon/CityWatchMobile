@@ -3,381 +3,409 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="C4iSytemsMobApp.MainPage">
+
     <ContentPage.Resources>
         <toolkit:BoolToObjectConverter x:Key="BoolToVisibilityConverter" TrueObject="True" FalseObject="False" />
     </ContentPage.Resources>
 
-<AbsoluteLayout>
+    <AbsoluteLayout>
 
-    <StackLayout Padding="10,0,0,0">
-        <!-- Adds Left Padding -->
-        <Frame Padding="5,5,5,5"
-               CornerRadius="10"
-               HasShadow="True"
-               HeightRequest="35"
-               WidthRequest="650"
-               HorizontalOptions="Center">
-            <Frame.Background>
-                <LinearGradientBrush>
-                    <GradientStop Color="#FFFFFF"
-                                  Offset="0.0" />
-                    <GradientStop Color="#F0F0F0"
-                                  Offset="1.0" />
-                </LinearGradientBrush>
-            </Frame.Background>
-            <StackLayout Spacing="2">
-                <Label x:Name="lblClientSite"
-                       Text="Client Site: N/A"
-                       FontSize="12"
-                       TextColor="Black"
-                       FontAttributes="Bold" />
-            </StackLayout>
-        </Frame>
-    </StackLayout>
-
-
-    <!-- Main Content Grid -->
-    <Grid RowDefinitions="Auto,*,Auto,*,*,Auto"
-          ColumnDefinitions="*,*"
-          Padding="5,0,5,10"
-          RowSpacing="2"
-          ColumnSpacing="2"
-          AbsoluteLayout.LayoutBounds="0,0,1,1"
-          AbsoluteLayout.LayoutFlags="All">
-
-        <!-- Hamburger Menu -->
-
-        <StackLayout Grid.Row="0"
-                     Grid.ColumnSpan="2"
-                     Orientation="Horizontal"
-                     HorizontalOptions="End">
-            <ImageButton Source="hamburger.png"
-                         WidthRequest="40"
-                         HeightRequest="40"
-                         BackgroundColor="Transparent"
-                         Clicked="OnMenuClicked" />
+        <StackLayout Padding="10,0,0,0">
+            <!-- Adds Left Padding -->
+            <Frame Padding="5"
+                   CornerRadius="10"
+                   HasShadow="True"
+                   HeightRequest="35"
+                   WidthRequest="650"
+                   HorizontalOptions="Center">
+                <Frame.Background>
+                    <LinearGradientBrush>
+                        <GradientStop Color="#FFFFFF" Offset="0.0" />
+                        <GradientStop Color="#F0F0F0" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Frame.Background>
+                <StackLayout Spacing="2">
+                    <Label x:Name="lblClientSite"
+                           Text="Client Site: N/A"
+                           FontSize="12"
+                           TextColor="Black"
+                           FontAttributes="Bold" />
+                </StackLayout>
+            </Frame>
         </StackLayout>
 
-        <!-- Incident Report Button -->
-        <Frame Grid.Row="1"
-               Grid.Column="0"
-               CornerRadius="15"
-               HorizontalOptions="FillAndExpand"
-               VerticalOptions="FillAndExpand"
-               Padding="5"
-               HasShadow="True">
-            <Frame.Background>
-                <LinearGradientBrush>
-                    <GradientStop Color="#007AFF"
-                                  Offset="0.0" />
-                    <GradientStop Color="#0056B3"
-                                  Offset="1.0" />
-                </LinearGradientBrush>
-            </Frame.Background>
-            <Frame.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnManualPositionClicked" />
-            </Frame.GestureRecognizers>
-            <StackLayout VerticalOptions="CenterAndExpand"
-                         HorizontalOptions="CenterAndExpand"
-                         Spacing="3">
-                <Image Source="card_checklist.png"
-                       WidthRequest="40"
-                       HeightRequest="40" />
-                <Label Text="Incident Report"
-                       TextColor="White"
-                       FontSize="12"
-                       HorizontalTextAlignment="Center" />
-            </StackLayout>
-        </Frame>
+        <!-- Main Content Grid -->
+        <Grid RowDefinitions="Auto,*,Auto,*,*,Auto"
+              ColumnDefinitions="*,*"
+              Padding="5,0,5,10"
+              RowSpacing="2"
+              ColumnSpacing="2"
+              AbsoluteLayout.LayoutBounds="0,0,1,1"
+              AbsoluteLayout.LayoutFlags="All">
 
-        <!-- Log Activity Button -->
-        <Frame Grid.Row="1"
-               Grid.Column="1"
-               CornerRadius="15"
-               HorizontalOptions="FillAndExpand"
-               VerticalOptions="FillAndExpand"
-               Padding="5"
-               HasShadow="True">
-            <Frame.Background>
-                <LinearGradientBrush>
-                    <GradientStop Color="#007AFF"
-                                  Offset="0.0" />
-                    <GradientStop Color="#0056B3"
-                                  Offset="1.0" />
-                </LinearGradientBrush>
-            </Frame.Background>
-            <Frame.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnLogActivityClicked" />
-            </Frame.GestureRecognizers>
-            <StackLayout VerticalOptions="CenterAndExpand"
-                         HorizontalOptions="CenterAndExpand"
-                         Spacing="3">
-                <Image Source="chat_text.png"
-                       WidthRequest="40"
-                       HeightRequest="40" />
-                <Label Text="Log Activity"
-                       TextColor="White"
-                       FontSize="12"
-                       HorizontalTextAlignment="Center" />
+            <!-- Hamburger Menu -->
+            <StackLayout Grid.Row="0"
+                         Grid.ColumnSpan="2"
+                         Orientation="Horizontal"
+                         HorizontalOptions="End">
+                <ImageButton Source="hamburger.png"
+                             WidthRequest="40"
+                             HeightRequest="40"
+                             BackgroundColor="Transparent"
+                             Clicked="OnMenuClicked" />
             </StackLayout>
-        </Frame>
 
-        <!-- Duress Button -->
-        <Frame x:Name="DuressButtonFrame"
-               Grid.Row="2"
-               Grid.ColumnSpan="2"
-               BackgroundColor="#FFC107"
-               CornerRadius="150"
-               WidthRequest="300"
-               HeightRequest="300"
-               VerticalOptions="Center"
-               HorizontalOptions="Center">
-            <Frame.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnDuressClicked" />
-            </Frame.GestureRecognizers>
-            <StackLayout VerticalOptions="CenterAndExpand"
-                         HorizontalOptions="CenterAndExpand"
-                         Spacing="3">
-                <Label Text="DURESS"
-                       FontSize="24"
-                       FontAttributes="Bold"
-                       TextColor="Black"
-                       HorizontalTextAlignment="Center" />
-                <Label x:Name="DuressStatusLabel"
-                       Text="Status: Normal"
-                       FontSize="16"
-                       TextColor="Black"
-                       HorizontalTextAlignment="Center" />
-            </StackLayout>
-        </Frame>
+            <!-- Incident Report Button -->
+            <Frame Grid.Row="1"
+                   Grid.Column="0"
+                   CornerRadius="15"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="FillAndExpand"
+                   Padding="5"
+                   HasShadow="True">
+                <Frame.Background>
+                    <LinearGradientBrush>
+                        <GradientStop Color="#007AFF" Offset="0.0" />
+                        <GradientStop Color="#0056B3" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Frame.Background>
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnManualPositionClicked" />
+                </Frame.GestureRecognizers>
+                <StackLayout VerticalOptions="CenterAndExpand"
+                             HorizontalOptions="CenterAndExpand"
+                             Spacing="3">
+                    <Image Source="card_checklist.png"
+                           WidthRequest="40"
+                           HeightRequest="40" />
+                    <Label Text="Incident Report"
+                           TextColor="White"
+                           FontSize="12"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Frame>
 
-        <!-- Audio Button -->
-        <Frame Grid.Row="3"
-               Grid.Column="0"
-               CornerRadius="15"
-               HorizontalOptions="FillAndExpand"
-               VerticalOptions="FillAndExpand"
-               Padding="5"
-               HasShadow="True">
-            <Frame.Background>
-                <LinearGradientBrush>
-                    <GradientStop Color="#007AFF"
-                                  Offset="0.0" />
-                    <GradientStop Color="#0056B3"
-                                  Offset="1.0" />
-                </LinearGradientBrush>
-            </Frame.Background>
-            <Frame.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnAudioClicked" />
-            </Frame.GestureRecognizers>
-            <StackLayout VerticalOptions="CenterAndExpand"
-                         HorizontalOptions="CenterAndExpand"
-                         Spacing="3">
-                <Image Source="mic_fill.png"
-                       WidthRequest="40"
-                       HeightRequest="40" />
-                <Label Text="Audio"
-                       TextColor="White"
-                       FontSize="12"
-                       HorizontalTextAlignment="Center" />
-            </StackLayout>
-        </Frame>
+            <!-- Log Activity Button -->
+            <Frame Grid.Row="1"
+                   Grid.Column="1"
+                   CornerRadius="15"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="FillAndExpand"
+                   Padding="5"
+                   HasShadow="True">
+                <Frame.Background>
+                    <LinearGradientBrush>
+                        <GradientStop Color="#007AFF" Offset="0.0" />
+                        <GradientStop Color="#0056B3" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Frame.Background>
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnLogActivityClicked" />
+                </Frame.GestureRecognizers>
+                <StackLayout VerticalOptions="CenterAndExpand"
+                             HorizontalOptions="CenterAndExpand"
+                             Spacing="3">
+                    <Image Source="chat_text.png"
+                           WidthRequest="40"
+                           HeightRequest="40" />
+                    <Label Text="Log Activity"
+                           TextColor="White"
+                           FontSize="12"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Frame>
 
-        <!-- Multimedia Button -->
-        <Frame Grid.Row="3"
-               Grid.Column="1"
-               CornerRadius="15"
-               HorizontalOptions="FillAndExpand"
-               VerticalOptions="FillAndExpand"
-               Padding="5"
-               HasShadow="True">
-            <Frame.Background>
-                <LinearGradientBrush>
-                    <GradientStop Color="#007AFF"
-                                  Offset="0.0" />
-                    <GradientStop Color="#0056B3"
-                                  Offset="1.0" />
-                </LinearGradientBrush>
-            </Frame.Background>
-            <Frame.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnMultimediaClicked" />
-            </Frame.GestureRecognizers>
-            <StackLayout VerticalOptions="CenterAndExpand"
-                         HorizontalOptions="CenterAndExpand"
-                         Spacing="3">
-                <Image Source="camera_fill.png"
-                       WidthRequest="40"
-                       HeightRequest="40" />
-                <Label Text="Multimedia"
-                       TextColor="White"
-                       FontSize="12"
-                       HorizontalTextAlignment="Center" />
-            </StackLayout>
-        </Frame>
+            <!-- Duress Button -->
+            <Frame x:Name="DuressButtonFrame"
+                   Grid.Row="2"
+                   Grid.ColumnSpan="2"
+                   BackgroundColor="#FFC107"
+                   CornerRadius="150"
+                   WidthRequest="300"
+                   HeightRequest="300"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center">
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnDuressClicked" />
+                </Frame.GestureRecognizers>
+                <StackLayout VerticalOptions="CenterAndExpand"
+                             HorizontalOptions="CenterAndExpand"
+                             Spacing="3">
+                    <Label Text="DURESS"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="Black"
+                           HorizontalTextAlignment="Center" />
+                    <Label x:Name="DuressStatusLabel"
+                           Text="Status: Normal"
+                           FontSize="16"
+                           TextColor="Black"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Frame>
 
-        <!-- Total Patrons Count -->
-        <Frame Grid.Row="4"
-               Grid.Column="0"
-               CornerRadius="15"
-               HorizontalOptions="FillAndExpand"
-               VerticalOptions="FillAndExpand"
-               Padding="5"
+            <!-- Audio Button -->
+            <Frame Grid.Row="3"
+                   Grid.Column="0"
+                   CornerRadius="15"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="FillAndExpand"
+                   Padding="5"
+                   HasShadow="True">
+                <Frame.Background>
+                    <LinearGradientBrush>
+                        <GradientStop Color="#007AFF" Offset="0.0" />
+                        <GradientStop Color="#0056B3" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Frame.Background>
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnAudioClicked" />
+                </Frame.GestureRecognizers>
+                <StackLayout VerticalOptions="CenterAndExpand"
+                             HorizontalOptions="CenterAndExpand"
+                             Spacing="3">
+                    <Image Source="mic_fill.png"
+                           WidthRequest="40"
+                           HeightRequest="40" />
+                    <Label Text="Audio"
+                           TextColor="White"
+                           FontSize="12"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Frame>
+
+            <!-- Multimedia Button -->
+            <Frame Grid.Row="3"
+                   Grid.Column="1"
+                   CornerRadius="15"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="FillAndExpand"
+                   Padding="5"
+                   HasShadow="True">
+                <Frame.Background>
+                    <LinearGradientBrush>
+                        <GradientStop Color="#007AFF" Offset="0.0" />
+                        <GradientStop Color="#0056B3" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Frame.Background>
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnMultimediaClicked" />
+                </Frame.GestureRecognizers>
+                <StackLayout VerticalOptions="CenterAndExpand"
+                             HorizontalOptions="CenterAndExpand"
+                             Spacing="3">
+                    <Image Source="camera_fill.png"
+                           WidthRequest="40"
+                           HeightRequest="40" />
+                    <Label Text="Multimedia"
+                           TextColor="White"
+                           FontSize="12"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Frame>
+
+            <!-- Total Patrons Count -->
+            <Frame Grid.Row="4"
+                   Grid.Column="0"
+                   CornerRadius="15"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="FillAndExpand"
+                   Padding="5"
                    HasShadow="True"
                    IsVisible="{Binding ShowCounters}">
                 <Frame.Background>
-                <LinearGradientBrush>
-                    <GradientStop Color="#007AFF"
-                                  Offset="0.0" />
-                    <GradientStop Color="#0056B3"
-                                  Offset="1.0" />
-                </LinearGradientBrush>
-            </Frame.Background>
-            <Frame.GestureRecognizers>
-                <TapGestureRecognizer Tapped="ToggleCounterDisplay" />
-            </Frame.GestureRecognizers>
+                    <LinearGradientBrush>
+                        <GradientStop Color="#007AFF" Offset="0.0" />
+                        <GradientStop Color="#0056B3" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Frame.Background>
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="ToggleCounterDisplay" />
+                </Frame.GestureRecognizers>
 
-            <!-- Grid with overlapping elements -->
-            <Grid>
-                <!-- Icon aligned to the left -->
-                <ImageButton BackgroundColor="Transparent"
-                             Padding="8,3,3,3"
-                             WidthRequest="40"
-                             HeightRequest="40"
-                             HorizontalOptions="Start"
-                             VerticalOptions="Center">
-                    <ImageButton.Source>
-                        <FontImageSource Glyph=""
-                                         FontFamily="FontAwesome"
-                                         Color="White"
-                                         Size="20" />
-                    </ImageButton.Source>
-                </ImageButton>
+                <!-- Grid with overlapping elements -->
+                <Grid>
+                    <!-- Icon aligned to the left -->
+                    <ImageButton BackgroundColor="Transparent"
+                                 Padding="8,3,3,3"
+                                 WidthRequest="40"
+                                 HeightRequest="40"
+                                 HorizontalOptions="Start"
+                                 VerticalOptions="Center">
+                        <ImageButton.Source>
+                            <FontImageSource Glyph=""
+                                             FontFamily="FontAwesome"
+                                             Color="White"
+                                             Size="20" />
+                        </ImageButton.Source>
+                    </ImageButton>
 
-                <!-- Label centered in the whole grid cell -->
-                <Label x:Name="total_current_patronsLabel"
-                       Padding="8,3,3,3"
-                       Text="T000000"
-                       TextColor="White"
-                       FontSize="20"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center" />
-            </Grid>
-        </Frame>
+                    <!-- Label centered in the whole grid cell -->
+                    <Label x:Name="total_current_patronsLabel"
+                           Padding="8,3,3,3"
+                           Text="T000000"
+                           TextColor="White"
+                           FontSize="20"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+                </Grid>
+            </Frame>
 
-
-        <!-- Counter -->
-        <Frame Grid.Row="4"
-               Grid.Column="1"
-               CornerRadius="15"
-               HorizontalOptions="FillAndExpand"
-               VerticalOptions="FillAndExpand"
-               Padding="5"
+            <!-- Counter -->
+            <Frame Grid.Row="4"
+                   Grid.Column="1"
+                   CornerRadius="15"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="FillAndExpand"
+                   Padding="5"
                    HasShadow="True"
                    IsVisible="{Binding ShowCounters}">
                 <Frame.Background>
-                <LinearGradientBrush>
-                    <GradientStop Color="#007AFF"
-                                  Offset="0.0" />
-                    <GradientStop Color="#0056B3"
-                                  Offset="1.0" />
-                </LinearGradientBrush>
-            </Frame.Background>
+                    <LinearGradientBrush>
+                        <GradientStop Color="#007AFF" Offset="0.0" />
+                        <GradientStop Color="#0056B3" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Frame.Background>
 
-            <!-- Grid Layout for Buttons and Label -->
-            <Grid ColumnSpacing="10"
-                  VerticalOptions="Center"
-                  HorizontalOptions="FillAndExpand">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+                <!-- Grid Layout for Buttons and Label -->
+                <Grid ColumnSpacing="10"
+                      VerticalOptions="Center"
+                      HorizontalOptions="FillAndExpand">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <!-- Decrement Button -->
-                <ImageButton Grid.Column="0"
-                             Padding="5"
-                             BackgroundColor="Transparent"
-                             WidthRequest="40"
-                             HeightRequest="40"
-                             Clicked="OnDecrementClicked"
-                             HorizontalOptions="Center"
-                             VerticalOptions="Center">
-                    <ImageButton.Source>
-                        <FontImageSource Glyph=""
-                                         FontFamily="FontAwesome"
-                                         Color="White"
-                                         Size="20" />
-                    </ImageButton.Source>
-                </ImageButton>
+                    <!-- Decrement Button -->
+                    <ImageButton Grid.Column="0"
+                                 Padding="5"
+                                 BackgroundColor="Transparent"
+                                 WidthRequest="40"
+                                 HeightRequest="40"
+                                 Clicked="OnDecrementClicked"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center">
+                        <ImageButton.Source>
+                            <FontImageSource Glyph=""
+                                             FontFamily="FontAwesome"
+                                             Color="White"
+                                             Size="20" />
+                        </ImageButton.Source>
+                    </ImageButton>
 
-                <!-- Counter Label -->
-                <Label Grid.Column="1"
-                       x:Name="CounterLabel"
-                       Text="0000"
-                       FontSize="18"
-                       HorizontalTextAlignment="Center"
-                       VerticalTextAlignment="Center"
-                       HorizontalOptions="FillAndExpand"
-                       VerticalOptions="Center"
-                       TextColor="White" />
+                    <!-- Counter Label -->
+                    <Label Grid.Column="1"
+                           x:Name="CounterLabel"
+                           Text="0000"
+                           FontSize="18"
+                           HorizontalTextAlignment="Center"
+                           VerticalTextAlignment="Center"
+                           HorizontalOptions="FillAndExpand"
+                           VerticalOptions="Center"
+                           TextColor="White" />
 
-                <!-- Increment Button -->
-                <ImageButton Grid.Column="2"
-                             Padding="5"
-                             BackgroundColor="Transparent"
-                             WidthRequest="40"
-                             HeightRequest="40"
-                             Clicked="OnIncrementClicked"
-                             HorizontalOptions="Center"
-                             VerticalOptions="Center">
-                    <ImageButton.Source>
-                        <FontImageSource Glyph=""
-                                         FontFamily="FontAwesome"
-                                         Color="White"
-                                         Size="20" />
-                    </ImageButton.Source>
-                </ImageButton>
-            </Grid>
-        </Frame>
+                    <!-- Increment Button -->
+                    <ImageButton Grid.Column="2"
+                                 Padding="5"
+                                 BackgroundColor="Transparent"
+                                 WidthRequest="40"
+                                 HeightRequest="40"
+                                 Clicked="OnIncrementClicked"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center">
+                        <ImageButton.Source>
+                            <FontImageSource Glyph=""
+                                             FontFamily="FontAwesome"
+                                             Color="White"
+                                             Size="20" />
+                        </ImageButton.Source>
+                    </ImageButton>
+                </Grid>
+            </Frame>
 
-        <!-- Footer Image -->
-        <Image Grid.Row="5"
-               Grid.ColumnSpan="2"
-               Source="c4ilogo.jpg"
-               HorizontalOptions="FillAndExpand"
-               VerticalOptions="End"
-               HeightRequest="50"
-               Aspect="AspectFit" />
+            <!-- Footer Image -->
+            <Image Grid.Row="5"
+                   Grid.ColumnSpan="2"
+                   Source="c4ilogo.jpg"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="End"
+                   HeightRequest="50"
+                   Aspect="AspectFit" />
 
-    </Grid>
+        </Grid>
 
-    <!-- Popup for Countdown -->
-    <Grid x:Name="DuressPopup"
-          BackgroundColor="#80000000"
-          IsVisible="False"
-          AbsoluteLayout.LayoutBounds="0,0,1,1"
-          AbsoluteLayout.LayoutFlags="All">
-        <Frame BackgroundColor="White"
-               CornerRadius="10"
-               VerticalOptions="Center"
-               HorizontalOptions="Center"
-               Padding="20">
-            <StackLayout>
-                <Label x:Name="CountdownLabel"
-                       Text="Activating duress in 5 seconds"
-                       FontSize="18"
-                       HorizontalTextAlignment="Center"
-                       TextColor="Black" />
-                <Button Text="Cancel"
-                        Clicked="OnCancelClicked"
-                        BackgroundColor="Red"
-                        TextColor="White"
-                        Margin="0,10,0,0" />
+        <!-- Popup for Countdown -->
+        <Grid x:Name="DuressPopup"
+              BackgroundColor="#80000000"
+              IsVisible="False"
+              AbsoluteLayout.LayoutBounds="0,0,1,1"
+              AbsoluteLayout.LayoutFlags="All">
+            <Frame BackgroundColor="White"
+                   CornerRadius="10"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   Padding="20">
+                <StackLayout>
+                    <Label x:Name="CountdownLabel"
+                           Text="Activating duress in 5 seconds"
+                           FontSize="18"
+                           HorizontalTextAlignment="Center"
+                           TextColor="Black" />
+                    <Button Text="Cancel"
+                            Clicked="OnCancelClicked"
+                            BackgroundColor="Red"
+                            TextColor="White"
+                            Margin="0,10,0,0" />
+                </StackLayout>
+            </Frame>
+        </Grid>
+
+
+        <!-- Drawer Menu Grid (Initially hidden, offscreen) -->
+        <Grid x:Name="DrawerMenu"
+      BackgroundColor="#FFF"
+      WidthRequest="250"
+      AbsoluteLayout.LayoutBounds="0,0,AutoSize,1"
+      AbsoluteLayout.LayoutFlags="HeightProportional"
+      TranslationX="-250"
+      ZIndex="10">
+
+            <!-- Sample Menu Items -->
+            <StackLayout Padding="20" Spacing="20">
+                <Label Text="Menu" FontAttributes="Bold" FontSize="20" />
+
+                <Button Text="SOP’s"         
+             />
+
+                <Button Text="Tools" Clicked="OnToolsClicked"
+            
+           />
+
+                <Button Text="Downloads"  Clicked="OnDownloadsClicked" 
+            
+             />
+
+                <Button Text="Off Duty"
+            
+             />
             </StackLayout>
-        </Frame>
-    </Grid>
 
-</AbsoluteLayout>
+        </Grid>
+
+        <Grid x:Name="DrawerOverlay"
+      BackgroundColor="#80000000"
+      IsVisible="False"
+      AbsoluteLayout.LayoutBounds="0,0,1,1"
+      AbsoluteLayout.LayoutFlags="All"
+      ZIndex="9">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnDrawerOverlayTapped" />
+            </Grid.GestureRecognizers>
+        </Grid>
+
+    </AbsoluteLayout>
 
 </ContentPage>
+
 

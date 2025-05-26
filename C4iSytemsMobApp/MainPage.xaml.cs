@@ -16,7 +16,7 @@ namespace C4iSytemsMobApp
         private bool _CcounterShown = false;
         private bool _TcounterShown = true;
         private bool _IsCrowdControlCounterEnabled = false;
-
+        bool isDrawerOpen = false;
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string propertyName)
         {
@@ -371,9 +371,37 @@ namespace C4iSytemsMobApp
 
             return true; // Prevent default back button behavior
         }
-        private void OnMenuClicked(object sender, EventArgs e)
+        private async void OnMenuClicked(object sender, EventArgs e)
         {
-           
+            if (!isDrawerOpen)
+            {
+                // Show overlay
+                DrawerOverlay.IsVisible = true;
+
+                // Slide drawer in
+                await DrawerMenu.TranslateTo(0, 0, 250, Easing.SinIn);
+                isDrawerOpen = true;
+            }
+            else
+            {
+                await CloseDrawer();
+            }
+        }
+
+        private async void OnDrawerOverlayTapped(object sender, EventArgs e)
+        {
+            await CloseDrawer();
+        }
+
+        private async Task CloseDrawer()
+        {
+            // Slide drawer out
+            await DrawerMenu.TranslateTo(-DrawerMenu.Width, 0, 250, Easing.SinOut);
+
+            // Hide overlay
+            DrawerOverlay.IsVisible = false;
+
+            isDrawerOpen = false;
         }
 
         private void OnIncrementClicked(object sender, EventArgs e)
@@ -460,6 +488,21 @@ namespace C4iSytemsMobApp
                 _CcounterShown = true;
                 _TcounterShown = false;
             }
+        }
+
+        private async void OnDownloadsClicked(object sender, EventArgs e)
+        {
+
+            Application.Current.MainPage = new DownloadsHome();
+            
+        }
+
+
+        private async void OnToolsClicked(object sender, EventArgs e)
+        {
+
+            Application.Current.MainPage = new ToolsHome();
+
         }
 
 
