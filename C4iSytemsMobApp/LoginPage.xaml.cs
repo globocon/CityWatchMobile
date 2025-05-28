@@ -182,9 +182,16 @@ public partial class LoginPage : ContentPage
 
             if (status != PermissionStatus.Granted)
             {
+                if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost"))
+                {
+                    await SecureStorage.SetAsync("GpsCoordinates", "40.748440,-73.984559");
+
+                }
                 //locationLabel.Text = "Location permission not granted. Please enable it in app settings.";
                 return;
             }
+
+           
 
             var location = await Geolocation.GetLocationAsync(new GeolocationRequest
             {
@@ -200,6 +207,7 @@ public partial class LoginPage : ContentPage
             }
             else
             {
+                
                 //locationLabel.Text = "Unable to retrieve location.";
             }
         }

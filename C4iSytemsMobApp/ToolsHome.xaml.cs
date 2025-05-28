@@ -18,4 +18,17 @@ public partial class ToolsHome : ContentPage
            
         }
     }
+
+
+    private void OnBackClicked(object sender, EventArgs e)
+    {
+        Application.Current.MainPage = new MainPage();
+    }
+
+    private void OnHomeClicked(object sender, EventArgs e)
+    {
+        // Navigate to your app's home page
+        // Example:
+        Application.Current.MainPage = new MainPage();
+    }
 }

@@ -102,6 +102,9 @@
 	  <MauiXaml Update="QrScannerPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="SOPPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="ToolsHome.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

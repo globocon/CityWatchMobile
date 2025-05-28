@@ -371,11 +371,11 @@
       TranslationX="-250"
       ZIndex="10">
 
-            <!-- Sample Menu Items -->
+          
             <StackLayout Padding="20" Spacing="20">
                 <Label Text="Menu" FontAttributes="Bold" FontSize="20" />
 
-                <Button Text="SOP’s"         
+                <Button Text="SOP’s"   Clicked="OnSOPClicked"      
              />
 
                 <Button Text="Tools" Clicked="OnToolsClicked"
@@ -386,12 +386,16 @@
             
              />
 
-                <Button Text="Off Duty"
+                <Button Text="Off Duty"  Clicked="OnOffDutyClicked"
             
              />
             </StackLayout>
 
         </Grid>
+
+
+       
+
 
         <Grid x:Name="DrawerOverlay"
       BackgroundColor="#80000000"

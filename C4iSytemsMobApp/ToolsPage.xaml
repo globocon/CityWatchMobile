@@ -70,14 +70,16 @@
 
                                 <!-- Open Link Icon -->
                                 <ImageButton Source="blueglobeicon.png"
-                                         CommandParameter="{Binding Hyperlink}"
-                                         Clicked="OnHyperlinkIconClicked"
-                                         BackgroundColor="Transparent"
-                                         WidthRequest="30"
-                                         HeightRequest="30"
-                                         Grid.Column="1"
-                                         VerticalOptions="Center"
-                                         HorizontalOptions="End" />
+             CommandParameter="{Binding Hyperlink}"
+             Clicked="OnHyperlinkIconClicked"
+             BackgroundColor="Transparent"
+             WidthRequest="15"
+             HeightRequest="15"
+             Padding="0"
+             Aspect="AspectFit"
+             Grid.Column="1"
+             VerticalOptions="Center"
+             HorizontalOptions="End" />
                             </Grid>
                         </Frame>
                     </Grid>

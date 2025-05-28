@@ -504,10 +504,60 @@ namespace C4iSytemsMobApp
             Application.Current.MainPage = new ToolsHome();
 
         }
+        private async void OnSOPClicked(object sender, EventArgs e)
+        {
+
+            Application.Current.MainPage = new SOPPage();
+
+        }
+
+
+        private async void OnOffDutyClicked(object sender, EventArgs e)
+        {
+            // Validate Guard ID
+            var guardId = await TryGetSecureId("GuardId", "Guard ID not found. Please validate the License Number first.");
+            if (guardId == null) return;
+
+            // Validate Client Site ID
+            var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+            if (clientSiteId == null) return;
+
+            // Validate User ID
+            var userId = await TryGetSecureId("UserId", "User ID is invalid. Please log in again.");
+            if (userId == null) return;
+
+            try
+            {
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UpdateOffDuty?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
+
+                using (HttpClient client = new HttpClient())
+                {
+                    var response = await client.GetAsync(apiUrl);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string content = await response.Content.ReadAsStringAsync();
+                        SecureStorage.RemoveAll(); // Clear SecureStorage (logout)
+                        System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the appI
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        await DisplayAlert("Error", $"Off Duty submission failed:\n{errorMessage}", "OK");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Exception", $"Unexpected error: {ex.Message}", "OK");
+            }
+        }
+
+
+
 
 
     }
 
 
-   
+
 }
