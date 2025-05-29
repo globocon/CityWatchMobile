@@ -446,32 +446,6 @@
             </Grid>
         </Grid>
 
-        <!-- Popup for Countdown -->
-        <Grid x:Name="DuressPopup"
-              BackgroundColor="#80000000"
-              IsVisible="False"
-              AbsoluteLayout.LayoutBounds="0,0,1,1"
-              AbsoluteLayout.LayoutFlags="All">
-            <Frame BackgroundColor="White"
-                   CornerRadius="10"
-                   VerticalOptions="Center"
-                   HorizontalOptions="Center"
-                   Padding="20">
-                <StackLayout>
-                    <Label x:Name="CountdownLabel"
-                           Text="Activating duress in 5 seconds"
-                           FontSize="18"
-                           HorizontalTextAlignment="Center"
-                           TextColor="Black" />
-                    <Button Text="Cancel"
-                            Clicked="OnCancelClicked"
-                            BackgroundColor="Red"
-                            TextColor="White"
-                            Margin="0,10,0,0" />
-                </StackLayout>
-            </Frame>
-        </Grid>
-
 
         <!-- Drawer Menu Grid (Initially hidden, offscreen) -->
         <Grid x:Name="DrawerMenu"

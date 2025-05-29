@@ -31,7 +31,7 @@ public partial class LoginPage : ContentPage
             string savedUsername = await SecureStorage.GetAsync("SavedUsername");
             string savedPassword = await SecureStorage.GetAsync("SavedPassword");
 
-            if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost"))
+            if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost") || AppConfig.ApiBaseUrl.Contains("192.168.1."))
             {
                 // Apply default test credentials if the API base URL is for testing
                 usernameEntry.Text = savedUsername ?? "martha_cove";
@@ -182,7 +182,7 @@ public partial class LoginPage : ContentPage
 
             if (status != PermissionStatus.Granted)
             {
-                if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost"))
+                if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost") || AppConfig.ApiBaseUrl.Contains("192.168.1."))
                 {
                     await SecureStorage.SetAsync("GpsCoordinates", "40.748440,-73.984559");
 

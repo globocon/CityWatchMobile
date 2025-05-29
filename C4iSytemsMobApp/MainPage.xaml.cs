@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace C4iSytemsMobApp
 {
@@ -273,10 +272,10 @@ namespace C4iSytemsMobApp
 
         private async Task ActivateDuress()
         {
-                                     
-            
 
-           string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+
+
+            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
 
 
             // Validate Guard ID
@@ -338,7 +337,7 @@ namespace C4iSytemsMobApp
         }
 
 
-        
+
 
         //private async void OnDuressClicked(object sender, EventArgs e)
         //{
@@ -692,15 +691,21 @@ namespace C4iSytemsMobApp
             }
         }
 
+
+
+        private async void OnDownloadsClicked(object sender, EventArgs e)
+        {
+
+            Application.Current.MainPage = new DownloadsHome();
+
         }
+        private async void OnToolsClicked(object sender, EventArgs e)
+        {
 
-    private async void OnDownloadsClicked(object sender, EventArgs e)
-    {
+            Application.Current.MainPage = new ToolsHome();
 
-        Application.Current.MainPage = new DownloadsHome();
-
-    }
-    private async void OnSOPClicked(object sender, EventArgs e)
+        }
+        private async void OnSOPClicked(object sender, EventArgs e)
         {
 
             Application.Current.MainPage = new SOPPage();

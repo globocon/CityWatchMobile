@@ -56,7 +56,7 @@ public partial class GuardLoginPage : ContentPage
         BindingContext = this;
         LoadLoggedInUser();
         LoadDropdownData();
-        if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost"))
+        if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost") || AppConfig.ApiBaseUrl.Contains("192.168.1."))
         {
             // Set default license number for test environment
             txtLicenseNumber.Text = "569-829-xxx";
