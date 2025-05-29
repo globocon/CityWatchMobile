@@ -1,4 +1,6 @@
 ﻿using C4iSytemsMobApp.Models;
+using Microsoft.AspNetCore.SignalR.Client;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http.Json;
@@ -10,14 +12,19 @@ namespace C4iSytemsMobApp
     {
         private readonly HttpClient _httpClient;
         private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
-        private int _counter = 0;
+        private int _pcounter = 0;
         private int _CurrentCounter = 0;
         private int _totalpatrons = 0;
         private bool _CcounterShown = false;
         private bool _TcounterShown = true;
         private bool _IsCrowdControlCounterEnabled = false;
+        private HubConnection _hubConnection;
         bool isDrawerOpen = false;
         public event PropertyChangedEventHandler PropertyChanged;
+        private int? _clientSiteId;
+        private int? _userId;
+        private int? _guardId;
+        private bool _guardCounterReset = false;
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -36,7 +43,7 @@ namespace C4iSytemsMobApp
             }
         }
 
-        
+
 
         public MainPage()
         {
@@ -45,12 +52,131 @@ namespace C4iSytemsMobApp
             NavigationPage.SetHasNavigationBar(this, false);
             LoadLoggedInUser();
             LoadSecureData();
-            InitializePatronsCounterDisplay();
             // Start checking duress status on app load
             duressCheckTimer.Elapsed += async (s, e) => await CheckDuressStatus();
             duressCheckTimer.AutoReset = true;
             duressCheckTimer.Start();
 
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+
+            // If InitializePatronsCounterDisplay is async, await it.
+            await InitializePatronsCounterDisplay();
+            if (_IsCrowdControlCounterEnabled)
+            {
+                if (_clientSiteId == null) return;
+                string hubUrl = $"{AppConfig.MobileSignalRBaseUrl}/MobileAppSignalRHub";
+                _hubConnection = new HubConnectionBuilder()
+                    .WithUrl(hubUrl)
+                    .WithAutomaticReconnect()
+                    .Build();
+
+                //await Task.Run(() => {
+                //    Dispatcher.Dispatch(async () => await _hubConnection.StartAsync());                   
+                // });
+
+                _hubConnection.On<ClientSiteMobileCrowdControl>("UpdateCrowdControl", (csmcc) =>
+                {
+                    _CurrentCounter = csmcc.Ccount;
+                    _totalpatrons = csmcc.Tcount;
+                    _pcounter = csmcc.ClientSiteCrowdControlGuards?.FirstOrDefault(x => x.GuardId == (int)_guardId && x.UserId == (int)_userId)?.Pcount ?? 0;
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        RefreshCounterDisplay();
+                    });
+                });
+
+                _hubConnection.On<ClientSiteMobileCrowdControl>("ResetSiteCrowdControlCount", (csmcc) =>
+                {
+                    _CurrentCounter = csmcc.Ccount;
+                    _totalpatrons = csmcc.Tcount;
+                    _pcounter = csmcc.ClientSiteCrowdControlGuards?.FirstOrDefault(x => x.GuardId == (int)_guardId && x.UserId == (int)_userId)?.Pcount ?? 0;
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        RefreshCounterDisplay();
+                        DisplayAlert("Success", "Site counter has been reset.", "Ok");
+                    });
+                });
+
+                _hubConnection.On<ClientSiteMobileCrowdControl>("ResetGuardCrowdControlCount", (csmcc) =>
+                {
+                    _CurrentCounter = csmcc.Ccount;
+                    _totalpatrons = csmcc.Tcount;
+                    _pcounter = csmcc.ClientSiteCrowdControlGuards?.FirstOrDefault(x => x.GuardId == (int)_guardId && x.UserId == (int)_userId)?.Pcount ?? 0;
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        RefreshCounterDisplay();
+                        if (_guardCounterReset)
+                        {
+                            _guardCounterReset = false;
+                            DisplayAlert("Success", "Location counter has been reset.", "Ok");
+                        }
+
+                    });
+                });
+
+                _hubConnection.Closed += async (error) =>
+                {
+                    Debug.WriteLine($"Connection closed. Reason: {error?.Message}");
+                    // Optionally attempt reconnect
+                    await Task.Delay(3000);
+                    await _hubConnection.StartAsync();
+                };
+
+                _hubConnection.Reconnected += connectionId =>
+                {
+                    Debug.WriteLine($"Reconnected with connectionId: {connectionId}");
+                    if (_hubConnection.State == HubConnectionState.Connected)
+                    {
+                        MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
+                        {
+                            ClientSiteId = (int)_clientSiteId,
+                            GuardId = (int)_guardId,
+                            UserId = (int)_userId
+                        };
+                        var r = Task.FromResult(_hubConnection.InvokeAsync<ClientSiteMobileCrowdControl>("JoinGroup", JoinGaurd)).Result;
+                        if (r != null)
+                        {
+                            _CurrentCounter = r.Result.Ccount;
+                            _totalpatrons = r.Result.Tcount;
+                            _pcounter = r.Result.ClientSiteCrowdControlGuards?.FirstOrDefault()?.Pcount ?? 0;
+                            RefreshCounterDisplay();
+                        }
+                    }
+                    return Task.CompletedTask;
+                };
+
+                _hubConnection.Reconnecting += error =>
+                {
+                    Debug.WriteLine($"Reconnecting due to: {error?.Message}");
+                    return Task.CompletedTask;
+                };
+
+
+
+                await _hubConnection.StartAsync();
+
+                if (_hubConnection.State == HubConnectionState.Connected)
+                {
+                    MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
+                    {
+                        ClientSiteId = (int)_clientSiteId,
+                        GuardId = (int)_guardId,
+                        UserId = (int)_userId
+                    };
+                    var r = await _hubConnection.InvokeAsync<ClientSiteMobileCrowdControl>("JoinGroup", JoinGaurd);
+                    if (r != null)
+                    {
+                        _CurrentCounter = r.Ccount;
+                        _totalpatrons = r.Tcount;
+                        _pcounter = r.ClientSiteCrowdControlGuards?.FirstOrDefault()?.Pcount ?? 0;
+                        RefreshCounterDisplay();
+                    }
+                }
+            }
         }
 
         private async void LoadLoggedInUser()
@@ -77,7 +203,7 @@ namespace C4iSytemsMobApp
         {
             lblClientSite.Text = $"Client Site: {await SecureStorage.GetAsync("ClientSite") ?? "N/A"}";
             //lblClientType.Text = $"Client Type: {await SecureStorage.GetAsync("ClientType") ?? "N/A"}";
-            //lblGuardName.Text = $"Guard Name: {await SecureStorage.GetAsync("GuardName") ?? "N/A"}";
+            //lblGuardName.Text = $"Guard Name: {await SecureStorage.GetAsync("GuardName") ?? "N/A"}";           
         }
 
         private async void OnManualPositionClicked(object sender, EventArgs e)
@@ -100,7 +226,7 @@ namespace C4iSytemsMobApp
         {
 
             Application.Current.MainPage = new NavigationPage(new MultiMedia());
-           
+
         }
 
         private CancellationTokenSource _countdownCts;
@@ -109,7 +235,7 @@ namespace C4iSytemsMobApp
         {
             if (DuressStatusLabel.Text.Contains("Active"))
             {
-               
+
                 return;
             }
 
@@ -124,7 +250,7 @@ namespace C4iSytemsMobApp
                     CountdownLabel.Text = $"Duress will activate in {i} seconds.";
                     await Task.Delay(1000, _countdownCts.Token);
                 }
-               
+
                 // Automatically activate duress if not cancelled
                 await ActivateDuress();
             }
@@ -146,10 +272,10 @@ namespace C4iSytemsMobApp
 
         private async Task ActivateDuress()
         {
-                                     
-            
 
-           string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+
+
+            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
 
 
             // Validate Guard ID
@@ -211,7 +337,7 @@ namespace C4iSytemsMobApp
         }
 
 
-        
+
 
         //private async void OnDuressClicked(object sender, EventArgs e)
         //{
@@ -339,7 +465,6 @@ namespace C4iSytemsMobApp
         }
 
 
-
         private async void OnLogoutClicked(object sender, EventArgs e)
         {
             bool confirm = await DisplayAlert("Logout", "Are you sure you want to log out?", "Yes", "No");
@@ -364,6 +489,18 @@ namespace C4iSytemsMobApp
 
                 if (isConfirmed)
                 {
+                    try
+                    {
+                        if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
+                        {
+                            _hubConnection.StopAsync();
+                            _hubConnection.DisposeAsync();
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        //  throw;
+                    }
                     SecureStorage.RemoveAll(); // Clear SecureStorage (logout)
                     System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the app
                 }
@@ -406,41 +543,59 @@ namespace C4iSytemsMobApp
 
         private void OnIncrementClicked(object sender, EventArgs e)
         {
-            _totalpatrons++;
-            _counter++;
-            _CurrentCounter++;
-            CounterLabel.Text = _counter.ToString("0000");
-            if (_CcounterShown && _IsCrowdControlCounterEnabled)
+            ClientSiteMobileCrowdControlData CountData = new ClientSiteMobileCrowdControlData()
             {
-                total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
-            }
-            else if (_TcounterShown && _IsCrowdControlCounterEnabled)
-            {
-                total_current_patronsLabel.Text = $"T{_totalpatrons.ToString("000000")}";
-            }
-               
+                ClientSiteId = (int)_clientSiteId,
+                AddCount = true,
+                Count = 1,
+                ClientSiteCrowdControlGuards = new List<ClientSiteMobileCrowdControlGuards>()
+                {
+                    new ClientSiteMobileCrowdControlGuards()
+                    {
+                        ClientSiteId = (int)_clientSiteId,
+                                    GuardId = (int)_guardId,
+                                    UserId = (int)_userId,
+                                    Pcount = 1
+                    }
+                }
+            };
+            _hubConnection.InvokeAsync("UpdateCCCToMobileSiteGroup", CountData);
         }
 
         private void OnDecrementClicked(object sender, EventArgs e)
         {
-            if (_counter > 0)
+            ClientSiteMobileCrowdControlData CountData = new ClientSiteMobileCrowdControlData()
             {
-                _counter--;
-                _CurrentCounter--;
-            }            
-            CounterLabel.Text = _counter.ToString("0000");
-            if (_CcounterShown && _IsCrowdControlCounterEnabled)
-            {
-                total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
-            }
+                ClientSiteId = (int)_clientSiteId,
+                AddCount = false,
+                Count = 1,
+                ClientSiteCrowdControlGuards = new List<ClientSiteMobileCrowdControlGuards>()
+                {
+                    new ClientSiteMobileCrowdControlGuards()
+                    {
+                        ClientSiteId = (int)_clientSiteId,
+                                    GuardId = (int)_guardId,
+                                    UserId = (int)_userId,
+                                    Pcount = 1
+                    }
+                }
+            };
+            _hubConnection.InvokeAsync("UpdateCCCToMobileSiteGroup", CountData);
         }
 
-        private async void InitializePatronsCounterDisplay()
+        private async Task InitializePatronsCounterDisplay()
         {
             // Validate Client Site ID
-            var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
-            if (clientSiteId == null) return;
-            string apiUrl = $"{AppConfig.ApiBaseUrl}CrowdCount/GetCrowdCountControlSettings?siteId={clientSiteId}";
+            _clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+            if (_clientSiteId == null) return;
+            _guardId = await TryGetSecureId("GuardId", "Guard ID not found. Please validate the License Number first.");
+            if (_guardId == null) return;
+
+            // Validate User ID
+            _userId = await TryGetSecureId("UserId", "User ID is invalid. Please log in again.");
+            if (_userId == null) return;
+
+            string apiUrl = $"{AppConfig.ApiBaseUrl}CrowdCount/GetCrowdCountControlSettings?siteId={_clientSiteId}";
 
             //var response = await _httpClient.GetFromJsonAsync<ClientSiteMobileAppSettings>(apiUrl);
 
@@ -464,7 +619,27 @@ namespace C4iSytemsMobApp
                 }
             }
 
+            RefreshCounterDisplay();
+        }
 
+        private void ToggleCounterDisplay(object sender, EventArgs e)
+        {
+            if (_CcounterShown && _IsCrowdControlCounterEnabled)
+            {
+                _CcounterShown = false;
+                _TcounterShown = true;
+                RefreshCounterDisplay();
+            }
+            else if (_TcounterShown && _IsCrowdControlCounterEnabled)
+            {
+                _CcounterShown = true;
+                _TcounterShown = false;
+                RefreshCounterDisplay();
+            }
+        }
+
+        private void RefreshCounterDisplay()
+        {
             if (_CcounterShown && _IsCrowdControlCounterEnabled)
             {
                 total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
@@ -473,31 +648,57 @@ namespace C4iSytemsMobApp
             {
                 total_current_patronsLabel.Text = $"T{_totalpatrons.ToString("000000")}";
             }
+            CounterLabel.Text = _pcounter.ToString("0000");
         }
-        private void ToggleCounterDisplay(object sender, EventArgs e)
+
+        private async void OnCounterSettingsClicked(object sender, EventArgs e)
         {
-            if (_CcounterShown && _IsCrowdControlCounterEnabled)
+            CrowdControlSettingsPopup.IsVisible = true;
+        }
+        private async void OnCounterSettingsCloseClicked(object sender, EventArgs e)
+        {
+            CrowdControlSettingsPopup.IsVisible = false;
+        }
+
+        private async void OnResetLocationClicked(object sender, EventArgs e)
+        {
+            MobileCrowdControlGuard ResetData = new MobileCrowdControlGuard()
             {
-                total_current_patronsLabel.Text = $"T{_totalpatrons.ToString("000000")}";
-                _CcounterShown = false;
-                _TcounterShown = true;
-            }
-            else if(_TcounterShown && _IsCrowdControlCounterEnabled)
+                ClientSiteId = (int)_clientSiteId,
+                GuardId = (int)_guardId,
+                UserId = (int)_userId
+            };
+            _guardCounterReset = true;
+            _hubConnection.InvokeAsync("ResetGuardCrowdControlCount", ResetData);
+            CrowdControlSettingsPopup.IsVisible = false;
+        }
+
+        private async void OnResetSiteClicked(object sender, EventArgs e)
+        {
+            bool isConfirmed = false;
+            isConfirmed = await DisplayAlert("Confirm", "Are you sure to reset Site Counter ?", "Yes", "No");
+            if (isConfirmed)
             {
-                total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
-                _CcounterShown = true;
-                _TcounterShown = false;
+
+                MobileCrowdControlGuard ResetData = new MobileCrowdControlGuard()
+                {
+                    ClientSiteId = (int)_clientSiteId,
+                    GuardId = (int)_guardId,
+                    UserId = (int)_userId
+                };
+                _hubConnection.InvokeAsync("ResetSiteCrowdControlCount", ResetData);
+                CrowdControlSettingsPopup.IsVisible = false;
             }
         }
+
+
 
         private async void OnDownloadsClicked(object sender, EventArgs e)
         {
 
             Application.Current.MainPage = new DownloadsHome();
-            
+
         }
-
-
         private async void OnToolsClicked(object sender, EventArgs e)
         {
 
