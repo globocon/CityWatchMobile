@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Reflection;
+using Microsoft.Maui.Devices.Sensors;
 
 namespace C4iSytemsMobApp;
 
@@ -14,6 +15,14 @@ public partial class LoginPage : ContentPage
         _httpClient = new HttpClient();
         lblAppVersion.Text = $"Version {GetAppVersion()}";       
         LoadSavedCredentials();
+       
+
+
+    }
+
+    private async void OnPageLoaded(object sender, EventArgs e)
+    {
+        await GetAndShowLocationAsync();
     }
     private async void LoadSavedCredentials()
     {
@@ -126,7 +135,7 @@ public partial class LoginPage : ContentPage
     private string GetAppVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version?.ToString() ?? "1.4.0";
+        return version?.ToString() ?? "1.6.0";
     }
 
 
@@ -147,6 +156,74 @@ public partial class LoginPage : ContentPage
 
         return true; // Prevent default back button behavior
     }
+
+
+
+    private async Task GetAndShowLocationAsync()
+    {
+        try
+        {
+            var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+
+            if (status != PermissionStatus.Granted)
+            {
+                // Inform the user why the permission is needed
+                bool answer = await DisplayAlert("Permission Required",
+                    "This app needs your location to continue. Please allow location access.", "OK", "Cancel");
+
+                if (!answer)
+                {
+                    //locationLabel.Text = "Location permission denied by user.";
+                    return;
+                }
+
+                status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+            }
+
+            if (status != PermissionStatus.Granted)
+            {
+                if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost"))
+                {
+                    await SecureStorage.SetAsync("GpsCoordinates", "40.748440,-73.984559");
+
+                }
+                //locationLabel.Text = "Location permission not granted. Please enable it in app settings.";
+                return;
+            }
+
+           
+
+            var location = await Geolocation.GetLocationAsync(new GeolocationRequest
+            {
+                DesiredAccuracy = GeolocationAccuracy.Medium,
+                Timeout = TimeSpan.FromSeconds(10)
+            });
+
+            if (location != null)
+            {
+
+                await SecureStorage.SetAsync("GpsCoordinates", location.Latitude.ToString() +','+location.Longitude.ToString());
+                //locationLabel.Text = $"Latitude: {location.Latitude}, Longitude: {location.Longitude}";
+            }
+            else
+            {
+                
+                //locationLabel.Text = "Unable to retrieve location.";
+            }
+        }
+        catch (Exception ex)
+        {
+            //locationLabel.Text = $"Error: {ex.Message}";
+        }
+    }
+
+
+
+
+
+
+
+
 
 }
 

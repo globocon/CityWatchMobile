@@ -48,8 +48,7 @@ public partial class GuardLoginPage : ContentPage
             }
         }
     }
-
-    // Inject HttpClient via Constructor
+  
     public GuardLoginPage()
     {
         InitializeComponent();
@@ -100,6 +99,34 @@ public partial class GuardLoginPage : ContentPage
         }
     }
 
+    //private async void LoadDropdownData()
+    //{
+    //    try
+    //    {
+    //        string userId = await SecureStorage.GetAsync("UserId");
+
+    //        if (string.IsNullOrEmpty(userId))
+    //        {
+    //            Debug.WriteLine("User ID not found.");
+    //            return;
+    //        }
+
+    //        var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(
+    //        //$"https://cws-ir.com/api/GuardSecurityNumber/GetUserClientTypes?userId={Uri.EscapeDataString(userId)}");
+    //            $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetUserClientTypes?userId={Uri.EscapeDataString(userId)}");
+
+    //        ClientTypes.Clear();
+    //        foreach (var type in response ?? new List<DropdownItem>())
+    //        {
+    //            ClientTypes.Add(type);
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Debug.WriteLine($"Error loading dropdown: {ex.Message}");
+    //    }
+    //}
+
     private async void LoadDropdownData()
     {
         try
@@ -113,13 +140,23 @@ public partial class GuardLoginPage : ContentPage
             }
 
             var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(
-            //$"https://cws-ir.com/api/GuardSecurityNumber/GetUserClientTypes?userId={Uri.EscapeDataString(userId)}");
                 $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetUserClientTypes?userId={Uri.EscapeDataString(userId)}");
 
             ClientTypes.Clear();
+
             foreach (var type in response ?? new List<DropdownItem>())
             {
+                if(type.Name!="Select")
                 ClientTypes.Add(type);
+            }
+
+            // If only one item exists, select it and remove from the list
+            if (ClientTypes.Count == 1)
+            {
+                SelectedClientType = ClientTypes[0];  // Automatically select the first item
+                textBoxSelectedClientType.Text = SelectedClientType.Name;
+                //textBoxSelectedClientType.IsVisible = true;// Set TextBox value
+               
             }
         }
         catch (Exception ex)
@@ -127,6 +164,7 @@ public partial class GuardLoginPage : ContentPage
             Debug.WriteLine($"Error loading dropdown: {ex.Message}");
         }
     }
+
 
     private async void LoadClientSites(int clientTypeId)
     {
@@ -147,7 +185,8 @@ public partial class GuardLoginPage : ContentPage
             ClientSites.Clear();
             foreach (var site in response ?? new List<DropdownItem>())
             {
-                ClientSites.Add(site);
+                if(site.Name != "Select")
+                    ClientSites.Add(site);
             }
         }
         catch (Exception ex)
@@ -212,7 +251,21 @@ public partial class GuardLoginPage : ContentPage
                         //btnEnterLogbook.IsEnabled = true;
 
                         // Show the hidden controls
-                        pickerClientType.IsVisible = true;
+
+                        if (!string.IsNullOrWhiteSpace(textBoxSelectedClientType.Text))
+                        {
+                            pickerClientType.IsVisible = false;
+                            textBoxSelectedClientType.IsVisible = true;
+                        }
+                        else
+                        {
+                            pickerClientType.IsVisible = true;
+                            textBoxSelectedClientType.IsVisible = false;
+                        }
+
+
+
+
                         pickerClientSite.IsVisible = true;
                         btnEnterLogbook.IsVisible = true;
                         ToggleInstructionalTextVisibility();
@@ -252,7 +305,7 @@ public partial class GuardLoginPage : ContentPage
     private void ToggleInstructionalTextVisibility()
     {
         // If ANY of these elements are visible, hide the instructional text
-        if (pickerClientType.IsVisible || pickerClientSite.IsVisible || btnEnterLogbook.IsVisible)
+        if (pickerClientType.IsVisible || pickerClientSite.IsVisible || btnEnterLogbook.IsVisible || textBoxSelectedClientType.IsVisible)
         {
             instructionalFrame.IsVisible = false;
             instructionalTextContainer.IsVisible = false;
@@ -278,12 +331,32 @@ public partial class GuardLoginPage : ContentPage
                 return;
             }
 
+
+
             // Validate Client Type
-            if (pickerClientType.SelectedItem == null || pickerClientType.SelectedItem.ToString().Trim().Equals("Select", StringComparison.OrdinalIgnoreCase))
+            // Check if the Picker selected item is null or "Select"
+            // Validate Client Type
+            bool isInvalid = false;
+
+            if (textBoxSelectedClientType.IsVisible)
+            {
+                // Validate TextBox only
+                isInvalid = string.IsNullOrWhiteSpace(textBoxSelectedClientType.Text) ||
+                            textBoxSelectedClientType.Text.Trim().Equals("Select", StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                // Validate Picker only
+                isInvalid = pickerClientType.SelectedItem == null ||
+                            pickerClientType.SelectedItem.ToString().Trim().Equals("Select", StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (isInvalid)
             {
                 await DisplayAlert("Validation Error", "Please select a valid Client Type.", "OK");
                 return;
             }
+
 
             // Validate Client Site
             if (pickerClientSite.SelectedItem == null || pickerClientSite.SelectedItem.ToString().Trim().Equals("Select", StringComparison.OrdinalIgnoreCase))
@@ -308,8 +381,20 @@ public partial class GuardLoginPage : ContentPage
                 return;
             }
 
+            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+
+            if (string.IsNullOrWhiteSpace(gpsCoordinates))
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                return;
+            }
+
             // API URL
-            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin" +
+                         $"?guardId={guardId}" +
+                         $"&clientsiteId={clientSiteId}" +      
+                         $"&userId={userId}" +
+                         $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
 
             //string apiUrl = $"https://cws-ir.com/api/GuardSecurityNumber/EnterGuardLogin?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
 
@@ -323,11 +408,22 @@ public partial class GuardLoginPage : ContentPage
                         await SecureStorage.SetAsync("ClientSite", selectedClientSite.Name.Trim());
                     }
 
-                    if (pickerClientType.SelectedItem is DropdownItem selectedClientType)
+                    string selectedClientTypeName = null;
+
+                    if (textBoxSelectedClientType.IsVisible && !string.IsNullOrWhiteSpace(textBoxSelectedClientType.Text))
                     {
-                        await SecureStorage.SetAsync("ClientType", selectedClientType.Name.Trim());
+                        selectedClientTypeName = textBoxSelectedClientType.Text.Trim();
                     }
-                    
+                    else if (pickerClientType.SelectedItem is DropdownItem selectedClientType)
+                    {
+                        selectedClientTypeName = selectedClientType.Name.Trim();
+                    }
+
+                    if (!string.IsNullOrEmpty(selectedClientTypeName))
+                    {
+                        await SecureStorage.SetAsync("ClientType", selectedClientTypeName);
+                    }
+
                     Application.Current.MainPage = new MainPage();
                     // await Shell.Current.GoToAsync("//Multimedia");
                     //await DisplayAlert("Success", "Guard successfully logged in.", "OK");

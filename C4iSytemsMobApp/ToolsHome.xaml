@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="C4iSytemsMobApp.ToolsHome"
+             Title="ToolsHome">
+
+    <!-- Row with Back (left) and Home (right) -->
+    <Grid RowDefinitions="Auto,*">
+        <!-- Top Bar with Back and Home Buttons -->
+        <!-- Row with Back (left) and Home (right) -->
+        <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+            <!-- Back Button -->
+            <Button Text="← Back"
+          Clicked="OnBackClicked"
+          BackgroundColor="Transparent"
+          TextColor="Blue"
+          FontAttributes="Bold"
+          HorizontalOptions="Start"
+          Grid.Column="0" />
+
+            <!-- Spacer -->
+            <BoxView WidthRequest="0" Grid.Column="1" />
+
+            <!-- Home Button -->
+            <ImageButton Source="home.png"
+               Clicked="OnHomeClicked"
+               HeightRequest="30"
+               WidthRequest="30"
+               BackgroundColor="Transparent"
+               HorizontalOptions="End"
+               VerticalOptions="Center"
+               Grid.Column="2" />
+        </Grid>
+
+        <!-- Scrollable Content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="10" Spacing="10">
+                <Button Text="IT Tools" Clicked="OnButtonClicked" />
+                <Button Text="Mental Health &amp; Support" Clicked="OnButtonClicked" />
+                <Button Text="NATIONAL / COMMONWEALTH" Clicked="OnButtonClicked" />
+                <Button Text="STATE - ACT" Clicked="OnButtonClicked" />
+                <Button Text="STATE - SA" Clicked="OnButtonClicked" />
+                <Button Text="STATE - NSW" Clicked="OnButtonClicked" />
+                <Button Text="STATE - TAS" Clicked="OnButtonClicked" />
+                <Button Text="STATE - NT" Clicked="OnButtonClicked" />
+                <Button Text="STATE - VIC" Clicked="OnButtonClicked" />
+                <Button Text="STATE - QLD" Clicked="OnButtonClicked" />
+                <Button Text="STATE - WA" Clicked="OnButtonClicked" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

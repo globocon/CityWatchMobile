@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="C4iSytemsMobApp.DownloadsHome"
+             Title="Downloads Home">
+
+    <ScrollView>
+
+        <VerticalStackLayout Spacing="20" Padding="10">
+
+            <!-- Header Grid with Title and Home Button -->
+            <Grid ColumnDefinitions="*,Auto" Padding="0,10">
+                <Label Text="Downloads Home"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"
+                       HorizontalOptions="Start" />
+                <ImageButton Source="home.png"
+                             Clicked="OnHomeClicked"
+                             HeightRequest="30"
+                             WidthRequest="30"
+                             BackgroundColor="Transparent"
+                             HorizontalOptions="End"
+                             VerticalOptions="Center"
+                             Grid.Column="1" />
+            </Grid>
+
+            <!-- Main Buttons -->
+            <Grid Padding="20"
+                  ColumnSpacing="20"
+                  RowSpacing="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <ImageButton Source="companysop.png"
+                             Grid.Column="0"
+                             Clicked="OnCompanySopClicked"
+                             BackgroundColor="Transparent"
+                             Aspect="AspectFit"
+                             HeightRequest="100"
+                             WidthRequest="100" />
+
+                <ImageButton Source="c4itraining.png"
+                             Grid.Column="1"
+                             Clicked="OnTrainingClicked"
+                             BackgroundColor="Transparent"
+                             Aspect="AspectFit"
+                             HeightRequest="100"
+                             WidthRequest="100" />
+
+                <ImageButton Source="formsandtemplates.png"
+                             Grid.Column="2"
+                             Clicked="OnFormsClicked"
+                             BackgroundColor="Transparent"
+                             Aspect="AspectFit"
+                             HeightRequest="100"
+                             WidthRequest="100" />
+            </Grid>
+
+        </VerticalStackLayout>
+
+    </ScrollView>
+</ContentPage>
+
+

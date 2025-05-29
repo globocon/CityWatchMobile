@@ -1,9 +1,11 @@
 ﻿using C4iSytemsMobApp.Models;
 using Microsoft.AspNetCore.SignalR.Client;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace C4iSytemsMobApp
 {
@@ -18,6 +20,7 @@ namespace C4iSytemsMobApp
         private bool _TcounterShown = true;
         private bool _IsCrowdControlCounterEnabled = false;
         private HubConnection _hubConnection;
+        bool isDrawerOpen = false;
         public event PropertyChangedEventHandler PropertyChanged;
         private int? _clientSiteId;
         private int? _userId;
@@ -270,6 +273,10 @@ namespace C4iSytemsMobApp
 
         private async Task ActivateDuress()
         {
+                                     
+            
+
+           string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
 
 
             // Validate Guard ID
@@ -284,10 +291,15 @@ namespace C4iSytemsMobApp
             var userId = await TryGetSecureId("UserId", "User ID is invalid. Please log in again.");
             if (userId == null) return;
 
+            if (string.IsNullOrWhiteSpace(gpsCoordinates))
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                return;
+            }
 
 
 
-            string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SaveClientSiteDuress?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
+            string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SaveClientSiteDuress?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}&gps={Uri.EscapeDataString(gpsCoordinates)}";
 
             using (HttpClient client = new HttpClient())
             {
@@ -326,7 +338,7 @@ namespace C4iSytemsMobApp
         }
 
 
-
+        
 
         //private async void OnDuressClicked(object sender, EventArgs e)
         //{
@@ -497,9 +509,37 @@ namespace C4iSytemsMobApp
 
             return true; // Prevent default back button behavior
         }
-        private void OnMenuClicked(object sender, EventArgs e)
+        private async void OnMenuClicked(object sender, EventArgs e)
         {
+            if (!isDrawerOpen)
+            {
+                // Show overlay
+                DrawerOverlay.IsVisible = true;
 
+                // Slide drawer in
+                await DrawerMenu.TranslateTo(0, 0, 250, Easing.SinIn);
+                isDrawerOpen = true;
+            }
+            else
+            {
+                await CloseDrawer();
+            }
+        }
+
+        private async void OnDrawerOverlayTapped(object sender, EventArgs e)
+        {
+            await CloseDrawer();
+        }
+
+        private async Task CloseDrawer()
+        {
+            // Slide drawer out
+            await DrawerMenu.TranslateTo(-DrawerMenu.Width, 0, 250, Easing.SinOut);
+
+            // Hide overlay
+            DrawerOverlay.IsVisible = false;
+
+            isDrawerOpen = false;
         }
 
         private void OnIncrementClicked(object sender, EventArgs e)
@@ -652,5 +692,68 @@ namespace C4iSytemsMobApp
             }
         }
 
+        }
+
+    private async void OnDownloadsClicked(object sender, EventArgs e)
+    {
+
+        Application.Current.MainPage = new DownloadsHome();
+
     }
+    private async void OnSOPClicked(object sender, EventArgs e)
+        {
+
+            Application.Current.MainPage = new SOPPage();
+
+        }
+
+
+        private async void OnOffDutyClicked(object sender, EventArgs e)
+        {
+            // Validate Guard ID
+            var guardId = await TryGetSecureId("GuardId", "Guard ID not found. Please validate the License Number first.");
+            if (guardId == null) return;
+
+            // Validate Client Site ID
+            var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+            if (clientSiteId == null) return;
+
+            // Validate User ID
+            var userId = await TryGetSecureId("UserId", "User ID is invalid. Please log in again.");
+            if (userId == null) return;
+
+            try
+            {
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UpdateOffDuty?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
+
+                using (HttpClient client = new HttpClient())
+                {
+                    var response = await client.GetAsync(apiUrl);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string content = await response.Content.ReadAsStringAsync();
+                        SecureStorage.RemoveAll(); // Clear SecureStorage (logout)
+                        System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the appI
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        await DisplayAlert("Error", $"Off Duty submission failed:\n{errorMessage}", "OK");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Exception", $"Unexpected error: {ex.Message}", "OK");
+            }
+        }
+
+
+
+
+
+    }
+
+
+
 }

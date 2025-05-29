@@ -3,6 +3,7 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="C4iSytemsMobApp.MainPage">
+
     <ContentPage.Resources>
         <toolkit:BoolToObjectConverter x:Key="BoolToVisibilityConverter"
                                        TrueObject="True"
@@ -445,8 +446,81 @@
             </Grid>
         </Grid>
 
+        <!-- Popup for Countdown -->
+        <Grid x:Name="DuressPopup"
+              BackgroundColor="#80000000"
+              IsVisible="False"
+              AbsoluteLayout.LayoutBounds="0,0,1,1"
+              AbsoluteLayout.LayoutFlags="All">
+            <Frame BackgroundColor="White"
+                   CornerRadius="10"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   Padding="20">
+                <StackLayout>
+                    <Label x:Name="CountdownLabel"
+                           Text="Activating duress in 5 seconds"
+                           FontSize="18"
+                           HorizontalTextAlignment="Center"
+                           TextColor="Black" />
+                    <Button Text="Cancel"
+                            Clicked="OnCancelClicked"
+                            BackgroundColor="Red"
+                            TextColor="White"
+                            Margin="0,10,0,0" />
+                </StackLayout>
+            </Frame>
+        </Grid>
+
+
+        <!-- Drawer Menu Grid (Initially hidden, offscreen) -->
+        <Grid x:Name="DrawerMenu"
+              BackgroundColor="#FFF"
+              WidthRequest="250"
+              AbsoluteLayout.LayoutBounds="0,0,AutoSize,1"
+              AbsoluteLayout.LayoutFlags="HeightProportional"
+              TranslationX="-250"
+              ZIndex="10">
+
+
+            <StackLayout Padding="20"
+                         Spacing="20">
+                <Label Text="Menu"
+                       FontAttributes="Bold"
+                       FontSize="20" />
+
+                <Button Text="SOP’s"
+                        Clicked="OnSOPClicked" />
+
+                <Button Text="Tools"
+                        Clicked="OnToolsClicked" />
+
+                <Button Text="Downloads"
+                        Clicked="OnDownloadsClicked" />
+
+                <Button Text="Off Duty"
+                        Clicked="OnOffDutyClicked" />
+            </StackLayout>
+
+        </Grid>
+
+
+
+
+
+        <Grid x:Name="DrawerOverlay"
+              BackgroundColor="#80000000"
+              IsVisible="False"
+              AbsoluteLayout.LayoutBounds="0,0,1,1"
+              AbsoluteLayout.LayoutFlags="All"
+              ZIndex="9">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnDrawerOverlayTapped" />
+            </Grid.GestureRecognizers>
+        </Grid>
 
     </AbsoluteLayout>
 
 </ContentPage>
+
 
