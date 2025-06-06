@@ -42,10 +42,10 @@ namespace C4iSytemsMobApp
                 }
             }
         }
+        private bool _shouldOpenDrawerOnReturn = false;
+        
 
-
-
-        public MainPage()
+        public MainPage(bool? showDrawerOnStart = null)
         {
             InitializeComponent();
             BindingContext = this;
@@ -56,7 +56,7 @@ namespace C4iSytemsMobApp
             duressCheckTimer.Elapsed += async (s, e) => await CheckDuressStatus();
             duressCheckTimer.AutoReset = true;
             duressCheckTimer.Start();
-
+            _shouldOpenDrawerOnReturn = showDrawerOnStart ?? false; // Defaults to false if null
         }
 
         protected override async void OnAppearing()
@@ -176,6 +176,13 @@ namespace C4iSytemsMobApp
                         RefreshCounterDisplay();
                     }
                 }
+            }
+
+
+            if (_shouldOpenDrawerOnReturn)
+            {
+                OpenDrawer();
+               
             }
         }
 
@@ -695,20 +702,23 @@ namespace C4iSytemsMobApp
 
         private async void OnDownloadsClicked(object sender, EventArgs e)
         {
-
+           
             Application.Current.MainPage = new DownloadsHome();
+            CloseDrawer();
 
         }
         private async void OnToolsClicked(object sender, EventArgs e)
         {
-
+            
             Application.Current.MainPage = new ToolsHome();
+            CloseDrawer();
 
         }
         private async void OnSOPClicked(object sender, EventArgs e)
         {
-
+           
             Application.Current.MainPage = new SOPPage();
+            CloseDrawer();
 
         }
 
@@ -755,10 +765,17 @@ namespace C4iSytemsMobApp
 
 
 
+        private void OpenDrawer()
+        {
+            DrawerMenu.TranslationX = 0;
+            DrawerOverlay.IsVisible = true;
+        }
 
 
     }
 
 
+   
 
-}
+
+    }

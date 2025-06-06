@@ -3,11 +3,36 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="C4iSytemsMobApp.WebIncidentReport"
-             Title="Incident Report">
+             >
 
     <ScrollView>
         <VerticalStackLayout Padding="10" Spacing="10">
 
+            <!-- Row with Back (left) and Home (right) -->
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center" Padding="0,5">
+
+                <!-- Back Button -->
+              
+
+                <!-- Title Label -->
+                <Label Text="Incident Report"
+FontSize="16"
+FontAttributes="Bold"
+HorizontalOptions="Center"
+VerticalOptions="Center"
+Grid.Column="0"
+TextColor="Black" />
+
+                <!-- Home Button -->
+                <ImageButton Source="home.png"
+      Clicked="OnHomeClicked"
+      HeightRequest="30"
+      WidthRequest="30"
+      BackgroundColor="Transparent"
+      HorizontalOptions="End"
+      VerticalOptions="Center"
+      Grid.Column="2" />
+            </Grid>
             <!-- Event Type Container with Border -->
             <Frame CornerRadius="10" Padding="10"  BorderColor="Grey">
                 <VerticalStackLayout Spacing="3">

@@ -19,6 +19,31 @@ public partial class LoginPage : ContentPage
 
 
     }
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+
+        try
+        {
+            var savedUsername = await SecureStorage.GetAsync("SavedUsername");
+            var savedPassword = await SecureStorage.GetAsync("SavedPassword");
+
+            if (!string.IsNullOrEmpty(savedUsername) && !string.IsNullOrEmpty(savedPassword))
+            {
+                usernameEntry.Text = savedUsername;
+                passwordEntry.Text = savedPassword;
+                rememberMeCheckBox.IsChecked = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle case where secure storage is unavailable
+            await DisplayAlert("Error", "Unable to load saved credentials.", "OK");
+        }
+    }
+
+
+
 
     private async void OnPageLoaded(object sender, EventArgs e)
     {
@@ -111,6 +136,18 @@ public partial class LoginPage : ContentPage
                         await SecureStorage.SetAsync("UserRole", responseData.Role);
                     }
 
+
+                    if (rememberMeCheckBox.IsChecked)
+                    {
+                        await SecureStorage.SetAsync("SavedUsername", username);
+                        await SecureStorage.SetAsync("SavedPassword", password);
+                    }
+                    else
+                    {
+                        SecureStorage.Remove("SavedUsername");
+                        SecureStorage.Remove("SavedPassword");
+                    }
+
                     return new LoginResponse { IsSuccess = true };
                 }
                 else
@@ -135,7 +172,7 @@ public partial class LoginPage : ContentPage
     private string GetAppVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version?.ToString() ?? "1.7.0";
+        return version?.ToString() ?? "1.8.0";
     }
 
 

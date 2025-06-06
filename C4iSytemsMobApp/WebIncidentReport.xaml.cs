@@ -9,6 +9,9 @@ public partial class WebIncidentReport : ContentPage
         JobTimePicker.Time = DateTime.Now.TimeOfDay; // Set default time
 
     }
+    private async void OnHomeClicked(object sender, EventArgs e)
+    {
+        Application.Current.MainPage = new MainPage();
+    }
 
-   
 }
