@@ -48,7 +48,28 @@ public partial class GuardLoginPage : ContentPage
             }
         }
     }
-  
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+
+        try
+        {
+            var savedLicenseNumber = await SecureStorage.GetAsync("SavedLicenseNumber");
+
+            if (!string.IsNullOrEmpty(savedLicenseNumber))
+            {
+                txtLicenseNumber.Text = savedLicenseNumber;
+                rememberMeCheckBox.IsChecked = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Optional: log or display error
+        }
+    }
+
+
     public GuardLoginPage()
     {
         InitializeComponent();
@@ -63,6 +84,9 @@ public partial class GuardLoginPage : ContentPage
         }
 
     }
+
+
+   
 
     private async void LoadLoggedInUser()
     {
@@ -272,6 +296,17 @@ public partial class GuardLoginPage : ContentPage
                         // Disable the license number Entry and Read button
                         txtLicenseNumber.IsEnabled = false;
                         ((Button)sender).IsEnabled = false;
+
+
+                        // If "Remember Me" is checked, store the license number securely
+                        if (rememberMeCheckBox.IsChecked)
+                        {
+                            SecureStorage.SetAsync("SavedLicenseNumber", licenseNumber);
+                        }
+                        else
+                        {
+                            SecureStorage.Remove("SavedLicenseNumber");
+                        }
                     });
                 }
                 else

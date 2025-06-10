@@ -24,6 +24,10 @@ public partial class DownloadsHome : ContentPage
         Application.Current.MainPage = new DownloadsPage(3);
         
     }
+    private void OnBackClicked(object sender, EventArgs e)
+    {
+        Application.Current.MainPage = new MainPage(true);
+    }
 
 
     private async void OnHomeClicked(object sender, EventArgs e)

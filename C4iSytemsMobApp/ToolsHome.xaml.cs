@@ -22,7 +22,7 @@ public partial class ToolsHome : ContentPage
 
     private void OnBackClicked(object sender, EventArgs e)
     {
-        Application.Current.MainPage = new MainPage();
+        Application.Current.MainPage = new MainPage(true);
     }
 
     private void OnHomeClicked(object sender, EventArgs e)

@@ -8,57 +8,64 @@
 
         <VerticalStackLayout Spacing="20" Padding="10">
 
-            <!-- Header Grid with Title and Home Button -->
-            <Grid ColumnDefinitions="*,Auto" Padding="0,10">
-                <Label Text="Downloads Home"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       VerticalOptions="Center"
-                       HorizontalOptions="Start" />
+
+          
+                <!-- Row with Back (left) and Home (right) -->
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center" Padding="0,5">
+
+                <!-- Back Button -->
+                <Button Text="← Back"
+        Clicked="OnBackClicked"
+        BackgroundColor="Transparent"
+        TextColor="Blue"
+        FontAttributes="Bold"
+        HorizontalOptions="Start"
+        VerticalOptions="Center"
+        Grid.Column="0" />
+
+                <!-- Title Label -->
+                <Label Text="Downloads"
+       FontSize="16"
+       FontAttributes="Bold"
+       HorizontalOptions="Center"
+       VerticalOptions="Center"
+       Grid.Column="1"
+       TextColor="Black" />
+
+                <!-- Home Button -->
                 <ImageButton Source="home.png"
-                             Clicked="OnHomeClicked"
-                             HeightRequest="30"
-                             WidthRequest="30"
-                             BackgroundColor="Transparent"
-                             HorizontalOptions="End"
-                             VerticalOptions="Center"
-                             Grid.Column="1" />
+             Clicked="OnHomeClicked"
+             HeightRequest="30"
+             WidthRequest="30"
+             BackgroundColor="Transparent"
+             HorizontalOptions="End"
+             VerticalOptions="Center"
+             Grid.Column="2" />
             </Grid>
+
+
+
 
             <!-- Main Buttons -->
-            <Grid Padding="20"
-                  ColumnSpacing="20"
-                  RowSpacing="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+            <VerticalStackLayout Padding="5" Spacing="15">
 
-                <ImageButton Source="companysop.png"
-                             Grid.Column="0"
-                             Clicked="OnCompanySopClicked"
-                             BackgroundColor="Transparent"
-                             Aspect="AspectFit"
-                             HeightRequest="100"
-                             WidthRequest="100" />
+                <Button Text="Company SOPs"
+            Clicked="OnCompanySopClicked"
+            
+            FontAttributes="Bold" />
 
-                <ImageButton Source="c4itraining.png"
-                             Grid.Column="1"
-                             Clicked="OnTrainingClicked"
-                             BackgroundColor="Transparent"
-                             Aspect="AspectFit"
-                             HeightRequest="100"
-                             WidthRequest="100" />
+                <Button Text="Training"
+            Clicked="OnTrainingClicked"
+           
+            FontAttributes="Bold" />
 
-                <ImageButton Source="formsandtemplates.png"
-                             Grid.Column="2"
-                             Clicked="OnFormsClicked"
-                             BackgroundColor="Transparent"
-                             Aspect="AspectFit"
-                             HeightRequest="100"
-                             WidthRequest="100" />
-            </Grid>
+                <Button Text="Forms &amp; Templates"
+            Clicked="OnFormsClicked"
+           
+            FontAttributes="Bold" />
+
+            </VerticalStackLayout>
+
 
         </VerticalStackLayout>
 

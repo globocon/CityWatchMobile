@@ -72,66 +72,7 @@
              x:Class="C4iSytemsMobApp.GuardLoginPage"
              >
 
-    <!--<Grid RowDefinitions="*,Auto" Padding="20">
-
-        --><!-- Main Content --><!--
-        <VerticalStackLayout Spacing="15" Grid.Row="0">
-
-            <HorizontalStackLayout HorizontalOptions="StartAndExpand" Spacing="10">
-                <Label x:Name="lblLoggedInUser"
-                       Text="Welcome, Visy"
-                       FontAttributes="Bold"
-                       FontSize="18"
-                       TextColor="Blue"
-                       HorizontalOptions="Start"/>
-            </HorizontalStackLayout>
-
-            <HorizontalStackLayout Spacing="10">
-                <Entry x:Name="txtLicenseNumber"
-                       Placeholder="Enter License Number"
-                       WidthRequest="250"/>
-                <Button Text="Login"
-                        Clicked="OnReadClicked"/>
-            </HorizontalStackLayout>
-
-            <Label x:Name="lblGuardName"
-                   Text=""
-                   TextColor="Red"
-                   FontAttributes="Bold"
-                   IsVisible="False"/>
-
-            <Picker x:Name="pickerClientType"
-                    Title="Select Client Type"
-                    ItemsSource="{Binding ClientTypes}"
-                    ItemDisplayBinding="{Binding Name}"
-                    SelectedItem="{Binding SelectedClientType, Mode=TwoWay}"
-                    IsVisible="False"/>
-
-            <Picker x:Name="pickerClientSite"
-                    Title="Select Client Site"
-                    ItemsSource="{Binding ClientSites}"
-                    ItemDisplayBinding="{Binding Name}"
-                    SelectedItem="{Binding SelectedClientSite, Mode=TwoWay}"
-                    IsVisible="False"/>
-
-            <Button x:Name="btnEnterLogbook"
-                    Text="Enter Logbook"
-                    BackgroundColor="Green"
-                    TextColor="White"
-                    Clicked="OnEnterLogbookClicked"
-                    IsVisible="False"/>
-
-        </VerticalStackLayout>
-
-        --><!-- Footer Logo --><!--
-        <Image Source="c4ilogo.jpg"
-               Aspect="AspectFit"
-               HeightRequest="50"
-               HorizontalOptions="Center"
-               VerticalOptions="End"
-               Grid.Row="1"/>
-
-    </Grid>-->
+    
 
 
 
@@ -151,13 +92,27 @@
             </HorizontalStackLayout>
 
             <!-- License Input -->
-            <HorizontalStackLayout Spacing="10">
-                <Entry x:Name="txtLicenseNumber"
-                   Placeholder="Enter License Number"
-                   WidthRequest="250"/>
-                <Button Text="Login"
-                    Clicked="OnReadClicked"/>
-            </HorizontalStackLayout>
+            <!-- License Input and Remember Me -->
+            <VerticalStackLayout Spacing="10" VerticalOptions="Center">
+
+                <!-- License + Login Button side-by-side -->
+                <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                    <Entry x:Name="txtLicenseNumber"
+               Placeholder="Enter License Number"
+               WidthRequest="250"/>
+
+                    <Button Text="Login"
+                Clicked="OnReadClicked"
+                VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <!-- Remember Me BELOW the Entry -->
+                <HorizontalStackLayout Spacing="2" VerticalOptions="Center">
+                    <CheckBox x:Name="rememberMeCheckBox" VerticalOptions="Center"/>
+                    <Label Text="Remember Me" VerticalOptions="Center" FontSize="12"/>
+                </HorizontalStackLayout>
+
+            </VerticalStackLayout>
 
             <!-- Guard Name Label (Initially Hidden) -->
             <Label x:Name="lblGuardName"

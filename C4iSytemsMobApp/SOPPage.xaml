@@ -5,35 +5,39 @@
              Title="SOPPage">
     <VerticalStackLayout Padding="20" Spacing="10">
 
-        <!-- Title -->
-        <Label x:Name="TitleLabel"
-            FontSize="24"
-            FontAttributes="Bold"
-            HorizontalOptions="Center" />
+      
 
         <!-- Row with Back (left) and Home (right) -->
-        <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center" Padding="0,5">
+
             <!-- Back Button -->
             <Button Text="← Back"
-                 Clicked="OnBackClicked"
-                 BackgroundColor="Transparent"
-                 TextColor="Blue"
-                 FontAttributes="Bold"
-                 HorizontalOptions="Start"
-                 Grid.Column="0" />
+ Clicked="OnBackClicked"
+ BackgroundColor="Transparent"
+ TextColor="Blue"
+ FontAttributes="Bold"
+ HorizontalOptions="Start"
+ VerticalOptions="Center"
+ Grid.Column="0" />
 
-            <!-- Spacer -->
-            <BoxView WidthRequest="0" Grid.Column="1" />
+            <!-- Title Label -->
+            <Label Text="SOP"
+FontSize="16"
+FontAttributes="Bold"
+HorizontalOptions="Center"
+VerticalOptions="Center"
+Grid.Column="1"
+TextColor="Black" />
 
             <!-- Home Button -->
             <ImageButton Source="home.png"
-                      Clicked="OnHomeClicked"
-                      HeightRequest="30"
-                      WidthRequest="30"
-                      BackgroundColor="Transparent"
-                      HorizontalOptions="End"
-                      VerticalOptions="Center"
-                      Grid.Column="2" />
+      Clicked="OnHomeClicked"
+      HeightRequest="30"
+      WidthRequest="30"
+      BackgroundColor="Transparent"
+      HorizontalOptions="End"
+      VerticalOptions="Center"
+      Grid.Column="2" />
         </Grid>
 
         <!-- File List -->
