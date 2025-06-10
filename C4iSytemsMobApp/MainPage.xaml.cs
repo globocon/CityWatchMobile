@@ -1,10 +1,13 @@
 ﻿using C4iSytemsMobApp.Models;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Maui.Devices.Sensors;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace C4iSytemsMobApp
 {
@@ -25,6 +28,7 @@ namespace C4iSytemsMobApp
         private int? _userId;
         private int? _guardId;
         private bool _guardCounterReset = false;
+        private List<DropdownItemsControl> _crowdControllocationList;
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -40,6 +44,7 @@ namespace C4iSytemsMobApp
                     _IsCrowdControlCounterEnabled = value;
                     OnPropertyChanged(nameof(ShowCounters));
                 }
+                if (_IsCrowdControlCounterEnabled) { CounterRow.Height = GridLength.Auto; } else { CounterRow.Height = new GridLength(0); }
             }
         }
 
@@ -315,7 +320,6 @@ namespace C4iSytemsMobApp
             }
         }
 
-
         private void UpdateDuressUI()
         {
             DuressButtonFrame.BackgroundColor = Colors.Red;
@@ -335,80 +339,6 @@ namespace C4iSytemsMobApp
 
             return id;
         }
-
-
-
-
-        //private async void OnDuressClicked(object sender, EventArgs e)
-        //{
-        //    if (sender is Frame duressFrame)
-        //    {
-        //        var stackLayout = duressFrame.Content as StackLayout;
-        //        if (stackLayout == null) return;
-
-        //        var statusLabel = stackLayout.Children.OfType<Label>().FirstOrDefault(l => l.Text.StartsWith("Status:"));
-        //        if (statusLabel == null) return;
-
-        //        // **Prevent clicking if already active**
-        //        if (statusLabel.Text.Contains("Active"))
-        //        {
-        //            await DisplayAlert("Info", "Duress is already active.", "OK");
-        //            return;
-        //        }
-
-        //        bool isConfirmed = await DisplayAlert("Confirm", "Are you sure you want to activate Duress?", "Yes", "No");
-        //        if (!isConfirmed)
-        //            return; // Exit if the user cancels
-
-        //        // Retrieve GuardId securely
-        //        string guardIdString = await SecureStorage.GetAsync("GuardId");
-        //        if (string.IsNullOrWhiteSpace(guardIdString) || !int.TryParse(guardIdString, out int guardId) || guardId <= 0)
-        //        {
-        //            await DisplayAlert("Error", "Guard ID not found. Please validate the License Number first.", "OK");
-        //            return;
-        //        }
-
-        //        // Retrieve and validate Client Site ID
-        //        string clientSiteIdString = await SecureStorage.GetAsync("SelectedClientSiteId");
-        //        if (string.IsNullOrWhiteSpace(clientSiteIdString) || !int.TryParse(clientSiteIdString, out int clientSiteId) || clientSiteId <= 0)
-        //        {
-        //            await DisplayAlert("Validation Error", "Please select a valid Client Site.", "OK");
-        //            return;
-        //        }
-
-        //        // Retrieve and validate User ID
-        //        string userIdString = await SecureStorage.GetAsync("UserId");
-        //        if (string.IsNullOrWhiteSpace(userIdString) || !int.TryParse(userIdString, out int userId) || userId <= 0)
-        //        {
-        //            await DisplayAlert("Validation Error", "User ID is invalid. Please log in again.", "OK");
-        //            return;
-        //        }
-
-        //        // API URL
-        //        string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SaveClientSiteDuress?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
-
-        //        using (HttpClient client = new HttpClient())
-        //        {
-        //            var response = await client.GetAsync(apiUrl);
-        //            if (response.IsSuccessStatusCode)
-        //            {
-        //                // **Update UI to indicate active status**
-        //                duressFrame.BackgroundColor = Colors.Red;
-        //                statusLabel.Text = "Status: Active";
-        //                statusLabel.TextColor = Colors.White;
-        //            }
-        //            else
-        //            {
-        //                string errorMessage = await response.Content.ReadAsStringAsync();
-        //                await DisplayAlert("Error", $"Duress submission failed: {errorMessage}", "OK");
-        //            }
-        //        }
-        //    }
-        //}
-
-
-
-
 
         private async Task CheckDuressStatus()
         {
@@ -463,7 +393,6 @@ namespace C4iSytemsMobApp
                 Console.WriteLine($"Error checking duress status: {ex.Message}");
             }
         }
-
 
         private async void OnLogoutClicked(object sender, EventArgs e)
         {
@@ -610,6 +539,73 @@ namespace C4iSytemsMobApp
                         _IsCrowdControlCounterEnabled = settings.IsCrowdCountEnabled;
                         ShowCounters = _IsCrowdControlCounterEnabled;
                         OnPropertyChanged(nameof(ShowCounters));
+
+
+                        _crowdControllocationList = new List<DropdownItemsControl>();
+                        int j = 1;
+                        if (settings.IsDoorEnabled)
+                        {
+                            for (int i = 1; i <= settings.CounterQuantity; i++)
+                            {
+                                _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Door {i:00}" });
+                                j++;
+                            }
+                        }
+                        if (settings.IsGateEnabled)
+                        {
+                            for (int i = 1; i <= settings.CounterQuantity; i++)
+                            {
+                                _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Gate {i:00}" });
+                                j++;
+                            }
+                        }
+                        if (settings.IsRoomEnabled)
+                        {
+                            for (int i = 1; i <= settings.CounterQuantity; i++)
+                            {
+                                _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Room {i:00}" });
+                                j++;
+                            }
+                        }
+                        if (settings.IsLevelFloorEnabled)
+                        {
+                            for (int i = 1; i <= settings.CounterQuantity; i++)
+                            {
+                                _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Level(Floor) {i:00}" });
+                                j++;
+                            }
+                        }
+
+                        CrowdControlLocationPicker.ItemsSource = _crowdControllocationList;
+                        CrowdControlLocationPicker.SelectedIndex = 0;
+
+                        // Disable picker if only one item
+                        CrowdControlLocationPicker.IsEnabled = _crowdControllocationList.Count > 1;
+                        if (_crowdControllocationList.Count == 1)
+                        {
+                            var selectedLocation = CrowdControlLocationPicker.SelectedItem as DropdownItemsControl;
+                            if (selectedLocation != null)
+                            {
+                                int locationId = selectedLocation.Id;
+                                string locationName = selectedLocation.Name;
+                                await SecureStorage.SetAsync("CrowdControlSelectedLocation", selectedLocation.Name);
+
+                                // Validate Client Site ID            
+                                if (_clientSiteId == null || _guardId == null || _userId == null)
+                                    return;
+
+                                MobileCrowdControlGuard mg = new MobileCrowdControlGuard()
+                                {
+                                    ClientSiteId = (int)_clientSiteId,
+                                    GuardId = (int)_guardId,
+                                    UserId = (int)_userId,
+                                    Location = locationName
+                                };
+
+                                UpdateGuardCrowdControlLocation(mg);
+                            }
+                        }
+
                     }
                 }
                 else
@@ -637,7 +633,6 @@ namespace C4iSytemsMobApp
                 RefreshCounterDisplay();
             }
         }
-
         private void RefreshCounterDisplay()
         {
             if (_CcounterShown && _IsCrowdControlCounterEnabled)
@@ -650,9 +645,18 @@ namespace C4iSytemsMobApp
             }
             CounterLabel.Text = _pcounter.ToString("0000");
         }
-
         private async void OnCounterSettingsClicked(object sender, EventArgs e)
         {
+            CrowdControlLocationPicker.IsEnabled = _crowdControllocationList.Count > 1;
+            string _CrowdControlSelectedLocation = await SecureStorage.GetAsync("CrowdControlSelectedLocation") ?? "";
+            int selectedIndex = 0;
+            // Find the index in the list where the Name matches
+            if (!string.IsNullOrEmpty(_CrowdControlSelectedLocation))
+            {
+                selectedIndex = _crowdControllocationList.FindIndex(loc => loc.Name == _CrowdControlSelectedLocation);
+            }
+            // Set picker index (fallback to 0 if not found)
+            CrowdControlLocationPicker.SelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
             CrowdControlSettingsPopup.IsVisible = true;
         }
         private async void OnCounterSettingsCloseClicked(object sender, EventArgs e)
@@ -691,7 +695,49 @@ namespace C4iSytemsMobApp
             }
         }
 
+        private async void OnCrowdControlLocationSelected(object sender, EventArgs e)
+        {
+            var selectedLocation = CrowdControlLocationPicker.SelectedItem as DropdownItemsControl;
+            if (selectedLocation != null)
+            {
+                int locationId = selectedLocation.Id;
+                string locationName = selectedLocation.Name;
+                await SecureStorage.SetAsync("CrowdControlSelectedLocation", selectedLocation.Name);
+               
+                // Validate Client Site ID            
+                if (_clientSiteId == null || _guardId == null || _userId == null)
+                    return;
 
+                MobileCrowdControlGuard mg = new MobileCrowdControlGuard()
+                {
+                    ClientSiteId = (int)_clientSiteId,
+                    GuardId = (int)_guardId,
+                    UserId = (int)_userId,
+                    Location = locationName
+                };
+
+                UpdateGuardCrowdControlLocation(mg);
+            }
+        }
+
+        private async void UpdateGuardCrowdControlLocation(MobileCrowdControlGuard mg)
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}CrowdCount/SaveGuardLocation";
+            using (HttpClient client = new HttpClient())
+            {
+                var json = JsonSerializer.Serialize(mg);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                try
+                {
+                    var response = await client.PostAsync(apiUrl, content);
+                }
+                catch (Exception)
+                {
+                    //throw;
+                }
+
+            }
+        }
 
         private async void OnDownloadsClicked(object sender, EventArgs e)
         {
@@ -711,8 +757,6 @@ namespace C4iSytemsMobApp
             Application.Current.MainPage = new SOPPage();
 
         }
-
-
         private async void OnOffDutyClicked(object sender, EventArgs e)
         {
             // Validate Guard ID
