@@ -22,6 +22,7 @@ namespace C4iSytemsMobApp.Models
         public int UserId { get; set; }
         public int GuardId { get; set; }
         public int Pcount { get; set; }
+        public string? Location { get; set; }
         public DateTime? CrowdControlDate { get; set; }
         public DateTime? GuardLastUpdateTime { get; set; }
 
@@ -31,7 +32,8 @@ namespace C4iSytemsMobApp.Models
     {        
         public int ClientSiteId { get; set; }
         public int UserId { get; set; }
-        public int GuardId { get; set; }        
+        public int GuardId { get; set; }
+        public string? Location { get; set; }
     }
 
     public class ClientSiteMobileCrowdControlData
