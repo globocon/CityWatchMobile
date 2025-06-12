@@ -107,7 +107,7 @@
                 </HorizontalStackLayout>
 
                 <!-- Remember Me BELOW the Entry -->
-                <HorizontalStackLayout Spacing="2" VerticalOptions="Center">
+                <HorizontalStackLayout Spacing="1" VerticalOptions="Center">
                     <CheckBox x:Name="rememberMeCheckBox" VerticalOptions="Center"/>
                     <Label Text="Remember Me" VerticalOptions="Center" FontSize="12"/>
                 </HorizontalStackLayout>
@@ -219,12 +219,12 @@ End-users also agree to use the system honestly and refrain from any actions tha
         </VerticalStackLayout>
 
         <!-- Footer Logo -->
-        <Image Source="c4ilogo.jpg"
+        <!--<Image Source="c4ilogo.jpg"
            Aspect="AspectFit"
            HeightRequest="50"
            HorizontalOptions="Center"
            VerticalOptions="End"
-           Grid.Row="2"/>
+           Grid.Row="2"/>-->
 
     </Grid>
 

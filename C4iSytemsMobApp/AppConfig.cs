@@ -8,7 +8,7 @@ namespace C4iSytemsMobApp
         public static string MobileSignalRBaseUrl { get; set; } = "https://cws-ir.com";
 
         // ### Test Url ####
-       // public static string ApiBaseUrl { get; set; } = "http://test.c4i-system.com/api/";
+        // public static string ApiBaseUrl { get; set; } = "http://test.c4i-system.com/api/";
         //public static string MobileSignalRBaseUrl { get; set; } = "http://test.c4i-system.com";
 
 

@@ -21,7 +21,7 @@
 		<Nullable>enable</Nullable>
 
 		<!-- Display name -->
-		<ApplicationTitle>C4iSystems</ApplicationTitle>
+		<ApplicationTitle>C4i System</ApplicationTitle>
 
 		<!-- App Identifier -->
 		<ApplicationId>com.C4isystem.c4isystemsmobapp</ApplicationId>
