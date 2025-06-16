@@ -235,7 +235,11 @@ public partial class WebIncidentReport : ContentPage
         ToggleDropdown();
     }
 
-
+    private async void OnSubmitClicked(object sender, EventArgs e)
+    {
+        // Replace with your API submission logic
+        await DisplayAlert("Submitted", "Your data has been submitted successfully.", "OK");
+    }
 
     private void OnTemplateTypeChanged(object sender, EventArgs e)
     {
