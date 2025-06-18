@@ -2,29 +2,28 @@
 using C4iSytemsMobApp.Interface;
 using Microsoft.Maui.Controls.Compatibility.Platform.Android;
 
-[assembly: Dependency(typeof(VolumeButtonService))]
-public class VolumeButtonService : IVolumeButtonService
-{    
-    public event EventHandler VolumeUpPressed;
-    public event EventHandler VolumeDownPressed;
-
-    public bool OnKeyDown(Keycode keyCode, KeyEvent e)
+namespace C4iSytemsMobApp.Platforms.Android.Services
+{
+    public class VolumeButtonService : IVolumeButtonService
     {
-        if (keyCode == Keycode.VolumeUp || keyCode == Keycode.VolumeDown)
-        {
-            VolumeDownPressed?.Invoke(this, EventArgs.Empty);
-            return true;
-        }
-        return false;
-    }
+        public event EventHandler VolumeUpPressed;
+        public event EventHandler VolumeDownPressed;
 
-    public bool OnKeyUp(Keycode keyCode, KeyEvent e)
-    {
-        if (keyCode == Keycode.VolumeUp || keyCode == Keycode.VolumeDown)
+        public bool OnKeyDown(Keycode keyCode, KeyEvent e)
         {
-            VolumeUpPressed?.Invoke(this, EventArgs.Empty);
-            return true;
+            if (keyCode == Keycode.VolumeDown)
+            {
+                VolumeDownPressed?.Invoke(this, EventArgs.Empty);
+                return true;
+            }
+            if (keyCode == Keycode.VolumeUp)
+            {
+                VolumeUpPressed?.Invoke(this, EventArgs.Empty);
+                return true;
+            }
+
+            return false;
         }
-        return false;
+                
     }
 }

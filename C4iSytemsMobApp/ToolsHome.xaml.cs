@@ -1,3 +1,5 @@
+using C4iSytemsMobApp.Interface;
+
 namespace C4iSytemsMobApp;
 
 public partial class ToolsHome : ContentPage
@@ -22,13 +24,17 @@ public partial class ToolsHome : ContentPage
 
     private void OnBackClicked(object sender, EventArgs e)
     {
-        Application.Current.MainPage = new MainPage(true);
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new MainPage(volumeButtonService, true);
+        //Application.Current.MainPage = new MainPage(true);
     }
 
     private void OnHomeClicked(object sender, EventArgs e)
     {
         // Navigate to your app's home page
         // Example:
-        Application.Current.MainPage = new MainPage();
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new MainPage(volumeButtonService, true);
+        //Application.Current.MainPage = new MainPage();
     }
 }

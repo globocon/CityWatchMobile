@@ -1,3 +1,4 @@
+using C4iSytemsMobApp.Interface;
 using System.Collections.ObjectModel;
 using System.Net.Http.Json;
 using System.Windows.Input;
@@ -101,7 +102,9 @@ public partial class DownloadsPage : ContentPage
 
     private async void OnHomeClicked(object sender, EventArgs e)
     {
-        Application.Current.MainPage = new MainPage();
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new MainPage(volumeButtonService);
+        //Application.Current.MainPage = new MainPage();
     }
 
 

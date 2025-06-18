@@ -16,6 +16,7 @@ namespace C4iSytemsMobApp
     {
         private readonly HttpClient _httpClient;
         private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
+        private readonly IVolumeButtonService _volumeButtonService;
         private int _pcounter = 0;
         private int _CurrentCounter = 0;
         private int _totalpatrons = 0;
@@ -54,9 +55,10 @@ namespace C4iSytemsMobApp
         private bool _shouldOpenDrawerOnReturn = false;
 
 
-        public MainPage(bool? showDrawerOnStart = null)
+        public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
             InitializeComponent();
+            _volumeButtonService = volumeButtonService;
             BindingContext = this;
             NavigationPage.SetHasNavigationBar(this, false);
             LoadLoggedInUser();
@@ -189,37 +191,35 @@ namespace C4iSytemsMobApp
                 }
 
 
-#if ANDROID
-    var volumeService = DependencyService.Get<IVolumeButtonService>();
-    if (volumeService != null)
-    {
-        volumeService.VolumeUpPressed += (s, e) =>
-        {
-            if (_IsVolumeControlButtonEnabled)
-                OnIncrementClicked(s, e);
-        };
-
-        volumeService.VolumeDownPressed += (s, e) =>
-        {
-            if (_IsVolumeControlButtonEnabled)
-                OnDecrementClicked(s, e);
-        };
-    }
-#endif
-
-                if (DeviceInfo.Platform == DevicePlatform.iOS)
-                {
-                    //var volumeService = App.Current.Services.GetService<IVolumeButtonService>();                    
-                    var iOSvolumeService = DependencyService.Get<IVolumeButtonService>();
-                    if (iOSvolumeService != null)
+                if (DeviceInfo.Platform == DevicePlatform.Android)
+                {                    
+                    if (_volumeButtonService != null)
                     {
-                        iOSvolumeService.VolumeUpPressed += (s, e) =>
+                        _volumeButtonService.VolumeUpPressed += (s, e) =>
                         {
                             if (_IsVolumeControlButtonEnabled)
                                 OnIncrementClicked(s, e);
                         };
 
-                        iOSvolumeService.VolumeDownPressed += (s, e) =>
+                        _volumeButtonService.VolumeDownPressed += (s, e) =>
+                        {
+                            if (_IsVolumeControlButtonEnabled)
+                                OnDecrementClicked(s, e);
+                        };
+                    }
+                }
+
+                if (DeviceInfo.Platform == DevicePlatform.iOS)
+                {                    
+                    if (_volumeButtonService != null)
+                    {
+                        _volumeButtonService.VolumeUpPressed += (s, e) =>
+                        {
+                            if (_IsVolumeControlButtonEnabled)
+                                OnIncrementClicked(s, e);
+                        };
+
+                        _volumeButtonService.VolumeDownPressed += (s, e) =>
                         {
                             if (_IsVolumeControlButtonEnabled)
                                 OnDecrementClicked(s, e);

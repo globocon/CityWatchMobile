@@ -32,9 +32,12 @@ public static class MauiProgram
         // Register LoginPage with HttpClient dependency
         builder.Services.AddTransient<LoginPage>();
 
-//#if IOS
-//        builder.Services.AddSingleton<IVolumeButtonService, C4iSytemsMobApp.Platforms.iOS.Services.VolumeButtonService>();
-//#endif
+#if ANDROID
+        builder.Services.AddSingleton<IVolumeButtonService, Platforms.Android.Services.VolumeButtonService>();
+#elif IOS
+        builder.Services.AddSingleton<IVolumeButtonService, Platforms.iOS.Services.VolumeButtonService>();
+#endif
+
 
 
 #if DEBUG

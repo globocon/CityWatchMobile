@@ -1,3 +1,4 @@
+using C4iSytemsMobApp.Interface;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -256,7 +257,9 @@ public partial class LogActivity : ContentPage
                     await ShowToastMessage("Log entry added successfully.");
                     CustomLogEntry.Text = string.Empty; // Clear entry after success
                     await Task.Delay(2000); // Wait for 2 seconds
-                    Application.Current.MainPage = new NavigationPage(new MainPage());
+                    var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+                    Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+                    //Application.Current.MainPage = new NavigationPage(new MainPage());
                 }
                 else
                 {
@@ -309,7 +312,9 @@ public partial class LogActivity : ContentPage
                 await ShowToastMessage("Log entry added successfully.");
                 CustomLogEntry.Text = string.Empty; // Clear entry after success
                 await Task.Delay(2000); // Wait for 2 seconds
-                Application.Current.MainPage = new NavigationPage(new MainPage());
+                var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+                Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+                //Application.Current.MainPage = new NavigationPage(new MainPage());
             }
             else
             {
@@ -351,13 +356,17 @@ public partial class LogActivity : ContentPage
 
     private async void OnHomeClicked(object sender, EventArgs e)
     {
-        Application.Current.MainPage = new NavigationPage(new MainPage());
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+        //Application.Current.MainPage = new NavigationPage(new MainPage());
     }
 
     protected override bool OnBackButtonPressed()
     {
         // Handle back button logic here
-        Application.Current.MainPage = new NavigationPage(new MainPage());
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+        //Application.Current.MainPage = new NavigationPage(new MainPage());
 
         // Return true to prevent default behavior (going back)
         return true;
