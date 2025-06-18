@@ -403,7 +403,7 @@
               AbsoluteLayout.LayoutFlags="All">
 
             <!-- Fullscreen container -->
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   ColumnDefinitions="*,Auto"
                   Padding="20"
                   BackgroundColor="Black"
@@ -460,22 +460,90 @@
                 <!-- Location Picker -->
                 <Grid Grid.Row="3"
                       Grid.ColumnSpan="2"
-                      Margin="0,20,0,0">
+                      Margin="0,10,0,0">
 
-                    <VerticalStackLayout Spacing="5">
+                    <Frame CornerRadius="12"
+                           HasShadow="False"
+                           BackgroundColor="SlateGrey"
+                           Padding="0,0,0,0"
+                           Margin="0,0,0,0"
+                           BorderColor="Gray">
 
-                        <Label Text="Location"
-                               TextColor="White"
-                               FontSize="14" />
+                        <VerticalStackLayout Spacing="5"
+                                             Padding="10,0,10,5">
 
-                        <Picker x:Name="CrowdControlLocationPicker"
-                                Title="Select Location"
-                                TitleColor="Gray"
-                                TextColor="White"
-                                BackgroundColor="#303030"
-                                SelectedIndexChanged="OnCrowdControlLocationSelected" />
-                    </VerticalStackLayout>
+                            <Label Text="Location"
+                                   TextColor="White"
+                                   FontSize="14" />
+
+                            <Picker x:Name="CrowdControlLocationPicker"
+                                    TextColor="White"
+                                    BackgroundColor="#303030"
+                                    SelectedIndexChanged="OnCrowdControlLocationSelected" />
+                        </VerticalStackLayout>
+                    </Frame>
                 </Grid>
+
+                <!-- Increment Value Picker -->
+                <Grid Grid.Row="4"
+                      Grid.ColumnSpan="2"
+                      Margin="0,10,0,0">
+                    <Frame CornerRadius="12"
+                           HasShadow="False"
+                           BackgroundColor="SlateGrey"
+                           Padding="0,0,0,0"
+                           Margin="0,0,0,0"
+                           BorderColor="Gray">
+
+                        <VerticalStackLayout Spacing="5"
+                                             Padding="10,0,10,5">
+                            <Label Text="Increment (+) Value"
+                                   TextColor="White"
+                                   FontSize="14" />
+                            <Picker x:Name="IncrementValuePicker"
+                                    TextColor="White"
+                                    BackgroundColor="#303030"
+                                    SelectedIndexChanged="OnIncrementValueChanged" />
+                        </VerticalStackLayout>
+                    </Frame>
+                </Grid>
+
+                <!-- Decrement Value Picker -->
+                <Grid Grid.Row="5"
+                      Grid.ColumnSpan="2"
+                      Margin="0,10,0,0">
+                    <Frame CornerRadius="12"
+                           HasShadow="False"
+                           BackgroundColor="SlateGrey"
+                           Padding="0,0,0,0"
+                           Margin="0,0,0,0"
+                           BorderColor="Gray">
+
+                        <VerticalStackLayout Spacing="5"
+                                             Padding="10,0,10,5">
+                            <Label Text="Decrement (-) Value"
+                                   TextColor="White"
+                                   FontSize="14" />
+                            <Picker x:Name="DecrementValuePicker"
+                                    TitleColor="Gray"
+                                    TextColor="White"
+                                    BackgroundColor="#303030"
+                                    SelectedIndexChanged="OnDecrementValueChanged" />
+                        </VerticalStackLayout>
+                    </Frame>
+                </Grid>
+
+                <!-- Volume Button Control Toggle -->
+                <Button Grid.Row="6"
+                        Grid.ColumnSpan="2"
+                        x:Name="VolumeButtonControl"
+                        Text="Volume Button Control = OFF"
+                        Clicked="OnToggleVolumeControl"
+                        BackgroundColor="SlateGrey"
+                        TextColor="White"
+                        Margin="0,10,0,0"
+                        HorizontalOptions="FillAndExpand" />
+
 
             </Grid>
         </Grid>
