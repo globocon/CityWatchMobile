@@ -1,3 +1,4 @@
+using C4iSytemsMobApp.Interface;
 using Microsoft.Maui.Controls;
 using System.Diagnostics;
 using System.Net.Http.Json;
@@ -145,7 +146,9 @@ public partial class GuardLoginQRCode : ContentPage
 
             if (loginResponse.IsSuccessStatusCode)
             {
-                Application.Current.MainPage = new MainPage();
+                var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+                Application.Current.MainPage = new MainPage(volumeButtonService);
+                //Application.Current.MainPage = new MainPage();
             }
             else
             {

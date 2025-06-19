@@ -1,3 +1,4 @@
+using C4iSytemsMobApp.Interface;
 using Plugin.Maui.Audio;
 using System.Collections.ObjectModel;
 using System.Net.Http.Json;
@@ -198,12 +199,16 @@ public partial class Audio : ContentPage
 
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
-        Application.Current.MainPage = new NavigationPage(new MainPage());
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+        //Application.Current.MainPage = new NavigationPage(new MainPage());
     }
 
     protected override bool OnBackButtonPressed()
     {
-        Application.Current.MainPage = new NavigationPage(new MainPage());
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+        //Application.Current.MainPage = new NavigationPage(new MainPage());
         return true;
     }
 

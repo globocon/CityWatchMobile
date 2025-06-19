@@ -1,3 +1,4 @@
+using C4iSytemsMobApp.Interface;
 using System.Collections.ObjectModel;
 using System.Net.Http.Json;
 
@@ -78,7 +79,9 @@ public partial class ToolsPage : ContentPage
     {
         // Navigate to your app's home page
         // Example:
-        Application.Current.MainPage = new MainPage();
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new MainPage(volumeButtonService);
+        //Application.Current.MainPage = new MainPage();
     }
 }
 

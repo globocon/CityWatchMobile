@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Maui;
+﻿using C4iSytemsMobApp.Interface;
+using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using ZXing.Net.Maui.Controls;
 
@@ -30,6 +31,14 @@ public static class MauiProgram
 
         // Register LoginPage with HttpClient dependency
         builder.Services.AddTransient<LoginPage>();
+
+#if ANDROID
+        builder.Services.AddSingleton<IVolumeButtonService, Platforms.Android.Services.VolumeButtonService>();
+#elif IOS
+        builder.Services.AddSingleton<IVolumeButtonService, Platforms.iOS.Services.VolumeButtonService>();
+#endif
+
+
 
 #if DEBUG
         builder.Logging.AddDebug();

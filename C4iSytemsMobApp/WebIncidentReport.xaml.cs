@@ -1,3 +1,5 @@
+
+using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -238,7 +240,9 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     }
     private async void OnHomeClicked(object sender, EventArgs e)
     {
-        Application.Current.MainPage = new MainPage();
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new MainPage(volumeButtonService);
+        //Application.Current.MainPage = new MainPage();
     }
 
 

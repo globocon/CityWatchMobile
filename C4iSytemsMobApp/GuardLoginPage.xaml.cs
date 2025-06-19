@@ -1,3 +1,4 @@
+using C4iSytemsMobApp.Interface;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -459,7 +460,9 @@ public partial class GuardLoginPage : ContentPage
                         await SecureStorage.SetAsync("ClientType", selectedClientTypeName);
                     }
 
-                    Application.Current.MainPage = new MainPage();
+                    var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+                    Application.Current.MainPage = new MainPage(volumeButtonService);
+                    //Application.Current.MainPage = new MainPage();
                     // await Shell.Current.GoToAsync("//Multimedia");
                     //await DisplayAlert("Success", "Guard successfully logged in.", "OK");
                 }

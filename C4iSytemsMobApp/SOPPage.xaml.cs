@@ -1,5 +1,8 @@
+using C4iSytemsMobApp.Interface;
 using System.Collections.ObjectModel;
 using System.Net.Http.Json;
+//using UIKit;
+
 
 namespace C4iSytemsMobApp;
 
@@ -100,12 +103,14 @@ public partial class SOPPage : ContentPage
 
     private void OnBackClicked(object sender, EventArgs e)
     {
-        Application.Current.MainPage = new MainPage(true);
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new MainPage(volumeButtonService,true);
     }
 
     private void OnHomeClicked(object sender, EventArgs e)
     {
-        Application.Current.MainPage = new MainPage();
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new MainPage(volumeButtonService, true);
     }
 
     public class StaffDocument

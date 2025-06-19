@@ -1,3 +1,4 @@
+using C4iSytemsMobApp.Interface;
 using CommunityToolkit.Maui.Views;
 using Plugin.Maui.Audio;
 using System.Collections.ObjectModel;
@@ -133,7 +134,9 @@ public partial class MultiMedia : ContentPage
         // Hide the fullscreen player
         FullscreenPlayer.IsVisible = false;
 
-        Application.Current.MainPage = new NavigationPage(new MainPage());
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+        //Application.Current.MainPage = new NavigationPage(new MainPage());
     }
 
     protected override bool OnBackButtonPressed()
@@ -144,7 +147,9 @@ public partial class MultiMedia : ContentPage
 
         // Hide the fullscreen player
         FullscreenPlayer.IsVisible = false;
-        Application.Current.MainPage = new NavigationPage(new MainPage());
+        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+        //Application.Current.MainPage = new NavigationPage(new MainPage());
         return true;
     }
 

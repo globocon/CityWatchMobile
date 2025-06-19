@@ -8,6 +8,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using C4iSytemsMobApp.Interface;
 
 namespace C4iSytemsMobApp
 {
@@ -15,6 +16,7 @@ namespace C4iSytemsMobApp
     {
         private readonly HttpClient _httpClient;
         private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
+        private readonly IVolumeButtonService _volumeButtonService;
         private int _pcounter = 0;
         private int _CurrentCounter = 0;
         private int _totalpatrons = 0;
@@ -28,6 +30,9 @@ namespace C4iSytemsMobApp
         private int? _userId;
         private int? _guardId;
         private bool _guardCounterReset = false;
+        private int selectedIncrement = 1;
+        private int selectedDecrement = 1;
+        private bool _IsVolumeControlButtonEnabled = false;
         private List<DropdownItemsControl> _crowdControllocationList;
         protected void OnPropertyChanged(string propertyName)
         {
@@ -48,11 +53,12 @@ namespace C4iSytemsMobApp
             }
         }
         private bool _shouldOpenDrawerOnReturn = false;
-        
 
-        public MainPage(bool? showDrawerOnStart = null)
+
+        public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
             InitializeComponent();
+            _volumeButtonService = volumeButtonService;
             BindingContext = this;
             NavigationPage.SetHasNavigationBar(this, false);
             LoadLoggedInUser();
@@ -67,6 +73,8 @@ namespace C4iSytemsMobApp
         protected override async void OnAppearing()
         {
             base.OnAppearing();
+
+
 
             // If InitializePatronsCounterDisplay is async, await it.
             await InitializePatronsCounterDisplay();
@@ -181,13 +189,51 @@ namespace C4iSytemsMobApp
                         RefreshCounterDisplay();
                     }
                 }
+
+
+                if (DeviceInfo.Platform == DevicePlatform.Android)
+                {                    
+                    if (_volumeButtonService != null)
+                    {
+                        _volumeButtonService.VolumeUpPressed += (s, e) =>
+                        {
+                            if (_IsVolumeControlButtonEnabled)
+                                OnIncrementClicked(s, e);
+                        };
+
+                        _volumeButtonService.VolumeDownPressed += (s, e) =>
+                        {
+                            if (_IsVolumeControlButtonEnabled)
+                                OnDecrementClicked(s, e);
+                        };
+                    }
+                }
+
+                if (DeviceInfo.Platform == DevicePlatform.iOS)
+                {                    
+                    if (_volumeButtonService != null)
+                    {
+                        _volumeButtonService.VolumeUpPressed += (s, e) =>
+                        {
+                            if (_IsVolumeControlButtonEnabled)
+                                OnIncrementClicked(s, e);
+                        };
+
+                        _volumeButtonService.VolumeDownPressed += (s, e) =>
+                        {
+                            if (_IsVolumeControlButtonEnabled)
+                                OnDecrementClicked(s, e);
+                        };
+                    }
+                }
+
             }
 
 
             if (_shouldOpenDrawerOnReturn)
             {
                 OpenDrawer();
-               
+
             }
         }
 
@@ -483,7 +529,7 @@ namespace C4iSytemsMobApp
             {
                 ClientSiteId = (int)_clientSiteId,
                 AddCount = true,
-                Count = 1,
+                Count = selectedIncrement,
                 ClientSiteCrowdControlGuards = new List<ClientSiteMobileCrowdControlGuards>()
                 {
                     new ClientSiteMobileCrowdControlGuards()
@@ -491,7 +537,7 @@ namespace C4iSytemsMobApp
                         ClientSiteId = (int)_clientSiteId,
                                     GuardId = (int)_guardId,
                                     UserId = (int)_userId,
-                                    Pcount = 1
+                                    Pcount = selectedIncrement
                     }
                 }
             };
@@ -504,7 +550,7 @@ namespace C4iSytemsMobApp
             {
                 ClientSiteId = (int)_clientSiteId,
                 AddCount = false,
-                Count = 1,
+                Count = selectedDecrement,
                 ClientSiteCrowdControlGuards = new List<ClientSiteMobileCrowdControlGuards>()
                 {
                     new ClientSiteMobileCrowdControlGuards()
@@ -512,7 +558,7 @@ namespace C4iSytemsMobApp
                         ClientSiteId = (int)_clientSiteId,
                                     GuardId = (int)_guardId,
                                     UserId = (int)_userId,
-                                    Pcount = 1
+                                    Pcount = selectedDecrement
                     }
                 }
             };
@@ -613,6 +659,8 @@ namespace C4iSytemsMobApp
                             }
                         }
 
+                        LoadPickerValues();
+
                     }
                 }
                 else
@@ -664,6 +712,10 @@ namespace C4iSytemsMobApp
             }
             // Set picker index (fallback to 0 if not found)
             CrowdControlLocationPicker.SelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
+
+            IncrementValuePicker.SelectedItem = selectedIncrement;
+            DecrementValuePicker.SelectedItem = selectedDecrement;
+
             CrowdControlSettingsPopup.IsVisible = true;
         }
         private async void OnCounterSettingsCloseClicked(object sender, EventArgs e)
@@ -710,7 +762,7 @@ namespace C4iSytemsMobApp
                 int locationId = selectedLocation.Id;
                 string locationName = selectedLocation.Name;
                 await SecureStorage.SetAsync("CrowdControlSelectedLocation", selectedLocation.Name);
-               
+
                 // Validate Client Site ID            
                 if (_clientSiteId == null || _guardId == null || _userId == null)
                     return;
@@ -725,6 +777,41 @@ namespace C4iSytemsMobApp
 
                 UpdateGuardCrowdControlLocation(mg);
             }
+        }
+
+        private void LoadPickerValues()
+        {
+            // Set values from 1 to 1000 for both pickers
+            List<int> values = Enumerable.Range(1, 1000).ToList();
+
+            IncrementValuePicker.ItemsSource = values;
+            DecrementValuePicker.ItemsSource = values;
+
+            // Optionally set default selection
+            IncrementValuePicker.SelectedIndex = 0; // Default to "1"
+            DecrementValuePicker.SelectedIndex = 0; // Default to "1"
+        }
+
+        private void OnIncrementValueChanged(object sender, EventArgs e)
+        {
+            if (IncrementValuePicker.SelectedIndex != -1)
+            {
+                selectedIncrement = (int)IncrementValuePicker.SelectedItem;
+            }
+        }
+
+        private void OnDecrementValueChanged(object sender, EventArgs e)
+        {
+            if (DecrementValuePicker.SelectedIndex != -1)
+            {
+                selectedDecrement = (int)DecrementValuePicker.SelectedItem;
+            }
+        }
+
+        private void OnToggleVolumeControl(object sender, EventArgs e)
+        {
+            _IsVolumeControlButtonEnabled = !_IsVolumeControlButtonEnabled;
+            VolumeButtonControl.Text = $"Volume Button Control = {(_IsVolumeControlButtonEnabled ? "ON" : "OFF")}";
         }
 
         private async void UpdateGuardCrowdControlLocation(MobileCrowdControlGuard mg)
@@ -748,21 +835,21 @@ namespace C4iSytemsMobApp
 
         private async void OnDownloadsClicked(object sender, EventArgs e)
         {
-           
+
             Application.Current.MainPage = new DownloadsHome();
             CloseDrawer();
 
         }
         private async void OnToolsClicked(object sender, EventArgs e)
         {
-            
+
             Application.Current.MainPage = new ToolsHome();
             CloseDrawer();
 
         }
         private async void OnSOPClicked(object sender, EventArgs e)
         {
-           
+
             Application.Current.MainPage = new SOPPage();
             CloseDrawer();
 
@@ -819,7 +906,7 @@ namespace C4iSytemsMobApp
     }
 
 
-   
 
 
-    }
+
+}
