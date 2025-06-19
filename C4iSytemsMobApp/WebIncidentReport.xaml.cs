@@ -1,38 +1,206 @@
+
 using C4iSytemsMobApp.Interface;
+using C4iSytemsMobApp.Models;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace C4iSytemsMobApp;
 
-public partial class WebIncidentReport : ContentPage
+public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 {
 
+    private string _selectedFeedbackType;
+    private FeedbackTemplateViewModel _selectedTemplate;
+    private string _savedClientAddress;
+
+    private string _backupAddress = string.Empty;
     private List<FeedbackTemplateViewModel> _feedbackTemplates = new();
     public ObservableCollection<FeedbackTemplateViewModel> ColourCodeList { get; set; } = new();
     public ObservableCollection<string> TemplateTypesList { get; set; } = new();
     public ObservableCollection<FeedbackTemplateViewModel> FilteredTemplatesList { get; set; } = new();
+
+    private ClientSite _currentClientSite;
+
+
+    private string _clientAddress;
+    private bool _isSuggestionsVisible;
+
+    private ObservableCollection<string> _suggestions = new();
+    public ObservableCollection<string> Suggestions
+    {
+        get => _suggestions;
+        set
+        {
+            _suggestions = value;
+            OnPropertyChanged(nameof(Suggestions));
+            //IsSuggestionsVisible = _suggestions.Any();
+        }
+    }
+
+    private bool _isSearchEnabled;
+    public bool IsSearchEnabled
+    {
+        get => _isSearchEnabled;
+        set
+        {
+            if (_isSearchEnabled != value)
+            {
+                _isSearchEnabled = value;
+                OnPropertyChanged(nameof(IsSearchEnabled));
+            }
+        }
+    }
+
+    public string ClientAddress
+    {
+        get => _clientAddress;
+        set
+        {
+            if (_clientAddress != value)
+            {
+                _clientAddress = value;
+                OnPropertyChanged(nameof(ClientAddress));
+
+                // Only load suggestions if search is active AND not empty
+                if (IsSearchEnabled && !string.IsNullOrWhiteSpace(_clientAddress))
+                {
+                    _ = LoadSuggestionsAsync(_clientAddress);
+                    IsSuggestionsVisible = true; // 
+                }
+                else
+                {
+                    Suggestions.Clear();
+                    IsSuggestionsVisible = false;
+                }
+            }
+        }
+    }
+
+    public bool IsSuggestionsVisible
+    {
+        get => _isSuggestionsVisible;
+        set
+        {
+            _isSuggestionsVisible = value;
+            OnPropertyChanged(nameof(IsSuggestionsVisible));
+        }
+    }
+
+    private readonly GooglePlacesService _placesService = new();
+
+    private async Task LoadSuggestionsAsync(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            Suggestions.Clear();
+            return;
+        }
+
+        var results = await _placesService.GetSuggestionsAsync(input);
+        Suggestions = new ObservableCollection<string>(results);
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+    protected void OnPropertyChanged(string name) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+
+    public async Task<(double Lat, double Lng)?> GetCoordinatesFromPlaceIdAsync(string placeId)
+    {
+        try
+        {
+            var url = $"https://maps.googleapis.com/maps/api/place/details/json?place_id={placeId}&key=AIzaSyCJK5DRhsD9rePFC-p9_8schzBdZsmXfUs";
+            using var client = new HttpClient();
+            var response = await client.GetStringAsync(url);
+
+            using var json = JsonDocument.Parse(response);
+            var result = json.RootElement.GetProperty("result");
+            var location = result.GetProperty("geometry").GetProperty("location");
+
+            double lat = location.GetProperty("lat").GetDouble();
+            double lng = location.GetProperty("lng").GetDouble();
+
+            return (lat, lng);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await LoadFeedbackTemplates();
+
+        try
+        {
+            await LoadFeedbackTemplates();
+
+            var clientTypeRaw = await SecureStorage.GetAsync("ClientSite");
+            var clientSite = await GetClientSiteByName(clientTypeRaw);
+
+            if (clientSite != null)
+            {
+                _currentClientSite = clientSite;
+                clientAddressEntry.Text = clientSite.Address; //
+            }
+            else
+            {
+                await DisplayAlert("Not Found", $"No site found with the name '{clientTypeRaw}'.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to load client site info.\n\n{ex.Message}", "OK");
+        }
     }
+
+
+
     public WebIncidentReport()
     {
         InitializeComponent();
         BindingContext = this; // or to your ViewModel
+        //var viewModel = new LocationViewModel();
+        //BindingContext = viewModel;
+
         reportDatePickerOffsite.Date = DateTime.Today;
-        reportTimePickerOffsite.Time = DateTime.Now.TimeOfDay; // Set default time
+        reportTimePickerOffsite.Time = DateTime.Now.TimeOfDay;
 
-
-        // Initially disable tap gesture (will be enabled when checkbox is checked)
         var tapGesture = new TapGestureRecognizer();
         tapGesture.Tapped += (s, e) => ToggleDropdown();
         DropdownBorder.GestureRecognizers.Add(tapGesture);
-        DropdownBorder.IsEnabled = false; // Initially disabled
+        DropdownBorder.IsEnabled = false;
 
-        
-
+        // Now you can safely call:
+        //viewModel.Suggestions.Clear();
+        //viewModel.IsSuggestionsVisible = false;
     }
+
+    public async Task<ClientSite> GetClientSiteByName(string name)
+    {
+        using var httpClient = new HttpClient();
+      
+        var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSiteByName?name={Uri.EscapeDataString(name)}";
+
+        var response = await httpClient.GetAsync(url);
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<ClientSite>();
+        }
+
+        return null;
+    }
+
+
+
     private void ChkColourCodeAlert_CheckedChanged(object sender, CheckedChangedEventArgs e)
     {
         if (e.Value) // Checked
@@ -45,7 +213,7 @@ public partial class WebIncidentReport : ContentPage
                 SelectedColourLabel.Text = defaultItem.TemplateName;
                 SelectedColourLabel.TextColor = Color.FromArgb(defaultItem.TextColor);
             }
-          
+
         }
         else // Unchecked
         {
@@ -95,7 +263,7 @@ public partial class WebIncidentReport : ContentPage
                 var colourCodes = _feedbackTemplates.Where(t => t.Type == 3)
                 .OrderBy(t => t.TemplateName).ToList();
 
-               
+
 
                 // Add default/placeholder at the beginning
                 colourCodes.Insert(0, new FeedbackTemplateViewModel
@@ -138,7 +306,7 @@ public partial class WebIncidentReport : ContentPage
                 }
 
                 // Set default for FilteredTemplatesList
-               
+
             }
         }
         catch (Exception ex)
@@ -207,7 +375,7 @@ public partial class WebIncidentReport : ContentPage
 
 
             // Directly load templates by FeedbackTypeName
-            
+
 
             // Automatically select "General" if available
             if (TemplateTypesList.Contains(selectedItem.FeedbackTypeName))
@@ -229,7 +397,7 @@ public partial class WebIncidentReport : ContentPage
         }
     }
 
-   
+
 
 
 
@@ -240,18 +408,279 @@ public partial class WebIncidentReport : ContentPage
 
     private async void OnSubmitClicked(object sender, EventArgs e)
     {
-        // Replace with your API submission logic
-        await DisplayAlert("Submitted", "Your data has been submitted successfully.", "OK");
+        try
+        {
+
+            // Retrieve stored values from SecureStorage
+            var guardId = await SecureStorage.GetAsync("GuardId");
+            var guardName = await SecureStorage.GetAsync("GuardName");
+            var savedLicenseNumber = await SecureStorage.GetAsync("LicenseNumber");
+            var clientSite = await SecureStorage.GetAsync("ClientSite");
+            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+            var clientSiteId = await SecureStorage.GetAsync("SelectedClientSiteId");
+
+           
+
+
+
+
+            var clientType = await SecureStorage.GetAsync("ClientType");
+            string clientTypeNew = Regex.Replace(clientType, @"\s*\(\d+\)$", "").Trim();
+            // Validate required values before proceeding
+            if (string.IsNullOrWhiteSpace(guardId) ||
+                string.IsNullOrWhiteSpace(guardName) ||
+                string.IsNullOrWhiteSpace(savedLicenseNumber) ||
+                string.IsNullOrWhiteSpace(clientSite) ||
+                string.IsNullOrWhiteSpace(clientTypeNew))
+            {
+                await DisplayAlert("Missing Info", "Some required session values are missing. Please log in again or contact support.", "OK");
+                return;
+            }
+
+            // 1. Check if at least one EventType is selected
+            if (!(chkHrRelated.IsChecked ||
+                  chkOhsMatters.IsChecked ||
+                  chkSecurityBreach.IsChecked ||
+                  chkEquipmentDamage.IsChecked ||
+                  chkCctvRelated.IsChecked ||
+                  chkEmergencyServices.IsChecked ||
+                  chkColourCodeAlert.IsChecked ||
+                  chkHealthRestraints.IsChecked ||
+                  chkGeneralPatrol.IsChecked ||
+                  chkAlarmActive.IsChecked ||
+                  chkAlarmDisabled.IsChecked ||
+                  chkClientOnsite.IsChecked ||
+                  chkEquipmentCarried.IsChecked ||
+                  chkOtherCategories.IsChecked))
+            {
+                await DisplayAlert("Validation Error", "Please select at least one event type.", "OK");
+                return;
+            }
+
+            // 2. Validate Wand Scanned selection
+            if (!(rbYes.IsChecked || rbNo.IsChecked))
+            {
+                await DisplayAlert("Validation Error", "Please select Does the BodyCamera, DashCAM, or other video footage part of this IR.", "OK");
+                return;
+            }
+
+            // 3. Client Type check
+            if (string.IsNullOrWhiteSpace(clientTypeNew))
+            {
+                await DisplayAlert("Validation Error", "Client Type is required.", "OK");
+                return;
+            }
+
+            // 4. Client Site check
+            if (string.IsNullOrWhiteSpace(clientSite))
+            {
+                await DisplayAlert("Validation Error", "Client Site is required.", "OK");
+                return;
+            }
+
+            // 5. Guard Month or Year on Site check
+            if (GuardMonthPicker.SelectedItem == null || string.IsNullOrWhiteSpace(GuardMonthPicker.SelectedItem.ToString()))
+            {
+                await DisplayAlert("Validation Error", "Guard months or years on site is required.", "OK");
+                return;
+            }
+
+
+
+
+
+
+            LoadingOverlay.IsVisible = true; // Show loader
+
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ProcessIrSubmit?IRguardId={guardId}&IRclientSiteId={clientSiteId}";
+            
+            var selectedColourCode = ColourCodeDropdown.SelectedItem as FeedbackTemplateViewModel;
+
+            int? selectedColourCodeId = selectedColourCode?.TemplateId;
+
+            DateTime reportDateTime = new DateTime();
+
+            // Check if user changed the default date or time (optional check)
+            if (reportDatePickerOffsite.Date != default(DateTime))
+            {
+                reportDateTime = new DateTime(
+                    reportDatePickerOffsite.Date.Year,
+                    reportDatePickerOffsite.Date.Month,
+                    reportDatePickerOffsite.Date.Day,
+                    reportTimePickerOffsite.Time.Hours,
+                    reportTimePickerOffsite.Time.Minutes,
+                    0
+                );
+            }
+
+            if (_currentClientSite == null)
+            {
+                await DisplayAlert("Missing Info", "Client site information is missing. Please try again.", "OK");
+                return;
+            }
+
+            var selectedGuardMonth = GuardMonthPicker.SelectedItem as string;
+            if (string.IsNullOrWhiteSpace(selectedGuardMonth))
+            {
+                await DisplayAlert("Validation Error", "Please select the guard's months or years on site.", "OK");
+                return;
+            }
+
+            var selectedNotifiedBy = NotifiedByPicker.SelectedItem as string ?? string.Empty;
+
+            var Report = new IncidentRequest
+            {
+                EventType = new EventType
+                {
+                    HrRelated = chkHrRelated?.IsChecked ?? false,
+                    OhsMatters = chkOhsMatters?.IsChecked ?? false,
+                    SecurtyBreach = chkSecurityBreach?.IsChecked ?? false,
+                    EquipmentDamage = chkEquipmentDamage?.IsChecked ?? false,
+                    Thermal = chkCctvRelated?.IsChecked ?? false,
+                    Emergency = chkEmergencyServices?.IsChecked ?? false,
+                    SiteColour = chkColourCodeAlert?.IsChecked ?? false,
+                    HealthDepart = chkHealthRestraints?.IsChecked ?? false,
+                    GeneralSecurity = chkGeneralPatrol?.IsChecked ?? false,
+                    AlarmActive = chkAlarmActive?.IsChecked ?? false,
+                    AlarmDisabled = chkAlarmDisabled?.IsChecked ?? false,
+                    AuthorisedPerson = chkClientOnsite?.IsChecked ?? false,
+                    Equipment = chkEquipmentCarried?.IsChecked ?? false,
+                    Other = chkOtherCategories?.IsChecked ?? false
+                },
+                SiteColourCodeId = selectedColourCodeId,
+                WandScannedYes3a = false,
+                WandScannedYes3b = false,
+                WandScannedNo = false,
+                BodyCameraYes = rbYes?.IsChecked ?? false,
+                BodyCameraNo = rbNo?.IsChecked ?? false,
+                Officer = new Officer
+                {
+                    FirstName = string.Empty,
+                    LastName = string.Empty,
+                    Gender = string.Empty,
+                    Phone = string.Empty,
+                    Position = string.Empty,
+                    Email = "username@example.com",
+                    LicenseNumber = string.Empty,
+                    LicenseState = string.Empty,
+                    CallSign = string.Empty,
+                    GuardMonth = selectedGuardMonth,
+                    NotifiedBy = selectedNotifiedBy,
+                    Billing = string.Empty,
+                },
+                IsPositionPatrolCar = false,
+                DateLocation = new DateLocation
+                {
+                    IncidentDate = new DateTime(
+                        incidentDatePicker.Date.Year,
+                        incidentDatePicker.Date.Month,
+                        incidentDatePicker.Date.Day,
+                        incidentTimePicker.Time.Hours,
+                        incidentTimePicker.Time.Minutes,
+                        0
+                    ),
+                    ReportDate = reportDateTime,
+                    ReimbursementNo = reimbursementNoCheckBox?.IsChecked ?? false,
+                    ReimbursementYes = reimbursementYesCheckBox?.IsChecked ?? false,
+                    JobNumber = JobNumberEntry?.Text ?? string.Empty,
+                    JobTime = null,
+                    Duration = null,
+                    Travel = 0,
+                    PatrolExternal = PatrolExternalCheckBox?.IsChecked ?? false,
+                    PatrolInternal = PatrolInternalCheckBox?.IsChecked ?? false,
+                    ClientType = clientTypeNew ?? string.Empty,
+                    ClientSite = clientSite ?? string.Empty,
+                    ClientArea = null,
+                    ShowIncidentLocationAddress = incidentLocationCheckBox?.IsChecked ?? false,
+                    ClientAddress = clientAddressEntry?.Text ?? string.Empty,
+                    State = _currentClientSite.State ?? string.Empty,
+                    ClientStatus = _currentClientSite?.Status ?? 0,
+                    ClientSiteLiveGps = _currentClientSite.Gps ?? string.Empty,
+                },
+                LinkedSerialNos = null,
+                Feedback = descriptionEditor?.Text ?? string.Empty,
+                ReportedBy = null,
+                FeedbackType = _selectedTemplate?.Type ?? 0,
+                FeedbackTemplates = _selectedTemplate?.TemplateId ?? 0,
+                PSPFName = "[SEC=UNOFFICIAL]"
+            };
+
+
+
+            //var report = new IncidentRequest
+            //{
+            //    EventType = new EventType
+            //    {
+            //        HrRelated = true
+            //    },
+            //    SiteColourCodeId = 1,
+            //    WandScannedYes3a = true,
+            //    WandScannedYes3b = true,
+            //    WandScannedNo = true,
+            //    BodyCameraYes = true,
+            //    BodyCameraNo = false,
+            //    Officer = new Officer
+            //    {
+            //        FirstName = "Dileep",
+            //        LastName = "Seb",
+            //        Gender = "Male",
+            //        Position = "SG01",
+            //        GuardMonth = "Apri"  
+            //    },
+            //    DateLocation = new DateLocation
+            //    {
+            //        JobNumber = "1234",
+            //        ClientSite = "ABC Corp",    
+            //        ClientType = "Construction" 
+            //    },
+            //    ReportedBy = "Supervisor Name",
+            //};
+
+
+            // Send the object as JSON and get the response as a strongly-typed list
+            using var httpClient = new HttpClient();
+            var response = await httpClient.PostAsJsonAsync(url, Report);
+
+
+                var result = await response.Content.ReadFromJsonAsync<ProcessIrResponse>();
+
+            if (!string.IsNullOrEmpty(result?.FileName))
+            {
+                var staticBaseUrl = "https://cws-ir.com/Pdf/ToDropbox/";
+                var fullDownloadUrl = $"{staticBaseUrl}{Uri.EscapeDataString(result.FileName)}";
+
+                Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl));
+               
+            }
+            else
+            {
+                var errorMessages = string.Join("\n", result?.Errors.Select(e => $"{e.Code}: {e.Message}"));
+                await DisplayAlert("Error", $"Failed to generate report:\n{errorMessages}", "OK");
+            }
+            // Use 'templates' as needed
+
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {response.StatusCode}, Details: {error}");
+            await DisplayAlert("Success", "Incident submitted successfully.", "OK");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Exception", ex.Message, "OK");
+        }
+        finally
+        {
+            LoadingOverlay.IsVisible = false;
+        }
     }
 
     private void OnTemplateTypeChanged(object sender, EventArgs e)
     {
-        var selectedType = templateTypesPicker.SelectedItem as string;
+        _selectedFeedbackType = templateTypesPicker.SelectedItem as string;
 
-        if (!string.IsNullOrEmpty(selectedType) && selectedType != "Select Template Type")
+        if (!string.IsNullOrEmpty(_selectedFeedbackType) && _selectedFeedbackType != "Select Template Type")
         {
             var matchingTemplates = _feedbackTemplates
-                .Where(t => t.FeedbackTypeName == selectedType)
+                .Where(t => t.FeedbackTypeName == _selectedFeedbackType)
                 .OrderBy(t => t.TemplateName)
                 .ToList();
 
@@ -262,22 +691,104 @@ public partial class WebIncidentReport : ContentPage
         else
         {
             FilteredTemplatesList.Clear();
+            _selectedFeedbackType = null; // reset
         }
     }
 
     private void templatesPicker_SelectedIndexChanged(object sender, EventArgs e)
     {
         if (templatesPicker.SelectedItem is FeedbackTemplateViewModel selectedTemplate &&
-            selectedTemplate.TemplateId != 0) // Skip the placeholder
+            selectedTemplate.TemplateId != 0)
         {
+            _selectedTemplate = selectedTemplate;
             descriptionEditor.Text = selectedTemplate.Text;
         }
         else
         {
+            _selectedTemplate = null;
             descriptionEditor.Text = string.Empty;
         }
     }
 
+
+    private void OnClientAddressTextChanged(object sender, TextChangedEventArgs e)
+    {
+       
+           ClientAddress = e.NewTextValue;
+        
+    }
+
+    private void OnSuggestionSelected(object sender, SelectionChangedEventArgs e)
+    {
+
+        if (
+            e.CurrentSelection.FirstOrDefault() is string selectedAddress)
+        {
+            ClientAddress = selectedAddress;
+            IsSuggestionsVisible = false;
+            Suggestions.Clear(); // 
+
+           
+        }
+
+    ((CollectionView)sender).SelectedItem = null;
+    }
+    private void OnIncidentLocationCheckBoxChanged(object sender, CheckedChangedEventArgs e)
+    {
+      
+            if (e.Value) // Checkbox is checked
+            {
+                _savedClientAddress = ClientAddress;
+                ClientAddress = string.Empty;
+               // vm.IsSuggestionsVisible = true;
+                IsSearchEnabled = true;
+            }
+            else // Checkbox is unchecked
+            {
+                IsSearchEnabled = false;
+                IsSuggestionsVisible = false;
+                ClientAddress = _savedClientAddress;
+                Suggestions.Clear();
+            }
+        
+    }
+
+
+
+    public class ProcessIrResponse
+    {
+        public bool Success { get; set; }
+        public string FileName { get; set; }
+        public List<ProcessIrError> Errors { get; set; }
+    }
+
+    public class ProcessIrError
+    {
+        public int Code { get; set; }
+        public string Message { get; set; }
+    }
+
+    public class ClientSite
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Address { get; set; }
+        public string State { get; set; }
+        public string Gps { get; set; }
+        public string Billing { get; set; }
+        public int Status { get; set; }
+        public DateTime? StatusDate { get; set; }
+        public string SiteEmail { get; set; }
+        public string LandLine { get; set; }
+        public string DuressEmail { get; set; }
+        public string DuressSms { get; set; }
+        public bool UploadGuardLog { get; set; }
+        public bool UploadFusionLog { get; set; }
+        public string GuardLogEmailTo { get; set; }
+        public bool DataCollectionEnabled { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsDosDontList { get; set; }
+    }
     public class FeedbackTemplateViewModel
     {
         public int TemplateId { get; set; }
@@ -290,4 +801,77 @@ public partial class WebIncidentReport : ContentPage
         public int DeleteStatus { get; set; }
         public bool SendtoRC { get; set; }
     }
+
+
+  
+}
+
+
+public class GooglePlacesAutocompletePrediction
+{
+    public string Description { get; set; }
+    public string PlaceId { get; set; }
+}
+
+
+
+
+// ---------- Google Places Service ----------
+public class GooglePlacesService
+{
+    private readonly string _apiKey = "AIzaSyCJK5DRhsD9rePFC-p9_8schzBdZsmXfUs"; // <-- Replace with your actual API key
+
+    public async Task<List<string>> GetSuggestionsAsync(string input)
+    {
+        
+        var url = $"https://maps.googleapis.com/maps/api/place/autocomplete/json?input={Uri.EscapeDataString(input)}&types=address&components=country:au&key={_apiKey}";
+        using var client = new HttpClient();
+        var json = await client.GetStringAsync(url);
+
+        var result = JsonSerializer.Deserialize<GooglePlacesAutocompleteResponse>(json);
+        return result?.Predictions?.Select(p => p.Description).ToList() ?? new List<string>();
+    }
+}
+
+// ---------- Google API DTOs ----------
+public class GooglePlacesAutocompleteResponse
+{
+    [JsonPropertyName("predictions")]
+    public List<Prediction> Predictions { get; set; }
+}
+
+public class Prediction
+{
+    [JsonPropertyName("description")]
+    public string Description { get; set; }
+
+    [JsonPropertyName("place_id")]
+    public string PlaceId { get; set; }
+
+    [JsonPropertyName("structured_formatting")]
+    public StructuredFormatting StructuredFormatting { get; set; }
+
+    [JsonPropertyName("terms")]
+    public List<Term> Terms { get; set; }
+
+    [JsonPropertyName("types")]
+    public List<string> Types { get; set; }
+}
+
+public class StructuredFormatting
+{
+    [JsonPropertyName("main_text")]
+    public string MainText { get; set; }
+
+    [JsonPropertyName("secondary_text")]
+    public string SecondaryText { get; set; }
+}
+
+public class Term
+{
+    [JsonPropertyName("offset")]
+    public int Offset { get; set; }
+
+    [JsonPropertyName("value")]
+    public string Value { get; set; }
 }

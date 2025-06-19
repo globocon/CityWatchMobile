@@ -388,8 +388,76 @@ TextColor="Black" />
 
 
                     <!-- Top row: Label on left, checkbox and label on right -->
-                    <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
-                        <!-- Client Address Label -->
+
+                    <VerticalStackLayout Padding="20" Spacing="10">
+
+                        <!-- Grid with Label + CheckBox -->
+                        <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                            <Label 
+                Grid.Column="0"
+                Text="Client Address"
+                FontAttributes="None"
+                FontSize="14" 
+                VerticalOptions="Center" />
+
+                            <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                                <CheckBox 
+                    x:Name="incidentLocationCheckBox"
+                    VerticalOptions="Center"
+                    CheckedChanged="OnIncidentLocationCheckBoxChanged"
+                    IsChecked="{Binding ShowIncidentLocation}" />
+                                <Label 
+                    Text="Incident Location"
+                    VerticalOptions="Center"
+                    FontAttributes="None"
+                    FontSize="14" />
+                            </HorizontalStackLayout>
+                        </Grid>
+
+                        <!-- Address Entry -->
+                        <Entry
+    x:Name="clientAddressEntry"
+    Placeholder="Enter a location"
+    Text="{Binding ClientAddress, Mode=TwoWay}"
+    FontSize="14"
+    BackgroundColor="White"
+    TextColor="Black"
+    HeightRequest="40" />
+
+
+                        <CollectionView
+    ItemsSource="{Binding Suggestions}"
+    IsVisible="{Binding IsSuggestionsVisible}"
+    SelectionChanged="OnSuggestionSelected"
+    HeightRequest="150"
+    BackgroundColor="White"
+    SelectionMode="Single">
+                            <!-- Ensure it's set explicitly -->
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Frame Padding="10" BorderColor="LightGray" HasShadow="False">
+                                        <Label Text="{Binding}" />
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        <!-- Suggestions List -->
+                        <!--<CollectionView
+            ItemsSource="{Binding Suggestions}"
+            IsVisible="{Binding IsSuggestionsVisible}"
+            SelectionChanged="OnSuggestionSelected"
+            HeightRequest="150"
+            BackgroundColor="White">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Label Text="{Binding}" Padding="10" />
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>-->
+
+                    </VerticalStackLayout>
+                    <!--<Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                        --><!-- Client Address Label --><!--
                         <Label 
             Grid.Column="0"
             Text="Client Address"
@@ -397,12 +465,13 @@ TextColor="Black" />
             FontSize="14" 
             VerticalOptions="Center" />
 
-                        <!-- Incident Location Checkbox + Label -->
+                        --><!-- Incident Location Checkbox + Label --><!--
                         <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
                             <CheckBox 
-                x:Name="incidentLocationCheckBox"
-                VerticalOptions="Center"
-                IsChecked="{Binding ShowIncidentLocation}" />
+    x:Name="incidentLocationCheckBox"
+    VerticalOptions="Center"
+    CheckedChanged="OnIncidentLocationCheckBoxChanged"
+    IsChecked="{Binding ShowIncidentLocation}" />
                             <Label 
                 Text="Incident Location"
                 VerticalOptions="Center"
@@ -411,7 +480,7 @@ TextColor="Black" />
                         </HorizontalStackLayout>
                     </Grid>
 
-                    <!-- Address Input -->
+                    --><!-- Address Input --><!--
                     <Entry 
         x:Name="clientAddressEntry"
         Placeholder="Enter a location"
@@ -420,7 +489,7 @@ TextColor="Black" />
         BackgroundColor="White"
         TextColor="Black"
         HeightRequest="40"
-         />
+         />-->
 
 
                     <!-- Notes -->
@@ -459,13 +528,17 @@ TextColor="Black" />
                     <!-- Text Area -->
                     <Label Text="Description" FontSize="14" HorizontalOptions="Start" />
                     <Editor 
-            x:Name="descriptionEditor"
-            Placeholder="Enter details here..."
-            FontSize="14"
-            AutoSize="TextChanges"
-            HeightRequest="100"
-            BackgroundColor="White"
-            TextColor="Black" />
+    x:Name="descriptionEditor"
+    Placeholder="Enter details here..."
+    FontSize="14"
+    AutoSize="TextChanges"
+    HeightRequest="100"
+    BackgroundColor="White"
+    TextColor="Black"
+    VerticalOptions="Start"
+    HorizontalOptions="FillAndExpand"
+    Margin="0"
+    IsTextPredictionEnabled="True" />
 
                     <!-- Text Field instead of Dropdown -->
                     <Label Text="Supervisor or person you reported this to and/or will email:" FontSize="14" HorizontalOptions="Start" />
@@ -498,9 +571,34 @@ TextColor="Black" />
             </Frame>
 
 
+            <StackLayout x:Name="LoadingOverlay"
+     BackgroundColor="#80000000"
+     IsVisible="False"
+     VerticalOptions="FillAndExpand"
+     HorizontalOptions="FillAndExpand"
+     AbsoluteLayout.LayoutBounds="0,0,1,1"
+     AbsoluteLayout.LayoutFlags="All"
+     Padding="20"
+     ZIndex="100">
+
+                <Frame BackgroundColor="White"
+   CornerRadius="10"
+   Padding="20"
+   HorizontalOptions="Center"
+   VerticalOptions="Center">
+                    <StackLayout Spacing="15" HorizontalOptions="Center">
+                        <ActivityIndicator IsRunning="True" Color="DarkGreen" />
+                        <Label Text="Please wait..." FontSize="Medium" HorizontalOptions="Center" />
+                    </StackLayout>
+                </Frame>
+            </StackLayout>
+
+
+
         </VerticalStackLayout>
 
-      
+
+        
 
     </ScrollView>
 </ContentPage>

@@ -297,8 +297,8 @@ public partial class GuardLoginPage : ContentPage
                         // Disable the license number Entry and Read button
                         txtLicenseNumber.IsEnabled = false;
                         ((Button)sender).IsEnabled = false;
-
-
+                        // Save license number
+                        SecureStorage.SetAsync("LicenseNumber", licenseNumber);
                         // If "Remember Me" is checked, store the license number securely
                         if (rememberMeCheckBox.IsChecked)
                         {

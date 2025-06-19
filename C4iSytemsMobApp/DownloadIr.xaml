@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="C4iSytemsMobApp.DownloadIr"
+             >
+
+    <ScrollView>
+        <StackLayout Padding="3" Spacing="3" VerticalOptions="StartAndExpand">
+
+            <!-- Top Buttons Row -->
+        <Grid ColumnDefinitions="*,*">
+            <!-- Back Button Left -->
+            <Button Text="← Back"
+            Clicked="OnBackClicked"
+            BackgroundColor="Transparent"
+            TextColor="Blue"
+            FontAttributes="Bold"
+            HorizontalOptions="Start"
+            Grid.Column="0" />
+
+            <!-- Home Icon Right -->
+            <ImageButton Source="home.png"
+                 Clicked="OnHomeClicked"
+                 HeightRequest="30"
+                 WidthRequest="30"
+                 BackgroundColor="Transparent"
+                 HorizontalOptions="End"
+                 VerticalOptions="Center"
+                 Grid.Column="1" />
+        </Grid>
+
+        <!-- Title -->
+        <Label Text="Incident Report Submitted Successfully"
+               FontSize="22"
+               FontAttributes="Bold"
+               TextColor="DarkGreen"
+               HorizontalTextAlignment="Center" />
+
+        <!-- Download Button -->
+        <Button Text="Download Report"
+                FontSize="18"
+                BackgroundColor="DarkGreen"
+                TextColor="White"
+                Clicked="OnDownloadClicked"
+                CornerRadius="10"
+                Padding="10,5"
+                HorizontalOptions="Center" />
+
+        <!-- Thank You Note -->
+        <Label Text="Thank you! Your report has been emailed to CityWatch HQ and, if needed, to the client as well."
+               FontSize="14"
+               TextColor="Black"
+               HorizontalTextAlignment="Center" />
+
+        <!-- Mental Health Info -->
+        <Label Text="Some incidents may be traumatic. Mental Health and EAP resources are available in the Tools menu."
+               FontSize="13"
+               TextColor="Gray"
+               HorizontalTextAlignment="Center" />
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>
+
