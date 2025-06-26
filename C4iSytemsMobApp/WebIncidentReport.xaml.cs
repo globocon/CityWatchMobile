@@ -3,6 +3,7 @@ using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -14,6 +15,12 @@ namespace C4iSytemsMobApp;
 public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 {
 
+    
+    public ObservableCollection<string> UploadedFiles { get; set; } = new();
+    private List<string> uploadedServerFileNames = new(); // filenames returned by server
+    private readonly string[] allowedExtensions = new[] {
+        ".avi", ".bmp", ".jpeg", ".jpg", ".mp3", ".mp4", ".pdf", ".png", ".xlsx", ".heic", ".gif"
+    };
     private string _selectedFeedbackType;
     private FeedbackTemplateViewModel _selectedTemplate;
     private string _savedClientAddress;
@@ -132,7 +139,10 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             return null;
         }
     }
-
+    public static class IrSession
+    {
+        public static string ReportReference { get; set; } = Guid.NewGuid().ToString();
+    }
 
 
     protected override async void OnAppearing()
@@ -145,7 +155,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
             var clientTypeRaw = await SecureStorage.GetAsync("ClientSite");
             var clientSite = await GetClientSiteByName(clientTypeRaw);
-
+            await LoadClientAreas(clientSite.Id);
             if (clientSite != null)
             {
                 _currentClientSite = clientSite;
@@ -485,12 +495,22 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(descriptionEditor?.Text))
+            {
+                await DisplayAlert("Validation Error", "You cannot submit an IR without any Text or Information on the notes section.", "OK");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(descriptionEditor?.Text))
+            {
+                await DisplayAlert("Validation Error", "You cannot submit an IR without any Text or Information on the notes section.", "OK");
+                return;
+            }
 
 
 
 
-
-            LoadingOverlay.IsVisible = true; // Show loader
+         
 
             var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ProcessIrSubmit?IRguardId={guardId}&IRclientSiteId={clientSiteId}";
             
@@ -500,9 +520,8 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
             DateTime reportDateTime = new DateTime();
 
-            // Check if user changed the default date or time (optional check)
-            if (reportDatePickerOffsite.Date != default(DateTime))
-            {
+           
+          
                 reportDateTime = new DateTime(
                     reportDatePickerOffsite.Date.Year,
                     reportDatePickerOffsite.Date.Month,
@@ -511,7 +530,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     reportTimePickerOffsite.Time.Minutes,
                     0
                 );
-            }
+           
 
             if (_currentClientSite == null)
             {
@@ -526,10 +545,44 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 return;
             }
 
+            if (chkColourCodeAlert?.IsChecked == true && ColourCodeDropdown.SelectedItem == null)
+            {
+                await DisplayAlert("Validation Error", "Please select a Colour Code if 'COLOUR Code Alert' is checked.", "OK");
+                return;
+            }
+
+            if (uploadedServerFileNames == null || uploadedServerFileNames.Count == 0)
+            {
+                bool confirm = await DisplayAlert(
+                    "No Attachments",
+                    "Are you sure you want to submit this IR without a photo to support your claim or observations?",
+                    "Yes", "No");
+
+                if (!confirm)
+                    return; // Stop submission
+            }
+
+
+            LoadingOverlay.IsVisible = true; // Show loader
             var selectedNotifiedBy = NotifiedByPicker.SelectedItem as string ?? string.Empty;
+
+            string clientArea = null;
+
+            if (areaPicker != null &&
+                areaPicker.ItemsSource is IEnumerable<AreaItem> source &&
+                source.Any() &&
+                areaPicker.SelectedItem is AreaItem selectedArea &&
+                !string.IsNullOrWhiteSpace(selectedArea.Value) &&
+                !selectedArea.Value.Equals("Select", StringComparison.OrdinalIgnoreCase))
+            {
+                clientArea = selectedArea.Value;
+            }
+
 
             var Report = new IncidentRequest
             {
+                ReportReference= IrSession.ReportReference,
+               
                 EventType = new EventType
                 {
                     HrRelated = chkHrRelated?.IsChecked ?? false,
@@ -547,10 +600,11 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     Equipment = chkEquipmentCarried?.IsChecked ?? false,
                     Other = chkOtherCategories?.IsChecked ?? false
                 },
-                SiteColourCodeId = selectedColourCodeId,
+                SiteColourCode = selectedColourCode?.Text ?? string.Empty,
+                SiteColourCodeId = selectedColourCode?.TemplateId,
                 WandScannedYes3a = false,
                 WandScannedYes3b = false,
-                WandScannedNo = false,
+                WandScannedNo = true,
                 BodyCameraYes = rbYes?.IsChecked ?? false,
                 BodyCameraNo = rbNo?.IsChecked ?? false,
                 Officer = new Officer
@@ -571,14 +625,24 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 IsPositionPatrolCar = false,
                 DateLocation = new DateLocation
                 {
-                    IncidentDate = new DateTime(
-                        incidentDatePicker.Date.Year,
-                        incidentDatePicker.Date.Month,
-                        incidentDatePicker.Date.Day,
-                        incidentTimePicker.Time.Hours,
-                        incidentTimePicker.Time.Minutes,
-                        0
-                    ),
+
+                    IncidentDate = enableDateTimeCheckBox?.IsChecked == true
+    ? new DateTime(
+        incidentDatePicker.Date.Year,
+        incidentDatePicker.Date.Month,
+        incidentDatePicker.Date.Day,
+        incidentTimePicker.Time.Hours,
+        incidentTimePicker.Time.Minutes,
+        0)
+    : (DateTime?)null,
+                    //IncidentDate = new DateTime(
+                    //    incidentDatePicker.Date.Year,
+                    //    incidentDatePicker.Date.Month,
+                    //    incidentDatePicker.Date.Day,
+                    //    incidentTimePicker.Time.Hours,
+                    //    incidentTimePicker.Time.Minutes,
+                    //    0
+                    //),
                     ReportDate = reportDateTime,
                     ReimbursementNo = reimbursementNoCheckBox?.IsChecked ?? false,
                     ReimbursementYes = reimbursementYesCheckBox?.IsChecked ?? false,
@@ -590,7 +654,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     PatrolInternal = PatrolInternalCheckBox?.IsChecked ?? false,
                     ClientType = clientTypeNew ?? string.Empty,
                     ClientSite = clientSite ?? string.Empty,
-                    ClientArea = null,
+                    ClientArea = clientArea,
                     ShowIncidentLocationAddress = incidentLocationCheckBox?.IsChecked ?? false,
                     ClientAddress = clientAddressEntry?.Text ?? string.Empty,
                     State = _currentClientSite.State ?? string.Empty,
@@ -606,7 +670,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             };
 
 
-
+            Report.Attachments = uploadedServerFileNames;
             //var report = new IncidentRequest
             //{
             //    EventType = new EventType
@@ -640,9 +704,10 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             // Send the object as JSON and get the response as a strongly-typed list
             using var httpClient = new HttpClient();
             var response = await httpClient.PostAsJsonAsync(url, Report);
+            //using var httpClient = new HttpClient();
+            //var response = await httpClient.PostAsJsonAsync("", Report);
 
-
-                var result = await response.Content.ReadFromJsonAsync<ProcessIrResponse>();
+            var result = await response.Content.ReadFromJsonAsync<ProcessIrResponse>();
 
             if (!string.IsNullOrEmpty(result?.FileName))
             {
@@ -658,7 +723,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 await DisplayAlert("Error", $"Failed to generate report:\n{errorMessages}", "OK");
             }
             // Use 'templates' as needed
-
+            IrSession.ReportReference = Guid.NewGuid().ToString();
             var error = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Error: {response.StatusCode}, Details: {error}");
             await DisplayAlert("Success", "Incident submitted successfully.", "OK");
@@ -802,8 +867,235 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         public bool SendtoRC { get; set; }
     }
 
+    //private async void OnUploadAttachmentClicked(object sender, EventArgs e)
+    //{
+    //    try
+    //    {
+    //        var results = await FilePicker.PickMultipleAsync();
 
-  
+    //        if (results == null)
+    //            return;
+
+    //        var filesToSave = results
+    //            .Where(f => allowedExtensions.Contains(Path.GetExtension(f.FileName).ToLower()))
+    //            .ToList();
+
+    //        if (!filesToSave.Any())
+    //        {
+    //            await DisplayAlert("No Valid Files", "Please select supported file types.", "OK");
+    //            return;
+    //        }
+
+    //        foreach (var file in filesToSave)
+    //        {
+    //            var stream = await file.OpenReadAsync();
+    //            var localFilePath = Path.Combine(FileSystem.CacheDirectory, file.FileName);
+
+    //            // Save to local cache
+    //            using (var fileStream = File.Create(localFilePath))
+    //            {
+    //                await stream.CopyToAsync(fileStream);
+    //            }
+    //            string reportReference = IrSession.ReportReference;
+    //            // Upload to server and get uploaded filename
+    //            var uploadedFileName = await UploadFileToServer(localFilePath, reportReference);
+
+    //            if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
+    //            {
+    //                UploadedFiles.Add(uploadedFileName); // Display to UI
+    //                uploadedServerFileNames.Add(uploadedFileName); // For sending in report
+    //            }
+    //        }
+
+    //        uploadDisplaySection.IsVisible = UploadedFiles.Any();
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        await DisplayAlert("Error", $"File selection failed: {ex.Message}", "OK");
+    //    }
+    //}
+
+
+    private async void OnUploadAttachmentClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var results = await FilePicker.PickMultipleAsync();
+            if (results == null) return;
+
+            var filesToSave = results
+                .Where(f => allowedExtensions.Contains(Path.GetExtension(f.FileName).ToLower()))
+                .ToList();
+
+            if (!filesToSave.Any())
+            {
+                await DisplayAlert("No Valid Files", "Please select supported file types.", "OK");
+                return;
+            }
+
+            uploadProgressBar.IsVisible = true;
+            uploadProgressBar.Progress = 0;
+
+            int totalFiles = filesToSave.Count;
+            int uploadedCount = 0;
+
+            foreach (var file in filesToSave)
+            {
+                var stream = await file.OpenReadAsync();
+                var localFilePath = Path.Combine(FileSystem.CacheDirectory, file.FileName);
+
+                using (var fileStream = File.Create(localFilePath))
+                {
+                    await stream.CopyToAsync(fileStream);
+                }
+
+                string reportReference = IrSession.ReportReference;
+                var uploadedFileName = await UploadFileToServer(localFilePath, reportReference);
+
+                if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
+                {
+                    UploadedFiles.Add(uploadedFileName);
+                    uploadedServerFileNames.Add(uploadedFileName);
+                }
+
+                uploadedCount++;
+                uploadProgressBar.Progress = (double)uploadedCount / totalFiles;
+            }
+
+            uploadProgressBar.IsVisible = false;
+
+            // Show uploaded list
+            uploadDisplaySection.IsVisible = UploadedFiles.Any();
+        }
+        catch (Exception ex)
+        {
+            uploadProgressBar.IsVisible = false;
+            await DisplayAlert("Error", $"File selection failed: {ex.Message}", "OK");
+        }
+    }
+
+    private void OnRemoveFileClicked(object sender, EventArgs e)
+    {
+        var button = sender as ImageButton;
+        var fileName = button?.CommandParameter as string;
+
+        if (!string.IsNullOrEmpty(fileName))
+        {
+            UploadedFiles.Remove(fileName);
+            uploadedServerFileNames.Remove(fileName);
+        }
+        uploadDisplaySection.IsVisible = UploadedFiles.Any();
+    }
+
+
+
+    private async Task<string> UploadFileToServer(string localFilePath, string reportReference)
+    {
+        var fileName = Path.GetFileName(localFilePath);
+        var httpClient = new HttpClient();
+
+        using var fileStream = File.OpenRead(localFilePath);
+        using var content = new MultipartFormDataContent();
+        var fileContent = new StreamContent(fileStream);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+        content.Add(fileContent, "file", fileName);
+
+        // Attach reportReference to the URL
+        var uploadUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadFile?reportReference={reportReference}";
+
+        var response = await httpClient.PostAsync(uploadUrl, content);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<FileUploadResponse>();
+        return result?.FileName;
+    }
+
+
+    public class FileUploadResponse
+    {
+        public string FileName { get; set; }
+    }
+
+
+    private void OnEnableDateTimeCheckBoxChanged(object sender, CheckedChangedEventArgs e)
+    {
+        bool isEnabled = e.Value;
+
+        dateTimePickerLayout.IsVisible = isEnabled;
+        disabledDateTimeLabel.IsVisible = !isEnabled;
+    }
+
+    private async Task LoadClientAreas(int clientSiteId)
+    {
+        try
+        {
+            using var httpClient = new HttpClient();
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/areas?clientSiteId={clientSiteId}";
+            var response = await httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var areaItems = JsonSerializer.Deserialize<List<AreaItem>>(json, options);
+
+                if (areaItems != null)
+                {
+                    // Remove empty-value items
+                    var actualItems = areaItems
+                        .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                        .ToList();
+
+                    if (actualItems.Any())
+                    {
+                        // Add "Select" as first item manually
+                        actualItems.Insert(0, new AreaItem
+                        {
+                            Text = "Select",
+                            Value = "",
+                            Selected = true
+                        });
+
+                        areaPicker.ItemsSource = actualItems;
+                        areaPicker.ItemDisplayBinding = new Binding("Text");
+                        areaPicker.SelectedIndex = 0;
+                    }
+                    // else: do NOT bind the picker at all
+                }
+            }
+            else
+            {
+                await DisplayAlert("Error", "Unable to load area list from server.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Exception loading area list: {ex.Message}", "OK");
+        }
+    }
+
+    public class AreaDto
+    {
+        public string Text { get; set; }
+        public string Value { get; set; }
+        public bool Selected { get; set; }
+    }
+
+    public class AreaItem
+    {
+        public string Text { get; set; }
+        public string Value { get; set; }
+        public bool Selected { get; set; }
+    }
 }
 
 
