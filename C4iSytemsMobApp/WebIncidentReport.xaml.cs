@@ -698,10 +698,10 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
 
             // Send the object as JSON and get the response as a strongly-typed list
-            //using var httpClient = new HttpClient();
-            //var response = await httpClient.PostAsJsonAsync(url, Report);
             using var httpClient = new HttpClient();
-            var response = await httpClient.PostAsJsonAsync("", Report);
+            var response = await httpClient.PostAsJsonAsync(url, Report);
+            //using var httpClient = new HttpClient();
+            //var response = await httpClient.PostAsJsonAsync("", Report);
 
             var result = await response.Content.ReadFromJsonAsync<ProcessIrResponse>();
 
