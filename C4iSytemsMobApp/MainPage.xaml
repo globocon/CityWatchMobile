@@ -559,24 +559,87 @@
               ZIndex="10">
 
 
-            <StackLayout Padding="20"
-                         Spacing="20">
+            <VerticalStackLayout Padding="20"
+                     Spacing="20"
+                     VerticalOptions="FillAndExpand">
+
+                <!-- Top section: Menu title and main buttons -->
                 <Label Text="Menu"
-                       FontAttributes="Bold"
-                       FontSize="20" />
+           FontAttributes="Bold"
+           FontSize="20" />
 
                 <Button Text="SOP’s"
-                        Clicked="OnSOPClicked" />
+            Clicked="OnSOPClicked" />
 
                 <Button Text="Tools"
-                        Clicked="OnToolsClicked" />
+            Clicked="OnToolsClicked" />
 
                 <Button Text="Downloads"
-                        Clicked="OnDownloadsClicked" />
+            Clicked="OnDownloadsClicked" />
+
+
+
+                <Frame CornerRadius="9"
+       HasShadow="False"
+       BorderColor="Transparent"
+       Margin="0,0,0,0"
+       Padding="0"
+       HeightRequest="46"
+       HorizontalOptions="Fill"
+       VerticalOptions="Center"
+       BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
+
+                    <HorizontalStackLayout Padding="15,0"
+                           Spacing="10"
+                           VerticalOptions="Center"
+                           HorizontalOptions="FillAndExpand"
+                           HeightRequest="46">
+
+                        <Label Text="Dark Mode"
+               FontSize="13"
+               VerticalOptions="Center"
+               HorizontalOptions="StartAndExpand"
+               TextColor="{AppThemeBinding Light=White, Dark=Black}" />
+
+                        <Switch x:Name="ThemeSwitch"
+                VerticalOptions="Center"
+                Toggled="OnThemeSwitchToggled"
+                OnColor="White"
+                ThumbColor="Gray"
+                Scale="0.9" />
+
+                        <Label x:Name="ThemeStateLabel"
+               Text="On"
+               FontSize="13"
+               FontAttributes="Bold"
+               VerticalOptions="Center"
+               HorizontalOptions="End"
+               TextColor="{AppThemeBinding Light=White, Dark=Black}" />
+                    </HorizontalStackLayout>
+                </Frame>
+
 
                 <Button Text="Off Duty"
-                        Clicked="OnOffDutyClicked" />
-            </StackLayout>
+            Clicked="OnOffDutyClicked" />
+
+                <!-- Spacer to push the following to the bottom -->
+                <BoxView 
+    HeightRequest="0"
+    VerticalOptions="FillAndExpand"
+    Color="Transparent" />
+
+                <BoxView 
+    HeightRequest="130"
+    Color="Transparent" />
+
+                <!-- Bottom section: Extra buttons -->
+                <Button Text="Check for Updates..."
+            Clicked="OnCheckForUpdatesClicked" />
+
+                <Button Text="About C4i System"
+            Clicked="OnAboutC4iClicked" />
+
+            </VerticalStackLayout>
 
         </Grid>
 
