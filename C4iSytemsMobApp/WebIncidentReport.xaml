@@ -455,14 +455,43 @@ TextColor="Black" />
     HeightRequest="40" />
 
 
-                                <CollectionView
+                            <CollectionView
     ItemsSource="{Binding Suggestions}"
     IsVisible="{Binding IsSuggestionsVisible}"
     SelectionChanged="OnSuggestionSelected"
     HeightRequest="150"
     BackgroundColor="White"
     SelectionMode="Single">
-                                    <!-- Ensure it's set explicitly -->
+
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Label 
+                Text="{Binding}" 
+                FontSize="14"
+                TextColor="Black"
+                Padding="5"
+                Margin="0,0,0,1"
+                BackgroundColor="White">
+                                            <Label.Background>
+                                                <LinearGradientBrush EndPoint="0,1">
+                                                    <GradientStop Color="White" Offset="0.9" />
+                                                    <GradientStop Color="LightGray" Offset="1" />
+                                                </LinearGradientBrush>
+                                            </Label.Background>
+                                        </Label>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+
+
+                            <!--<CollectionView
+    ItemsSource="{Binding Suggestions}"
+    IsVisible="{Binding IsSuggestionsVisible}"
+    SelectionChanged="OnSuggestionSelected"
+    HeightRequest="150"
+    BackgroundColor="White"
+    SelectionMode="Single">
+                                    --><!-- Ensure it's set explicitly --><!--
                                     <CollectionView.ItemTemplate>
                                         <DataTemplate>
                                             <Frame Padding="10" BorderColor="LightGray" HasShadow="False">
@@ -470,7 +499,7 @@ TextColor="Black" />
                                             </Frame>
                                         </DataTemplate>
                                     </CollectionView.ItemTemplate>
-                                </CollectionView>
+                                </CollectionView>-->
 
 
                             </VerticalStackLayout>
