@@ -75,6 +75,13 @@ namespace C4iSytemsMobApp
         {
             base.OnAppearing();
 
+            string savedTheme = Preferences.Get("AppTheme", "Dark");
+            bool isDark = savedTheme == "Dark";
+
+            ThemeSwitch.IsToggled = isDark;
+            ThemeStateLabel.Text = isDark ? "On" : "Off";
+
+
 
 
             // If InitializePatronsCounterDisplay is async, await it.
@@ -1069,14 +1076,54 @@ namespace C4iSytemsMobApp
             }
         }
 
+        private void OnCheckForUpdatesClicked(object sender, EventArgs e)
+        {
+            // Your update check logic here
+            DisplayAlert("Check for Updates", "You are running the latest version.", "OK");
+        }
 
+        private async void OnAboutC4iClicked(object sender, EventArgs e)
+        {
+            //try
+            //{
+            //    Uri uri = new("https://www.c4isystem.com/");
+            //    await Launcher.Default.OpenAsync(uri); // Skip CanOpenAsync
+            //}
+            //catch (Exception ex)
+            //{
+            //    await DisplayAlert("Exception", $"Could not launch URL: {ex.Message}", "OK");
+            //}
+
+            try
+            {
+                Uri uri = new Uri("https://www.c4isystem.com");
+                await Browser.Default.OpenAsync(uri, BrowserLaunchMode.SystemPreferred);
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Exception", $"Could not launch URL: {ex.Message}", "OK");
+                // An unexpected error occurred. No browser may be installed on the device.
+            }
+        }
 
         private void OpenDrawer()
         {
             DrawerMenu.TranslationX = 0;
             DrawerOverlay.IsVisible = true;
         }
+        private void OnThemeSwitchToggled(object sender, ToggledEventArgs e)
+        {
+            bool isDark = e.Value;
 
+            // Set the app theme
+            Application.Current.UserAppTheme = isDark ? AppTheme.Dark : AppTheme.Light;
+
+            // Save preference
+            Preferences.Set("AppTheme", isDark ? "Dark" : "Light");
+
+            // Optional: update label
+            ThemeStateLabel.Text = isDark ? "On" : "Off";
+        }
 
     }
 

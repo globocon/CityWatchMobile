@@ -5,17 +5,22 @@
              x:Class="C4iSytemsMobApp.WebIncidentReport"
              >
 
-    <ScrollView>
-        <VerticalStackLayout Padding="10" Spacing="10">
+    <AbsoluteLayout>
 
-            <!-- Row with Back (left) and Home (right) -->
-            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center" Padding="0,5">
+        <!-- Main content goes inside a ScrollView -->
+        <ScrollView AbsoluteLayout.LayoutBounds="0,0,1,1"
+                AbsoluteLayout.LayoutFlags="All">
+           
+                <VerticalStackLayout Padding="10" Spacing="10">
 
-                <!-- Back Button -->
-              
+                    <!-- Row with Back (left) and Home (right) -->
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center" Padding="0,5">
 
-                <!-- Title Label -->
-                <Label Text="Incident Report"
+                        <!-- Back Button -->
+
+
+                        <!-- Title Label -->
+                        <Label Text="Incident Report"
 FontSize="16"
 FontAttributes="Bold"
 HorizontalOptions="Center"
@@ -23,8 +28,8 @@ VerticalOptions="Center"
 Grid.Column="0"
 TextColor="Black" />
 
-                <!-- Home Button -->
-                <ImageButton Source="home.png"
+                        <!-- Home Button -->
+                        <ImageButton Source="home.png"
       Clicked="OnHomeClicked"
       HeightRequest="30"
       WidthRequest="30"
@@ -32,64 +37,64 @@ TextColor="Black" />
       HorizontalOptions="End"
       VerticalOptions="Center"
       Grid.Column="2" />
-            </Grid>
-            <!-- Event Type Container with Border -->
-            <Frame CornerRadius="10" Padding="10"  BorderColor="Grey">
-                <VerticalStackLayout Spacing="3">
+                    </Grid>
+                    <!-- Event Type Container with Border -->
+                    <Frame CornerRadius="10" Padding="10"  BorderColor="Grey">
+                        <VerticalStackLayout Spacing="3">
 
-                    <!-- Event Type Header -->
-                    <Label Text="Event Type" FontSize="20" FontAttributes="Bold"
+                            <!-- Event Type Header -->
+                            <Label Text="Event Type" FontSize="20" FontAttributes="Bold"
                            HorizontalOptions="Center" Padding="3"/>
 
-                    <!-- StackLayout for checkboxes (Compact Layout) -->
-                    <VerticalStackLayout Spacing="1">
+                            <!-- StackLayout for checkboxes (Compact Layout) -->
+                            <VerticalStackLayout Spacing="1">
 
-                        <HorizontalStackLayout Spacing="1">
-                            <CheckBox x:Name="chkHrRelated" VerticalOptions="Center"/>
-                            <Label Text="HR related; Staff Sick; Staff Late; Shift Swaps" 
+                                <HorizontalStackLayout Spacing="1">
+                                    <CheckBox x:Name="chkHrRelated" VerticalOptions="Center"/>
+                                    <Label Text="HR related; Staff Sick; Staff Late; Shift Swaps" 
                                    VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
+                                </HorizontalStackLayout>
 
-                        <HorizontalStackLayout Spacing="1">
-                            <CheckBox x:Name="chkOhsMatters" VerticalOptions="Center"/>
-                            <Label Text="OH and S matters; 'near misses'; onsite injuries" 
+                                <HorizontalStackLayout Spacing="1">
+                                    <CheckBox x:Name="chkOhsMatters" VerticalOptions="Center"/>
+                                    <Label Text="OH and S matters; 'near misses'; onsite injuries" 
                                    VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
+                                </HorizontalStackLayout>
 
-                        <HorizontalStackLayout Spacing="1">
-                            <CheckBox x:Name="chkSecurityBreach" VerticalOptions="Center"/>
-                            <Label Text="Security / Site Policy Breach; Theft; Access Issues" 
+                                <HorizontalStackLayout Spacing="1">
+                                    <CheckBox x:Name="chkSecurityBreach" VerticalOptions="Center"/>
+                                    <Label Text="Security / Site Policy Breach; Theft; Access Issues" 
                                    VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
+                                </HorizontalStackLayout>
 
-                        <HorizontalStackLayout Spacing="3">
-                            <CheckBox x:Name="chkEquipmentDamage" VerticalOptions="Center"/>
-                            <Label Text="Equipment damage or loss; Maintenance Issues" 
+                                <HorizontalStackLayout Spacing="3">
+                                    <CheckBox x:Name="chkEquipmentDamage" VerticalOptions="Center"/>
+                                    <Label Text="Equipment damage or loss; Maintenance Issues" 
                                    VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
+                                </HorizontalStackLayout>
 
-                        <HorizontalStackLayout Spacing="3">
-                            <CheckBox x:Name="chkCctvRelated" VerticalOptions="Center"/>
-                            <Label Text="CCTV related OR Thermal Variations" 
+                                <HorizontalStackLayout Spacing="3">
+                                    <CheckBox x:Name="chkCctvRelated" VerticalOptions="Center"/>
+                                    <Label Text="CCTV related OR Thermal Variations" 
                                    VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
+                                </HorizontalStackLayout>
 
-                        <HorizontalStackLayout Spacing="3">
-                            <CheckBox x:Name="chkEmergencyServices" VerticalOptions="Center"/>
-                            <Label Text="Emergency Services on Site; Police, Fire, Ambulance" 
+                                <HorizontalStackLayout Spacing="3">
+                                    <CheckBox x:Name="chkEmergencyServices" VerticalOptions="Center"/>
+                                    <Label Text="Emergency Services on Site; Police, Fire, Ambulance" 
                                    VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
+                                </HorizontalStackLayout>
 
-                        <VerticalStackLayout Spacing="3">
-                            <HorizontalStackLayout Spacing="3">
-                            <CheckBox x:Name="chkColourCodeAlert" VerticalOptions="Center" CheckedChanged="ChkColourCodeAlert_CheckedChanged"/>
-                            <Label Text="COLOUR Code Alert (Code Blue, Code Grey, etc)" VerticalOptions="Center" FontSize="12"/>
-                            </HorizontalStackLayout>
+                                <VerticalStackLayout Spacing="3">
+                                    <HorizontalStackLayout Spacing="3">
+                                        <CheckBox x:Name="chkColourCodeAlert" VerticalOptions="Center" CheckedChanged="ChkColourCodeAlert_CheckedChanged"/>
+                                        <Label Text="COLOUR Code Alert (Code Blue, Code Grey, etc)" VerticalOptions="Center" FontSize="12"/>
+                                    </HorizontalStackLayout>
 
-                            <VerticalStackLayout Padding="0">
+                                    <VerticalStackLayout Padding="0">
 
-                                <!-- Tap area -->
-                                <Border x:Name="DropdownBorder"
+                                        <!-- Tap area -->
+                                        <Border x:Name="DropdownBorder"
                                     BackgroundColor="White"
                                     Stroke="Gray"
                                     StrokeThickness="1"
@@ -99,11 +104,11 @@ TextColor="Black" />
                                     Margin="0"
                                     Padding="0"
                                     IsEnabled="False" >
-                                    <!-- Remove padding here -->
+                                            <!-- Remove padding here -->
 
-                                    <Grid HeightRequest="40" Padding="0">
-                                        <!-- Apply padding here instead -->
-                                        <Label x:Name="SelectedColourLabel"
+                                            <Grid HeightRequest="40" Padding="0">
+                                                <!-- Apply padding here instead -->
+                                                <Label x:Name="SelectedColourLabel"
                                               VerticalOptions="Fill"
                HorizontalOptions="Fill"   
                             VerticalTextAlignment="Center"
@@ -111,259 +116,284 @@ TextColor="Black" />
                            Margin="0"
                            Padding="10,0,0,0"
                                              />
-                                            <!-- Remove padding -->
-                                        <Label Text="▼"
+                                                <!-- Remove padding -->
+                                                <Label Text="▼"
                            FontSize="12"
                                               
                            HorizontalOptions="End"
                            VerticalOptions="Center"
                            TextColor="Gray"
                            Margin="0,0,10,0"  />
-                                    </Grid>
+                                            </Grid>
 
-                                </Border>
+                                        </Border>
 
 
 
-                                <!-- Dropdown container (start hidden) -->
-                                <CollectionView x:Name="ColourCodeDropdown"
+                                        <!-- Dropdown container (start hidden) -->
+                                        <CollectionView x:Name="ColourCodeDropdown"
                     ItemsSource="{Binding ColourCodeList}"
                     SelectionMode="Single"
                     IsVisible="False"
                     SelectionChanged="OnColourCodeSelected">
-                                    <CollectionView.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackLayout Padding="5" BackgroundColor="{Binding BackgroundColour}">
-                                                <Label Text="{Binding TemplateName}" TextColor="{Binding TextColor}" />
-                                            </StackLayout>
-                                        </DataTemplate>
-                                    </CollectionView.ItemTemplate>
-                                </CollectionView>
+                                            <CollectionView.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackLayout Padding="5" BackgroundColor="{Binding BackgroundColour}">
+                                                        <Label Text="{Binding TemplateName}" TextColor="{Binding TextColor}" />
+                                                    </StackLayout>
+                                                </DataTemplate>
+                                            </CollectionView.ItemTemplate>
+                                        </CollectionView>
+
+                                    </VerticalStackLayout>
+
+
+
+
+                                </VerticalStackLayout>
+
+
+
+                                <HorizontalStackLayout Spacing="3">
+                                    <CheckBox x:Name="chkHealthRestraints" VerticalOptions="Center"/>
+                                    <Label Text="Health - Restraints, Isolation, SASH Watch" 
+                                   VerticalOptions="Center" FontSize="12"/>
+                                </HorizontalStackLayout>
+
+                                <HorizontalStackLayout Spacing="3">
+                                    <CheckBox x:Name="chkGeneralPatrol" VerticalOptions="Center"/>
+                                    <Label Text="General Security Patrol / Site 'Lock-up' / 'Unlock'" 
+                                   VerticalOptions="Center" FontSize="12"/>
+                                </HorizontalStackLayout>
+
+                                <HorizontalStackLayout Spacing="3">
+                                    <CheckBox x:Name="chkAlarmActive" VerticalOptions="Center"/>
+                                    <Label Text="Alarm is Active (Security, Fire, VESDA, Duress)" 
+                                   VerticalOptions="Center" FontSize="12"/>
+                                </HorizontalStackLayout>
+
+                                <HorizontalStackLayout Spacing="3">
+                                    <CheckBox x:Name="chkAlarmDisabled" VerticalOptions="Center"/>
+                                    <Label Text="Alarm is Disabled (Late to Close / site not sealed)" 
+                                   VerticalOptions="Center" FontSize="12"/>
+                                </HorizontalStackLayout>
+
+                                <HorizontalStackLayout Spacing="3">
+                                    <CheckBox x:Name="chkClientOnsite" VerticalOptions="Center"/>
+                                    <Label Text="Client or Authorized person still onsite" 
+                                   VerticalOptions="Center" FontSize="12"/>
+                                </HorizontalStackLayout>
+
+                                <HorizontalStackLayout Spacing="3">
+                                    <CheckBox x:Name="chkEquipmentCarried" VerticalOptions="Center"/>
+                                    <Label Text="Carrying Baton, Handcuffs, Firearm, or Vest?" 
+                                   VerticalOptions="Center" FontSize="12"/>
+                                </HorizontalStackLayout>
+
+                                <HorizontalStackLayout Spacing="3">
+                                    <CheckBox x:Name="chkOtherCategories" VerticalOptions="Center"/>
+                                    <Label Text="Other Categories: Feedback, Suggestions, Compliments" 
+                                   VerticalOptions="Center" FontSize="12"/>
+                                </HorizontalStackLayout>
 
                             </VerticalStackLayout>
 
-
-                           
-
-                        </VerticalStackLayout>
-
-
-
-                        <HorizontalStackLayout Spacing="3">
-                            <CheckBox x:Name="chkHealthRestraints" VerticalOptions="Center"/>
-                            <Label Text="Health - Restraints, Isolation, SASH Watch" 
-                                   VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
-
-                        <HorizontalStackLayout Spacing="3">
-                            <CheckBox x:Name="chkGeneralPatrol" VerticalOptions="Center"/>
-                            <Label Text="General Security Patrol / Site 'Lock-up' / 'Unlock'" 
-                                   VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
-
-                        <HorizontalStackLayout Spacing="3">
-                            <CheckBox x:Name="chkAlarmActive" VerticalOptions="Center"/>
-                            <Label Text="Alarm is Active (Security, Fire, VESDA, Duress)" 
-                                   VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
-
-                        <HorizontalStackLayout Spacing="3">
-                            <CheckBox x:Name="chkAlarmDisabled" VerticalOptions="Center"/>
-                            <Label Text="Alarm is Disabled (Late to Close / site not sealed)" 
-                                   VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
-
-                        <HorizontalStackLayout Spacing="3">
-                            <CheckBox x:Name="chkClientOnsite" VerticalOptions="Center"/>
-                            <Label Text="Client or Authorized person still onsite" 
-                                   VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
-
-                        <HorizontalStackLayout Spacing="3">
-                            <CheckBox x:Name="chkEquipmentCarried" VerticalOptions="Center"/>
-                            <Label Text="Carrying Baton, Handcuffs, Firearm, or Vest?" 
-                                   VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
-
-                        <HorizontalStackLayout Spacing="3">
-                            <CheckBox x:Name="chkOtherCategories" VerticalOptions="Center"/>
-                            <Label Text="Other Categories: Feedback, Suggestions, Compliments" 
-                                   VerticalOptions="Center" FontSize="12"/>
-                        </HorizontalStackLayout>
-
-                    </VerticalStackLayout>
-
-                    <!-- NOTE inside the same box -->
-                    <Label Text="NOTE: Multi-selections are encouraged; Try and avoid selecting OTHER, and always consider COLOUR codes when applicable." 
+                            <!-- NOTE inside the same box -->
+                            <Label Text="NOTE: Multi-selections are encouraged; Try and avoid selecting OTHER, and always consider COLOUR codes when applicable." 
                            FontSize="10" TextColor="Red" Padding="5" HorizontalOptions="Center"/>
 
-                </VerticalStackLayout>
-            </Frame>
+                        </VerticalStackLayout>
+                    </Frame>
 
-            <!-- New Section: BodyCamera, DashCAM, or Other Video Footage -->
-            <Frame CornerRadius="10" Padding="10" BorderColor="Grey">
-                <VerticalStackLayout Spacing="3">
+                    <!-- New Section: BodyCamera, DashCAM, or Other Video Footage -->
+                    <Frame CornerRadius="10" Padding="10" BorderColor="Grey">
+                        <VerticalStackLayout Spacing="3">
 
-                    <Label Text="Does the BodyCamera, DashCAM, or other video footage part of this IR?" 
+                            <Label Text="Does the BodyCamera, DashCAM, or other video footage part of this IR?" 
                FontSize="16" FontAttributes="Bold" 
                HorizontalOptions="Center" Padding="3"/>
 
-                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
-                        <RadioButton x:Name="rbYes" Content="YES" GroupName="VideoFootage"/>
-                        <RadioButton x:Name="rbNo" Content="NO (n/a)" GroupName="VideoFootage" IsChecked="True"/>
-                    </HorizontalStackLayout>
+                            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                                <RadioButton x:Name="rbYes" Content="YES" GroupName="VideoFootage"/>
+                                <RadioButton x:Name="rbNo" Content="NO (n/a)" GroupName="VideoFootage" IsChecked="True"/>
+                            </HorizontalStackLayout>
 
-                </VerticalStackLayout>
-            </Frame>
-            <Frame CornerRadius="10" Padding="10" BorderColor="Grey">
-                <VerticalStackLayout Spacing="3">
+                        </VerticalStackLayout>
+                    </Frame>
+                    <Frame CornerRadius="10" Padding="10" BorderColor="Grey">
+                        <VerticalStackLayout Spacing="3">
 
-                    <Label Text="Guard Months or Years on Site" 
+                            <Label Text="Guard Months or Years on Site" 
          FontSize="16" FontAttributes="Bold" 
          HorizontalOptions="Center" Padding="3"/>
 
-                    <Picker x:Name="GuardMonthPicker" Title="Select" HorizontalOptions="Fill">
-                        <Picker.ItemsSource>
-                            <x:Array Type="{x:Type x:String}">
-                                <x:String>&lt; 3 Months</x:String>
-                                <x:String>3-11 Months</x:String>
-                                <x:String>1~2 years</x:String>
-                                <x:String>2~4 years</x:String>
-                                <x:String>5~10 years</x:String>
-                                <x:String>10+ years</x:String>
-                            </x:Array>
-                        </Picker.ItemsSource>
-                    </Picker>
+                            <Picker x:Name="GuardMonthPicker" Title="Select" HorizontalOptions="Fill">
+                                <Picker.ItemsSource>
+                                    <x:Array Type="{x:Type x:String}">
+                                        <x:String>&lt; 3 Months</x:String>
+                                        <x:String>3-11 Months</x:String>
+                                        <x:String>1~2 years</x:String>
+                                        <x:String>2~4 years</x:String>
+                                        <x:String>5~10 years</x:String>
+                                        <x:String>10+ years</x:String>
+                                    </x:Array>
+                                </Picker.ItemsSource>
+                            </Picker>
 
-                </VerticalStackLayout>
-            </Frame>
+                        </VerticalStackLayout>
+                    </Frame>
 
-            <Frame CornerRadius="10" Padding="10" BorderColor="Grey">
-                <VerticalStackLayout Spacing="3">
+                    <Frame CornerRadius="10" Padding="10" BorderColor="Grey">
+                        <VerticalStackLayout Spacing="3">
 
-                    <Label Text="Notified By" FontSize="16" FontAttributes="Bold" 
+                            <Label Text="Notified By" FontSize="16" FontAttributes="Bold" 
                HorizontalOptions="Center" Padding="3"/>
 
-                    <Picker x:Name="NotifiedByPicker" Title="Select Notified By" HorizontalOptions="Fill">
-                        <Picker.ItemsSource>
-                            <x:Array Type="{x:Type x:String}">
-                                <x:String>AMSEC</x:String>
-                                <x:String>ASCOM</x:String>
-                                <x:String>C4i System</x:String>
-                                <x:String>CAMS S/W</x:String>
-                                <x:String>Client:</x:String>
-                                <x:String>CWS-Bruno</x:String>
-                                <x:String>CWS-CRO</x:String>
-                                <x:String>CWS-Richard</x:String>
-                                <x:String>CWS-Rocky</x:String>
-                                <x:String>CWS-Sharon</x:String>
-                                <x:String>Emergency SVC</x:String>
-                                <x:String>FlightRADAR24</x:String>
-                                <x:String>M1-Sunny</x:String>
-                                <x:String>No One (Myself)</x:String>
-                                <x:String>OZLAND</x:String>
-                                <x:String>SAMS (IMG)</x:String>
-                            </x:Array>
-                        </Picker.ItemsSource>
-                    </Picker>
+                            <Picker x:Name="NotifiedByPicker" Title="Select Notified By" HorizontalOptions="Fill">
+                                <Picker.ItemsSource>
+                                    <x:Array Type="{x:Type x:String}">
+                                        <x:String>AMSEC</x:String>
+                                        <x:String>ASCOM</x:String>
+                                        <x:String>C4i System</x:String>
+                                        <x:String>CAMS S/W</x:String>
+                                        <x:String>Client:</x:String>
+                                        <x:String>CWS-Bruno</x:String>
+                                        <x:String>CWS-CRO</x:String>
+                                        <x:String>CWS-Richard</x:String>
+                                        <x:String>CWS-Rocky</x:String>
+                                        <x:String>CWS-Sharon</x:String>
+                                        <x:String>Emergency SVC</x:String>
+                                        <x:String>FlightRADAR24</x:String>
+                                        <x:String>M1-Sunny</x:String>
+                                        <x:String>No One (Myself)</x:String>
+                                        <x:String>OZLAND</x:String>
+                                        <x:String>SAMS (IMG)</x:String>
+                                    </x:Array>
+                                </Picker.ItemsSource>
+                            </Picker>
 
-                </VerticalStackLayout>
-            </Frame>
-
-
-            <Frame CornerRadius="10" Padding="10" BorderColor="Grey">
-
-             
-
-                    
-
-               
-
-
-
-
-                <VerticalStackLayout Spacing="5">
-
-                    <!-- Header -->
-                    <Label Text="Incident Date / Location" FontSize="16" FontAttributes="Bold" 
-               HorizontalOptions="Center" Padding="3"/>
-
-                    <!-- Date/Time of Incident or Patrol Onsite -->
-                    <Label Text="Date / Time of Incident or Patrol Onsite" FontAttributes="Bold" />
-                    <HorizontalStackLayout>
-                        <DatePicker x:Name="incidentDatePicker" Format="dd/MM/yyyy"   />
-                        <TimePicker x:Name="incidentTimePicker"  Format="HH:mm" />
-                    </HorizontalStackLayout>
-
-
-
-                    <!-- Date/Time of Report or Patrol Offsite -->
-                    <Label Text="Date / Time of Report or Patrol Offsite" FontAttributes="Bold" />
-                    <HorizontalStackLayout>
-                        <DatePicker x:Name="reportDatePickerOffsite"  Format="dd/MM/yyyy"  />
-                        <TimePicker x:Name="reportTimePickerOffsite"  Format="HH:mm" />
-                    </HorizontalStackLayout>
-
-                    <!-- Do you seek financial reimbursement? -->
-                    <Label Text="Do you seek financial reimbursement?" FontAttributes="Bold" />
-
-                    <HorizontalStackLayout Spacing="30" Padding="10,0">
-                        <!-- NO Option -->
-                        <VerticalStackLayout>
-                            <CheckBox x:Name="reimbursementNoCheckBox" IsChecked="True" />
-                            <Label Text="NO (n/a)" FontSize="12" />
                         </VerticalStackLayout>
+                    </Frame>
 
-                        <!-- YES Option -->
-                        <VerticalStackLayout>
-                            <CheckBox x:Name="reimbursementYesCheckBox" />
-                            <Label Text="YES (&amp; Receipt Attached + PayID/BSB)" FontSize="12" />
-                        </VerticalStackLayout>
-                    </HorizontalStackLayout>
 
-                    <HorizontalStackLayout Spacing="5">
-                        <Label Text="J:" VerticalOptions="Center" FontSize="14"/>
-                        <Entry x:Name="JobNumberEntry" Placeholder="Enter Job Number" 
+                    <Frame CornerRadius="10" Padding="10" BorderColor="Grey">
+
+
+
+
+
+
+
+
+
+
+                        <VerticalStackLayout Spacing="5">
+
+                            <!-- Section Header -->
+                            <Label Text="Incident Date / Location" 
+           FontSize="16" 
+           FontAttributes="Bold" 
+           HorizontalOptions="Center" 
+           Padding="3"/>
+
+                            <!-- Date/Time Label -->
+                            <Label Text="Date / Time of Incident or Patrol Onsite" 
+           FontAttributes="Bold" />
+
+                            <!-- Checkbox BELOW the label -->
+                            <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                                <CheckBox x:Name="enableDateTimeCheckBox"
+                  CheckedChanged="OnEnableDateTimeCheckBoxChanged"
+                  IsChecked="False" />
+                                <Label Text="Do you want to set the Date / Time of Incident or Patrol Onsite?" 
+               VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+
+                            <!-- Date and Time Picker Stack (Initially Hidden) -->
+                            <HorizontalStackLayout x:Name="dateTimePickerLayout" IsVisible="False">
+                                <DatePicker x:Name="incidentDatePicker" Format="dd/MM/yyyy" />
+                                <TimePicker x:Name="incidentTimePicker" Format="HH:mm" />
+                            </HorizontalStackLayout>
+
+                            <!-- Static Placeholder Label -->
+                            <Label x:Name="disabledDateTimeLabel"
+           Text="dd/MM/yyyy  --:--"
+           IsVisible="True"
+           FontAttributes="Italic"
+           VerticalOptions="Center"
+           TextColor="Gray" />
+
+
+
+
+
+                            <!-- Date/Time of Report or Patrol Offsite -->
+                            <Label Text="Date / Time of Report or Patrol Offsite" FontAttributes="Bold" />
+                            <HorizontalStackLayout>
+                                <DatePicker x:Name="reportDatePickerOffsite"  Format="dd/MM/yyyy"  />
+                                <TimePicker x:Name="reportTimePickerOffsite"  Format="HH:mm" />
+                            </HorizontalStackLayout>
+
+                            <!-- Do you seek financial reimbursement? -->
+                            <Label Text="Do you seek financial reimbursement?" FontAttributes="Bold" />
+
+                            <HorizontalStackLayout Spacing="30" Padding="10,0">
+                                <!-- NO Option -->
+                                <VerticalStackLayout>
+                                    <CheckBox x:Name="reimbursementNoCheckBox" IsChecked="True" />
+                                    <Label Text="NO (n/a)" FontSize="12" />
+                                </VerticalStackLayout>
+
+                                <!-- YES Option -->
+                                <VerticalStackLayout>
+                                    <CheckBox x:Name="reimbursementYesCheckBox" />
+                                    <Label Text="YES (&amp; Receipt Attached + PayID/BSB)" FontSize="12" />
+                                </VerticalStackLayout>
+                            </HorizontalStackLayout>
+
+                            <HorizontalStackLayout Spacing="5">
+                                <Label Text="J:" VerticalOptions="Center" FontSize="14"/>
+                                <Entry x:Name="JobNumberEntry" Placeholder="Enter Job Number" 
                        />
-                    </HorizontalStackLayout>
-                    <!-- Job Time Input -->
-                   
-                        <HorizontalStackLayout Spacing="5">
-                            <Label Text="T:" VerticalOptions="Center" FontSize="14"/>
-                            <TimePicker x:Name="JobTimePicker" Format="HH:mm"
+                            </HorizontalStackLayout>
+                            <!-- Job Time Input -->
+
+                            <HorizontalStackLayout Spacing="5">
+                                <Label Text="T:" VerticalOptions="Center" FontSize="14"/>
+                                <TimePicker x:Name="JobTimePicker" Format="HH:mm"
                             />
-                        </HorizontalStackLayout>
-                   
-                    
-
-                </VerticalStackLayout>
-            </Frame>
-
-            <Frame CornerRadius="5" Padding="5" BorderColor="LightGray">
-                <VerticalStackLayout Spacing="1">
-                    <!-- Patrol Label -->
-                    <Label Text="Patrol:" FontSize="14"/>
-
-                    <HorizontalStackLayout Spacing="1" Padding="0,1" VerticalOptions="Center">
-
-                        <!-- External Patrol Checkbox -->
-                        <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-                            <CheckBox x:Name="PatrolExternalCheckBox" VerticalOptions="Center"/>
-                            <Label Text="External" VerticalOptions="Center" FontSize="14"/>
-                        </HorizontalStackLayout>
-
-                        <!-- Internal Patrol Checkbox -->
-                        <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-                            <CheckBox x:Name="PatrolInternalCheckBox" VerticalOptions="Center"/>
-                            <Label Text="Internal" VerticalOptions="Center" FontSize="14"/>
-                        </HorizontalStackLayout>
-
-                    </HorizontalStackLayout>
+                            </HorizontalStackLayout>
 
 
 
-                    <!-- Label -->
-                    <Label 
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <Frame CornerRadius="5" Padding="5" BorderColor="LightGray">
+                        <VerticalStackLayout Spacing="1">
+                            <!-- Patrol Label -->
+                            <Label Text="Patrol:" FontSize="14"/>
+
+                            <HorizontalStackLayout Spacing="1" Padding="0,1" VerticalOptions="Center">
+
+                                <!-- External Patrol Checkbox -->
+                                <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                                    <CheckBox x:Name="PatrolExternalCheckBox" VerticalOptions="Center"/>
+                                    <Label Text="External" VerticalOptions="Center" FontSize="14"/>
+                                </HorizontalStackLayout>
+
+                                <!-- Internal Patrol Checkbox -->
+                                <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                                    <CheckBox x:Name="PatrolInternalCheckBox" VerticalOptions="Center"/>
+                                    <Label Text="Internal" VerticalOptions="Center" FontSize="14"/>
+                                </HorizontalStackLayout>
+
+                            </HorizontalStackLayout>
+
+
+
+                            <!-- Label -->
+                            <Label 
     Text="Area / Ward" 
     FontAttributes="None" 
     FontSize="14" 
@@ -371,10 +401,10 @@ TextColor="Black" />
     HorizontalOptions="Start"
     LineBreakMode="NoWrap"
     WidthRequest="100" />
-                    <!-- Adjust width to avoid wrapping -->
+                            <!-- Adjust width to avoid wrapping -->
 
-                        <!-- Picker -->
-                        <Picker 
+                            <!-- Picker -->
+                            <Picker 
         x:Name="areaPicker"
        
         HeightRequest="40"
@@ -383,39 +413,39 @@ TextColor="Black" />
         FontSize="14"
         
                             />
-                  
 
 
 
-                    <!-- Top row: Label on left, checkbox and label on right -->
 
-                    <VerticalStackLayout Padding="20" Spacing="10">
+                            <!-- Top row: Label on left, checkbox and label on right -->
 
-                        <!-- Grid with Label + CheckBox -->
-                        <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
-                            <Label 
+                            <VerticalStackLayout Padding="20" Spacing="10">
+
+                                <!-- Grid with Label + CheckBox -->
+                                <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                                    <Label 
                 Grid.Column="0"
                 Text="Client Address"
                 FontAttributes="None"
                 FontSize="14" 
                 VerticalOptions="Center" />
 
-                            <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
-                                <CheckBox 
+                                    <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                                        <CheckBox 
                     x:Name="incidentLocationCheckBox"
                     VerticalOptions="Center"
                     CheckedChanged="OnIncidentLocationCheckBoxChanged"
                     IsChecked="{Binding ShowIncidentLocation}" />
-                                <Label 
+                                        <Label 
                     Text="Incident Location"
                     VerticalOptions="Center"
                     FontAttributes="None"
                     FontSize="14" />
-                            </HorizontalStackLayout>
-                        </Grid>
+                                    </HorizontalStackLayout>
+                                </Grid>
 
-                        <!-- Address Entry -->
-                        <Entry
+                                <!-- Address Entry -->
+                                <Entry
     x:Name="clientAddressEntry"
     Placeholder="Enter a location"
     Text="{Binding ClientAddress, Mode=TwoWay}"
@@ -425,109 +455,93 @@ TextColor="Black" />
     HeightRequest="40" />
 
 
-                        <CollectionView
+                            <CollectionView
     ItemsSource="{Binding Suggestions}"
     IsVisible="{Binding IsSuggestionsVisible}"
     SelectionChanged="OnSuggestionSelected"
     HeightRequest="150"
     BackgroundColor="White"
     SelectionMode="Single">
-                            <!-- Ensure it's set explicitly -->
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate>
-                                    <Frame Padding="10" BorderColor="LightGray" HasShadow="False">
-                                        <Label Text="{Binding}" />
-                                    </Frame>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
-                        <!-- Suggestions List -->
-                        <!--<CollectionView
-            ItemsSource="{Binding Suggestions}"
-            IsVisible="{Binding IsSuggestionsVisible}"
-            SelectionChanged="OnSuggestionSelected"
-            HeightRequest="150"
-            BackgroundColor="White">
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate>
-                                    <Label Text="{Binding}" Padding="10" />
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>-->
 
-                    </VerticalStackLayout>
-                    <!--<Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
-                        --><!-- Client Address Label --><!--
-                        <Label 
-            Grid.Column="0"
-            Text="Client Address"
-            FontAttributes="None"
-            FontSize="14" 
-            VerticalOptions="Center" />
-
-                        --><!-- Incident Location Checkbox + Label --><!--
-                        <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
-                            <CheckBox 
-    x:Name="incidentLocationCheckBox"
-    VerticalOptions="Center"
-    CheckedChanged="OnIncidentLocationCheckBoxChanged"
-    IsChecked="{Binding ShowIncidentLocation}" />
-                            <Label 
-                Text="Incident Location"
-                VerticalOptions="Center"
-                FontAttributes="None"
-                FontSize="14" />
-                        </HorizontalStackLayout>
-                    </Grid>
-
-                    --><!-- Address Input --><!--
-                    <Entry 
-        x:Name="clientAddressEntry"
-        Placeholder="Enter a location"
-        Text="{Binding ClientAddress}"
-        FontSize="14"
-        BackgroundColor="White"
-        TextColor="Black"
-        HeightRequest="40"
-         />-->
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Label 
+                Text="{Binding}" 
+                FontSize="14"
+                TextColor="Black"
+                Padding="5"
+                Margin="0,0,0,1"
+                BackgroundColor="White">
+                                            <Label.Background>
+                                                <LinearGradientBrush EndPoint="0,1">
+                                                    <GradientStop Color="White" Offset="0.9" />
+                                                    <GradientStop Color="LightGray" Offset="1" />
+                                                </LinearGradientBrush>
+                                            </Label.Background>
+                                        </Label>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
 
 
-                    <!-- Notes -->
-                    <Label Text="NOTE: If WAND points do not exist, or are missing you must take photos AND mention in notes that there are NO WAND points" 
+                            <!--<CollectionView
+    ItemsSource="{Binding Suggestions}"
+    IsVisible="{Binding IsSuggestionsVisible}"
+    SelectionChanged="OnSuggestionSelected"
+    HeightRequest="150"
+    BackgroundColor="White"
+    SelectionMode="Single">
+                                    --><!-- Ensure it's set explicitly --><!--
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Frame Padding="10" BorderColor="LightGray" HasShadow="False">
+                                                <Label Text="{Binding}" />
+                                            </Frame>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>-->
+
+
+                            </VerticalStackLayout>
+
+
+
+                            <!-- Notes -->
+                            <Label Text="NOTE: If WAND points do not exist, or are missing you must take photos AND mention in notes that there are NO WAND points" 
                FontSize="12" TextColor="Red" Padding="5"/>
 
-                    <!-- AS.4421-2011 Label -->
-                    <Label Text="AS.4421-2011" FontSize="12" FontAttributes="Bold" TextDecorations="Underline" 
+                            <!-- AS.4421-2011 Label -->
+                            <Label Text="AS.4421-2011" FontSize="12" FontAttributes="Bold" TextDecorations="Underline" 
                HorizontalOptions="Center"/>
-                </VerticalStackLayout>
-            </Frame>
+                        </VerticalStackLayout>
+                    </Frame>
 
 
 
-            <Frame CornerRadius="5" Padding="10" BorderColor="LightGray">
-                <VerticalStackLayout Spacing="10">
+                    <Frame CornerRadius="5" Padding="10" BorderColor="LightGray">
+                        <VerticalStackLayout Spacing="10">
 
-                    <!-- Dropdown 1 -->
-                    <Label Text="Template Types" FontSize="14" HorizontalOptions="Start" />
-                    <Picker 
+                            <!-- Dropdown 1 -->
+                            <Label Text="Template Types" FontSize="14" HorizontalOptions="Start" />
+                            <Picker 
     x:Name="templateTypesPicker"
     
     ItemsSource="{Binding TemplateTypesList}"
     SelectedIndexChanged="OnTemplateTypeChanged"
 />
 
-                    <!-- Dropdown 2 -->
-                    <!--<Label Text="Templates" FontSize="14" HorizontalOptions="Start" />-->
-                    <Picker 
+                            <!-- Dropdown 2 -->
+                            <!--<Label Text="Templates" FontSize="14" HorizontalOptions="Start" />-->
+                            <Picker 
     x:Name="templatesPicker"
     Title="Select Template"
     ItemsSource="{Binding FilteredTemplatesList}"
     ItemDisplayBinding="{Binding TemplateName}"
     SelectedIndexChanged="templatesPicker_SelectedIndexChanged" />
 
-                    <!-- Text Area -->
-                    <Label Text="Description" FontSize="14" HorizontalOptions="Start" />
-                    <Editor 
+                            <!-- Text Area -->
+                            <Label Text="Description" FontSize="14" HorizontalOptions="Start" />
+                            <Editor 
     x:Name="descriptionEditor"
     Placeholder="Enter details here..."
     FontSize="14"
@@ -540,9 +554,9 @@ TextColor="Black" />
     Margin="0"
     IsTextPredictionEnabled="True" />
 
-                    <!-- Text Field instead of Dropdown -->
-                    <Label Text="Supervisor or person you reported this to and/or will email:" FontSize="14" HorizontalOptions="Start" />
-                    <Entry 
+                            <!-- Text Field instead of Dropdown -->
+                            <Label Text="Supervisor or person you reported this to and/or will email:" FontSize="14" HorizontalOptions="Start" />
+                            <Entry 
             x:Name="supervisorEntry"
             Placeholder="Enter name or email"
             FontSize="14"
@@ -550,15 +564,46 @@ TextColor="Black" />
             TextColor="Black"
             HeightRequest="40" />
 
-                </VerticalStackLayout>
-            </Frame>
+
+                            <!-- File Attachments Section -->
+                            <Label Text="File Attachments" FontSize="14" HorizontalOptions="Start" />
+                            <Label Text="Select files (.avi, .bmp, .jpeg, .jpg, .mp3, .mp4, .pdf, .png, .xlsx, .heic, .gif)" 
+               FontSize="12" TextColor="Gray" HorizontalOptions="Start" />
+
+                            <Button Text="Select Attachment(s)" Clicked="OnUploadAttachmentClicked" />
+
+                            <!-- Show progress during upload -->
+                            <ProgressBar x:Name="uploadProgressBar" Progress="0" IsVisible="False" />
+
+                            <StackLayout x:Name="uploadDisplaySection" IsVisible="False">
+
+                                <!-- Uploaded files display -->
+                                <CollectionView x:Name="uploadedFilesView"
+                    ItemsSource="{Binding UploadedFiles}"
+                    HeightRequest="120">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <HorizontalStackLayout Spacing="5">
+                                                <Label Text="{Binding .}" FontSize="12" />
+                                                <ImageButton Source="delete_icon.png"
+                                 Clicked="OnRemoveFileClicked"
+                                 CommandParameter="{Binding .}"
+                                 WidthRequest="10"
+                                 HeightRequest="10" />
+                                            </HorizontalStackLayout>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </StackLayout>
+                        </VerticalStackLayout>
+                    </Frame>
 
 
-            <Frame CornerRadius="5" Padding="10" BorderColor="LightGray">
-                <VerticalStackLayout Spacing="10">
+                    <Frame CornerRadius="5" Padding="10" BorderColor="LightGray">
+                        <VerticalStackLayout Spacing="10">
 
-                    <!-- Submit Button Only -->
-                    <Button 
+                            <!-- Submit Button Only -->
+                            <Button 
             Text="Submit"
             FontSize="14"
             CornerRadius="5"
@@ -567,40 +612,46 @@ TextColor="Black" />
             HeightRequest="45"
             Clicked="OnSubmitClicked" />
 
+                        </VerticalStackLayout>
+                    </Frame>
+
+
+                   
+
+
+
                 </VerticalStackLayout>
+
+
+
+
+           
+        </ScrollView>
+
+        <StackLayout x:Name="LoadingOverlay"
+                     BackgroundColor="#80000000"
+                     IsVisible="False"
+                     VerticalOptions="FillAndExpand"
+                     HorizontalOptions="FillAndExpand"
+                     AbsoluteLayout.LayoutBounds="0,0,1,1"
+                     AbsoluteLayout.LayoutFlags="All"
+                     Padding="20"
+                     ZIndex="100">
+            <Frame BackgroundColor="White"
+                   CornerRadius="10"
+                   Padding="20"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center">
+                <StackLayout Spacing="15" HorizontalOptions="Center">
+                    <ActivityIndicator IsRunning="True" Color="DarkGreen" />
+                    <Label Text="Submitting your Incident Report. Please wait..." FontSize="Medium" HorizontalOptions="Center" />
+                </StackLayout>
             </Frame>
+        </StackLayout>
+
+    </AbsoluteLayout>
 
 
-            <StackLayout x:Name="LoadingOverlay"
-     BackgroundColor="#80000000"
-     IsVisible="False"
-     VerticalOptions="FillAndExpand"
-     HorizontalOptions="FillAndExpand"
-     AbsoluteLayout.LayoutBounds="0,0,1,1"
-     AbsoluteLayout.LayoutFlags="All"
-     Padding="20"
-     ZIndex="100">
-
-                <Frame BackgroundColor="White"
-   CornerRadius="10"
-   Padding="20"
-   HorizontalOptions="Center"
-   VerticalOptions="Center">
-                    <StackLayout Spacing="15" HorizontalOptions="Center">
-                        <ActivityIndicator IsRunning="True" Color="DarkGreen" />
-                        <Label Text="Please wait..." FontSize="Medium" HorizontalOptions="Center" />
-                    </StackLayout>
-                </Frame>
-            </StackLayout>
-
-
-
-        </VerticalStackLayout>
-
-
-        
-
-    </ScrollView>
 </ContentPage>
 
 
