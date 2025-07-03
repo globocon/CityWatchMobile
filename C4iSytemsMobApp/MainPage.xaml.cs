@@ -1,4 +1,6 @@
-﻿using C4iSytemsMobApp.Models;
+﻿using C4iSytemsMobApp.Controls;
+using C4iSytemsMobApp.Interface;
+using C4iSytemsMobApp.Models;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Maui.Devices.Sensors;
 using System;
@@ -8,7 +10,6 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using C4iSytemsMobApp.Interface;
 
 namespace C4iSytemsMobApp
 {
@@ -812,6 +813,180 @@ namespace C4iSytemsMobApp
         {
             _IsVolumeControlButtonEnabled = !_IsVolumeControlButtonEnabled;
             VolumeButtonControl.Text = $"Volume Button Control = {(_IsVolumeControlButtonEnabled ? "ON" : "OFF")}";
+        }
+
+        private async void OnShowAllSiteCountersButtonControl(object sender, EventArgs e)
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}CrowdCount/GetCrowdCountControlDataAndSettings?siteId={_clientSiteId}";
+            using (HttpClient client = new HttpClient()) 
+            {
+                var response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var settingsAndData = await response.Content.ReadFromJsonAsync<ClientSiteMobileCrowdControlDTO>();
+                    
+                    if (settingsAndData != null && settingsAndData.CounterNameAndCount?.Any() == true)
+                    {
+                        // Clear existing rows (except header row with title and close button)
+                        AllCrowdCounterGrid.RowDefinitions.Clear();
+                        AllCrowdCounterGrid.Children.Clear();
+
+                        // Add title and close button (row 0)
+                        AllCrowdCounterGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+                        var titleLabel = new Label
+                        {
+                            Text = "All Counter settings",
+                            FontSize = 18,
+                            TextColor = Colors.White,
+                            HorizontalTextAlignment = TextAlignment.Start,
+                            VerticalOptions = LayoutOptions.Start
+                        };
+                        AllCrowdCounterGrid.Add(titleLabel, 0, 0);
+
+                        var closeBtn = new ImageButton
+                        {
+                            BackgroundColor = Colors.Transparent,
+                            WidthRequest = 30,
+                            HeightRequest = 30,
+                            HorizontalOptions = LayoutOptions.End,
+                            VerticalOptions = LayoutOptions.Start
+                        };
+                        closeBtn.Clicked += OnAllCounterSettingsPopupCloseClicked;
+                        closeBtn.Source = new FontImageSource
+                        {
+                            Glyph = "\uf00d",
+                            FontFamily = "FontAwesome",
+                            Color = Colors.White,
+                            Size = 20
+                        };
+                        AllCrowdCounterGrid.Add(closeBtn, 1, 0);
+
+                        // Add each counter row dynamically
+                        int rowIndex = 1;
+
+                        foreach (var kvp in settingsAndData.CounterNameAndCount)
+                        {
+                            // Add row definition
+                            AllCrowdCounterGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+                            // AnimatedCounter
+                            var counter = new AnimatedCounter
+                            {
+                                Padding = 5,
+                                Value = kvp.Value,
+                                HorizontalOptions = LayoutOptions.Center,
+                                VerticalOptions = LayoutOptions.Center
+                            };
+                            AllCrowdCounterGrid.Add(counter, 0, rowIndex);
+
+                            // Label
+                            var label = new Label
+                            {
+                                Text = kvp.Key,
+                                TextColor = Colors.White,
+                                FontAttributes = FontAttributes.Bold,
+                                HorizontalOptions = LayoutOptions.Start,
+                                VerticalOptions = LayoutOptions.Center,
+                                Padding = 5
+                            };
+                            AllCrowdCounterGrid.Add(label, 1, rowIndex);
+
+                            rowIndex++;
+                        }
+
+                        //Current row count
+                        // Add row definition
+                        AllCrowdCounterGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+                        // AnimatedCounter
+                        var currentcounter = new AnimatedCounter
+                        {
+                            Padding = 5,
+                            Value = settingsAndData.CurrentCount,
+                            HorizontalOptions = LayoutOptions.Center,
+                            VerticalOptions = LayoutOptions.Center
+                        };
+                        AllCrowdCounterGrid.Add(currentcounter, 0, rowIndex);
+
+                        // Label
+                        var currentlabel = new Label
+                        {
+                            Text = "Current",
+                            TextColor = Colors.White,
+                            FontAttributes = FontAttributes.Bold,
+                            HorizontalOptions = LayoutOptions.Start,
+                            VerticalOptions = LayoutOptions.Center,
+                            Padding = 5
+                        };
+                        AllCrowdCounterGrid.Add(currentlabel, 1, rowIndex);
+                        rowIndex++;
+
+                        //Total Count
+                        // Add row definition
+                        AllCrowdCounterGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+                        // AnimatedCounter
+                        var totalcounter = new AnimatedCounter
+                        {
+                            Padding = 5,
+                            Value = settingsAndData.TotalCount,
+                            HorizontalOptions = LayoutOptions.Center,
+                            VerticalOptions = LayoutOptions.Center
+                        };
+                        AllCrowdCounterGrid.Add(totalcounter, 0, rowIndex);
+
+                        // Label
+                        var totallabel = new Label
+                        {
+                            Text = "Total",
+                            TextColor = Colors.White,
+                            FontAttributes = FontAttributes.Bold,
+                            HorizontalOptions = LayoutOptions.Start,
+                            VerticalOptions = LayoutOptions.Center,
+                            Padding = 5
+                        };
+                        AllCrowdCounterGrid.Add(totallabel, 1, rowIndex);
+                        rowIndex++;
+
+                        //Till Date Count
+                        // Add row definition
+                        AllCrowdCounterGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+                        // AnimatedCounter
+                        var tillDatecounter = new AnimatedCounter
+                        {
+                            Padding = 5,
+                            Value = settingsAndData.TotalCount,
+                            HorizontalOptions = LayoutOptions.Center,
+                            VerticalOptions = LayoutOptions.Center
+                        };
+                        AllCrowdCounterGrid.Add(tillDatecounter, 0, rowIndex);
+
+                        // Label
+                        var tillDatelabel = new Label
+                        {
+                            Text = settingsAndData.TillDate,
+                            TextColor = Colors.White,
+                            FontAttributes = FontAttributes.Bold,
+                            HorizontalOptions = LayoutOptions.Start,
+                            VerticalOptions = LayoutOptions.Center,
+                            Padding = 5
+                        };
+                        AllCrowdCounterGrid.Add(tillDatelabel, 1, rowIndex);
+
+
+                    }
+                }
+            }
+
+            AllCrowdControlViewPopup.IsVisible = true;
+        }
+
+                
+        private void OnAllCounterSettingsPopupCloseClicked(object sender, EventArgs e)
+        {
+            AllCrowdControlViewPopup.IsVisible = false;
         }
 
         private async void UpdateGuardCrowdControlLocation(MobileCrowdControlGuard mg)
