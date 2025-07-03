@@ -15,8 +15,8 @@ namespace C4iSytemsMobApp
         //public static string ApiBaseUrl { get; set; } = "https://localhost:44356/api/";
 
         //#### Added for local testing by Binoy        
-        //public static string ApiBaseUrl { get; set; } = "http://192.168.1.33:91/api/";
-        //public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.33:91";
+        //public static string ApiBaseUrl { get; set; } = "http://192.168.1.36:91/api/";
+        //public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.36:91";
 
     }
 }

@@ -55,7 +55,6 @@ public partial class DownloadIr : ContentPage
 
     private async void OnHomeClicked(object sender, EventArgs e)
     {
-
         var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
         Application.Current.MainPage = new MainPage(volumeButtonService);
 
