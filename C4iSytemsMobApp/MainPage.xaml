@@ -623,14 +623,7 @@
             Clicked="OnOffDutyClicked" />
 
                 <!-- Spacer to push the following to the bottom -->
-                <BoxView 
-    HeightRequest="0"
-    VerticalOptions="FillAndExpand"
-    Color="Transparent" />
-
-                <BoxView 
-    HeightRequest="130"
-    Color="Transparent" />
+                <Label Text="" Margin="0,0,0,130" />
 
                 <!-- Bottom section: Extra buttons -->
                 <Button Text="Check for Updates..."

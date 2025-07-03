@@ -909,19 +909,25 @@ namespace C4iSytemsMobApp
 
         private async void OnAboutC4iClicked(object sender, EventArgs e)
         {
+            //try
+            //{
+            //    Uri uri = new("https://www.c4isystem.com/");
+            //    await Launcher.Default.OpenAsync(uri); // Skip CanOpenAsync
+            //}
+            //catch (Exception ex)
+            //{
+            //    await DisplayAlert("Exception", $"Could not launch URL: {ex.Message}", "OK");
+            //}
+
             try
             {
-                Uri uri = new("https://www.c4isystem.com/");
-                bool canOpen = await Launcher.Default.CanOpenAsync(uri);
-
-                if (canOpen)
-                    await Launcher.Default.OpenAsync(uri);
-                else
-                    await DisplayAlert("Error", "Cannot open browser on this device.", "OK");
+                Uri uri = new Uri("https://www.c4isystem.com");
+                await Browser.Default.OpenAsync(uri, BrowserLaunchMode.SystemPreferred);
             }
             catch (Exception ex)
             {
                 await DisplayAlert("Exception", $"Could not launch URL: {ex.Message}", "OK");
+                // An unexpected error occurred. No browser may be installed on the device.
             }
         }
 
