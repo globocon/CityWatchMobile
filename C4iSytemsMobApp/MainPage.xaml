@@ -722,8 +722,8 @@
                 <Button Text="Off Duty"
             Clicked="OnOffDutyClicked" />
 
-                <!-- Spacer to push the following to the bottom -->
-                <Label Text="" Margin="0,0,0,130" />
+                <!-- Spacer to push the following to the bottom --><!--
+                <Label Text="" Margin="0,0,0,130" />-->
 
                 <!-- Bottom section: Extra buttons -->
                 <Button Text="Check for Updates..."
