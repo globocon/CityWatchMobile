@@ -428,20 +428,25 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             var clientSite = await SecureStorage.GetAsync("ClientSite");
             string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
             var clientSiteId = await SecureStorage.GetAsync("SelectedClientSiteId");
-
-           
-
+            var userId = await SecureStorage.GetAsync("UserId");
+            
 
 
 
             var clientType = await SecureStorage.GetAsync("ClientType");
             string clientTypeNew = Regex.Replace(clientType, @"\s*\(\d+\)$", "").Trim();
             // Validate required values before proceeding
-            if (string.IsNullOrWhiteSpace(guardId) ||
+            if (
+                string.IsNullOrWhiteSpace(guardId) ||
                 string.IsNullOrWhiteSpace(guardName) ||
                 string.IsNullOrWhiteSpace(savedLicenseNumber) ||
                 string.IsNullOrWhiteSpace(clientSite) ||
-                string.IsNullOrWhiteSpace(clientTypeNew))
+                string.IsNullOrWhiteSpace(clientTypeNew)||
+                string.IsNullOrWhiteSpace(userId) ||
+                string.IsNullOrWhiteSpace(gpsCoordinates)
+                
+
+                )
             {
                 await DisplayAlert("Missing Info", "Some required session values are missing. Please log in again or contact support.", "OK");
                 return;
@@ -512,7 +517,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
          
 
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ProcessIrSubmit?IRguardId={guardId}&IRclientSiteId={clientSiteId}";
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ProcessIrSubmit?gps={gpsCoordinates}&UserId={userId}&IRguardId={guardId}&IRclientSiteId={clientSiteId}";
             
             var selectedColourCode = ColourCodeDropdown.SelectedItem as FeedbackTemplateViewModel;
 

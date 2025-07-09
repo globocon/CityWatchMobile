@@ -102,8 +102,6 @@ public partial class LogActivity : ContentPage
         return int.TryParse(parts[0], out int result) ? result : int.MaxValue;
     }
 
-
-
     private async void LoadLogs()
     {
         try
@@ -144,41 +142,110 @@ public partial class LogActivity : ContentPage
                     Spacing = 3,
                     Children =
                 {
-                new Label
-        {
-            FormattedText = new FormattedString
-            {
-                Spans =
-                {
-                    new Span
+                    new Label
                     {
-                        Text = log.GuardInitials,
-                        FontAttributes = FontAttributes.Bold,
-                        TextColor = Colors.Teal,
-                        FontSize = 13
-                    },
-                    new Span
-                    {
-                        Text = $"  {log.EventDateTimeLocal:HH:mm}",
-                        FontSize = 11,
-                        TextColor = Colors.Gray
+                        FormattedText = new FormattedString
+                        {
+                            Spans =
+                            {
+                                new Span
+                                {
+                                    Text = log.GuardInitials,
+                                    FontAttributes = FontAttributes.Bold,
+                                    TextColor = Colors.Teal,
+                                    FontSize = 13
+                                },
+                                new Span
+                                {
+                                    Text = $"  {log.EventDateTimeLocal:HH:mm}",
+                                    FontSize = 11,
+                                    TextColor = Colors.Gray
+                                }
+                            }
+                        },
+                        Margin = new Thickness(0, 0, 0, 2)
                     }
-                }
-            },
-            Margin = new Thickness(0, 0, 0, 2)
-        },
-        new Label
-        {
-            Text = log.Notes ?? "",
-            LineBreakMode = LineBreakMode.WordWrap,
-            TextColor = Colors.Black,
-            FontSize = 12,
-            Margin = new Thickness(0, 0, 0, 10)
-        }
-
                 }
                 };
 
+                // Add Note with optional hyperlink
+                Label noteLabel;
+
+                if (log.IrEntryType == true)
+                {
+                    var formattedText = new FormattedString();
+
+                    var noteText = log.Notes?.Trim() ?? "";
+                    formattedText.Spans.Add(new Span
+                    {
+                        Text = noteText + " ",
+                        TextColor = Colors.Black,
+                        FontSize = 12
+                    });
+
+                    string blobUrl = null;
+                    if (!string.IsNullOrWhiteSpace(noteText) && noteText.Length >= 8)
+                    {
+                        var folder = new string(noteText.Take(8).ToArray());
+
+                        // Ensure .pdf extension
+                        var blobFileName = noteText.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+                            ? noteText
+                            : noteText + ".pdf";
+
+                        var encodedBlobName = Uri.EscapeDataString(blobFileName);
+                        blobUrl = $"https://c4istorage1.blob.core.windows.net/irfiles/{folder}/{encodedBlobName}";
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(blobUrl))
+                    {
+                        var linkSpan = new Span
+                        {
+                            Text = "Click here",
+                            TextColor = Colors.Blue,
+                            FontSize = 12,
+                            TextDecorations = TextDecorations.Underline
+                        };
+
+                        var tapGesture = new TapGestureRecognizer();
+                        tapGesture.Tapped += async (s, e) =>
+                        {
+                            try
+                            {
+                                await Browser.Default.OpenAsync(blobUrl, BrowserLaunchMode.SystemPreferred);                                
+                            }
+                            catch
+                            {
+                                await Application.Current.MainPage.DisplayAlert("Error", "Unable to open link.", "OK");
+                            }
+                        };
+
+                        linkSpan.GestureRecognizers.Add(tapGesture);
+                        formattedText.Spans.Add(linkSpan);
+                    }
+
+                    noteLabel = new Label
+                    {
+                        FormattedText = formattedText,
+                        LineBreakMode = LineBreakMode.WordWrap,
+                        Margin = new Thickness(0, 0, 0, 10)
+                    };
+                }
+                else
+                {
+                    noteLabel = new Label
+                    {
+                        Text = log.Notes ?? "",
+                        LineBreakMode = LineBreakMode.WordWrap,
+                        TextColor = Colors.Black,
+                        FontSize = 12,
+                        Margin = new Thickness(0, 0, 0, 10)
+                    };
+                }
+
+                contentLayout.Children.Add(noteLabel);
+
+                // Add any image URLs
                 foreach (var imageUrl in log.ImageUrls ?? Enumerable.Empty<string>())
                 {
                     if (!string.IsNullOrWhiteSpace(imageUrl))
@@ -221,6 +288,126 @@ public partial class LogActivity : ContentPage
             await DisplayAlert("Error", $"An error occurred while loading logs: {ex.Message}", "OK");
         }
     }
+
+
+
+    //private async void LoadLogs()
+    //{
+    //    try
+    //    {
+    //        var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+    //        if (guardId <= 0 || clientSiteId <= 0 || userId <= 0)
+    //            return;
+
+    //        LogDisplayArea.Children.Clear();
+
+    //        var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={clientSiteId}";
+    //        var response = await _httpClient.GetAsync(url);
+
+    //        if (!response.IsSuccessStatusCode)
+    //        {
+    //            await DisplayAlert("Error", "Failed to load site logs.", "OK");
+    //            return;
+    //        }
+
+    //        var json = await response.Content.ReadAsStringAsync();
+    //        var logs = JsonSerializer.Deserialize<List<GuardLogDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+    //        if (logs == null || logs.Count == 0)
+    //        {
+    //            LogDisplayArea.Children.Add(new Label
+    //            {
+    //                Text = "No logs available for today.",
+    //                TextColor = Colors.Gray,
+    //                FontSize = 12
+    //            });
+    //            return;
+    //        }
+
+    //        foreach (var log in logs)
+    //        {
+    //            var contentLayout = new VerticalStackLayout
+    //            {
+    //                Spacing = 3,
+    //                Children =
+    //            {
+    //            new Label
+    //    {
+    //        FormattedText = new FormattedString
+    //        {
+    //            Spans =
+    //            {
+    //                new Span
+    //                {
+    //                    Text = log.GuardInitials,
+    //                    FontAttributes = FontAttributes.Bold,
+    //                    TextColor = Colors.Teal,
+    //                    FontSize = 13
+    //                },
+    //                new Span
+    //                {
+    //                    Text = $"  {log.EventDateTimeLocal:HH:mm}",
+    //                    FontSize = 11,
+    //                    TextColor = Colors.Gray
+    //                }
+    //            }
+    //        },
+    //        Margin = new Thickness(0, 0, 0, 2)
+    //    },
+    //    new Label
+    //    {
+    //        Text = log.Notes ?? "",
+    //        LineBreakMode = LineBreakMode.WordWrap,
+    //        TextColor = Colors.Black,
+    //        FontSize = 12,
+    //        Margin = new Thickness(0, 0, 0, 10)
+    //    }
+
+    //            }
+    //            };
+
+    //            foreach (var imageUrl in log.ImageUrls ?? Enumerable.Empty<string>())
+    //            {
+    //                if (!string.IsNullOrWhiteSpace(imageUrl))
+    //                {
+    //                    try
+    //                    {
+    //                        contentLayout.Children.Add(new Image
+    //                        {
+    //                            Source = ImageSource.FromUri(new Uri(imageUrl)),
+    //                            HeightRequest = 130,
+    //                            Margin = new Thickness(0, 4, 0, 4)
+    //                        });
+    //                    }
+    //                    catch
+    //                    {
+    //                        contentLayout.Children.Add(new Label
+    //                        {
+    //                            Text = "(Image could not be loaded)",
+    //                            TextColor = Colors.Red,
+    //                            FontSize = 11
+    //                        });
+    //                    }
+    //                }
+    //            }
+
+    //            var logCard = new Frame
+    //            {
+    //                CornerRadius = 8,
+    //                Padding = 6,
+    //                Margin = new Thickness(2, 4),
+    //                BackgroundColor = Color.FromArgb("#F2F2F2"),
+    //                Content = contentLayout
+    //            };
+
+    //            LogDisplayArea.Children.Add(logCard);
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        await DisplayAlert("Error", $"An error occurred while loading logs: {ex.Message}", "OK");
+    //    }
+    //}
 
 
 
@@ -428,4 +615,5 @@ public class GuardLogDto
     public string Notes { get; set; }
     public List<string> ImageUrls { get; set; }
     public string GuardInitials { get; set; }
+    public bool? IrEntryType { get; set; }
 }
