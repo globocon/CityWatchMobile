@@ -63,20 +63,24 @@ public partial class DownloadsPage : ContentPage
         {
             try
             {
-                var httpClient = new HttpClient();
-                var bytes = await httpClient.GetByteArrayAsync(new Uri(fileUrl));
-                var fileName = Path.GetFileName(fileUrl);
-                var filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
 
-                await File.WriteAllBytesAsync(filePath, bytes);
 
-                await DisplayAlert("Downloaded", $"File saved to: {filePath}", "OK");
+                Uri uri = new Uri(fileUrl);
+                await Browser.Default.OpenAsync(uri, BrowserLaunchMode.SystemPreferred);
+                //var httpClient = new HttpClient();
+                //var bytes = await httpClient.GetByteArrayAsync(new Uri(fileUrl));
+                //var fileName = Path.GetFileName(fileUrl);
+                //var filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
 
-                // Launch the file with default viewer
-                await Launcher.Default.OpenAsync(new OpenFileRequest
-                {
-                    File = new ReadOnlyFile(filePath)
-                });
+                //await File.WriteAllBytesAsync(filePath, bytes);
+
+                //await DisplayAlert("Downloaded", $"File saved to: {filePath}", "OK");
+
+                //// Launch the file with default viewer
+                //await Launcher.Default.OpenAsync(new OpenFileRequest
+                //{
+                //    File = new ReadOnlyFile(filePath)
+                //});
             }
             catch (Exception ex)
             {

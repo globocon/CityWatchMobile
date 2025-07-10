@@ -76,19 +76,24 @@ public partial class SOPPage : ContentPage
         {
             try
             {
-                var httpClient = new HttpClient();
-                var bytes = await httpClient.GetByteArrayAsync(new Uri(fileUrl));
-                var fileName = Path.GetFileName(fileUrl);
-                var filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
 
-                await File.WriteAllBytesAsync(filePath, bytes);
 
-                await DisplayAlert("Downloaded", $"File saved to: {filePath}", "OK");
+                Uri uri = new Uri(fileUrl);
+                await Browser.Default.OpenAsync(uri, BrowserLaunchMode.SystemPreferred);
 
-                await Launcher.Default.OpenAsync(new OpenFileRequest
-                {
-                    File = new ReadOnlyFile(filePath)
-                });
+                //var httpClient = new HttpClient();
+                //var bytes = await httpClient.GetByteArrayAsync(new Uri(fileUrl));
+                //var fileName = Path.GetFileName(fileUrl);
+                //var filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
+
+                //await File.WriteAllBytesAsync(filePath, bytes);
+
+                //await DisplayAlert("Downloaded", $"File saved to: {filePath}", "OK");
+
+                //await Launcher.Default.OpenAsync(new OpenFileRequest
+                //{
+                //    File = new ReadOnlyFile(filePath)
+                //});
             }
             catch (Exception ex)
             {
