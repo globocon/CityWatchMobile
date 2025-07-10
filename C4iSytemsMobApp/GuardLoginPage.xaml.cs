@@ -1,4 +1,5 @@
 using C4iSytemsMobApp.Interface;
+using C4iSytemsMobApp.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -10,6 +11,7 @@ namespace C4iSytemsMobApp;
 public partial class GuardLoginPage : ContentPage
 {
     private readonly HttpClient _httpClient;
+    private readonly ICrowdControlServices _crowdControlServices;
     public ObservableCollection<DropdownItem> ClientTypes { get; set; } = new();
     public ObservableCollection<DropdownItem> ClientSites { get; set; } = new();
 
@@ -71,10 +73,11 @@ public partial class GuardLoginPage : ContentPage
     }
 
 
-    public GuardLoginPage()
+    public GuardLoginPage(ICrowdControlServices crowdControlServices)
     {
         InitializeComponent();
         _httpClient = new HttpClient(); // Temporary fix
+        _crowdControlServices = crowdControlServices;
         BindingContext = this;
         LoadLoggedInUser();
         LoadDropdownData();
@@ -460,11 +463,29 @@ public partial class GuardLoginPage : ContentPage
                         await SecureStorage.SetAsync("ClientType", selectedClientTypeName);
                     }
 
-                    var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
-                    Application.Current.MainPage = new MainPage(volumeButtonService);
+                    var _crowdControlsettings = await _crowdControlServices.GetCrowdControlSettingsAsync(clientSiteIdString);
+                    if(_crowdControlsettings != null && (_crowdControlsettings?.IsCrowdCountEnabled ?? false))
+                    {
+                       if( _crowdControlsettings.IsCrowdCountEnabled)
+                        {
+                            Application.Current.MainPage = new GuardSecurityIdTagPage();
+                        }
+                        else
+                        {
+                            var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+                            Application.Current.MainPage = new MainPage(volumeButtonService);
+                        }
+                    }
+                    else
+                    {
+                        var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+                        Application.Current.MainPage = new MainPage(volumeButtonService);
+                    }
+
                     //Application.Current.MainPage = new MainPage();
                     // await Shell.Current.GoToAsync("//Multimedia");
                     //await DisplayAlert("Success", "Guard successfully logged in.", "OK");
+
                 }
                 else
                 {

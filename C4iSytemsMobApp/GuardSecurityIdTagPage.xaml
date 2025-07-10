@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="C4iSytemsMobApp.GuardSecurityIdTagPage">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" Padding="20"          
+                  HorizontalOptions="Center"
+                  VerticalOptions="Fill"
+                  RowSpacing="10">
+
+        <!-- Main Content -->
+        <VerticalStackLayout Spacing="2" 
+                             Grid.Row="0"
+                             VerticalOptions="Start">
+            
+            <!-- Logged-in User -->
+            <HorizontalStackLayout 
+                Spacing="10">
+                <Label x:Name="lblLoggedInUser"
+                   Text="Welcome, Visy"
+                   FontAttributes="Bold"
+                   FontSize="18"
+                   TextColor="Blue"
+                   HorizontalOptions="Start"/>
+            </HorizontalStackLayout>
+
+            <!-- License Input and Remember Me -->
+            <VerticalStackLayout Spacing="1" 
+                                 VerticalOptions="Center">
+                <!-- License + Login Button side-by-side -->
+                <HorizontalStackLayout Spacing="10" 
+                                       VerticalOptions="Center">
+                    <Entry x:Name="txtLicenseNumber"
+                           Placeholder="Enter License Number"
+                           WidthRequest="250" 
+                           IsEnabled="False"/>
+
+                    <Button Text="Login"
+                            IsEnabled="False"
+                            VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+                <!-- Guard Name Label (Initially Hidden) -->
+                <Label x:Name="lblGuardName"
+                       Text=""
+                       TextColor="Green"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       IsVisible="True"/>   
+            </VerticalStackLayout>            
+        </VerticalStackLayout>
+        
+        
+        <!-- Badge Frame -->
+        <Frame BackgroundColor="Black"
+       Padding="5"
+       HorizontalOptions="Center"
+       HeightRequest="260"
+                   Grid.Row="1">
+
+            <VerticalStackLayout Spacing="10" HorizontalOptions="Center">
+
+                <!-- Inner Frame for Badge Look -->
+                <Frame BackgroundColor="Black"
+               BorderColor="White"
+               CornerRadius="5"
+               Padding="10"
+                HeightRequest="245"
+               WidthRequest="180"
+               HorizontalOptions="Center"
+                       VerticalOptions="Fill">
+
+                    <!-- Use Grid to control vertical alignment -->
+                    <Grid RowDefinitions="Auto,*,Auto"
+                  HorizontalOptions="Center"
+                  VerticalOptions="FillAndExpand"
+                  RowSpacing="0">
+
+                        <!-- Top Border -->
+                        <Border BackgroundColor="Black"
+                        StrokeShape="RoundRectangle 5"
+                        StrokeThickness="2"
+                        Stroke="White"
+                        WidthRequest="40"
+                        HeightRequest="10"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Start"
+                        Grid.Row="0" />
+
+                        <!-- Centered Badge Number -->
+                        <Label x:Name="lblBadgeNumber"
+                       Text="000"
+                       FontSize="64"
+                       FontFamily="ArielRoundBold"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       Grid.Row="1" />
+
+                        <!-- Bottom SECURITY Label -->
+                        <Label Text="SECURITY"
+                       FontSize="22"
+                       FontFamily="ArielRoundBold"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center"
+                       HorizontalOptions="Center"
+                       VerticalOptions="End"
+                       Grid.Row="2" />
+
+                    </Grid>
+                </Frame>
+            </VerticalStackLayout>
+        </Frame>
+
+
+        <!-- Picker for badge number -->
+        <Picker x:Name="numberPicker"
+                    Grid.Row="2"
+                    Title="Select Badge Number"
+                    SelectedIndexChanged="OnBadgeNumberChanged" />
+
+
+        <!-- Enter Logbook Button (Initially Hidden) -->
+        <Button x:Name="btnEnterLogbook"
+                    Grid.Row="3"
+                Text="Enter Logbook"
+                BackgroundColor="Green"
+                TextColor="White"
+                Clicked="OnEnterLogbookClicked"
+                IsEnabled="False"/>
+
+
+
+        <!-- Footer Logo -->
+        <Image Source="c4ilogo.jpg"
+           Aspect="AspectFit"
+           HeightRequest="50"
+           HorizontalOptions="Center"
+           VerticalOptions="End"
+           Grid.Row="4"/>
+
+    </Grid>
+</ContentPage>

@@ -1,6 +1,7 @@
 ﻿using C4iSytemsMobApp.Controls;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
+using C4iSytemsMobApp.Services;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Maui.Devices.Sensors;
 using System;
@@ -200,7 +201,7 @@ namespace C4iSytemsMobApp
 
 
                 if (DeviceInfo.Platform == DevicePlatform.Android)
-                {                    
+                {
                     if (_volumeButtonService != null)
                     {
                         _volumeButtonService.VolumeUpPressed += (s, e) =>
@@ -218,7 +219,7 @@ namespace C4iSytemsMobApp
                 }
 
                 if (DeviceInfo.Platform == DevicePlatform.iOS)
-                {                    
+                {
                     if (_volumeButtonService != null)
                     {
                         _volumeButtonService.VolumeUpPressed += (s, e) =>
@@ -584,98 +585,84 @@ namespace C4iSytemsMobApp
             // Validate User ID
             _userId = await TryGetSecureId("UserId", "User ID is invalid. Please log in again.");
             if (_userId == null) return;
+                       
+            var crowdControlSettingsService = IPlatformApplication.Current.Services.GetService<ICrowdControlServices>();
+            var settings = await crowdControlSettingsService.GetCrowdControlSettingsAsync(_clientSiteId.ToString());
 
-            string apiUrl = $"{AppConfig.ApiBaseUrl}CrowdCount/GetCrowdCountControlSettings?siteId={_clientSiteId}";
-
-            //var response = await _httpClient.GetFromJsonAsync<ClientSiteMobileAppSettings>(apiUrl);
-
-            using (HttpClient client = new HttpClient())
+            if (settings != null)
             {
-                var response = await client.GetAsync(apiUrl);
-                if (response.IsSuccessStatusCode)
+                _IsCrowdControlCounterEnabled = settings.IsCrowdCountEnabled;
+                ShowCounters = _IsCrowdControlCounterEnabled;
+                OnPropertyChanged(nameof(ShowCounters));
+
+
+                _crowdControllocationList = new List<DropdownItemsControl>();
+                int j = 1;
+                if (settings.IsDoorEnabled)
                 {
-                    var settings = await response.Content.ReadFromJsonAsync<ClientSiteMobileAppSettings>();
-                    if (settings != null)
+                    for (int i = 1; i <= settings.CounterQuantity; i++)
                     {
-                        _IsCrowdControlCounterEnabled = settings.IsCrowdCountEnabled;
-                        ShowCounters = _IsCrowdControlCounterEnabled;
-                        OnPropertyChanged(nameof(ShowCounters));
-
-
-                        _crowdControllocationList = new List<DropdownItemsControl>();
-                        int j = 1;
-                        if (settings.IsDoorEnabled)
-                        {
-                            for (int i = 1; i <= settings.CounterQuantity; i++)
-                            {
-                                _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Door {i:00}" });
-                                j++;
-                            }
-                        }
-                        if (settings.IsGateEnabled)
-                        {
-                            for (int i = 1; i <= settings.CounterQuantity; i++)
-                            {
-                                _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Gate {i:00}" });
-                                j++;
-                            }
-                        }
-                        if (settings.IsRoomEnabled)
-                        {
-                            for (int i = 1; i <= settings.CounterQuantity; i++)
-                            {
-                                _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Room {i:00}" });
-                                j++;
-                            }
-                        }
-                        if (settings.IsLevelFloorEnabled)
-                        {
-                            for (int i = 1; i <= settings.CounterQuantity; i++)
-                            {
-                                _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Level(Floor) {i:00}" });
-                                j++;
-                            }
-                        }
-
-                        CrowdControlLocationPicker.ItemsSource = _crowdControllocationList;
-                        CrowdControlLocationPicker.SelectedIndex = 0;
-
-                        // Disable picker if only one item
-                        CrowdControlLocationPicker.IsEnabled = _crowdControllocationList.Count > 1;
-                        if (_crowdControllocationList.Count == 1)
-                        {
-                            var selectedLocation = CrowdControlLocationPicker.SelectedItem as DropdownItemsControl;
-                            if (selectedLocation != null)
-                            {
-                                int locationId = selectedLocation.Id;
-                                string locationName = selectedLocation.Name;
-                                await SecureStorage.SetAsync("CrowdControlSelectedLocation", selectedLocation.Name);
-
-                                // Validate Client Site ID            
-                                if (_clientSiteId == null || _guardId == null || _userId == null)
-                                    return;
-
-                                MobileCrowdControlGuard mg = new MobileCrowdControlGuard()
-                                {
-                                    ClientSiteId = (int)_clientSiteId,
-                                    GuardId = (int)_guardId,
-                                    UserId = (int)_userId,
-                                    Location = locationName
-                                };
-
-                                UpdateGuardCrowdControlLocation(mg);
-                            }
-                        }
-
-                        LoadPickerValues();
-
+                        _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Door {i:00}" });
+                        j++;
                     }
                 }
-                else
+                if (settings.IsGateEnabled)
                 {
-                    string errorMessage = await response.Content.ReadAsStringAsync();
-                    // Handle error (log or show message)
+                    for (int i = 1; i <= settings.CounterQuantity; i++)
+                    {
+                        _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Gate {i:00}" });
+                        j++;
+                    }
                 }
+                if (settings.IsRoomEnabled)
+                {
+                    for (int i = 1; i <= settings.CounterQuantity; i++)
+                    {
+                        _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Room {i:00}" });
+                        j++;
+                    }
+                }
+                if (settings.IsLevelFloorEnabled)
+                {
+                    for (int i = 1; i <= settings.CounterQuantity; i++)
+                    {
+                        _crowdControllocationList.Add(new DropdownItemsControl() { Id = j, Name = $"Level(Floor) {i:00}" });
+                        j++;
+                    }
+                }
+
+                CrowdControlLocationPicker.ItemsSource = _crowdControllocationList;
+                CrowdControlLocationPicker.SelectedIndex = 0;
+
+                // Disable picker if only one item
+                CrowdControlLocationPicker.IsEnabled = _crowdControllocationList.Count > 1;
+                if (_crowdControllocationList.Count == 1)
+                {
+                    var selectedLocation = CrowdControlLocationPicker.SelectedItem as DropdownItemsControl;
+                    if (selectedLocation != null)
+                    {
+                        int locationId = selectedLocation.Id;
+                        string locationName = selectedLocation.Name;
+                        await SecureStorage.SetAsync("CrowdControlSelectedLocation", selectedLocation.Name);
+
+                        // Validate Client Site ID            
+                        if (_clientSiteId == null || _guardId == null || _userId == null)
+                            return;
+
+                        MobileCrowdControlGuard mg = new MobileCrowdControlGuard()
+                        {
+                            ClientSiteId = (int)_clientSiteId,
+                            GuardId = (int)_guardId,
+                            UserId = (int)_userId,
+                            Location = locationName
+                        };
+
+                        UpdateGuardCrowdControlLocation(mg);
+                    }
+                }
+
+                LoadPickerValues();
+
             }
 
             RefreshCounterDisplay();
@@ -825,13 +812,13 @@ namespace C4iSytemsMobApp
         private async void OnShowAllSiteCountersButtonControl(object sender, EventArgs e)
         {
             string apiUrl = $"{AppConfig.ApiBaseUrl}CrowdCount/GetCrowdCountControlDataAndSettings?siteId={_clientSiteId}";
-            using (HttpClient client = new HttpClient()) 
+            using (HttpClient client = new HttpClient())
             {
                 var response = await client.GetAsync(apiUrl);
                 if (response.IsSuccessStatusCode)
                 {
                     var settingsAndData = await response.Content.ReadFromJsonAsync<ClientSiteMobileCrowdControlDTO>();
-                    
+
                     if (settingsAndData != null && settingsAndData.CounterNameAndCount?.Any() == true)
                     {
                         // Clear existing rows (except header row with title and close button)
@@ -990,7 +977,7 @@ namespace C4iSytemsMobApp
             AllCrowdControlViewPopup.IsVisible = true;
         }
 
-                
+
         private void OnAllCounterSettingsPopupCloseClicked(object sender, EventArgs e)
         {
             AllCrowdControlViewPopup.IsVisible = false;

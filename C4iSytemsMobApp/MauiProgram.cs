@@ -1,4 +1,5 @@
 ﻿using C4iSytemsMobApp.Interface;
+using C4iSytemsMobApp.Services;
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using ZXing.Net.Maui.Controls;
@@ -22,6 +23,7 @@ public static class MauiProgram
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFont("Arlrdbd.ttf", "ArielRoundBold");
                 fonts.AddFont("fa-solid-900.ttf", "FontAwesome");
                 fonts.AddFont("fa-regular-400.ttf", "FontAwesomeRegular");
                 fonts.AddFont("fa-brands-400.ttf", "FontAwesomeBrands");
@@ -31,6 +33,7 @@ public static class MauiProgram
 
         // Register LoginPage with HttpClient dependency
         builder.Services.AddTransient<LoginPage>();
+        builder.Services.AddSingleton<ICrowdControlServices, CrowdControlServices>();
 
 #if ANDROID
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.Android.Services.VolumeButtonService>();
