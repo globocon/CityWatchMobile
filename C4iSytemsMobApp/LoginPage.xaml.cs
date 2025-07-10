@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Reflection;
+using C4iSytemsMobApp.Services;
 using Microsoft.Maui.Devices.Sensors;
 
 namespace C4iSytemsMobApp;
@@ -105,7 +106,8 @@ public partial class LoginPage : ContentPage
 
         if (loginResponse.IsSuccess)
         {
-            Application.Current.MainPage = new GuardLoginPage();
+            var crowdControlSettingsService = IPlatformApplication.Current.Services.GetService<ICrowdControlServices>();
+            Application.Current.MainPage = new GuardLoginPage(crowdControlSettingsService);
         }
         else
         {

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="C4iSytemsMobApp.GuardSecurityIdTagPage">
+
+    <!-- Grid with three main rows -->
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="20"
+          HorizontalOptions="Center"
+          VerticalOptions="Fill"
+          RowSpacing="10">
+
+        <!-- Main Content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="10" VerticalOptions="Start">
+
+                <!-- Welcome and Entry -->
+                <Label x:Name="lblLoggedInUser"
+                       Text="Welcome, Visy"
+                       FontAttributes="Bold"
+                       FontSize="18"
+                       TextColor="Blue"
+                       HorizontalOptions="Start"/>
+
+                <HorizontalStackLayout Spacing="10">
+                    <Entry x:Name="txtLicenseNumber"
+                           Placeholder="Enter License Number"
+                           WidthRequest="250"
+                           IsEnabled="False"/>
+                    <Button Text="Login"
+                            IsEnabled="False"
+                            VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <!-- Guard Name -->
+                <Label x:Name="lblGuardName"
+                       Text=""
+                       TextColor="Green"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       IsVisible="True"/>
+
+                <!-- Badge -->
+                <Frame BackgroundColor="Black"
+                       Padding="5"
+                       HorizontalOptions="Center"
+                       HeightRequest="260">
+
+                    <VerticalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Frame BackgroundColor="Black"
+                               BorderColor="White"
+                               CornerRadius="5"
+                               Padding="10"
+                               HeightRequest="245"
+                               WidthRequest="180"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Fill">
+
+                            <Grid RowDefinitions="Auto,*,Auto"
+                                  HorizontalOptions="Center"
+                                  VerticalOptions="FillAndExpand"
+                                  RowSpacing="0">
+
+                                <Border BackgroundColor="Black"
+                                        StrokeShape="RoundRectangle 5"
+                                        StrokeThickness="2"
+                                        Stroke="White"
+                                        WidthRequest="40"
+                                        HeightRequest="10"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Start"
+                                        Grid.Row="0" />
+
+                                <Label x:Name="lblBadgeNumber"
+                                       Text="000"
+                                       FontSize="64"
+                                       FontFamily="ArielRoundBold"
+                                       TextColor="White"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       Grid.Row="1" />
+
+                                <Label Text="SECURITY"
+                                       FontSize="22"
+                                       FontFamily="ArielRoundBold"
+                                       TextColor="White"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="End"
+                                       Grid.Row="2" />
+                            </Grid>
+                        </Frame>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Picker -->
+                <Picker x:Name="numberPicker"
+                        Title="Select Badge Number"
+                        SelectedIndexChanged="OnBadgeNumberChanged" />
+
+                <!-- Button -->
+                <Button x:Name="btnEnterLogbook"
+                        Text="Enter Logbook"
+                        BackgroundColor="Green"
+                        TextColor="White"
+                        Clicked="OnEnterLogbookClicked"
+                        IsEnabled="False"/>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Footer Logo at bottom -->
+        <Image Grid.Row="2"
+               Source="c4ilogo.jpg"
+               Aspect="AspectFit"
+               HeightRequest="50"
+               HorizontalOptions="Center"
+               VerticalOptions="End"/>
+    </Grid>
+</ContentPage>

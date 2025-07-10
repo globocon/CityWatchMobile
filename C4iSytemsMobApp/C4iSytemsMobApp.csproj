@@ -73,6 +73,9 @@
 	  <Compile Update="DownloadsHome.xaml.cs">
 	    <DependentUpon>DownloadsHome.xaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="GuardSecurityIdTagPage.xaml.cs">
+	    <DependentUpon>GuardSecurityIdTagPage.xaml</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -86,6 +89,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="DownloadsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="GuardSecurityIdTagPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="GuardLoginPage.xaml">
