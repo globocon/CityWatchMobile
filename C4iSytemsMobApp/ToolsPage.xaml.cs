@@ -51,22 +51,25 @@ public partial class ToolsPage : ContentPage
 
 
 
-    private async void OnHyperlinkTapped(object sender, EventArgs e)
+   
+   private async void OnHyperlinkTapped(object sender, EventArgs e)
     {
-        if (sender is Label label && Uri.TryCreate(label.Text, UriKind.Absolute, out var uri))
+        if (sender is Label label && !string.IsNullOrWhiteSpace(label.Text) &&
+            Uri.TryCreate(label.Text.Trim(), UriKind.Absolute, out var uri))
         {
-            await Launcher.OpenAsync(uri);
+            await Browser.Default.OpenAsync(uri, BrowserLaunchMode.SystemPreferred);
         }
     }
 
 
-  
+
 
     private async void OnHyperlinkIconClicked(object sender, EventArgs e)
     {
         if (sender is ImageButton btn && btn.CommandParameter is string url && !string.IsNullOrWhiteSpace(url))
         {
-            await Launcher.Default.OpenAsync(url);
+            Uri uri = new Uri(url);
+            await Browser.Default.OpenAsync(uri, BrowserLaunchMode.SystemPreferred);
         }
     }
 
