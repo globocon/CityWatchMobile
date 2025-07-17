@@ -24,10 +24,19 @@ public partial class GuardSecurityIdTagPage : ContentPage
             {
                 lblGuardName.Text = $"Hello {savedGuardName}. Please select your badge number and click Enter Log Book";
             }
+
+            var savedBadgeNumber = await SecureStorage.GetAsync("GuardSelectedBadgeNumber");
+            if (!string.IsNullOrEmpty(savedBadgeNumber))
+            {
+                // Set initial badge number
+                lblBadgeNumber.Text = savedBadgeNumber;
+                numberPicker.SelectedItem = savedBadgeNumber;                
+            }
         }
         catch (Exception ex)
         {
             // Optional: log or display error
+            Debug.WriteLine($"Error loading badge number: {ex.Message}");
         }
     }
 
