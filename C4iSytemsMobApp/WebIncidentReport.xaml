@@ -544,31 +544,27 @@ TextColor="Black" />
 
                             <!-- Text Area -->
                             <Label Text="Description" FontSize="14" HorizontalOptions="Start" />
-
-                        <ScrollView Orientation="Vertical" HeightRequest="150">
+                        <Frame BorderColor="Gray"
+       CornerRadius="6"
+       Padding="0"
+       HasShadow="False"
+       HeightRequest="150">
+                            <ScrollView Orientation="Vertical" HeightRequest="150">
                             <Editor 
-        x:Name="descriptionEditor"
-        Placeholder="Enter details here..."
-        FontSize="14"
-        BackgroundColor="White"
-        TextColor="Black"
-        VerticalOptions="Start"
-        HorizontalOptions="FillAndExpand"
-        Margin="0"
-        IsTextPredictionEnabled="True" />
-                        </ScrollView>
-                        <!--<Editor 
     x:Name="descriptionEditor"
     Placeholder="Enter details here..."
     FontSize="14"
-    AutoSize="TextChanges"
-    HeightRequest="100"
     BackgroundColor="White"
     TextColor="Black"
     VerticalOptions="Start"
     HorizontalOptions="FillAndExpand"
+    HeightRequest="250" 
     Margin="0"
-    IsTextPredictionEnabled="True" />-->
+    IsTextPredictionEnabled="True"
+    AutoSize="Disabled" />
+                        </ScrollView>
+                        </Frame>
+                       
 
                             <!-- Text Field instead of Dropdown -->
                             <Label Text="Supervisor or person you reported this to and/or will email:" FontSize="14" HorizontalOptions="Start" />

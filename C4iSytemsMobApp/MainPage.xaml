@@ -13,8 +13,8 @@
 
     <AbsoluteLayout>
 
-        <StackLayout Padding="10,0,0,0">
-            <!-- Adds Left Padding -->
+        <!--<StackLayout Padding="10,0,0,0">
+            --><!-- Adds Left Padding --><!--
             <Frame Padding="5,5,5,5"
                    CornerRadius="10"
                    HasShadow="True"
@@ -37,12 +37,45 @@
                            FontAttributes="Bold" />
                 </StackLayout>
             </Frame>
+        </StackLayout>-->
+
+
+
+        <StackLayout Padding="5,0,5,0"
+      AbsoluteLayout.LayoutBounds="0,0,1,AutoSize"
+      AbsoluteLayout.LayoutFlags="WidthProportional">
+            <Frame Padding="5"
+    CornerRadius="10"
+    HasShadow="True"
+    HeightRequest="35"
+    HorizontalOptions="FillAndExpand">
+                <Frame.Background>
+                    <LinearGradientBrush>
+                        <GradientStop Color="#FFFFFF" Offset="0.0" />
+                        <GradientStop Color="#F0F0F0" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Frame.Background>
+
+                <!-- Fill and center vertically -->
+                <StackLayout Spacing="0"
+              VerticalOptions="CenterAndExpand"
+              HorizontalOptions="FillAndExpand">
+                    <Label x:Name="lblClientSite"
+            Text="Client Site: N/A"
+            FontSize="12"
+            TextColor="Black"
+            FontAttributes="Bold"
+            VerticalOptions="Center"
+            HorizontalOptions="Start" />
+                </StackLayout>
+            </Frame>
         </StackLayout>
+
 
 
         <!-- Main Content Grid -->
         <Grid ColumnDefinitions="*,*"
-              Padding="5,0,5,10"
+              Padding="5,0,5,0"
               RowSpacing="2"
               ColumnSpacing="2"
               AbsoluteLayout.LayoutBounds="0,0,1,1"
@@ -60,14 +93,17 @@
             <!-- Hamburger Menu -->
 
             <StackLayout Grid.Row="0"
-                         Grid.ColumnSpan="2"
-                         Orientation="Horizontal"
-                         HorizontalOptions="End">
+ Grid.ColumnSpan="2"
+ Orientation="Horizontal"
+ HorizontalOptions="End"
+ HeightRequest="60"
+ Padding="0">
                 <ImageButton Source="hamburger.png"
-                             WidthRequest="40"
-                             HeightRequest="40"
-                             BackgroundColor="Transparent"
-                             Clicked="OnMenuClicked" />
+     WidthRequest="30"
+     HeightRequest="30"
+     BackgroundColor="Transparent"
+     TranslationY="-12"
+     Clicked="OnMenuClicked" />
             </StackLayout>
 
             <!-- Incident Report Button -->
