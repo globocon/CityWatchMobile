@@ -30,6 +30,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     public ObservableCollection<FeedbackTemplateViewModel> ColourCodeList { get; set; } = new();
     public ObservableCollection<string> TemplateTypesList { get; set; } = new();
     public ObservableCollection<FeedbackTemplateViewModel> FilteredTemplatesList { get; set; } = new();
+    public ObservableCollection<string> NotifiedByList { get; set; } = new();
 
     private ClientSite _currentClientSite;
 
@@ -145,6 +146,10 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     }
 
 
+
+    
+
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -152,7 +157,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         try
         {
             await LoadFeedbackTemplates();
-
+            await LoadNotifiedByListAsync();
             var clientTypeRaw = await SecureStorage.GetAsync("ClientSite");
             var clientSite = await GetClientSiteByName(clientTypeRaw);
             await LoadClientAreas(clientSite.Id);
@@ -193,6 +198,46 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         //viewModel.Suggestions.Clear();
         //viewModel.IsSuggestionsVisible = false;
     }
+
+
+
+    public async Task LoadNotifiedByListAsync()
+    {
+        using var httpClient = new HttpClient();
+        var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetNotifiedByList";
+
+        var response = await httpClient.GetAsync(url);
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<List<string>>();
+            if (result != null)
+            {
+                NotifiedByList.Clear();
+                foreach (var item in result)
+                {
+                    NotifiedByList.Add(item);
+                }
+            }
+        }
+    }
+
+
+    private void NotifiedByPicker_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (NotifiedByPicker.SelectedIndex >= 0)
+        {
+            var selectedText = NotifiedByPicker.SelectedItem as string;
+
+            // Set selected text in Entry
+            NotifiedByEntry.Text = selectedText;
+
+            // Clear the Picker selection to hide it from Picker UI
+            NotifiedByPicker.SelectedIndex = -1;
+        }
+    }
+
+
+
 
     public async Task<ClientSite> GetClientSiteByName(string name)
     {
@@ -569,7 +614,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
 
             LoadingOverlay.IsVisible = true; // Show loader
-            var selectedNotifiedBy = NotifiedByPicker.SelectedItem as string ?? string.Empty;
+            var selectedNotifiedBy = NotifiedByEntry.Text;
 
             string clientArea = null;
 
@@ -719,8 +764,8 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 var staticBaseUrl = "https://cws-ir.com/Pdf/ToDropbox/";
                 var fullDownloadUrl = $"{staticBaseUrl}{Uri.EscapeDataString(result.FileName)}";
 
-                Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl));
-               
+                Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, (result?.Domin)));
+
             }
             else
             {
@@ -829,6 +874,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     {
         public bool Success { get; set; }
         public string FileName { get; set; }
+        public string Domin { get; set; }
         public List<ProcessIrError> Errors { get; set; }
     }
 

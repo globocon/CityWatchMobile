@@ -4,13 +4,18 @@ namespace C4iSytemsMobApp;
 
 public partial class DownloadIr : ContentPage
 {
-    private readonly string _downloadUrl;
-    public DownloadIr(string downloadUrl)
+    private readonly string _downloadUrl;    
+    private string _thirdPartyDomain;
+    public DownloadIr(string downloadUrl,string thirdPartyDomin)
 	{
         InitializeComponent();
         _downloadUrl = downloadUrl;
+        _thirdPartyDomain = thirdPartyDomin;
 
-        
+        string hqName = !string.IsNullOrWhiteSpace(_thirdPartyDomain) ? _thirdPartyDomain : "CityWatch HQ";
+
+        ThankYouLabel.Text = $"Thank you! Your report has been emailed to {hqName} and, if needed, to the client as well.";
+
     }
     private async void OnDownloadClicked(object sender, EventArgs e)
     {

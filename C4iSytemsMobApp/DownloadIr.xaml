@@ -47,12 +47,13 @@
                 HorizontalOptions="Center" />
 
         <!-- Thank You Note -->
-        <Label Text="Thank you! Your report has been emailed to CityWatch HQ and, if needed, to the client as well."
-               FontSize="14"
-               TextColor="Black"
-               HorizontalTextAlignment="Center" />
+            <Label x:Name="ThankYouLabel"
+       Text="Thank you! Your report has been emailed to CityWatch HQ and, if needed, to the client as well."
+       FontSize="14"
+       TextColor="Black"
+       HorizontalTextAlignment="Center" />
 
-        <!-- Mental Health Info -->
+            <!-- Mental Health Info -->
         <Label Text="Some incidents may be traumatic. Mental Health and EAP resources are available in the Tools menu."
                FontSize="13"
                TextColor="Gray"

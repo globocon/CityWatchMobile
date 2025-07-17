@@ -57,7 +57,7 @@ TextColor="Black" />
 
                                 <HorizontalStackLayout Spacing="1">
                                     <CheckBox x:Name="chkOhsMatters" VerticalOptions="Center"/>
-                                    <Label Text="OH and S matters; 'near misses'; onsite injuries" 
+                                <Label Text="OH&amp;S matters; 'near misses'; onsite injuries" 
                                    VerticalOptions="Center" FontSize="12"/>
                                 </HorizontalStackLayout>
 
@@ -249,30 +249,33 @@ TextColor="Black" />
                             <Label Text="Notified By" FontSize="16" FontAttributes="Bold" 
                HorizontalOptions="Center" Padding="3"/>
 
-                            <Picker x:Name="NotifiedByPicker" Title="Select Notified By" HorizontalOptions="Fill">
-                                <Picker.ItemsSource>
-                                    <x:Array Type="{x:Type x:String}">
-                                        <x:String>AMSEC</x:String>
-                                        <x:String>ASCOM</x:String>
-                                        <x:String>C4i System</x:String>
-                                        <x:String>CAMS S/W</x:String>
-                                        <x:String>Client:</x:String>
-                                        <x:String>CWS-Bruno</x:String>
-                                        <x:String>CWS-CRO</x:String>
-                                        <x:String>CWS-Richard</x:String>
-                                        <x:String>CWS-Rocky</x:String>
-                                        <x:String>CWS-Sharon</x:String>
-                                        <x:String>Emergency SVC</x:String>
-                                        <x:String>FlightRADAR24</x:String>
-                                        <x:String>M1-Sunny</x:String>
-                                        <x:String>No One (Myself)</x:String>
-                                        <x:String>OZLAND</x:String>
-                                        <x:String>SAMS (IMG)</x:String>
-                                    </x:Array>
-                                </Picker.ItemsSource>
-                            </Picker>
 
-                        </VerticalStackLayout>
+
+
+
+
+
+
+                        <StackLayout>
+
+                            <Entry x:Name="NotifiedByEntry" 
+           Placeholder="Select or type Notified By" 
+           Text="{Binding NotifiedByInput, Mode=TwoWay}" />
+
+
+                            <Picker x:Name="NotifiedByPicker"
+            Title="Or select from list"
+            ItemsSource="{Binding NotifiedByList}"
+            SelectedIndexChanged="NotifiedByPicker_SelectedIndexChanged" />
+                        </StackLayout>
+
+
+
+
+
+
+
+                    </VerticalStackLayout>
                     </Frame>
 
 
@@ -541,7 +544,20 @@ TextColor="Black" />
 
                             <!-- Text Area -->
                             <Label Text="Description" FontSize="14" HorizontalOptions="Start" />
+
+                        <ScrollView Orientation="Vertical" HeightRequest="150">
                             <Editor 
+        x:Name="descriptionEditor"
+        Placeholder="Enter details here..."
+        FontSize="14"
+        BackgroundColor="White"
+        TextColor="Black"
+        VerticalOptions="Start"
+        HorizontalOptions="FillAndExpand"
+        Margin="0"
+        IsTextPredictionEnabled="True" />
+                        </ScrollView>
+                        <!--<Editor 
     x:Name="descriptionEditor"
     Placeholder="Enter details here..."
     FontSize="14"
@@ -552,7 +568,7 @@ TextColor="Black" />
     VerticalOptions="Start"
     HorizontalOptions="FillAndExpand"
     Margin="0"
-    IsTextPredictionEnabled="True" />
+    IsTextPredictionEnabled="True" />-->
 
                             <!-- Text Field instead of Dropdown -->
                             <Label Text="Supervisor or person you reported this to and/or will email:" FontSize="14" HorizontalOptions="Start" />
