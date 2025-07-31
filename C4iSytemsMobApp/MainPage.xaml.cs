@@ -951,7 +951,7 @@ namespace C4iSytemsMobApp
                         var tillDatecounter = new AnimatedCounter
                         {
                             Padding = 5,
-                            Value = settingsAndData.TotalCount,
+                            Value = settingsAndData.TillDateCount,
                             HorizontalOptions = LayoutOptions.Center,
                             VerticalOptions = LayoutOptions.Center
                         };
