@@ -328,7 +328,7 @@ public partial class GuardLoginPage : ContentPage
                 string errorResponse = await response.Content.ReadAsStringAsync();
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    lblGuardName.Text = $"Invalid License Number. {errorResponse}";
+                    lblGuardName.Text = $"{errorResponse ?? "Error: Invalid License Number."}";
                     lblGuardName.TextColor = Colors.Red;
                     lblGuardName.IsVisible = true;
                 });

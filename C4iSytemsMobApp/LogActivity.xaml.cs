@@ -59,7 +59,9 @@ public partial class LogActivity : ContentPage
         try
         {
             ButtonContainer.Children.Clear(); // Clear previous items if reloading
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivities?type=2";
+            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+            
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivities?type=2&siteid={clientSiteId}";
 
             HttpResponseMessage response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode)
