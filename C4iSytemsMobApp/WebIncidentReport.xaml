@@ -455,7 +455,7 @@ TextColor="Black" />
     FontSize="14"
     BackgroundColor="White"
     TextColor="Black"
-    HeightRequest="40" />
+    HeightRequest="40" IsEnabled="{Binding IsSearchEnabled}" />
 
 
                             <CollectionView
