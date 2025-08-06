@@ -7,14 +7,22 @@ namespace C4iSytemsMobApp;
 public partial class GuardSecurityIdTagPage : ContentPage
 {
     private readonly HttpClient _httpClient;
+    private int? _clientSiteId;
+    private int? _userId;
+    private int? _guardId;
+    private string savedLicenseNumber;
+    private string savedGuardName;
+    private string savedBadgeKeyName;
     protected override async void OnAppearing()
     {
         base.OnAppearing();
 
         try
         {
-            var savedLicenseNumber = await SecureStorage.GetAsync("SavedLicenseNumber");
-            var savedGuardName = await SecureStorage.GetAsync("GuardName");
+            await GetStoredParameters();
+            savedBadgeKeyName = $"{_clientSiteId}_{_guardId}_GuardSelectedBadgeNumber";
+
+
             if (!string.IsNullOrEmpty(savedLicenseNumber))
             {
                 txtLicenseNumber.Text = savedLicenseNumber;      
@@ -25,7 +33,7 @@ public partial class GuardSecurityIdTagPage : ContentPage
                 lblGuardName.Text = $"Hello {savedGuardName}. Please select your badge number and click Enter Log Book";
             }
 
-            var savedBadgeNumber = await SecureStorage.GetAsync("GuardSelectedBadgeNumber");
+            var savedBadgeNumber = await SecureStorage.GetAsync(savedBadgeKeyName);
             if (!string.IsNullOrEmpty(savedBadgeNumber))
             {
                 // Set initial badge number
@@ -64,7 +72,28 @@ public partial class GuardSecurityIdTagPage : ContentPage
 
     }
 
+    private async Task GetStoredParameters()
+    {
+        // Validate Client Site ID
+        _clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+        _guardId = await TryGetSecureId("GuardId", "Guard ID not found. Please validate the License Number first.");       
+        _userId = await TryGetSecureId("UserId", "User ID is invalid. Please log in again.");    
+        savedLicenseNumber = await SecureStorage.GetAsync("SavedLicenseNumber");
+        savedGuardName = await SecureStorage.GetAsync("GuardName");
 
+    }
+    private async Task<int?> TryGetSecureId(string key, string errorMessage)
+    {
+        string idString = await SecureStorage.GetAsync(key);
+
+        if (string.IsNullOrWhiteSpace(idString) || !int.TryParse(idString, out int id) || id <= 0)
+        {
+            await DisplayAlert("Validation Error", errorMessage, "OK");
+            return null;
+        }
+
+        return id;
+    }
 
 
     private async void LoadLoggedInUser()
@@ -95,7 +124,7 @@ public partial class GuardSecurityIdTagPage : ContentPage
             SecureStorage.Remove("UserId");
             SecureStorage.Remove("UserName");
             SecureStorage.Remove("UserRole");
-            SecureStorage.Remove("GuardSelectedBadgeNumber");
+            
 
             Application.Current.MainPage = new LoginPage();
 
@@ -138,7 +167,7 @@ public partial class GuardSecurityIdTagPage : ContentPage
             {
                 // Save the selected badge number securely
                 var selectedBadgeNumber = numberPicker.Items[numberPicker.SelectedIndex];
-                await SecureStorage.SetAsync("GuardSelectedBadgeNumber", selectedBadgeNumber);
+                await SecureStorage.SetAsync(savedBadgeKeyName, selectedBadgeNumber);
             }
             else
             {
@@ -158,20 +187,5 @@ public partial class GuardSecurityIdTagPage : ContentPage
     }
 
 
-
-
-
-
 }
 
-//// Model class for API response
-//public class GuardResponse
-//{
-//    public string Name { get; set; }
-//    public int GuardId { get; set; }
-//}
-//public class DropdownItem
-//{
-//    public int Id { get; set; }
-//    public string Name { get; set; }
-//}
