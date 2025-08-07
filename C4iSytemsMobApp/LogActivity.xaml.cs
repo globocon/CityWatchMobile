@@ -653,12 +653,12 @@ public partial class LogActivity : ContentPage
             }
             catch (Exception ex)
             {
-                await ShowToastMessage($"Error: {ex.Message}");
+                //await ShowToastMessage($"Error: {ex.Message}");
             }
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+            //await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
         }
     }
 
@@ -719,7 +719,7 @@ public partial class LogActivity : ContentPage
         }
         catch (Exception ex)
         {
-            await ShowToastMessage($"Error: {ex.Message}");
+            //await ShowToastMessage($"Error: {ex.Message}");
         }
 
     }
