@@ -1,7 +1,9 @@
 using C4iSytemsMobApp.Interface;
+using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+
 
 
 namespace C4iSytemsMobApp;
@@ -13,15 +15,30 @@ public partial class LogActivity : ContentPage
     private List<int> _lastLogIds = new();
     private CancellationTokenSource _delayCancellationTokenSource;
     private List<GuardLogDto> _lastLogs = new();
+    public ObservableCollection<MyFileModel> SelectedFiles { get; set; }
+     = new ObservableCollection<MyFileModel>();
     public LogActivity()
     {
         InitializeComponent();
         NavigationPage.SetHasNavigationBar(this, false);
         LoadActivities();
         //LoadLogs();
-       
-    }
+        FilesCollection.ItemsSource = SelectedFiles;
 
+    
+
+    }
+    private void PopupOverlay_SizeChanged(object sender, EventArgs e)
+    {
+        if (PopupOverlay.Width > 0)
+        {
+            // Make popup width 90% of screen width
+            MyPopupFrame.WidthRequest = PopupOverlay.Width * 0.9;
+
+            // Optional: Limit height to 80% of screen height
+            MyPopupFrame.HeightRequest = PopupOverlay.Height * 0.8;
+        }
+    }
 
     protected override void OnAppearing()
     {
@@ -179,7 +196,7 @@ public partial class LogActivity : ContentPage
                 }
                 };
 
-                // Notes / IR handling (unchanged)
+                // Notes / IR handling
                 Label noteLabel;
                 if (log.IrEntryType == true)
                 {
@@ -240,18 +257,88 @@ public partial class LogActivity : ContentPage
                 }
                 else
                 {
-                    noteLabel = new Label
+                    var noteText = log.Notes ?? "";
+
+                    if (noteText.Contains("Mob app image upload", StringComparison.OrdinalIgnoreCase))
                     {
-                        Text = log.Notes ?? "",
-                        LineBreakMode = LineBreakMode.WordWrap,
-                        TextColor = Colors.Black,
-                        FontSize = 12,
-                        Margin = new Thickness(0, 0, 0, 10)
-                    };
+                        var formattedText = new FormattedString();
+
+                        // Add the main text first
+                        formattedText.Spans.Add(new Span
+                        {
+                            Text = "Mob app image upload\n",
+                            TextColor = Colors.Black,
+                            FontSize = 12
+                        });
+
+                        // Find all links like <a href="url">filename</a>
+                        var regex = new System.Text.RegularExpressions.Regex(
+                            "<a\\s+href=\\\"(?<url>[^\\\"]+)\\\"[^>]*>(?<text>[^<]+)</a>",
+                            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                        foreach (System.Text.RegularExpressions.Match match in regex.Matches(noteText))
+                        {
+                            var url2 = match.Groups["url"].Value;
+                            var linkText = match.Groups["text"].Value;
+
+                            // Add prefix text
+                            formattedText.Spans.Add(new Span
+                            {
+                                Text = "See attached file ",
+                                TextColor = Colors.Black,
+                                FontSize = 12
+                            });
+
+                            var linkSpan = new Span
+                            {
+                                Text = linkText + "\n",
+                                TextColor = Colors.Blue,
+                                FontSize = 12,
+                                TextDecorations = TextDecorations.Underline
+                            };
+
+                            var tapGesture = new TapGestureRecognizer();
+                            tapGesture.Tapped += async (s, e) =>
+                            {
+                                try
+                                {
+                                    await Browser.Default.OpenAsync(url2, BrowserLaunchMode.SystemPreferred);
+                                }
+                                catch
+                                {
+                                    await Application.Current.MainPage.DisplayAlert("Error", "Unable to open link.", "OK");
+                                }
+                            };
+
+                            linkSpan.GestureRecognizers.Add(tapGesture);
+                            formattedText.Spans.Add(linkSpan);
+                        }
+
+                        noteLabel = new Label
+                        {
+                            FormattedText = formattedText,
+                            LineBreakMode = LineBreakMode.WordWrap,
+                            Margin = new Thickness(0, 0, 0, 10)
+                        };
+                    }
+                    else
+                    {
+                        // Original fallback
+                        noteLabel = new Label
+                        {
+                            Text = noteText,
+                            LineBreakMode = LineBreakMode.WordWrap,
+                            TextColor = Colors.Black,
+                            FontSize = 12,
+                            Margin = new Thickness(0, 0, 0, 10)
+                        };
+                    }
                 }
 
+                // add noteLabel once, outside the if/else
                 contentLayout.Children.Add(noteLabel);
 
+                // Images (unchanged)
                 foreach (var imageUrl in log.ImageUrls ?? Enumerable.Empty<string>())
                 {
                     if (!string.IsNullOrWhiteSpace(imageUrl))
@@ -294,6 +381,7 @@ public partial class LogActivity : ContentPage
             await DisplayAlert("Error", $"An error occurred while loading logs: {ex.Message}", "OK");
         }
     }
+
 
 
 
@@ -831,8 +919,279 @@ public partial class LogActivity : ContentPage
         return true;
     }
 
+
+    private void ShowPopup()
+    {
+        PopupOverlay.IsVisible = true;
+    }
+
+   
+
+    private void OnCameraClicked(object sender, EventArgs e)
+    {
+        // Show the popup when camera button is clicked
+        ShowPopup();
+    }
+
+
+
+
+
+    private void OnOpenPopupClicked(object sender, EventArgs e)
+    {
+        PopupOverlay.IsVisible = true;
+    }
+
+
+
+    private void OnCheckboxCheckedChanged(object sender, CheckedChangedEventArgs e)
+    {
+        if (!(sender is CheckBox changedCheckBox))
+            return;
+
+        // If this checkbox is checked
+        if (e.Value)
+        {
+            // Uncheck the other checkbox
+            if (changedCheckBox == chkRearFullPage)
+                chkWithinField.IsChecked = false;
+            else if (changedCheckBox == chkWithinField)
+                chkRearFullPage.IsChecked = false;
+        }
+        else
+        {
+            // If both are unchecked, default to WithinField
+            if (!chkRearFullPage.IsChecked && !chkWithinField.IsChecked)
+                chkWithinField.IsChecked = true;
+        }
+    }
+    private async void OnPickFileClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var results = await FilePicker.PickMultipleAsync(); // Multiple files
+            if (results != null && results.Any())
+            {
+                // Allowed file extensions
+                string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+
+                // Determine the file type based on the checkboxes
+                string fileType = chkRearFullPage.IsChecked ? "rear" : "twentyfive";
+
+                foreach (var file in results)
+                {
+                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
+                        continue; // Skip this file
+                    }
+
+                    SelectedFiles.Add(new MyFileModel
+                    {
+                        File = file,
+                        FileType = fileType
+                    });
+                }
+            }
+
+            // Show the file list only if it has items
+            FilesCollection.IsVisible = SelectedFiles.Any();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
+        }
+    }
+
+
+
+
+    private async void OnDownloadFileClicked(object sender, EventArgs e)
+    {
+        if (sender is Button btn && btn.BindingContext is FileResult file)
+        {
+            await DisplayAlert("Download", $"Simulating download of {file.FileName}", "OK");
+            // TODO: Add your actual download logic
+        }
+    }
+
+    private void OnDeleteFileClicked(object sender, EventArgs e)
+    {
+        if (sender is Button btn && btn.BindingContext is MyFileModel file)
+        {
+            var files = (ObservableCollection<MyFileModel>)FilesCollection.ItemsSource;
+            files.Remove(file);
+
+            // Hide the list if no files remain
+            FilesCollection.IsVisible = files.Any();
+        }
+    }
+
+    //    private async void OnSaveAndCloseClicked(object sender, EventArgs e)
+    //    {
+    //        try
+    //        {
+    //            using var client = new HttpClient();
+
+    //            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+    //            if (guardId <= 0 || clientSiteId <= 0 || userId <= 0)
+    //            {
+    //                await DisplayAlert("Error", "Invalid session. Please login again.", "OK");
+    //                return;
+    //            }
+
+    //            //  Build ONE multipart content for all files
+    //            var content = new MultipartFormDataContent
+    //        {
+    //            { new StringContent("rear"), "type" }, // or "twentyfive"
+    //            { new StringContent(guardId.ToString()), "guardId" },
+    //            { new StringContent(AppConfig.ApiBaseUrl), "url" }
+    //        };
+
+    //            //Add all files into the same request
+    //            foreach (var file in SelectedFiles)
+    //            {
+    //                if (file == null)
+    //                    continue;
+
+    //                var stream = await file.OpenReadAsync();
+    //                var fileContent = new StreamContent(stream);
+    //                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+    //                content.Add(fileContent, "files", file.FileName);
+    //                // "files" should match your backend handler's expected parameter name
+    //            }
+
+    //            //Send one request with all files
+    //            var uploadResponse = await client.PostAsync(
+    //    $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
+    //    content
+    //);
+
+    //            if (!uploadResponse.IsSuccessStatusCode)
+    //            {
+    //                await DisplayAlert("Error", "One or more files failed to upload.", "OK");
+    //            }
+    //            else
+    //            {
+    //                // Clear files only after successful upload
+    //                SelectedFiles.Clear();
+    //                await DisplayAlert("Success", "Activity saved and all files uploaded successfully.", "OK");
+    //            }
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            await DisplayAlert("Error", $"Save & Close failed: {ex.Message}", "OK");
+    //        }
+    //    }
+
+
+    private async void OnSaveAndCloseClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+
+            using var client = new HttpClient();
+            var content = new MultipartFormDataContent();
+
+            // Add files + types (same index order)
+            foreach (var fileModel in SelectedFiles)
+            {
+                var stream = await fileModel.File.OpenReadAsync();
+                var fileContent = new StreamContent(stream);
+                fileContent.Headers.ContentType =
+                    new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+                // Add file
+                content.Add(fileContent, "files", fileModel.File.FileName);
+
+                // Add matching type (rear / twentyfive / etc.)
+                content.Add(new StringContent(fileModel.FileType), "types");
+            }
+
+            // Add other form data
+            content.Add(new StringContent(guardId.ToString()), "guardId");
+            content.Add(new StringContent(clientSiteId.ToString()), "clientsiteId");
+            content.Add(new StringContent(userId.ToString()), "userId");
+            content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+
+            // Send request
+            var uploadResponse = await client.PostAsync(
+                $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
+                content
+            );
+
+            if (!uploadResponse.IsSuccessStatusCode)
+            {
+                await DisplayAlert("Error", "One or more files failed to upload.", "OK");
+            }
+            else
+            {
+                SelectedFiles.Clear();
+                await DisplayAlert("Success", "All files uploaded successfully.", "OK");
+
+                // Small delay for smoother UI transition
+                await Task.Delay(300);
+
+                // Hide popup
+                PopupOverlay.IsVisible = false;
+
+                // Reset checkboxes to default values
+                chkRearFullPage.IsChecked = false;
+                chkWithinField.IsChecked = true;
+
+                // Clear the file list
+                if (FilesCollection.ItemsSource is ObservableCollection<MyFileModel> files)
+                {
+                    files.Clear();
+                }
+
+                // Hide the file list control
+                FilesCollection.IsVisible = false;
+
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Save & Close failed: {ex.Message}", "OK");
+        }
+    }
+
+
+
+
+
+    private void OnClosePopupClicked(object sender, EventArgs e)
+    {
+        // Hide the popup
+        PopupOverlay.IsVisible = false;
+
+        // Reset checkboxes to default values
+        chkRearFullPage.IsChecked = false;
+        chkWithinField.IsChecked = true;
+
+        // Clear the file list
+        if (FilesCollection.ItemsSource is ObservableCollection<MyFileModel> files)
+        {
+            files.Clear();
+        }
+
+        // Hide the file list
+        FilesCollection.IsVisible = false;
+    }
+
 }
 
+
+public class MyFileModel
+{
+    public FileResult File { get; set; }
+    public string FileType { get; set; }  // rear / twentyfive / etc
+    public string FileName => File?.FileName; // <-- useful for UI binding
+}
 public class ActivityModel
 {
     public int Id { get; set; }
