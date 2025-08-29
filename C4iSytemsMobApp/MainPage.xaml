@@ -14,7 +14,9 @@
     <AbsoluteLayout>
 
         <!--<StackLayout Padding="10,0,0,0">
-            --><!-- Adds Left Padding --><!--
+            -->
+        <!-- Adds Left Padding -->
+        <!--
             <Frame Padding="5,5,5,5"
                    CornerRadius="10"
                    HasShadow="True"
@@ -42,31 +44,33 @@
 
 
         <StackLayout Padding="5,0,5,0"
-      AbsoluteLayout.LayoutBounds="0,0,1,AutoSize"
-      AbsoluteLayout.LayoutFlags="WidthProportional">
+                     AbsoluteLayout.LayoutBounds="0,0,1,AutoSize"
+                     AbsoluteLayout.LayoutFlags="WidthProportional">
             <Frame Padding="5"
-    CornerRadius="10"
-    HasShadow="True"
-    HeightRequest="35"
-    HorizontalOptions="FillAndExpand">
+                   CornerRadius="10"
+                   HasShadow="True"
+                   HeightRequest="35"
+                   HorizontalOptions="FillAndExpand">
                 <Frame.Background>
                     <LinearGradientBrush>
-                        <GradientStop Color="#FFFFFF" Offset="0.0" />
-                        <GradientStop Color="#F0F0F0" Offset="1.0" />
+                        <GradientStop Color="#FFFFFF"
+                                      Offset="0.0" />
+                        <GradientStop Color="#F0F0F0"
+                                      Offset="1.0" />
                     </LinearGradientBrush>
                 </Frame.Background>
 
                 <!-- Fill and center vertically -->
                 <StackLayout Spacing="0"
-              VerticalOptions="CenterAndExpand"
-              HorizontalOptions="FillAndExpand">
+                             VerticalOptions="CenterAndExpand"
+                             HorizontalOptions="FillAndExpand">
                     <Label x:Name="lblClientSite"
-            Text="Client Site: N/A"
-            FontSize="12"
-            TextColor="Black"
-            FontAttributes="Bold"
-            VerticalOptions="Center"
-            HorizontalOptions="Start" />
+                           Text="Client Site: N/A"
+                           FontSize="12"
+                           TextColor="Black"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Start" />
                 </StackLayout>
             </Frame>
         </StackLayout>
@@ -93,17 +97,17 @@
             <!-- Hamburger Menu -->
 
             <StackLayout Grid.Row="0"
- Grid.ColumnSpan="2"
- Orientation="Horizontal"
- HorizontalOptions="End"
- HeightRequest="60"
- Padding="0">
+                         Grid.ColumnSpan="2"
+                         Orientation="Horizontal"
+                         HorizontalOptions="End"
+                         HeightRequest="60"
+                         Padding="0">
                 <ImageButton Source="hamburger.png"
-     WidthRequest="30"
-     HeightRequest="30"
-     BackgroundColor="Transparent"
-     TranslationY="-12"
-     Clicked="OnMenuClicked" />
+                             WidthRequest="30"
+                             HeightRequest="30"
+                             BackgroundColor="Transparent"
+                             TranslationY="-12"
+                             Clicked="OnMenuClicked" />
             </StackLayout>
 
             <!-- Incident Report Button -->
@@ -600,7 +604,7 @@
               BackgroundColor="#80000000"
               IsVisible="False"
               AbsoluteLayout.LayoutBounds="0,0,1,1"
-              AbsoluteLayout.LayoutFlags="All"> 
+              AbsoluteLayout.LayoutFlags="All">
 
             <!-- Fullscreen container -->
             <Grid x:Name="AllCrowdCounterGrid"
@@ -622,63 +626,115 @@
 
                 <!-- Close Button -->
                 <ImageButton Grid.Row="0"
-                     Grid.Column="1"
-                     Padding="5"
-                     BackgroundColor="Transparent"
-                     WidthRequest="30"
-                     HeightRequest="30"
-                     Clicked="OnAllCounterSettingsPopupCloseClicked"
-                     HorizontalOptions="End"
-                     VerticalOptions="Start">
+                             Grid.Column="1"
+                             Padding="5"
+                             BackgroundColor="Transparent"
+                             WidthRequest="30"
+                             HeightRequest="30"
+                             Clicked="OnAllCounterSettingsPopupCloseClicked"
+                             HorizontalOptions="End"
+                             VerticalOptions="Start">
                     <ImageButton.Source>
                         <FontImageSource Glyph="&#xf00d;"
-                                 FontFamily="FontAwesome"
-                                 Color="White"
-                                 Size="20" />
+                                         FontFamily="FontAwesome"
+                                         Color="White"
+                                         Size="20" />
                     </ImageButton.Source>
                 </ImageButton>
 
                 <!--<StackLayout Grid.Row="1" Spacing="20" Padding="20" BackgroundColor="Black">-->
 
-                <controls:AnimatedCounter Grid.Row="1" Grid.Column="0" x:Name="Gate5Counter" Padding="5" Value="20" />
-                <Label Text="Gate 5" 
-                       Grid.Row="1" 
-                       Grid.Column="1" 
-                       TextColor="White" 
-                       Padding="5" 
+                <controls:AnimatedCounter Grid.Row="1"
+                                          Grid.Column="0"
+                                          x:Name="Gate5Counter"
+                                          Padding="5"
+                                          Value="20" />
+                <Label Text="Gate 5"
+                       Grid.Row="1"
+                       Grid.Column="1"
+                       TextColor="White"
+                       Padding="5"
                        FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"/>
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
 
-                <controls:AnimatedCounter Grid.Row="2" Grid.Column="0" x:Name="Door1Counter" Padding="5" Value="10" />
-                <Label Text="Door 1" Grid.Row="2" Grid.Column="1" TextColor="White" FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"/>
+                <controls:AnimatedCounter Grid.Row="2"
+                                          Grid.Column="0"
+                                          x:Name="Door1Counter"
+                                          Padding="5"
+                                          Value="10" />
+                <Label Text="Door 1"
+                       Grid.Row="2"
+                       Grid.Column="1"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
 
-                <controls:AnimatedCounter Grid.Row="3" Grid.Column="0" x:Name="Door2Counter" Padding="5" Value="15" />
-                <Label Text="Door 2" Grid.Row="3" Grid.Column="1" TextColor="White" FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"/>
+                <controls:AnimatedCounter Grid.Row="3"
+                                          Grid.Column="0"
+                                          x:Name="Door2Counter"
+                                          Padding="5"
+                                          Value="15" />
+                <Label Text="Door 2"
+                       Grid.Row="3"
+                       Grid.Column="1"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
 
-                <controls:AnimatedCounter Grid.Row="4" Grid.Column="0" x:Name="Door3Counter" Padding="5" Value="4" />
-                <Label Text="Door 3" Grid.Row="4" Grid.Column="1" TextColor="White" FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"/>
+                <controls:AnimatedCounter Grid.Row="4"
+                                          Grid.Column="0"
+                                          x:Name="Door3Counter"
+                                          Padding="5"
+                                          Value="4" />
+                <Label Text="Door 3"
+                       Grid.Row="4"
+                       Grid.Column="1"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
 
-                <controls:AnimatedCounter Grid.Row="5" Grid.Column="0" x:Name="CurrentCounter" Padding="5" Value="4" />
-                <Label Text="Current" Grid.Row="5" Grid.Column="1" TextColor="White" FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"/>
+                <controls:AnimatedCounter Grid.Row="5"
+                                          Grid.Column="0"
+                                          x:Name="CurrentCounter"
+                                          Padding="5"
+                                          Value="4" />
+                <Label Text="Current"
+                       Grid.Row="5"
+                       Grid.Column="1"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
 
-                <controls:AnimatedCounter Grid.Row="6" Grid.Column="0" x:Name="TotalCounter" Padding="5" Value="4" />
-                <Label Text="Total" Grid.Row="6" Grid.Column="1" TextColor="White" FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"/>
+                <controls:AnimatedCounter Grid.Row="6"
+                                          Grid.Column="0"
+                                          x:Name="TotalCounter"
+                                          Padding="5"
+                                          Value="4" />
+                <Label Text="Total"
+                       Grid.Row="6"
+                       Grid.Column="1"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
 
-                <controls:AnimatedCounter Grid.Row="7" Grid.Column="0" x:Name="DateCounter" Padding="5" Value="4" />
-                <Label Text="24 APR 2025" Grid.Row="7" Grid.Column="1" TextColor="White" FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"/>
+                <controls:AnimatedCounter Grid.Row="7"
+                                          Grid.Column="0"
+                                          x:Name="DateCounter"
+                                          Padding="5"
+                                          Value="4" />
+                <Label Text="24 APR 2025"
+                       Grid.Row="7"
+                       Grid.Column="1"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
                 <!--</StackLayout>-->
 
             </Grid>
@@ -696,77 +752,78 @@
 
 
             <VerticalStackLayout Padding="20"
-                     Spacing="20"
-                     VerticalOptions="FillAndExpand">
+                                 Spacing="20"
+                                 VerticalOptions="FillAndExpand">
 
                 <!-- Top section: Menu title and main buttons -->
                 <Label Text="Menu"
-           FontAttributes="Bold"
-           FontSize="20" />
+                       FontAttributes="Bold"
+                       FontSize="20" />
 
                 <Button Text="SOP’s"
-            Clicked="OnSOPClicked" />
+                        Clicked="OnSOPClicked" />
 
                 <Button Text="Tools"
-            Clicked="OnToolsClicked" />
+                        Clicked="OnToolsClicked" />
 
                 <Button Text="Downloads"
-            Clicked="OnDownloadsClicked" />
+                        Clicked="OnDownloadsClicked" />
 
 
 
                 <Frame CornerRadius="9"
-       HasShadow="False"
-       BorderColor="Transparent"
-       Margin="0,0,0,0"
-       Padding="0"
-       HeightRequest="46"
-       HorizontalOptions="Fill"
-       VerticalOptions="Center"
-       BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
+                       HasShadow="False"
+                       BorderColor="Transparent"
+                       Margin="0,0,0,0"
+                       Padding="0"
+                       HeightRequest="46"
+                       HorizontalOptions="Fill"
+                       VerticalOptions="Center"
+                       BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
 
                     <HorizontalStackLayout Padding="15,0"
-                           Spacing="10"
-                           VerticalOptions="Center"
-                           HorizontalOptions="FillAndExpand"
-                           HeightRequest="46">
+                                           Spacing="10"
+                                           VerticalOptions="Center"
+                                           HorizontalOptions="FillAndExpand"
+                                           HeightRequest="46">
 
                         <Label Text="Dark Mode"
-               FontSize="13"
-               VerticalOptions="Center"
-               HorizontalOptions="StartAndExpand"
-               TextColor="{AppThemeBinding Light=White, Dark=Black}" />
+                               FontSize="13"
+                               VerticalOptions="Center"
+                               HorizontalOptions="StartAndExpand"
+                               TextColor="{AppThemeBinding Light=White, Dark=Black}" />
 
                         <Switch x:Name="ThemeSwitch"
-                VerticalOptions="Center"
-                Toggled="OnThemeSwitchToggled"
-                OnColor="White"
-                ThumbColor="Gray"
-                Scale="0.9" />
+                                VerticalOptions="Center"
+                                Toggled="OnThemeSwitchToggled"
+                                OnColor="White"
+                                ThumbColor="Gray"
+                                Scale="0.9" />
 
                         <Label x:Name="ThemeStateLabel"
-               Text="On"
-               FontSize="13"
-               FontAttributes="Bold"
-               VerticalOptions="Center"
-               HorizontalOptions="End"
-               TextColor="{AppThemeBinding Light=White, Dark=Black}" />
+                               Text="On"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center"
+                               HorizontalOptions="End"
+                               TextColor="{AppThemeBinding Light=White, Dark=Black}" />
                     </HorizontalStackLayout>
                 </Frame>
 
 
                 <Button Text="Off Duty"
-            Clicked="OnOffDutyClicked" />
+                        Clicked="OnOffDutyClicked" />
 
-                <!-- Spacer to push the following to the bottom --><!--
+                <!-- Spacer to push the following to the bottom -->
+                <!--
                 <Label Text="" Margin="0,0,0,130" />-->
 
                 <!-- Bottom section: Extra buttons -->
                 <Button Text="Check for Updates..."
-            Clicked="OnCheckForUpdatesClicked" />
+                        Clicked="OnCheckForUpdatesClicked" />
 
                 <Button Text="About C4i System"
-            Clicked="OnAboutC4iClicked" />
+                        Clicked="OnAboutC4iClicked" />
 
             </VerticalStackLayout>
 

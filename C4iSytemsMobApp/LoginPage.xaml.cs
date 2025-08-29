@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Reflection;
+using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Services;
 using Microsoft.Maui.Devices.Sensors;
 
@@ -169,6 +170,14 @@ public partial class LoginPage : ContentPage
     private async void OnQRCodeLoginClicked(object sender, EventArgs e)
     {
        await Navigation.PushAsync(new QrScannerPage());
+    }
+
+    private async void OnNfcTestClicked(object sender, EventArgs e)
+    {
+        var nfcScannerTestPage = IPlatformApplication.Current.Services.GetService<INfcService>();
+        //Application.Current.MainPage = nfcScannerTestPage;
+        //await Navigation.PushAsync(nfcScannerTestPage);       
+        Application.Current.MainPage = new NfcScannerTestPage(nfcScannerTestPage);
     }
 
     private string GetAppVersion()

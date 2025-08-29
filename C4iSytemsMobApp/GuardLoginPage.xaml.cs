@@ -437,6 +437,7 @@ public partial class GuardLoginPage : ContentPage
 
             //string apiUrl = $"https://cws-ir.com/api/GuardSecurityNumber/EnterGuardLogin?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
 
+
             using (HttpClient client = new HttpClient())
             {
                 var response = await client.GetAsync(apiUrl);
