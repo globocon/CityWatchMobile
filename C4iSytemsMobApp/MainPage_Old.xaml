@@ -3,7 +3,7 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:C4iSytemsMobApp.Controls"
-             x:Class="C4iSytemsMobApp.MainPage">
+             x:Class="C4iSytemsMobApp.MainPage_Old">
 
     <ContentPage.Resources>
         <toolkit:BoolToObjectConverter x:Key="BoolToVisibilityConverter"
@@ -12,6 +12,7 @@
     </ContentPage.Resources>
 
     <AbsoluteLayout>
+
         <StackLayout Padding="5,0,5,0"
                      AbsoluteLayout.LayoutBounds="0,0,1,AutoSize"
                      AbsoluteLayout.LayoutFlags="WidthProportional">
@@ -48,16 +49,16 @@
 
         <!-- Main Content Grid -->
         <Grid ColumnDefinitions="*,*"
-              Padding="5,5,5,0"
+              Padding="5,0,5,0"
               RowSpacing="2"
               ColumnSpacing="2"
               AbsoluteLayout.LayoutBounds="0,0,1,1"
               AbsoluteLayout.LayoutFlags="All">
             <Grid.RowDefinitions>
-                <RowDefinition x:Name="HamburgerMenu"
-                               Height="Auto"/>
-                <RowDefinition x:Name="DuressButtonsAndFrame"
-                               Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
                 <RowDefinition x:Name="CounterRow"
                                Height="*" />
                 <RowDefinition Height="Auto" />
@@ -69,7 +70,7 @@
                          Grid.ColumnSpan="2"
                          Orientation="Horizontal"
                          HorizontalOptions="End"
-                         HeightRequest="40"
+                         HeightRequest="60"
                          Padding="0">
                 <ImageButton Source="hamburger.png"
                              WidthRequest="30"
@@ -79,242 +80,7 @@
                              Clicked="OnMenuClicked" />
             </StackLayout>
 
-            <!-- New UI Changes Starts Here -->
-            <!-- Frame for buttons and duress badge -->
-            <Frame Grid.Row="1"
-                   Grid.ColumnSpan="2"
-                   HorizontalOptions="FillAndExpand"
-                   VerticalOptions="FillAndExpand"
-                   Padding="2"
-                   HasShadow="False">
-
-                <Grid>
-                    <!-- Bottom Grid -->
-                    <Grid>
-                        <Grid x:Name="LayeredButtonGrid"
-                              BackgroundColor="Black"
-                              ZIndex="0">
-
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition x:Name="Column1"
-                                                  Width="*" />
-                                <ColumnDefinition x:Name="HorizontalGap"
-                                                  Width="Auto" />
-                                <ColumnDefinition x:Name="Column3"
-                                                  Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <Grid.RowDefinitions>
-                                <RowDefinition x:Name="Row1"
-                                               Height="*" />
-                                <RowDefinition x:Name="VerticalGap"
-                                               Height="Auto" />
-                                <RowDefinition x:Name="Row3"
-                                               Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <!-- Incident Report Button -->
-                            <Frame Grid.Row="0"
-                                   Grid.Column="0"
-                                   HorizontalOptions="FillAndExpand"
-                                   VerticalOptions="FillAndExpand"
-                                   Padding="5"
-                                   HasShadow="True">
-                                <Frame.Background>
-                                    <LinearGradientBrush>
-                                        <GradientStop Color="#007AFF"
-                                                      Offset="0.0" />
-                                        <GradientStop Color="#0056B3"
-                                                      Offset="1.0" />
-                                    </LinearGradientBrush>
-                                </Frame.Background>
-                                <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnManualPositionClicked" />
-                                </Frame.GestureRecognizers>
-                                <StackLayout VerticalOptions="Start"
-                                             HorizontalOptions="Center"
-                                             Spacing="3">
-                                    <Image Source="card_checklist.png"
-                                           Margin="0,30,0,0"
-                                           WidthRequest="40"
-                                           HeightRequest="40" />
-                                    <Label Text="Incident Report"
-                                           TextColor="White"
-                                           FontSize="12"
-                                           HorizontalTextAlignment="Center" />
-                                </StackLayout>
-                            </Frame>
-
-                            <BoxView Grid.Row="0"
-                                     Grid.Column="1"
-                                     Color="Black"
-                                     Margin="5"
-                                     Opacity="0.1"
-                                     ZIndex="0" />
-
-                            <!-- Log Activity Button -->
-                            <Frame Grid.Row="0"
-                                   Grid.Column="2"
-                                   HorizontalOptions="FillAndExpand"
-                                   VerticalOptions="FillAndExpand"
-                                   Padding="5"
-                                   HasShadow="True">
-                                <Frame.Background>
-                                    <LinearGradientBrush>
-                                        <GradientStop Color="#007AFF"
-                                                      Offset="0.0" />
-                                        <GradientStop Color="#0056B3"
-                                                      Offset="1.0" />
-                                    </LinearGradientBrush>
-                                </Frame.Background>
-                                <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnLogActivityClicked" />
-                                </Frame.GestureRecognizers>
-                                <StackLayout VerticalOptions="Start"
-                                             HorizontalOptions="Center"
-                                             Spacing="3">
-                                    <Image Source="chat_text.png"
-                                           Margin="0,30,0,0"
-                                           WidthRequest="40"
-                                           HeightRequest="40" />
-                                    <Label Text="Log Activity"
-                                           TextColor="White"
-                                           FontSize="12"
-                                           HorizontalTextAlignment="Center" />
-                                </StackLayout>
-                            </Frame>
-
-                            <BoxView Grid.Row="1"
-                                     Grid.Column="0"
-                                     Color="Black"
-                                     Margin="5"
-                                     Opacity="0.1"
-                                     ZIndex="0" />
-
-
-
-                            <!-- Audio Button -->
-                            <Frame Grid.Row="2"
-                                   Grid.Column="0"
-                                   HorizontalOptions="FillAndExpand"
-                                   VerticalOptions="FillAndExpand"
-                                   Padding="5"
-                                   HasShadow="True">
-                                <Frame.Background>
-                                    <LinearGradientBrush>
-                                        <GradientStop Color="#007AFF"
-                                                      Offset="0.0" />
-                                        <GradientStop Color="#0056B3"
-                                                      Offset="1.0" />
-                                    </LinearGradientBrush>
-                                </Frame.Background>
-                                <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnAudioClicked" />
-                                </Frame.GestureRecognizers>
-                                <StackLayout VerticalOptions="Start"
-                                             HorizontalOptions="Center"
-                                             Spacing="3">
-                                    <Image Source="mic_fill.png"
-                                           Margin="0,100,0,0"
-                                           WidthRequest="40"
-                                           HeightRequest="40" />
-                                    <Label Text="Audio"
-                                           TextColor="White"
-                                           FontSize="12"
-                                           HorizontalTextAlignment="Center" />
-                                </StackLayout>
-                            </Frame>
-
-                            <!-- Multimedia Button -->
-                            <Frame Grid.Row="2"
-                                   Grid.Column="2"
-                                   HorizontalOptions="FillAndExpand"
-                                   VerticalOptions="FillAndExpand"
-                                   Padding="5"
-                                   HasShadow="True">
-                                <Frame.Background>
-                                    <LinearGradientBrush>
-                                        <GradientStop Color="#007AFF"
-                                                      Offset="0.0" />
-                                        <GradientStop Color="#0056B3"
-                                                      Offset="1.0" />
-                                    </LinearGradientBrush>
-                                </Frame.Background>
-                                <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnMultimediaClicked" />
-                                </Frame.GestureRecognizers>
-                                <StackLayout VerticalOptions="Start"
-                                             HorizontalOptions="Center"
-                                             Spacing="3">
-                                    <Image Source="camera_fill.png"
-                                           Margin="0,100,0,0"
-                                           WidthRequest="40"
-                                           HeightRequest="40" />
-                                    <Label Text="Multimedia"
-                                           TextColor="White"
-                                           FontSize="12"
-                                           HorizontalTextAlignment="Center" />
-                                </StackLayout>
-                            </Frame>
-                        </Grid>
-                    </Grid>
-
-                    <!-- Duress Top Grid (overlaid) -->
-                    <Grid HeightRequest="160"
-                          WidthRequest="160">
-
-                        <Frame x:Name="DuressButtonFrameOuter"
-                               ZIndex="119"
-                               BackgroundColor="Black"
-                               CornerRadius="150"
-                               WidthRequest="223"
-                               HeightRequest="220"
-                               VerticalOptions="Center"
-                               HorizontalOptions="Center"
-                               AbsoluteLayout.LayoutBounds="0,135,1,AutoSize"
-                               AbsoluteLayout.LayoutFlags="WidthProportional">
-                            <Frame.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnDuressClicked" />
-                            </Frame.GestureRecognizers>
-                        </Frame>
-
-                        <!-- Duress Badge -->
-                        <Frame x:Name="DuressButtonFrame"
-                               BackgroundColor="#FFC107"
-                               CornerRadius="150"
-                               Padding="5"
-                               WidthRequest="200"
-                               HeightRequest="200"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center"
-                               IsVisible="True"
-                               ZIndex="120">
-                            <Frame.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnDuressClicked" />
-                            </Frame.GestureRecognizers>
-                            <StackLayout VerticalOptions="CenterAndExpand"
-                                         HorizontalOptions="CenterAndExpand"
-                                         Spacing="3">
-                                <Label Text="DURESS"
-                                       FontSize="24"
-                                       FontAttributes="Bold"
-                                       TextColor="Black"
-                                       HorizontalTextAlignment="Center" />
-                                <Label x:Name="DuressStatusLabel"
-                                       Text="Status: Normal"
-                                       FontSize="16"
-                                       TextColor="Black"
-                                       HorizontalTextAlignment="Center" />
-                            </StackLayout>
-                        </Frame>
-
-                    </Grid>
-                </Grid>
-            </Frame>
-
-            <!-- New UI Changes Ends Here -->
-
-            <!-- Incident Report Button --><!--
+            <!-- Incident Report Button -->
             <Frame Grid.Row="1"
                    Grid.Column="0"
                    CornerRadius="15"
@@ -346,7 +112,7 @@
                 </StackLayout>
             </Frame>
 
-            --><!-- Log Activity Button --><!--
+            <!-- Log Activity Button -->
             <Frame Grid.Row="1"
                    Grid.Column="1"
                    CornerRadius="15"
@@ -378,7 +144,7 @@
                 </StackLayout>
             </Frame>
 
-            --><!-- Duress Button --><!--
+            <!-- Duress Button -->
             <Frame x:Name="DuressButtonFrame"
                    Grid.Row="2"
                    Grid.ColumnSpan="2"
@@ -407,7 +173,7 @@
                 </StackLayout>
             </Frame>
 
-            --><!-- Audio Button --><!--
+            <!-- Audio Button -->
             <Frame Grid.Row="3"
                    Grid.Column="0"
                    CornerRadius="15"
@@ -439,7 +205,7 @@
                 </StackLayout>
             </Frame>
 
-            --><!-- Multimedia Button --><!--
+            <!-- Multimedia Button -->
             <Frame Grid.Row="3"
                    Grid.Column="1"
                    CornerRadius="15"
@@ -469,10 +235,10 @@
                            FontSize="12"
                            HorizontalTextAlignment="Center" />
                 </StackLayout>
-            </Frame>-->
+            </Frame>
 
             <!-- Crowd Count StackLayout (Replaces Grid.Row="4") -->
-            <StackLayout Grid.Row="2"
+            <StackLayout Grid.Row="4"
                          Grid.ColumnSpan="2"
                          Orientation="Horizontal"
                          Spacing="5"
@@ -604,7 +370,7 @@
             </StackLayout>
 
             <!-- Footer Image -->
-            <Image Grid.Row="3"
+            <Image Grid.Row="5"
                    Grid.ColumnSpan="2"
                    Source="c4ilogo.jpg"
                    HorizontalOptions="FillAndExpand"
