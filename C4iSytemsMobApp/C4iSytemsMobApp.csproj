@@ -27,7 +27,7 @@
 		<ApplicationId>com.C4isystem.c4isystemsmobapp</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.16</ApplicationDisplayVersion>
+		<ApplicationDisplayVersion>1.17</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
@@ -77,6 +77,9 @@
 	  <Compile Update="GuardSecurityIdTagPage.xaml.cs">
 	    <DependentUpon>GuardSecurityIdTagPage.xaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="MainPage_Old.xaml.cs">
+	    <DependentUpon>MainPage_Old.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="NfcScannerTestPage.xaml.cs">
 	    <DependentUpon>NfcScannerTestPage.xaml</DependentUpon>
 	  </Compile>
@@ -108,6 +111,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="LoginPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="MainPage_Old.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="MultiMedia.xaml">

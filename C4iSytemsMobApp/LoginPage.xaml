@@ -56,7 +56,7 @@
         <!-- Version Label -->
         <Label x:Name="lblAppVersion"
        Grid.Row="2"
-       Text="Version 1.16.0"
+       Text="Version 1.17.0"
        FontSize="12"
        TextColor="Gray"
        HorizontalOptions="Center"

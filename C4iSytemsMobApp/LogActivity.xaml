@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="C4iSytemsMobApp.LogActivity"
+            
           >
 
 
@@ -51,16 +52,37 @@
                Margin="0,10"
                FontSize="18"
                HeightRequest="50"
-               VerticalOptions="Center" />
+               VerticalOptions="Center" TextChanged="CustomLogEntry_TextChanged" />
 
-            <Button Text="Add Custom Log Entry"
-                Clicked="OnAddLogEntryClicked"
-                BackgroundColor="#28a745"
-                TextColor="White"
-                FontSize="18"
-                HeightRequest="50"
-                CornerRadius="10"
-                VerticalOptions="Center" />
+            <Grid ColumnDefinitions="7*,3*" Margin="0,10,0,0" HeightRequest="50">
+
+                <!-- Existing Add Custom Log Entry button (unchanged) -->
+                <Button Text="Add Custom Log Entry"
+            Clicked="OnAddLogEntryClicked"
+            BackgroundColor="#28a745"
+            TextColor="White"
+            FontSize="18"
+            HeightRequest="50"
+            CornerRadius="10"
+            VerticalOptions="Center"
+            Grid.Column="0"
+            Margin="0,0,5,0"/>
+
+                <!-- New SVG Image Upload Button (30% width, same style) -->
+                <ImageButton Source="camera.png"
+                 Clicked="OnCameraClicked"
+                 BackgroundColor="#28a745"
+                  HeightRequest="50"
+                 CornerRadius="10"
+                 Padding="10"
+                 Aspect="AspectFit"
+                 VerticalOptions="Center"
+                 Grid.Column="1"
+                 Margin="5,0,0,0"/>
+            </Grid>
+
+
+
         </StackLayout>
 
         <!-- Fixed Title -->
@@ -74,6 +96,285 @@
         <ScrollView Grid.Row="2" Padding="5">
             <VerticalStackLayout x:Name="LogDisplayArea" Spacing="5" />
         </ScrollView>
+
+
+        <Grid x:Name="PopupOverlay" 
+      BackgroundColor="#80000000"
+      IsVisible="False"
+      SizeChanged="PopupOverlay_SizeChanged">
+
+            <Frame x:Name="MyPopupFrame"
+           BackgroundColor="White"
+           CornerRadius="12"
+           Padding="10"
+           Margin="8"
+           HasShadow="True"
+           VerticalOptions="Center"
+           HorizontalOptions="Center"
+           MaximumWidthRequest="480">
+
+                <!-- Grid inside Frame: Content + Footer -->
+                <Grid RowDefinitions="*,Auto">
+
+                    <!-- Scrollable Content -->
+                    <ScrollView Grid.Row="0">
+                        <VerticalStackLayout Spacing="8">
+
+                            <!-- Popup Header -->
+                            <Label Text="Add Image into LB"
+                           FontSize="14"
+                           TextColor="Black"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+
+                            <!-- Options -->
+                            <VerticalStackLayout Spacing="6">
+                                <!-- First row -->
+                                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                    <CheckBox x:Name="chkRearFullPage"
+                                      IsChecked="False"
+                                      Color="Green"
+                                      CheckedChanged="OnCheckboxCheckedChanged" />
+                                    <Label Text="Add as attachment to rear (Full Page)"
+                                   VerticalOptions="Center"
+                                   FontSize="12"
+                                   TextColor="Black" />
+                                </HorizontalStackLayout>
+
+                                <!-- Second row -->
+                                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                    <CheckBox x:Name="chkWithinField"
+                                      IsChecked="True"
+                                      Color="Green"
+                                      CheckedChanged="OnCheckboxCheckedChanged" />
+                                    <Label Text="Add within field (25% of the Page)"
+                                   VerticalOptions="Center"
+                                   FontSize="12"
+                                   TextColor="Black" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+
+                            <!-- Add Button -->
+                            <Button Text="+ Add Image"
+                            Clicked="OnPickFileClicked"
+                            BackgroundColor="DodgerBlue"
+                            TextColor="White"
+                            HorizontalOptions="Center"
+                            FontSize="12"
+                            CornerRadius="6" />
+
+                            <!-- File List -->
+                            <CollectionView x:Name="FilesCollection"
+                                    HeightRequest="120"
+                                    IsVisible="False"
+                                    Margin="0"
+                                    ItemSizingStrategy="MeasureAllItems">
+                                <CollectionView.ItemsLayout>
+                                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="0" />
+                                </CollectionView.ItemsLayout>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Padding="0"
+                                      ColumnDefinitions="*,Auto"
+                                      HeightRequest="30"
+                                      VerticalOptions="Center"
+                                      Margin="0">
+
+                                            <!-- File Name -->
+                                            <Label Text="{Binding FileName}"
+                                           VerticalOptions="Center"
+                                           Grid.Column="0"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"
+                                           TextColor="Black"
+                                           FontSize="9"
+                                           Margin="2,0" />
+
+                                            <!-- Delete Button -->
+                                            <Button Clicked="OnDeleteFileClicked"
+                                            WidthRequest="20"
+                                            HeightRequest="20"
+                                            BackgroundColor="Transparent"
+                                            Padding="0"
+                                            Margin="0"
+                                            Grid.Column="1"
+                                            VerticalOptions="Center">
+                                                <Button.ImageSource>
+                                                    <FileImageSource File="delete_icon_s.png" />
+                                                </Button.ImageSource>
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+
+                        </VerticalStackLayout>
+                    </ScrollView>
+
+                    <!-- Fixed Footer Buttons -->
+                    <HorizontalStackLayout Grid.Row="1"
+                                   Spacing="10"
+                                   HorizontalOptions="Center"
+                                   Margin="0,10,0,0">
+                        <Button Text="Save and Close"
+                        Clicked="OnSaveAndCloseClicked"
+                        BackgroundColor="Green"
+                        TextColor="White"
+                        FontSize="12"
+                        CornerRadius="6"/>
+                        <Button Text="Cancel"
+                        Clicked="OnClosePopupClicked"
+                        BackgroundColor="Gray"
+                        TextColor="White"
+                        FontSize="12"
+                        CornerRadius="6"/>
+                    </HorizontalStackLayout>
+
+                </Grid>
+            </Frame>
+        </Grid>
+
+
+
+        <!--<Grid x:Name="PopupOverlay" 
+      BackgroundColor="#80000000"
+      IsVisible="False"
+      SizeChanged="PopupOverlay_SizeChanged">
+
+            <Frame x:Name="MyPopupFrame"
+           BackgroundColor="White"
+           CornerRadius="12"
+           Padding="10"
+           Margin="8"
+           HasShadow="True"
+           VerticalOptions="Center"
+           HorizontalOptions="Center"
+           MaximumWidthRequest="480">
+
+                <ScrollView>
+                    <VerticalStackLayout Spacing="8">
+
+                        --><!-- Popup Header --><!--
+                        <Label Text="Add Image into LB"
+                       FontSize="14"   TextColor="Black"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center" />
+
+                        --><!-- Options --><!--
+                        <VerticalStackLayout Spacing="6">
+
+                            --><!-- First row --><!--
+                            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                <CheckBox x:Name="chkRearFullPage"
+                  IsChecked="False"
+                  Color="Green"
+                  CheckedChanged="OnCheckboxCheckedChanged" />
+                                <Label Text="Add as attachment to rear (Full Page)"
+               VerticalOptions="Center"
+               FontSize="12"
+               TextColor="Black" />
+                            </HorizontalStackLayout>
+
+                            --><!-- Second row --><!--
+                            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                <CheckBox x:Name="chkWithinField"
+                  IsChecked="True"
+                  Color="Green"
+                  CheckedChanged="OnCheckboxCheckedChanged" />
+                                <Label Text="Add within field (25% of the Page)"
+               VerticalOptions="Center"
+               FontSize="12"
+               TextColor="Black" />
+                            </HorizontalStackLayout>
+
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="8">
+
+                            --><!-- Add Button --><!--
+                            <Button Text="+ Add Image"
+            Clicked="OnPickFileClicked"
+            BackgroundColor="DodgerBlue"
+            TextColor="White"
+            HorizontalOptions="Center"
+            FontSize="12"           
+            CornerRadius="6" />
+
+                            --><!-- File List (hidden initially) --><!--
+                            <CollectionView x:Name="FilesCollection"
+                    HeightRequest="120"
+                    IsVisible="False"
+                    Margin="0"
+                    ItemSizingStrategy="MeasureAllItems">
+                                <CollectionView.ItemsLayout>
+                                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="0" />
+                                </CollectionView.ItemsLayout>
+
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Padding="0"
+                      ColumnDefinitions="*,Auto"
+                      HeightRequest="30"
+                      VerticalOptions="Center"
+                      Margin="0">
+
+                                            --><!-- File Name --><!--
+                                            <Label Text="{Binding FileName}"
+                           VerticalOptions="Center"
+                           Grid.Column="0"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="1"
+                           FontSize="9"
+                           Margin="2,0" />
+
+                                            --><!-- Delete Button --><!--
+                                            <Button Clicked="OnDeleteFileClicked"
+                            WidthRequest="20"
+                            HeightRequest="20"
+                            BackgroundColor="Transparent"
+                            Padding="0"
+                            Margin="0"
+                            Grid.Column="1"
+                            VerticalOptions="Center">
+                                                <Button.ImageSource>
+                                                    <FileImageSource File="delete_icon_s.png" />
+                                                </Button.ImageSource>
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+
+                            --><!-- Action Buttons --><!--
+                            <HorizontalStackLayout Spacing="10"
+                            HorizontalOptions="Center">
+                                <Button Text="Save and Close"
+                Clicked="OnSaveAndCloseClicked"
+                BackgroundColor="Green"
+                TextColor="White"
+                FontSize="12"
+               
+                CornerRadius="6"/>
+                                <Button Text="Cancel"
+                Clicked="OnClosePopupClicked"
+                BackgroundColor="Gray"
+                TextColor="White"
+                FontSize="12"
+               
+                CornerRadius="6"/>
+                            </HorizontalStackLayout>
+
+                        </VerticalStackLayout>
+
+                    </VerticalStackLayout>
+                  
+                </ScrollView>
+            </Frame>
+        </Grid>-->
+
+
+
+
     </Grid>
 
 

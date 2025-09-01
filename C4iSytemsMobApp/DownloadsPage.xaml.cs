@@ -36,7 +36,8 @@ public partial class DownloadsPage : ContentPage
         {
             var httpClient = new HttpClient();
             var query = "";
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetStaffDocuments?type={type}&query={Uri.EscapeDataString(query)}";
+            var userId = await SecureStorage.GetAsync("UserId");
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetStaffDocuments?type={type}&UserId={userId}&query={Uri.EscapeDataString(query)}";
 
             var documents = await httpClient.GetFromJsonAsync<List<StaffDocument>>(url);
 
