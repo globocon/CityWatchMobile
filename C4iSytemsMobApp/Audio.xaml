@@ -1,136 +1,149 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!--<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="C4iSytemsMobApp.Audio"       
-             >
-
-    <StackLayout   Padding="5,0,5,10"  Spacing="0" Margin="0">
-
-        --><!-- Title and Home Button Row --><!--
-        <Grid ColumnDefinitions="*, Auto" Padding="0" Margin="0">
-            --><!-- Title --><!--
-            <Label Text="Audio"
-                   FontSize="14"
-                   FontAttributes="Bold"
-                   VerticalOptions="Center"
-                   HorizontalOptions="Start"
-                   TextColor="Black"/>
-
-            --><!-- Home Button --><!--
-            <ImageButton
-                Source="home.png"
-                Clicked="OnBackButtonClicked"
-                HeightRequest="30"
-                WidthRequest="30"
-                BackgroundColor="Transparent"
-                HorizontalOptions="End"
-                VerticalOptions="Center"
-                Grid.Column="1"/>
-        </Grid>
-
-        --><!-- Loading Indicator --><!--
-        <ActivityIndicator x:Name="LoadingIndicator" 
-                           IsRunning="False" 
-                           IsVisible="False" 
-                           Color="Blue" 
-                           HorizontalOptions="Center"/>
-
-        --><!-- ListView for MP3 Files --><!--
-        <ListView x:Name="Mp3ListView" 
-                  SeparatorVisibility="None"
-                  Margin="0" 
-                 >
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <ViewCell>
-                        <StackLayout Padding="5">
-                            <Button Text="{Binding Label}" 
-                                    FontSize="18"
-                                    FontAttributes="Bold"
-                                    BackgroundColor="Blue"
-                                    TextColor="White"
-                                    Command="{Binding PlayCommand}" />
-                        </StackLayout>
-                    </ViewCell>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
-
-    </StackLayout>
-
-</ContentPage>-->
-
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="C4iSytemsMobApp.Audio"
-             Padding="0" 
-            >
+             >
+    <Grid Padding="2" Margin="0">
+        <!-- Main content -->
+        <StackLayout Padding="0" Margin="0" Spacing="10">
 
-    <StackLayout Padding="5,0,5,10" Spacing="10">
+            <!-- Title and Buttons Row -->
+           <Grid ColumnDefinitions="*, Auto"  Margin="0">
+    
+    <!-- Label on the left -->
+    <Label Text="Audio"
+           FontSize="14"
+           FontAttributes="Bold"
+           VerticalOptions="Center"
+           HorizontalOptions="Start"
+           TextColor="Black"
+          
+           Grid.Column="0"/>
 
-        <!-- Title and Buttons Row -->
-        <Grid ColumnDefinitions="*, Auto, Auto" Padding="2" Margin="0">
-            <!-- Title -->
-            <Label Text="Audio"
-                   FontSize="14"
-                   FontAttributes="Bold"
+    <!-- Buttons on the right -->
+    <HorizontalStackLayout Grid.Column="1" Spacing="5" VerticalOptions="Center" HorizontalOptions="End">
+        <Button x:Name="LoopPlaybackButton"
+                Text="☑ Repeat Play"
+                IsEnabled="True"
+                Clicked="LoopPlaybackButton_Clicked"
+                BackgroundColor="Green"
+                TextColor="White"
+                FontAttributes="Bold"
+                Padding="10,5"
+                VerticalOptions="Center"/>
+
+        <ImageButton Source="play.png"
+                     Clicked="OnStopButtonClicked"
+                     HeightRequest="30"
+                     WidthRequest="30"
+                     BackgroundColor="Transparent"
+                     IsEnabled="False"
+                     x:Name="StopButton"
+                     VerticalOptions="Center"/>
+
+        <ImageButton Source="home.png"
+                     Clicked="OnBackButtonClicked"
+                     HeightRequest="30"
+                     WidthRequest="30"
+                     BackgroundColor="Transparent"
+                     VerticalOptions="Center"/>
+    </HorizontalStackLayout>
+</Grid>
+
+
+            <!-- Loading Indicator -->
+            <ActivityIndicator x:Name="LoadingIndicator" 
+                               IsRunning="False" 
+                               IsVisible="False" 
+                               Color="Blue" 
+                               HorizontalOptions="Center"/>
+
+            <!-- ListView for MP3 Files -->
+            <ListView x:Name="Mp3ListView" 
+          SeparatorVisibility="None"
+          HasUnevenRows="True">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <StackLayout Padding="5" Orientation="Horizontal" Spacing="10">
+                                <Button Text="{Binding Label}" 
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            BackgroundColor="Blue"
+                            TextColor="White"
+                            Command="{Binding PlayCommand}"
+                            HorizontalOptions="FillAndExpand"/>
+                                <Frame BackgroundColor="Blue"
+       Padding="4"
+       CornerRadius="4"
+       HorizontalOptions="Center"
+       VerticalOptions="Center"
+       HasShadow="False"
+       HeightRequest="40" WidthRequest="40">
+                                    <!-- optional fixed size -->
+                                    <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" 
+              HorizontalOptions="Center"
+              VerticalOptions="Center"/>
+                                </Frame>
+                            </StackLayout>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </StackLayout>
+
+        <!-- Popup Overlay (moved OUTSIDE the StackLayout so it overlays entire page) -->
+        <Grid x:Name="SilencePopupOverlay"
+              BackgroundColor="#80000000"
+              IsVisible="False"
+              Padding="20">
+            <Frame BackgroundColor="White"
+                   CornerRadius="12"
+                   Padding="15"
+                   HasShadow="True"
                    VerticalOptions="Center"
-                   HorizontalOptions="Start"
-                   TextColor="Black" Padding="2"/>
+                   HorizontalOptions="Center"
+                   MaximumWidthRequest="400">
 
-            <!-- Global Stop Button -->
-            <ImageButton
-                Source="play.png"
-                Clicked="OnStopButtonClicked"
-                HeightRequest="30"
-                WidthRequest="30"
-                BackgroundColor="Transparent"
-                HorizontalOptions="End"
-                VerticalOptions="Center"
-                IsEnabled="False"
-                x:Name="StopButton"
-                Grid.Column="1"/>
+                <Grid RowDefinitions="*,Auto">
+                    <!-- Content -->
+                    <VerticalStackLayout Spacing="12"
+                                         Grid.Row="0">
+                        <Label Text="Silence between looping tracks?"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"
+                               TextColor="Black" />
 
-            <!-- Home Button -->
-            <ImageButton
-                Source="home.png"
-                Clicked="OnBackButtonClicked"
-                HeightRequest="30"
-                WidthRequest="30"
-                BackgroundColor="Transparent"
-                HorizontalOptions="End"
-                VerticalOptions="Center"
-                Grid.Column="2"/>
+                        <!-- Dropdown for minutes -->
+                        <Picker x:Name="MinutesPicker"
+        Title="Choose minutes"
+        TitleColor="Black"
+        FontSize="14"
+        TextColor="Black"
+        HorizontalOptions="FillAndExpand" />
+                    </VerticalStackLayout>
+
+                    <!-- Footer Buttons -->
+                    <HorizontalStackLayout Grid.Row="1"
+                                           Spacing="10"
+                                           HorizontalOptions="Center"
+                                           Margin="0,15,0,0">
+                        <Button Text="Play"
+                                Clicked="OnSilenceOkClicked"
+                                BackgroundColor="Green"
+                                TextColor="White"
+                                CornerRadius="6"/>
+                        <Button Text="Cancel"
+                                Clicked="OnSilenceCancelClicked"
+                                BackgroundColor="Gray"
+                                TextColor="White"
+                                CornerRadius="6"/>
+                    </HorizontalStackLayout>
+                </Grid>
+            </Frame>
         </Grid>
-
-        <!-- Loading Indicator -->
-        <ActivityIndicator x:Name="LoadingIndicator" 
-                           IsRunning="False" 
-                           IsVisible="False" 
-                           Color="Blue" 
-                           HorizontalOptions="Center"/>
-
-        <!-- ListView for MP3 Files -->
-        <ListView x:Name="Mp3ListView" 
-                  SeparatorVisibility="None">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <ViewCell>
-                        <StackLayout Padding="5">
-                            <Button Text="{Binding Label}" 
-                                    FontSize="18"
-                                    FontAttributes="Bold"
-                                    BackgroundColor="Blue"
-                                    TextColor="White"
-                                    Command="{Binding PlayCommand}" />
-                        </StackLayout>
-                    </ViewCell>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
-
-    </StackLayout>
-
+    </Grid>
 </ContentPage>
 
 
