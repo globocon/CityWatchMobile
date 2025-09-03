@@ -18,7 +18,7 @@ public class MainActivity : MauiAppCompatActivity
         CrossNFC.Init(this);
 
         base.OnCreate(savedInstanceState);
-        ZXing.Net.Maui.Controls.Platform.Init();
+        //ZXing.Net.Maui.Controls.Platform.Init();
     }
     protected override void OnResume()
     {
