@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
-    <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-            xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
              x:Class="C4iSytemsMobApp.QrScannerPage">
+
     <VerticalStackLayout Spacing="25" Padding="30">
         <Label Text="Scan a QR Code" 
                FontSize="24" 
@@ -10,16 +11,13 @@
 
         <VerticalStackLayout Padding="10" Spacing="10">
             <zxing:CameraBarcodeReaderView x:Name="cameraView"
-                                   BarcodesDetected="OnBarcodesDetected"
-                                   WidthRequest="300"
-                                   HeightRequest="300"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center"/>
-
+                                           BarcodesDetected="OnBarcodesDetected"
+                                           WidthRequest="300"
+                                           HeightRequest="300"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"/>
             <Button Text="Close Scanner" Clicked="OnCloseScannerClicked" />
-
         </VerticalStackLayout>
-
-        
     </VerticalStackLayout>
 </ContentPage>
+
