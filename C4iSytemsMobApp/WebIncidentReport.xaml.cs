@@ -842,8 +842,13 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             ClientAddress = selectedAddress;
             IsSuggestionsVisible = false;
             Suggestions.Clear(); // 
+                                 // Force Entry to show from the beginning
+            Device.BeginInvokeOnMainThread(() =>
+            {
+                clientAddressEntry.CursorPosition = 0;
+                clientAddressEntry.SelectionLength = 0;
+            });
 
-           
         }
 
     ((CollectionView)sender).SelectedItem = null;

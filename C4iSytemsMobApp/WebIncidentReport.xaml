@@ -422,7 +422,7 @@ TextColor="Black" />
 
                             <!-- Top row: Label on left, checkbox and label on right -->
 
-                            <VerticalStackLayout Padding="20" Spacing="10">
+                            <VerticalStackLayout Padding="0" Spacing="10">
 
                                 <!-- Grid with Label + CheckBox -->
                                 <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
@@ -455,6 +455,7 @@ TextColor="Black" />
     FontSize="14"
     BackgroundColor="White"
     TextColor="Black"
+    HorizontalTextAlignment="Start"
     HeightRequest="40" IsEnabled="{Binding IsSearchEnabled}" />
 
 
@@ -514,8 +515,8 @@ TextColor="Black" />
                FontSize="12" TextColor="Red" Padding="5"/>
 
                             <!-- AS.4421-2011 Label -->
-                            <Label Text="AS.4421-2011" FontSize="12" FontAttributes="Bold" TextDecorations="Underline" 
-               HorizontalOptions="Center"/>
+                            <!--<Label Text="AS.4421-2011" FontSize="12" FontAttributes="Bold" TextDecorations="Underline" 
+               HorizontalOptions="Center"/>-->
                         </VerticalStackLayout>
                     </Frame>
 
