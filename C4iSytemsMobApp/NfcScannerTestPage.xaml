@@ -3,16 +3,46 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="C4iSytemsMobApp.NfcScannerTestPage">
     <VerticalStackLayout Spacing="25" Padding="30">
+        
         <Label Text="Scan a NFC Tag" 
                FontSize="24" 
                HorizontalOptions="Center" />
 
         <VerticalStackLayout Padding="10" Spacing="10">
 
-            <Button Text="Start NFC Scanner" Clicked="OnStartNfcScannerClicked" />
+            <Button Text="Start NFC Scanner" x:Name="button_Start_Stop"
+                    Clicked="OnStartNfcScannerClicked" />
+           
+            <Label x:Name="lblIsAvailable"
+                   Text=""
+                   TextColor="White"
+                   FontSize="14"
+                   FontAttributes="Bold"
+                   Padding="10,5,0,5"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
 
+            <Label x:Name="lblIsEnabled"
+                   Text=""
+                   TextColor="White"
+                   FontSize="14"
+                   FontAttributes="Bold"
+                   Padding="10,5,0,5"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+            
+            <Label x:Name="lblServiceStatus"
+                   Text=""
+                   TextColor="White"
+                   FontSize="14"
+                   FontAttributes="Bold"
+                   Padding="10,5,0,5"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+            
             <Label x:Name="txtnfcTagID" 
-                    Text="" 
+                    Text=""
+                    TextColor="White"
                     FontSize="14"
                     FontAttributes="Bold"           
                     Padding="10,5,0,5" 

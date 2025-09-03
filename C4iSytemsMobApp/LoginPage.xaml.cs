@@ -108,7 +108,8 @@ public partial class LoginPage : ContentPage
         if (loginResponse.IsSuccess)
         {
             var crowdControlSettingsService = IPlatformApplication.Current.Services.GetService<ICrowdControlServices>();
-            Application.Current.MainPage = new GuardLoginPage(crowdControlSettingsService);
+            var scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
+            Application.Current.MainPage = new GuardLoginPage(crowdControlSettingsService, scannerControlServices);
         }
         else
         {
@@ -172,13 +173,11 @@ public partial class LoginPage : ContentPage
        await Navigation.PushAsync(new QrScannerPage());
     }
 
-    private async void OnNfcTestClicked(object sender, EventArgs e)
-    {
-        var nfcScannerTestPage = IPlatformApplication.Current.Services.GetService<INfcService>();
-        //Application.Current.MainPage = nfcScannerTestPage;
-        //await Navigation.PushAsync(nfcScannerTestPage);       
-        Application.Current.MainPage = new NfcScannerTestPage(nfcScannerTestPage);
-    }
+    //private async void OnNfcTestClicked(object sender, EventArgs e)
+    //{
+    //    var nfcScannerTestPage = IPlatformApplication.Current.Services.GetService<INfcService>();
+    //    Application.Current.MainPage = new NfcScannerTestPage(nfcScannerTestPage);
+    //}
 
     private string GetAppVersion()
     {

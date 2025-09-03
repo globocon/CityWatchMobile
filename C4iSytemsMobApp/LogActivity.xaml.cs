@@ -11,6 +11,7 @@ namespace C4iSytemsMobApp;
 public partial class LogActivity : ContentPage
 {
     private readonly HttpClient _httpClient = new();
+    private readonly ILogBookServices _logBookServices;
     private System.Timers.Timer _logRefreshTimer;
     private List<int> _lastLogIds = new();
     private CancellationTokenSource _delayCancellationTokenSource;
@@ -24,8 +25,8 @@ public partial class LogActivity : ContentPage
         LoadActivities();
         //LoadLogs();
         FilesCollection.ItemsSource = SelectedFiles;
+        _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
 
-    
 
     }
     private void PopupOverlay_SizeChanged(object sender, EventArgs e)
@@ -697,56 +698,73 @@ public partial class LogActivity : ContentPage
 
     private async Task LogActivityTask(string activityDescription)
     {
-        var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+        //var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
 
-        string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+        //string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
 
-        if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        //if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        //{
+        //    await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+        //    return;
+        //}
+
+
+        //if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
+        //var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
+        //     $"?guardId={guardId}" +
+        //     $"&clientsiteId={clientSiteId}" +
+        //     $"&userId={userId}" +
+        //     $"&activityString={Uri.EscapeDataString(activityDescription)}" +
+        //     $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
+
+
+        //try
+        //{
+        //    try
+        //    {
+        //        HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            await ShowToastMessage("Log entry added successfully.");
+        //            _delayCancellationTokenSource = new CancellationTokenSource();
+        //            //CustomLogEntry.Text = string.Empty; // Clear entry after success
+
+        //            await Task.Delay(2000, _delayCancellationTokenSource.Token); // Wait for 2 seconds
+        //            var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        //            Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+        //            //Application.Current.MainPage = new NavigationPage(new MainPage());
+        //        }
+        //        else
+        //        {
+        //            string errorMessage = await response.Content.ReadAsStringAsync();
+        //            await ShowToastMessage($"Failed: {errorMessage}");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        //await ShowToastMessage($"Error: {ex.Message}");
+        //    }
+        //}
+        //catch (Exception ex)
+        //{
+        //    //await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+        //}
+
+        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription);
+        if (isSuccess)
         {
-            await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
-            return;
+            await ShowToastMessage(msg);
+            //await ShowToastMessage("Log entry added successfully.");
+            _delayCancellationTokenSource = new CancellationTokenSource();
+            //CustomLogEntry.Text = string.Empty; // Clear entry after success
+
+            await Task.Delay(2000, _delayCancellationTokenSource.Token); // Wait for 2 seconds
+            var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+            Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));            
         }
-
-
-        if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
-        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
-             $"?guardId={guardId}" +
-             $"&clientsiteId={clientSiteId}" +
-             $"&userId={userId}" +
-             $"&activityString={Uri.EscapeDataString(activityDescription)}" +
-             $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
-
-
-        try
+        else
         {
-            try
-            {
-                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
-                if (response.IsSuccessStatusCode)
-                {
-                    await ShowToastMessage("Log entry added successfully.");
-                    _delayCancellationTokenSource = new CancellationTokenSource();
-                    //CustomLogEntry.Text = string.Empty; // Clear entry after success
-
-                    await Task.Delay(2000, _delayCancellationTokenSource.Token); // Wait for 2 seconds
-                    var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
-                    Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
-                    //Application.Current.MainPage = new NavigationPage(new MainPage());
-                }
-                else
-                {
-                    string errorMessage = await response.Content.ReadAsStringAsync();
-                    await ShowToastMessage($"Failed: {errorMessage}");
-                }
-            }
-            catch (Exception ex)
-            {
-                //await ShowToastMessage($"Error: {ex.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            //await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+            await ShowToastMessage(msg);
         }
     }
 

@@ -2,42 +2,208 @@
 using Plugin.NFC;
 
 
+
 namespace C4iSytemsMobApp.Services
 {
+    // Refer url: https://prototypemakers.medium.com/start-building-with-nfc-rfid-tags-on-ios-android-using-xamarin-today-2268cf86d3b4
+    // https://github.com/franckbour/Plugin.NFC
     public class NfcService : INfcService
-    {
-        private Action<string>? _onTagRead;
+    {       
+        public bool IsSupported => CrossNFC.IsSupported;
+        public bool IsAvailable => CrossNFC.Current.IsAvailable;
+        public bool IsEnabled => CrossNFC.Current.IsEnabled;
+        public bool IsListening { get; private set; }
+        public bool IsWritingTagSupported => CrossNFC.Current.IsWritingTagSupported;
 
-        public bool IsNfcAvailable => CrossNFC.IsSupported && CrossNFC.Current.IsAvailable;
-        public bool IsNfcEnabled => CrossNFC.IsSupported && CrossNFC.Current.IsEnabled;
+        public event EventHandler<ITagInfo> OnMessageReceived;
+        public event EventHandler<ITagInfo> OnMessagePublished;
+        public event EventHandler<(ITagInfo TagInfo, bool Format)> OnTagDiscovered;
+        public event EventHandler<bool> OnNfcStatusChanged;
+        public event EventHandler<bool> OnTagListeningStatusChanged;
+        public event EventHandler OniOSReadingSessionCancelled;
 
-        public void StartListening(Action<string> onTagRead)
+        private bool _isDeviceiOS;
+
+        public NfcService() 
         {
-            _onTagRead = onTagRead;
-            CrossNFC.Current.OnMessageReceived += Current_OnMessageReceived;
-            CrossNFC.Current.StartListening();
+            _isDeviceiOS = DeviceInfo.Platform == DevicePlatform.iOS;
+            CrossNFC.Legacy = false;
         }
 
-        public void StopListening()
+        public async Task InitializeAsync()
         {
-            CrossNFC.Current.OnMessageReceived -= Current_OnMessageReceived;
-            CrossNFC.Current.StopListening();
-            _onTagRead = null;
-        }
-
-        private void Current_OnMessageReceived(ITagInfo tagInfo)
-        {
-            if (tagInfo == null || !tagInfo.IsSupported)
+            if (!IsSupported || !IsAvailable)
                 return;
 
-            // Customized serial number
-            //var identifier = tagInfo.Identifier;
-            //var serialNumber = NFCUtils.ByteArrayToHexString(identifier, ":");
-            //var title = !string.IsNullOrWhiteSpace(serialNumber) ? $"Tag [{serialNumber}]" : "Tag Info";
+            SubscribeToEvents();
 
-            //var tagId = tagInfo.SerialNumber ?? string.Empty;
-            var tagId = tagInfo.ToString() ?? string.Empty;
-            _onTagRead?.Invoke(tagId);
+            // Some delay to prevent Java.Lang.IllegalStateException on Android
+            await Task.Delay(500);
+        }
+
+        public async Task StartListeningAsync()
+        {
+            if (!IsSupported || !IsAvailable || !IsEnabled)
+                return;
+
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    CrossNFC.Current.StartListening();
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to start listening", ex);
+            }
+        }
+
+        public async Task StopListeningAsync()
+        {
+            if (!IsSupported)
+                return;
+
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    CrossNFC.Current.StopListening();
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to stop listening", ex);
+            }
+        }
+
+        public async Task StartPublishingAsync(bool formatTag = false)
+        {
+            if (!IsSupported || !IsAvailable || !IsEnabled)
+                return;
+
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    CrossNFC.Current.StartPublishing(formatTag);
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to start publishing", ex);
+            }
+        }
+
+        public async Task StopPublishingAsync()
+        {
+            if (!IsSupported)
+                return;
+
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    CrossNFC.Current.StopPublishing();
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to stop publishing", ex);
+            }
+        }
+
+        public async Task PublishMessageAsync(ITagInfo tagInfo, bool makeReadOnly = false)
+        {
+            if (!IsSupported)
+                return;
+
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    CrossNFC.Current.PublishMessage(tagInfo, makeReadOnly);
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to publish message", ex);
+            }
+        }
+
+        public async Task ClearMessageAsync(ITagInfo tagInfo)
+        {
+            if (!IsSupported)
+                return;
+
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    CrossNFC.Current.ClearMessage(tagInfo);
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to clear message", ex);
+            }
+        }
+
+        public void Configure(NfcConfiguration configuration)
+        {
+            CrossNFC.Current.SetConfiguration(configuration);
+        }
+
+        public string ByteArrayToHexString(byte[] bytes, string separator = null)
+        {
+            return NFCUtils.ByteArrayToHexString(bytes, separator);
+        }
+
+        public byte[] EncodeToByteArray(string text)
+        {
+            return NFCUtils.EncodeToByteArray(text);
+        }
+
+        private void SubscribeToEvents()
+        {
+            CrossNFC.Current.OnMessageReceived += (tagInfo) => OnMessageReceived?.Invoke(this, tagInfo);
+            CrossNFC.Current.OnMessagePublished += (tagInfo) => OnMessagePublished?.Invoke(this, tagInfo);
+            CrossNFC.Current.OnTagDiscovered += (tagInfo, format) => OnTagDiscovered?.Invoke(this, (tagInfo, format));
+            CrossNFC.Current.OnNfcStatusChanged += (isEnabled) => OnNfcStatusChanged?.Invoke(this, isEnabled);
+            CrossNFC.Current.OnTagListeningStatusChanged += (isListening) =>
+            {
+                IsListening = isListening;
+                OnTagListeningStatusChanged?.Invoke(this, isListening);
+            };
+
+            if (_isDeviceiOS)
+            {
+                CrossNFC.Current.OniOSReadingSessionCancelled += (sender, e) =>
+                    OniOSReadingSessionCancelled?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        private void UnsubscribeFromEvents()
+        {
+            // Events are automatically unsubscribed when the service is disposed
+            CrossNFC.Current.OnMessageReceived -= (tagInfo) => OnMessageReceived?.Invoke(this, tagInfo);
+            CrossNFC.Current.OnMessagePublished += (tagInfo) => OnMessagePublished?.Invoke(this, tagInfo);
+            CrossNFC.Current.OnTagDiscovered += (tagInfo, format) => OnTagDiscovered?.Invoke(this, (tagInfo, format));
+            CrossNFC.Current.OnNfcStatusChanged -= (isEnabled) => OnNfcStatusChanged?.Invoke(this, isEnabled);
+            CrossNFC.Current.OnTagListeningStatusChanged -= (isListening) =>
+            {
+                IsListening = isListening;
+                OnTagListeningStatusChanged?.Invoke(this, isListening);
+            };
+
+            if (_isDeviceiOS)
+                CrossNFC.Current.OniOSReadingSessionCancelled -= (sender, e) =>
+                    OniOSReadingSessionCancelled?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void Dispose()
+        {
+            UnsubscribeFromEvents();
         }
     }
 }

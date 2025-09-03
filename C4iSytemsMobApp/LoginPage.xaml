@@ -38,9 +38,6 @@
             <Button Text="Login" Clicked="OnLoginClicked"/>
             <Button Text="Login with QR Code" Clicked="OnQRCodeLoginClicked" BackgroundColor="#28a745"/>
 
-            <!-- NFC Test Buttons -->
-            <Button Text="NFC Test" Clicked="OnNfcTestClicked" BackgroundColor ="BurlyWood"/>
-
             <!-- Loading Indicator -->
             <ActivityIndicator x:Name="loadingIndicator" IsRunning="False" IsVisible="False"/>
            
