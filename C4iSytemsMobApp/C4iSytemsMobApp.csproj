@@ -40,7 +40,7 @@
 
 	<ItemGroup>
 		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#FFF9C4" />
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#FFF9C4" />
 
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
@@ -65,6 +65,7 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
 		<PackageReference Include="Plugin.Maui.Audio" Version="3.0.1" />
 		<PackageReference Include="Plugin.MediaManager" Version="1.2.2" />
+		<PackageReference Include="Plugin.NFC" Version="0.1.26" />
 		<PackageReference Include="ZXing.Net.Maui" Version="0.4.0" />
 		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.4.0" />
 	</ItemGroup>
@@ -78,6 +79,9 @@
 	  </Compile>
 	  <Compile Update="MainPage_Old.xaml.cs">
 	    <DependentUpon>MainPage_Old.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="NfcScannerTestPage.xaml.cs">
+	    <DependentUpon>NfcScannerTestPage.xaml</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 
@@ -113,6 +117,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="MultiMedia.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="NfcScannerTestPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="QrScannerPage.xaml">

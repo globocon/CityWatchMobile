@@ -34,6 +34,9 @@ public static class MauiProgram
         // Register LoginPage with HttpClient dependency
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddSingleton<ICrowdControlServices, CrowdControlServices>();
+        builder.Services.AddSingleton<IScannerControlServices, ScannerControlServices>();
+        builder.Services.AddSingleton<ILogBookServices, LogBookServices>();
+        builder.Services.AddSingleton<INfcService, NfcService>();
 
 #if ANDROID
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.Android.Services.VolumeButtonService>();

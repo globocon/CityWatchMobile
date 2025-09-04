@@ -11,7 +11,10 @@ namespace C4iSytemsMobApp;
 public partial class GuardLoginPage : ContentPage
 {
     private readonly HttpClient _httpClient;
+    private readonly IScannerControlServices _scannerControlServices;
     private readonly ICrowdControlServices _crowdControlServices;
+    private readonly INfcService _nfcService;
+
     public ObservableCollection<DropdownItem> ClientTypes { get; set; } = new();
     public ObservableCollection<DropdownItem> ClientSites { get; set; } = new();
 
@@ -52,6 +55,42 @@ public partial class GuardLoginPage : ContentPage
         }
     }
 
+    #region "NFC Properties"
+
+    public const string ALERT_TITLE = "NFC";
+
+    private bool _isDeviceiOS = false;
+    public bool DeviceIsListening
+    {
+        get => _deviceIsListening;
+        set
+        {
+            _deviceIsListening = value;
+            OnPropertyChanged(nameof(DeviceIsListening));
+        }
+    }
+
+    private bool _deviceIsListening;
+
+    private bool _nfcIsEnabled;
+    public bool NfcIsEnabled
+    {
+        get => _nfcIsEnabled;
+        set
+        {
+            _nfcIsEnabled = value;
+            OnPropertyChanged(nameof(NfcIsEnabled));
+            OnPropertyChanged(nameof(NfcIsDisabled));
+        }
+    }
+
+    public bool NfcIsDisabled => !NfcIsEnabled;
+
+    #endregion  "NFC Properties"
+
+
+
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -70,14 +109,31 @@ public partial class GuardLoginPage : ContentPage
         {
             // Optional: log or display error
         }
+
+        // Check NFC status
+        if (_nfcService.IsSupported)
+        {
+            if (_nfcService.IsAvailable)
+            {
+                NfcIsEnabled = _nfcService.IsEnabled;
+
+                if (DeviceInfo.Platform == DevicePlatform.iOS)
+                    _isDeviceiOS = true;
+
+                await InitializeNFCAsync();
+            }
+        }
     }
 
 
-    public GuardLoginPage(ICrowdControlServices crowdControlServices)
+    public GuardLoginPage(ICrowdControlServices crowdControlServices, IScannerControlServices scannerControlServices)
     {
         InitializeComponent();
         _httpClient = new HttpClient(); // Temporary fix
         _crowdControlServices = crowdControlServices;
+        _scannerControlServices = scannerControlServices;
+        _nfcService = IPlatformApplication.Current.Services.GetService<INfcService>();
+
         BindingContext = this;
         LoadLoggedInUser();
         LoadDropdownData();
@@ -89,8 +145,12 @@ public partial class GuardLoginPage : ContentPage
 
     }
 
+    protected override async void OnDisappearing()
+    {
+        base.OnDisappearing();
+        //await StopListening();
+    }
 
-   
 
     private async void LoadLoggedInUser()
     {
@@ -122,8 +182,8 @@ public partial class GuardLoginPage : ContentPage
             SecureStorage.Remove("UserRole");
 
             Application.Current.MainPage = new LoginPage();
-            
-             // Navigate back to login page
+
+            // Navigate back to login page
         }
     }
 
@@ -174,8 +234,8 @@ public partial class GuardLoginPage : ContentPage
 
             foreach (var type in response ?? new List<DropdownItem>())
             {
-                if(type.Name!="Select")
-                ClientTypes.Add(type);
+                if (type.Name != "Select")
+                    ClientTypes.Add(type);
             }
 
             // If only one item exists, select it and remove from the list
@@ -184,7 +244,7 @@ public partial class GuardLoginPage : ContentPage
                 SelectedClientType = ClientTypes[0];  // Automatically select the first item
                 textBoxSelectedClientType.Text = SelectedClientType.Name;
                 //textBoxSelectedClientType.IsVisible = true;// Set TextBox value
-               
+
             }
         }
         catch (Exception ex)
@@ -206,14 +266,14 @@ public partial class GuardLoginPage : ContentPage
 
             // Use both userId and clientTypeId in the request
             var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(
-                //$"https://cws-ir.com/api/GuardSecurityNumber/GetClientSitesByClientType?userId={userId}&clientTypeId={clientTypeId}");
+              //$"https://cws-ir.com/api/GuardSecurityNumber/GetClientSitesByClientType?userId={userId}&clientTypeId={clientTypeId}");
               $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSitesByClientType?userId={Uri.EscapeDataString(userId)}&clientTypeId={clientTypeId}");
 
 
             ClientSites.Clear();
             foreach (var site in response ?? new List<DropdownItem>())
             {
-                if(site.Name != "Select")
+                if (site.Name != "Select")
                     ClientSites.Add(site);
             }
         }
@@ -231,6 +291,7 @@ public partial class GuardLoginPage : ContentPage
 
     protected override bool OnBackButtonPressed()
     {
+        UnsubscribeFromNFCEvents();
         // Handle back button logic here
         Application.Current.MainPage = new NavigationPage(new LoginPage());
 
@@ -269,7 +330,7 @@ public partial class GuardLoginPage : ContentPage
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
                         lblGuardName.Text = $"Hello {guardData.Name}. Please verify your details and click Enter Log Book";
-                        SecureStorage.SetAsync("GuardName",guardData.Name);
+                        SecureStorage.SetAsync("GuardName", guardData.Name);
                         lblGuardName.TextColor = Colors.Green;
                         lblGuardName.IsVisible = true;
 
@@ -431,11 +492,12 @@ public partial class GuardLoginPage : ContentPage
             // API URL
             var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin" +
                          $"?guardId={guardId}" +
-                         $"&clientsiteId={clientSiteId}" +      
+                         $"&clientsiteId={clientSiteId}" +
                          $"&userId={userId}" +
                          $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
 
             //string apiUrl = $"https://cws-ir.com/api/GuardSecurityNumber/EnterGuardLogin?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
+
 
             using (HttpClient client = new HttpClient())
             {
@@ -463,10 +525,34 @@ public partial class GuardLoginPage : ContentPage
                         await SecureStorage.SetAsync("ClientType", selectedClientTypeName);
                     }
 
-                    var _crowdControlsettings = await _crowdControlServices.GetCrowdControlSettingsAsync(clientSiteIdString);
-                    if(_crowdControlsettings != null && (_crowdControlsettings?.IsCrowdCountEnabled ?? false))
+                    // Check if NFC is onboarded for site
+                    var scannerSettings = await _scannerControlServices.CheckScannerOnboardedAsync(clientSiteIdString);
+                    if (scannerSettings != null && scannerSettings.Count > 0)
                     {
-                       if( _crowdControlsettings.IsCrowdCountEnabled)
+                        // If scanner is onboarded, navigate to NFC page
+                        if (scannerSettings.Exists(x => x.ToLower().Equals("nfc")))
+                        {
+                            await SecureStorage.SetAsync("NfcOnboarded", "true");
+                            //check if nfc is available in the device
+                            //check if nfc is enabled
+                            if (_nfcService.IsSupported && _nfcService.IsAvailable && !NfcIsEnabled)
+                            {
+                                await DisplayAlert(ALERT_TITLE, "NFC is disabled. Please enable NFC to proceed.", "OK");
+                                return;
+                            }
+
+                            if (_nfcService.IsSupported && _nfcService.IsAvailable && NfcIsEnabled) { UnsubscribeFromNFCEvents(); }
+                        }
+                        else
+                        {
+                            await SecureStorage.SetAsync("NfcOnboarded", "false");
+                        }
+                    }
+
+                    var _crowdControlsettings = await _crowdControlServices.GetCrowdControlSettingsAsync(clientSiteIdString);
+                    if (_crowdControlsettings != null && (_crowdControlsettings?.IsCrowdCountEnabled ?? false))
+                    {
+                        if (_crowdControlsettings.IsCrowdCountEnabled)
                         {
                             Application.Current.MainPage = new GuardSecurityIdTagPage();
                         }
@@ -502,9 +588,62 @@ public partial class GuardLoginPage : ContentPage
     }
 
 
+    #region "NFC Methods"
+    private async Task InitializeNFCAsync()
+    {
+        try
+        {
+            await _nfcService.InitializeAsync();
+            SubscribeToNFCEvents();            
+            // Some delay to prevent Java.Lang.IllegalStateException on Android
+            await Task.Delay(500);
+            //await StartListeningIfNotiOS();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert(ALERT_TITLE, $"Failed to initialize NFC: {ex.Message}", "OK");
+        }
+    }
+
+    private void SubscribeToNFCEvents()
+    {
+        //_nfcService.OnMessageReceived += OnMessageReceived;
+        //_nfcService.OnMessagePublished += OnMessagePublished;
+        //_nfcService.OnTagDiscovered += OnTagDiscovered;
+        _nfcService.OnNfcStatusChanged += OnNfcStatusChanged;
+        //_nfcService.OnTagListeningStatusChanged += OnTagListeningStatusChanged;        
+
+        if (_isDeviceiOS)
+            _nfcService.OniOSReadingSessionCancelled += OniOSReadingSessionCancelled;
+    }
+
+    private void UnsubscribeFromNFCEvents()
+    {
+        //_nfcService.OnMessageReceived -= OnMessageReceived;
+        //_nfcService.OnMessagePublished -= OnMessagePublished;
+        //_nfcService.OnTagDiscovered -= OnTagDiscovered;
+        _nfcService.OnNfcStatusChanged -= OnNfcStatusChanged;
+        //_nfcService.OnTagListeningStatusChanged -= OnTagListeningStatusChanged;
+
+        _nfcService.Dispose();
+
+        if (_isDeviceiOS)
+            _nfcService.OniOSReadingSessionCancelled -= OniOSReadingSessionCancelled;
+    }
+    private async void OnNfcStatusChanged(object sender, bool isEnabled)
+    {
+        NfcIsEnabled = isEnabled;
+        await DisplayAlert(ALERT_TITLE, $"NFC has been {(isEnabled ? "enabled" : "disabled")} from Guard Login Page.", "OK");
+    }
+
+    private void OniOSReadingSessionCancelled(object sender, EventArgs e) =>
+       Debug.WriteLine("iOS NFC Session has been cancelled");
 
 
-   
+
+    #endregion "NFC Methods"
+
+
 
 }
 

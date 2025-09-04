@@ -1,5 +1,9 @@
 using C4iSytemsMobApp.Interface;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
+using Plugin.NFC;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -11,12 +15,44 @@ namespace C4iSytemsMobApp;
 public partial class LogActivity : ContentPage
 {
     private readonly HttpClient _httpClient = new();
+    private readonly ILogBookServices _logBookServices;
     private System.Timers.Timer _logRefreshTimer;
     private List<int> _lastLogIds = new();
     private CancellationTokenSource _delayCancellationTokenSource;
     private List<GuardLogDto> _lastLogs = new();
+
     public ObservableCollection<MyFileModel> SelectedFiles { get; set; }
      = new ObservableCollection<MyFileModel>();
+
+    public const string ALERT_TITLE = "NFC";
+    bool _eventsAlreadySubscribed = false;
+    private readonly IScannerControlServices _scannerControlServices;
+    private bool _isNfcEnabledForSite = false;
+    bool _isDeviceiOS = false;
+    public bool DeviceIsListening
+    {
+        get => _deviceIsListening;
+        set
+        {
+            _deviceIsListening = value;
+            OnPropertyChanged(nameof(DeviceIsListening));
+        }
+    }
+    private bool _deviceIsListening;
+    private bool _nfcIsEnabled;
+    public bool NfcIsEnabled
+    {
+        get => _nfcIsEnabled;
+        set
+        {
+            _nfcIsEnabled = value;
+            OnPropertyChanged(nameof(NfcIsEnabled));
+            OnPropertyChanged(nameof(NfcIsDisabled));
+        }
+    }
+
+    public bool NfcIsDisabled => !NfcIsEnabled;
+
     public LogActivity()
     {
         InitializeComponent();
@@ -24,9 +60,8 @@ public partial class LogActivity : ContentPage
         LoadActivities();
         //LoadLogs();
         FilesCollection.ItemsSource = SelectedFiles;
-
-    
-
+        _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
+        _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
     }
     private void PopupOverlay_SizeChanged(object sender, EventArgs e)
     {
@@ -40,11 +75,13 @@ public partial class LogActivity : ContentPage
         }
     }
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
 
         LoadLogs(); // Call when the page is about to appear
+
+        await StartNFC();
 
         // Set up a timer for periodic refresh every 1 second
         _logRefreshTimer = new System.Timers.Timer(1000); // 1 second = 1000 ms
@@ -59,7 +96,7 @@ public partial class LogActivity : ContentPage
         _logRefreshTimer.Start();
     }
 
-    protected override void OnDisappearing()
+    protected override async void OnDisappearing()
     {
         base.OnDisappearing();
 
@@ -68,6 +105,11 @@ public partial class LogActivity : ContentPage
             _logRefreshTimer.Stop();
             _logRefreshTimer.Dispose();
             _logRefreshTimer = null;
+        }
+
+        if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
+        {
+            await StopListening();
         }
     }
 
@@ -697,56 +739,73 @@ public partial class LogActivity : ContentPage
 
     private async Task LogActivityTask(string activityDescription)
     {
-        var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+        //var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
 
-        string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+        //string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
 
-        if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        //if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        //{
+        //    await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+        //    return;
+        //}
+
+
+        //if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
+        //var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
+        //     $"?guardId={guardId}" +
+        //     $"&clientsiteId={clientSiteId}" +
+        //     $"&userId={userId}" +
+        //     $"&activityString={Uri.EscapeDataString(activityDescription)}" +
+        //     $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
+
+
+        //try
+        //{
+        //    try
+        //    {
+        //        HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            await ShowToastMessage("Log entry added successfully.");
+        //            _delayCancellationTokenSource = new CancellationTokenSource();
+        //            //CustomLogEntry.Text = string.Empty; // Clear entry after success
+
+        //            await Task.Delay(2000, _delayCancellationTokenSource.Token); // Wait for 2 seconds
+        //            var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        //            Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+        //            //Application.Current.MainPage = new NavigationPage(new MainPage());
+        //        }
+        //        else
+        //        {
+        //            string errorMessage = await response.Content.ReadAsStringAsync();
+        //            await ShowToastMessage($"Failed: {errorMessage}");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        //await ShowToastMessage($"Error: {ex.Message}");
+        //    }
+        //}
+        //catch (Exception ex)
+        //{
+        //    //await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+        //}
+
+        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription);
+        if (isSuccess)
         {
-            await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
-            return;
+            await ShowToastMessage(msg);
+            //await ShowToastMessage("Log entry added successfully.");
+            _delayCancellationTokenSource = new CancellationTokenSource();
+            //CustomLogEntry.Text = string.Empty; // Clear entry after success
+
+            await Task.Delay(2000, _delayCancellationTokenSource.Token); // Wait for 2 seconds
+            var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+            Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));            
         }
-
-
-        if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
-        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
-             $"?guardId={guardId}" +
-             $"&clientsiteId={clientSiteId}" +
-             $"&userId={userId}" +
-             $"&activityString={Uri.EscapeDataString(activityDescription)}" +
-             $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
-
-
-        try
+        else
         {
-            try
-            {
-                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
-                if (response.IsSuccessStatusCode)
-                {
-                    await ShowToastMessage("Log entry added successfully.");
-                    _delayCancellationTokenSource = new CancellationTokenSource();
-                    //CustomLogEntry.Text = string.Empty; // Clear entry after success
-
-                    await Task.Delay(2000, _delayCancellationTokenSource.Token); // Wait for 2 seconds
-                    var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
-                    Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
-                    //Application.Current.MainPage = new NavigationPage(new MainPage());
-                }
-                else
-                {
-                    string errorMessage = await response.Content.ReadAsStringAsync();
-                    await ShowToastMessage($"Failed: {errorMessage}");
-                }
-            }
-            catch (Exception ex)
-            {
-                //await ShowToastMessage($"Error: {ex.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            //await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+            await ShowToastMessage(msg);
         }
     }
 
@@ -840,6 +899,11 @@ public partial class LogActivity : ContentPage
 
     private async void OnHomeClicked(object sender, EventArgs e)
     {
+        if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
+        {
+            Task.Run(async () => await StopListening());
+        }
+
         var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
         Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
         //Application.Current.MainPage = new NavigationPage(new MainPage());
@@ -847,6 +911,11 @@ public partial class LogActivity : ContentPage
 
     protected override bool OnBackButtonPressed()
     {
+        if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
+        {
+            Task.Run(async () => await StopListening());
+        }
+
         // Handle back button logic here
         var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
         Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
@@ -860,37 +929,39 @@ public partial class LogActivity : ContentPage
     // Method to display toast message
     private async Task ShowToastMessage(string message)
     {
-        var toast = new Frame
-        {
-            Content = new Label
-            {
-                Text = message,
-                TextColor = Colors.White,
-                HorizontalOptions = LayoutOptions.Center,
-                VerticalOptions = LayoutOptions.Center,
-                HorizontalTextAlignment = TextAlignment.Center,
-                VerticalTextAlignment = TextAlignment.Center,
-                FontSize = 16
-            },
-            BackgroundColor = Color.FromRgba(0, 0, 0, 0.7),
-            CornerRadius = 10,
-            Padding = 15,
-            Margin = 20,
-            HorizontalOptions = LayoutOptions.Center,
-            VerticalOptions = LayoutOptions.Center, // Centered vertically
-            Opacity = 0
-        };
+        await Toast.Make(message, ToastDuration.Long).Show();
 
-        // Add the toast to the main grid
-        MainGrid.Children.Add(toast);
+        //var toast = new Frame
+        //{
+        //    Content = new Label
+        //    {
+        //        Text = message,
+        //        TextColor = Colors.White,
+        //        HorizontalOptions = LayoutOptions.Center,
+        //        VerticalOptions = LayoutOptions.Center,
+        //        HorizontalTextAlignment = TextAlignment.Center,
+        //        VerticalTextAlignment = TextAlignment.Center,
+        //        FontSize = 16
+        //    },
+        //    BackgroundColor = Color.FromRgba(0, 0, 0, 0.7),
+        //    CornerRadius = 10,
+        //    Padding = 15,
+        //    Margin = 20,
+        //    HorizontalOptions = LayoutOptions.Center,
+        //    VerticalOptions = LayoutOptions.Center, // Centered vertically
+        //    Opacity = 0
+        //};
 
-        // Animate the toast appearance and disappearance
-        await toast.FadeTo(1, 250);       // Fade In
-        await Task.Delay(2000);           // Show for 2 seconds
-        await toast.FadeTo(0, 250);       // Fade Out
+        //// Add the toast to the main grid
+        //MainGrid.Children.Add(toast);
 
-        // Remove toast after display
-        MainGrid.Children.Remove(toast);
+        //// Animate the toast appearance and disappearance
+        //await toast.FadeTo(1, 250);       // Fade In
+        //await Task.Delay(2000);           // Show for 2 seconds
+        //await toast.FadeTo(0, 250);       // Fade Out
+
+        //// Remove toast after display
+        //MainGrid.Children.Remove(toast);
     }
 
     private void CustomLogEntry_TextChanged(object sender, TextChangedEventArgs e)
@@ -1161,9 +1232,6 @@ public partial class LogActivity : ContentPage
     }
 
 
-
-
-
     private void OnClosePopupClicked(object sender, EventArgs e)
     {
         // Hide the popup
@@ -1182,6 +1250,177 @@ public partial class LogActivity : ContentPage
         // Hide the file list
         FilesCollection.IsVisible = false;
     }
+
+    #region "NFC Methods"
+
+    private async Task StartNFC()
+    {
+        // Check NFC status
+        string isNfcEnabledForSiteLocalStored = await SecureStorage.GetAsync("NfcOnboarded");
+
+        if (!string.IsNullOrEmpty(isNfcEnabledForSiteLocalStored) && bool.TryParse(isNfcEnabledForSiteLocalStored, out _isNfcEnabledForSite))
+        {
+            // In order to support Mifare Classic 1K tags (read/write), you must set legacy mode to true.
+            CrossNFC.Legacy = false;
+
+            if (CrossNFC.IsSupported)
+            {
+                if (CrossNFC.Current.IsAvailable)
+                {
+                    NfcIsEnabled = CrossNFC.Current.IsEnabled;
+                    if (!NfcIsEnabled)
+                        await DisplayAlert(ALERT_TITLE, "NFC is disabled from Log Activity Page", "OK");
+
+                    if (DeviceInfo.Platform == DevicePlatform.iOS)
+                        _isDeviceiOS = true;
+
+                    //await InitializeNFCAsync();
+                    await AutoStartAsync().ConfigureAwait(false);
+                }
+            }
+        }
+
+    }
+
+    async Task AutoStartAsync()
+    {
+        // Some delay to prevent Java.Lang.IllegalStateException "Foreground dispatch can only be enabled when your activity is resumed" on Android
+        await Task.Delay(500);
+        await StartListeningIfNotiOS();
+    }
+
+    void SubscribeEvents()
+    {
+        if (_eventsAlreadySubscribed)
+            UnsubscribeEvents();
+
+        _eventsAlreadySubscribed = true;
+
+        CrossNFC.Current.OnMessageReceived += Current_OnMessageReceived;
+        CrossNFC.Current.OnNfcStatusChanged += Current_OnNfcStatusChanged;
+        CrossNFC.Current.OnTagListeningStatusChanged += Current_OnTagListeningStatusChanged;
+
+        if (_isDeviceiOS)
+            CrossNFC.Current.OniOSReadingSessionCancelled += Current_OniOSReadingSessionCancelled;
+    }
+
+    void UnsubscribeEvents()
+    {
+        CrossNFC.Current.OnMessageReceived -= Current_OnMessageReceived;
+        CrossNFC.Current.OnNfcStatusChanged -= Current_OnNfcStatusChanged;
+        CrossNFC.Current.OnTagListeningStatusChanged -= Current_OnTagListeningStatusChanged;
+
+        if (_isDeviceiOS)
+            CrossNFC.Current.OniOSReadingSessionCancelled -= Current_OniOSReadingSessionCancelled;
+
+        _eventsAlreadySubscribed = false;
+    }
+    void Current_OnTagListeningStatusChanged(bool isListening) => DeviceIsListening = isListening;
+
+    async void Current_OnNfcStatusChanged(bool isEnabled)
+    {
+        NfcIsEnabled = isEnabled;
+        await DisplayAlert(ALERT_TITLE, $"NFC has been {(isEnabled ? "enabled" : "disabled")} from Log Activity Page", "OK");
+    }
+
+    async void Current_OnMessageReceived(ITagInfo tagInfo)
+    {
+        if (tagInfo == null)
+        {
+            await DisplayAlert(ALERT_TITLE, "No tag found", "OK");
+            return;
+        }
+
+        var identifier = tagInfo.Identifier;
+        var serialNumber = NFCUtils.ByteArrayToHexString(identifier, "");
+        var title = !tagInfo.IsEmpty ? $"Tag Info: {tagInfo}" : "Tag Info";
+
+        if (!tagInfo.IsSupported)
+        {
+            await DisplayAlert(ALERT_TITLE, "Unsupported NFC tag", "OK");
+        }
+        else if (!string.IsNullOrEmpty(serialNumber))
+        {
+            await ShowToastMessage($"Tag scanned. Logging activity...");
+            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+            if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
+
+            var scannerSettings = await _scannerControlServices.FetchTagInfoDetailsAsync(clientSiteId.ToString(), serialNumber, guardId.ToString(), userId.ToString());
+            if (scannerSettings != null)
+            {
+                if (scannerSettings.IsSuccess)
+                {
+                    // Valid tag - log activity
+                    LogActivityTask(scannerSettings.tagInfoLabel);                   
+                }
+                else
+                {
+                    await DisplayAlert(ALERT_TITLE, scannerSettings?.message ?? "Unknown error", "OK");
+                    return;
+                }
+            }
+            else
+            {
+                await DisplayAlert(ALERT_TITLE, scannerSettings?.message ?? "Unknown error", "OK");
+                return;
+            }
+
+        }
+        else
+        {
+            //var first = tagInfo.Records[0];
+            //await DisplayAlert(ALERT_TITLE, GetMessage(first), "OK");
+            await DisplayAlert(ALERT_TITLE, "Tag UID not found", "OK");
+            return;
+        }
+    }
+
+    void Current_OniOSReadingSessionCancelled(object sender, EventArgs e) => Debug.WriteLine("iOS NFC Session has been cancelled");
+
+    async Task StartListeningIfNotiOS()
+    {
+        if (_isDeviceiOS)
+        {
+            SubscribeEvents();
+            return;
+        }
+        await BeginListening();
+    }
+
+    async Task BeginListening()
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                SubscribeEvents();
+                CrossNFC.Current.StartListening();
+            });
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert(ALERT_TITLE, ex.Message, "OK");
+        }
+    }
+
+    async Task StopListening()
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                CrossNFC.Current.StopListening();
+                UnsubscribeEvents();
+            });
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert(ALERT_TITLE, ex.Message, "OK");
+        }
+    }
+
+
+    #endregion "NFC Methods"
 
 }
 

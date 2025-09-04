@@ -12,12 +12,16 @@ namespace C4iSytemsMobApp
         //public static string MobileSignalRBaseUrl { get; set; } = "http://test.c4i-system.com";
 
 
-        //public static string ApiBaseUrl { get; set; } = "https://localhost:44356/api/";
+        //public static string ApiBaseUrl { get; set; } = "https://localhost:5001/api/";
+        //public static string MobileSignalRBaseUrl { get; set; } = "https://localhost:5001/api/";
 
         //#### Added for local testing by Binoy
         //
-        //public static string ApiBaseUrl { get; set; } = "http://192.168.1.37:91/api/";
-        //public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.37:91";
+        //public static string ApiBaseUrl { get; set; } = "http://192.168.1.40:91/api/";
+        //public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.40:91";
+
+        //public static string ApiBaseUrl { get; set; } = "https://192.168.1.40:5001/api/";
+        //public static string MobileSignalRBaseUrl { get; set; } = "https://192.168.1.40:5001/api/";
 
     }
 }

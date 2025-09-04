@@ -47,7 +47,8 @@
 
 
         <!-- Main Content Grid -->
-        <Grid ColumnDefinitions="*,*"
+        <Grid x:Name="MainGrid"
+              ColumnDefinitions="*,*"
               Padding="5,5,5,0"
               RowSpacing="2"
               ColumnSpacing="2"
