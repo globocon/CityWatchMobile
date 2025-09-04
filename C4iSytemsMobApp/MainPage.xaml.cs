@@ -12,6 +12,8 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
 
 namespace C4iSytemsMobApp
 {
@@ -43,7 +45,6 @@ namespace C4iSytemsMobApp
         bool _eventsAlreadySubscribed = false;
         private readonly IScannerControlServices _scannerControlServices;
         private bool _isNfcEnabledForSite = false;
-        private bool _isNfcSupportedByDevice = false;
         bool _isDeviceiOS = false;
         public bool DeviceIsListening
         {
@@ -282,7 +283,20 @@ namespace C4iSytemsMobApp
             await StartNFC();
         }
 
-        
+        protected override async void OnDisappearing()
+        {
+            base.OnDisappearing();
+
+            if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
+            {
+                await StopListening();
+            }
+            if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
+            {
+                _hubConnection.StopAsync();
+                _hubConnection.DisposeAsync();
+            }   
+        }
 
         private async void LoadLoggedInUser()
         {
@@ -521,7 +535,11 @@ namespace C4iSytemsMobApp
                 {
                     try
                     {
-                        Task.Run(() => StopListening());
+                        if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
+                        {
+                            Task.Run(async () => await StopListening());
+                        }
+                        
                         if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
                         {
                             _hubConnection.StopAsync();
@@ -1159,18 +1177,18 @@ namespace C4iSytemsMobApp
             // Check NFC status
             string isNfcEnabledForSiteLocalStored = await SecureStorage.GetAsync("NfcOnboarded");
 
-            if (!string.IsNullOrEmpty(isNfcEnabledForSiteLocalStored) && bool.TryParse(isNfcEnabledForSiteLocalStored, out bool _isNfcEnabledForSite))
+            if (!string.IsNullOrEmpty(isNfcEnabledForSiteLocalStored) && bool.TryParse(isNfcEnabledForSiteLocalStored, out _isNfcEnabledForSite))
             {
                 // In order to support Mifare Classic 1K tags (read/write), you must set legacy mode to true.
                 CrossNFC.Legacy = false;
 
                 if (CrossNFC.IsSupported)
-                {
+                {                    
                     if (CrossNFC.Current.IsAvailable)
                     {
                         NfcIsEnabled = CrossNFC.Current.IsEnabled;
                         if (!NfcIsEnabled)
-                            await DisplayAlert(ALERT_TITLE, "NFC is disabled from Log Activity Page", "OK");
+                            await DisplayAlert(ALERT_TITLE, "NFC is disabled from Home Page", "OK");
 
                         if (DeviceInfo.Platform == DevicePlatform.iOS)
                             _isDeviceiOS = true;
@@ -1334,37 +1352,8 @@ namespace C4iSytemsMobApp
 
         private async Task ShowToastMessage(string message)
         {
-            var toast = new Frame
-            {
-                Content = new Label
-                {
-                    Text = message,
-                    TextColor = Colors.White,
-                    HorizontalOptions = LayoutOptions.Center,
-                    VerticalOptions = LayoutOptions.Center,
-                    HorizontalTextAlignment = TextAlignment.Center,
-                    VerticalTextAlignment = TextAlignment.Center,
-                    FontSize = 16
-                },
-                BackgroundColor = Color.FromRgba(0, 0, 0, 0.7),
-                CornerRadius = 10,
-                Padding = 15,
-                Margin = 20,
-                HorizontalOptions = LayoutOptions.Center,
-                VerticalOptions = LayoutOptions.Center, // Centered vertically
-                Opacity = 0
-            };
-
-            // Add the toast to the main grid
-            MainGrid.Children.Add(toast);
-
-            // Animate the toast appearance and disappearance
-            await toast.FadeTo(1, 250);       // Fade In
-            await Task.Delay(2000);           // Show for 2 seconds
-            await toast.FadeTo(0, 250);       // Fade Out
-
-            // Remove toast after display
-            MainGrid.Children.Remove(toast);
+            await Toast.Make(message, ToastDuration.Long).Show();
+            
         }
 
         private async Task<(int guardId, int clientSiteId, int userId)> GetSecureStorageValues()
