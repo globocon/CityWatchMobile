@@ -549,15 +549,17 @@ public partial class GuardLoginPage : ContentPage
                         }
                     }
 
+                    await SecureStorage.SetAsync("CrowdCountEnabledForSite", "false");
                     var _crowdControlsettings = await _crowdControlServices.GetCrowdControlSettingsAsync(clientSiteIdString);
                     if (_crowdControlsettings != null && (_crowdControlsettings?.IsCrowdCountEnabled ?? false))
                     {
                         if (_crowdControlsettings.IsCrowdCountEnabled)
                         {
+                            await SecureStorage.SetAsync("CrowdCountEnabledForSite", "true");
                             Application.Current.MainPage = new GuardSecurityIdTagPage();
                         }
                         else
-                        {
+                        {                            
                             var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
                             Application.Current.MainPage = new MainPage(volumeButtonService);
                         }
