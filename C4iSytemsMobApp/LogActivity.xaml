@@ -234,6 +234,98 @@
             </Frame>
         </Grid>
 
+        <Grid x:Name="PopupOverlayPushNotifications"
+      BackgroundColor="#80000000"
+      IsVisible="False"
+      SizeChanged="PopupOverlay_SizeChanged">
+
+            <Frame x:Name="PushNotificationsFrame"
+           BackgroundColor="White"
+           CornerRadius="12"
+           Padding="10"
+           Margin="8"
+           HasShadow="True"
+           VerticalOptions="Center"
+           HorizontalOptions="Center"
+           MaximumWidthRequest="480">
+
+                <!-- Grid inside Frame -->
+                <Grid RowDefinitions="*,Auto">
+
+                    <!-- Scrollable Content -->
+                    <ScrollView Grid.Row="0">
+                        <VerticalStackLayout Spacing="5">
+
+                            <!-- Popup Header -->
+                            <Label Text="Push Notifications"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="Black"
+                           HorizontalOptions="Center" />
+
+                            <!-- Checkboxes -->
+                            <VerticalStackLayout Spacing="3">
+                                <HorizontalStackLayout Spacing="3" VerticalOptions="Center">
+                                    <CheckBox x:Name="chkPushAcknowledge"
+                                      IsChecked="True"
+                                               CheckedChanged="chkPushAcknowledge_CheckedChanged"
+                                      Color="Green" />
+                                    <Label Text="Acknowledge Message"
+                                   VerticalOptions="Center"
+                                   FontSize="13"
+                                   TextColor="Black" />
+                                </HorizontalStackLayout>
+
+                                <HorizontalStackLayout Spacing="3" VerticalOptions="Center">
+                                    <CheckBox x:Name="chkPushMessageBack"
+                                      IsChecked="False"
+                                      CheckedChanged="chkPushMessageBack_CheckedChanged"
+                                      Color="Green" />
+                                    <Label Text="Message Back Instead"
+                                   VerticalOptions="Center"
+                                   FontSize="13"
+                                   TextColor="Black" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+
+                            <!-- Message Box -->
+                            <Editor x:Name="txtPushMessage"
+                            Placeholder="Type your message here..."
+                            AutoSize="TextChanges"
+                            HeightRequest="100"
+                            FontSize="13"
+                            TextColor="Black"
+                            IsEnabled="False"  
+                                    />
+
+                        </VerticalStackLayout>
+                    </ScrollView>
+
+                    <!-- Footer Buttons -->
+                    <HorizontalStackLayout Grid.Row="1"
+                                   Spacing="10"
+                                   HorizontalOptions="Center"
+                                   Margin="0,10,0,0">
+                        <Button x:Name="btnPushSend"
+                        Text="Send >>"
+                        Clicked="OnPushSendClicked"
+                        BackgroundColor="#007BFF"
+                        TextColor="White"
+                        FontSize="13"
+                        CornerRadius="6"/>
+                        <Button x:Name="btnPushCancel"
+                        Text="Cancel"
+                        Clicked="OnPushClosePopupClicked"
+                        BackgroundColor="Gray"
+                        TextColor="White"
+                        FontSize="13"
+                        CornerRadius="6"/>
+                    </HorizontalStackLayout>
+
+                </Grid>
+            </Frame>
+        </Grid>
+
 
 
         <!--<Grid x:Name="PopupOverlay" 

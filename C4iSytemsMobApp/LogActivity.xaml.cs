@@ -52,7 +52,7 @@ public partial class LogActivity : ContentPage
     }
 
     public bool NfcIsDisabled => !NfcIsEnabled;
-
+    private GuardLogDto SelectedLogForPush { get; set; }
     public LogActivity()
     {
         InitializeComponent();
@@ -205,8 +205,13 @@ public partial class LogActivity : ContentPage
                 return;
             }
 
+           
+            var bgColorPaleYellow = Color.FromArgb("#fcf8d1");
+            var bgColorPaleRed = Color.FromArgb("#ffcccc");
+            var bgColorNormal = Color.FromArgb("#F2F2F2"); // default
             foreach (var log in logs)
             {
+                bool isAlarm = false;
                 var contentLayout = new VerticalStackLayout
                 {
                     Spacing = 3,
@@ -240,7 +245,7 @@ public partial class LogActivity : ContentPage
 
                 // Notes / IR handling
                 Label noteLabel;
-                if (log.IrEntryType == true)
+                if (log.IrEntryType == 1)
                 {
                     var formattedText = new FormattedString();
                     var noteText = log.Notes?.Trim() ?? "";
@@ -252,7 +257,7 @@ public partial class LogActivity : ContentPage
                     });
 
                     string blobUrl = null;
-                    if (!string.IsNullOrWhiteSpace(noteText) && noteText.Length >= 8)
+                    if (!string.IsNullOrWhiteSpace(noteText) && noteText.Length >= 8 &&  noteText.Contains("IR Report", StringComparison.OrdinalIgnoreCase) )
                     {
                         var folder = new string(noteText.Take(8).ToArray());
                         var blobFileName = noteText.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
@@ -406,13 +411,62 @@ public partial class LogActivity : ContentPage
                     }
                 }
 
+                Color cardBgColor = bgColorNormal;
+                if (log.IrEntryType == 2)
+                {
+                    cardBgColor = bgColorPaleRed;
+                    isAlarm = true;
+                }
+                else if (log.IrEntryType == 1)
+                    cardBgColor = bgColorPaleYellow;
+
+                // Create a Grid to hold content + optional button
+                var cardGrid = new Grid
+                {
+                    ColumnDefinitions =
+    {
+        new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }, // main content
+        new ColumnDefinition { Width = GridLength.Auto } // button
+    }
+                };
+
+                // Add existing contentLayout to the first column
+                cardGrid.Add(contentLayout, 0, 0);
+
+                // Add button only if IrEntryType == 2
+                if (isAlarm)
+                {
+                    var actionButton = new ImageButton
+                    {
+                        Source = "envelope.png", // replace with your image filename in Resources/Images
+                        BackgroundColor = Colors.Transparent,
+                        HeightRequest = 30,
+                        WidthRequest = 30,
+                        HorizontalOptions = LayoutOptions.End,
+                        VerticalOptions = LayoutOptions.Start,
+                        CornerRadius = 6,
+                        Padding = 2
+                    };
+
+                    actionButton.Clicked += (s, e) =>
+                    {
+                        SelectedLogForPush = log; // store the selected log
+                        ShowPushNotificationsPopup();
+                        // Optional: Display alert for testing
+                        // await Application.Current.MainPage.DisplayAlert("Alarm", $"Action triggered for {log.GuardInitials}", "OK");
+                    };
+
+
+                    cardGrid.Add(actionButton, 1, 0);
+                }
+
                 var logCard = new Frame
                 {
                     CornerRadius = 8,
                     Padding = 6,
                     Margin = new Thickness(2, 4),
-                    BackgroundColor = Color.FromArgb("#F2F2F2"),
-                    Content = contentLayout
+                    BackgroundColor = cardBgColor,
+                    Content = cardGrid
                 };
 
                 LogDisplayArea.Children.Add(logCard);
@@ -423,7 +477,115 @@ public partial class LogActivity : ContentPage
             await DisplayAlert("Error", $"An error occurred while loading logs: {ex.Message}", "OK");
         }
     }
+    private void chkPushAcknowledge_CheckedChanged(object sender, CheckedChangedEventArgs e)
+    {
+        if (chkPushAcknowledge.IsChecked)
+        {
+            // Uncheck the other
+            chkPushMessageBack.IsChecked = false;
 
+            // Disable & clear text box
+            txtPushMessage.IsEnabled = false;
+            txtPushMessage.Text = string.Empty;
+        }
+    }
+
+    private void chkPushMessageBack_CheckedChanged(object sender, CheckedChangedEventArgs e)
+    {
+        if (chkPushMessageBack.IsChecked)
+        {
+            // Uncheck the other
+            chkPushAcknowledge.IsChecked = false;
+
+            // Enable text box
+            txtPushMessage.IsEnabled = true;
+        }
+        else
+        {
+            // If unchecked, also clear/disable the text box
+            txtPushMessage.IsEnabled = false;
+            txtPushMessage.Text = string.Empty;
+        }
+    }
+
+
+    private void ShowPushNotificationsPopup()
+    {
+        PopupOverlayPushNotifications.IsVisible = true;
+    }
+
+    private void OnPushClosePopupClicked(object sender, EventArgs e)
+    {
+        PopupOverlayPushNotifications.IsVisible = false;
+    }
+
+    private async void OnPushSendClicked(object sender, EventArgs e)
+    {
+       
+        if (SelectedLogForPush == null)
+        {
+            await DisplayAlert("Error", "No log selected for notification.", "OK");
+            return;
+        }
+        var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+        if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
+
+        string existingLog = CustomLogEntry.Text?.Trim() ?? string.Empty;
+
+       
+
+        // Build the message including the selected log details
+        string logInfo =$" {SelectedLogForPush.Notes}";
+
+       
+        string messageToSend;
+
+        // Check which option is selected
+        if (chkPushAcknowledge.IsChecked)
+        {
+            messageToSend = $"{logInfo}\n--ACKNOWLEDGED";
+        }
+        else if (chkPushMessageBack.IsChecked)
+        {
+            messageToSend = $"{logInfo}\n--{txtPushMessage.Text}";
+        }
+        else
+        {
+            // fallback, in case neither is selected
+            messageToSend = logInfo;
+        }
+
+        int rcPushMessageId = SelectedLogForPush.rcPushMessageId ?? 0;
+
+        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SavePushNotificationTestMessage" +
+                     $"?guardId={guardId}" +
+                     $"&clientsiteId={clientSiteId}" +
+                     $"&userId={userId}" +
+                     $"&notifications={Uri.EscapeDataString(messageToSend)}" +
+                     $"&rcPushMessageId={rcPushMessageId}";
+
+        try
+        {
+            // Use POST (because API is [HttpPost])
+            HttpResponseMessage response = await _httpClient.PostAsync(apiUrl, null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await ShowToastMessage("Notification sent successfully.");
+                txtPushMessage.Text = string.Empty;
+                PopupOverlayPushNotifications.IsVisible = false;
+            }
+            else
+            {
+                string errorMessage = await response.Content.ReadAsStringAsync();
+                await ShowToastMessage($"Failed: {errorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowToastMessage($"Error: {ex.Message}");
+        }
+    }
 
 
 
@@ -831,7 +993,10 @@ public partial class LogActivity : ContentPage
       $"&clientsiteId={clientSiteId}" +
       $"&userId={userId}" +
       $"&activityString={Uri.EscapeDataString(CustomLogEntry.Text.Trim())}" +
-      $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
+      $"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
+        $"&systemEntry=false";  
+
+        ;
         
         try
         {
@@ -1443,10 +1608,14 @@ public class GuardLogDto
 {
     public int Id { get; set; }
     public DateTime EventDateTime { get; set; }
-    public string EventDateTimeLocal { get; set; }
-    public string EventDateTimeZoneShort { get; set; }
+    public string EventDateTimeLocal { get; set; } // For frontend use
+    public string EventDateTimeZoneShort { get; set; } // For frontend use
+
     public string Notes { get; set; }
     public List<string> ImageUrls { get; set; }
     public string GuardInitials { get; set; }
-    public bool? IrEntryType { get; set; }
+    public int IrEntryType { get; set; }
+    public bool IsSystemEntry { get; set; }
+    public int? rcPushMessageId { get; set; }
 }
+
