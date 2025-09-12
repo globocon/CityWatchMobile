@@ -14,6 +14,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
+using C4iSytemsMobApp.Enums;
 
 namespace C4iSytemsMobApp
 {
@@ -1286,7 +1287,8 @@ namespace C4iSytemsMobApp
                     {
                         // Valid tag - log activity
                         //LogActivityTask(scannerSettings.tagInfoLabel);
-                      var (isSuccess, msg) = await _logBookServices.LogActivityTask(scannerSettings.tagInfoLabel);
+                        int _scannerType = (int)ScanningType.NFC;
+                        var (isSuccess, msg) = await _logBookServices.LogActivityTask(scannerSettings.tagInfoLabel, _scannerType);
                         if (isSuccess)
                         {
                             await ShowToastMessage(msg);
