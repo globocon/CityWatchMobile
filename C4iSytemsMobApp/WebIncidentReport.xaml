@@ -10,8 +10,8 @@
         <!-- Main content goes inside a ScrollView -->
         <ScrollView AbsoluteLayout.LayoutBounds="0,0,1,1"
                 AbsoluteLayout.LayoutFlags="All">
-           
-                <VerticalStackLayout Padding="10" Spacing="10">
+
+            <VerticalStackLayout  Padding="10,0,10,10" Spacing="10">
 
                     <!-- Row with Back (left) and Home (right) -->
                     <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center" Padding="0,5">
