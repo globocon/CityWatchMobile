@@ -1,3 +1,4 @@
+using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
@@ -146,7 +147,7 @@ public partial class LogActivity : ContentPage
                     Margin = new Thickness(5)
                 };
 
-                button.Clicked += (s, e) => MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(activity.Name));
+                button.Clicked += (s, e) => MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(activity.Name,0));
                 ButtonContainer.Children.Add(button);
             }
         }
@@ -899,7 +900,7 @@ public partial class LogActivity : ContentPage
 
 
 
-    private async Task LogActivityTask(string activityDescription)
+    private async Task LogActivityTask(string activityDescription, int scanningType = 0)
     {
         //var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
 
@@ -953,7 +954,7 @@ public partial class LogActivity : ContentPage
         //    //await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
         //}
 
-        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription);
+        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, _scannerType);
         if (isSuccess)
         {
             await ShowToastMessage(msg);
@@ -1516,7 +1517,8 @@ public partial class LogActivity : ContentPage
                 if (scannerSettings.IsSuccess)
                 {
                     // Valid tag - log activity
-                    LogActivityTask(scannerSettings.tagInfoLabel);                   
+                    int _scannerType = (int)ScanningType.NFC;
+                    LogActivityTask(scannerSettings.tagInfoLabel, _scannerType);
                 }
                 else
                 {
