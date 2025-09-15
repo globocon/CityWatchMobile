@@ -58,16 +58,17 @@
             </ListView>
 
             <!-- Buttons Row -->
-            <StackLayout Grid.Row="2" Orientation="Horizontal" Spacing="20" Padding="10" HorizontalOptions="Center">
+            <StackLayout Grid.Row="2" Padding="5" Spacing="5">
                 <Button 
-            Text="+ Add Photo to Logbook"
-            Clicked="OnPickFileClicked"
-            HorizontalOptions="Center" />
-
+      Text="+ Add Photo to Logbook"
+      Clicked="OnPickFileClicked"
+      BackgroundColor="Green" 
+      TextColor="White"/>
                 <Button 
-            Text="+ Add Video to Logbook"
-            Clicked="OnPickVideoClicked"
-            HorizontalOptions="Center" />
+      Text="+ Add Video to Logbook"
+      Clicked="OnPickVideoClicked"
+      BackgroundColor="Green" 
+      TextColor="White"/>
             </StackLayout>
 
         </Grid>
