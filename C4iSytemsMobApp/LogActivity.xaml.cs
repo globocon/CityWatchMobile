@@ -954,7 +954,7 @@ public partial class LogActivity : ContentPage
         //    //await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
         //}
 
-        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, _scannerType);
+        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType);
         if (isSuccess)
         {
             await ShowToastMessage(msg);
