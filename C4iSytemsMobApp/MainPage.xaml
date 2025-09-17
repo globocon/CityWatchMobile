@@ -72,7 +72,7 @@
                          Orientation="Horizontal"
                          HorizontalOptions="End"
                          HeightRequest="50"
-                         Padding="1">
+                         Padding="5,1,5,1">
                 <ImageButton Source="hamburger.png"
                              WidthRequest="40"
                              HeightRequest="30"
@@ -269,7 +269,7 @@
                         <Frame x:Name="DuressButtonFrameOuter"
                                ZIndex="119"
                                BackgroundColor="{AppThemeBinding Light=White, Dark=Black}"
-                               CornerRadius="150"
+                               CornerRadius="112"
                                WidthRequest="223"
                                HeightRequest="220"
                                VerticalOptions="Center"
@@ -285,7 +285,7 @@
                         <!-- Duress Badge -->
                         <Frame x:Name="DuressButtonFrame"
                                BackgroundColor="#FFC107"
-                               CornerRadius="150"
+                               CornerRadius="100"
                                Padding="5"
                                WidthRequest="200"
                                HeightRequest="200"
