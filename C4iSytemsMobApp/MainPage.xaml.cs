@@ -14,6 +14,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
+using C4iSytemsMobApp.Enums;
 
 namespace C4iSytemsMobApp
 {
@@ -105,11 +106,20 @@ namespace C4iSytemsMobApp
             _shouldOpenDrawerOnReturn = showDrawerOnStart ?? false; // Defaults to false if null
             _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
             _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
+
+            string isCrowdControlEnabledForSiteLocalStored = "false";
+            Task.Run(async () => isCrowdControlEnabledForSiteLocalStored = await SecureStorage.GetAsync("CrowdCountEnabledForSite"));
+
+            if (!string.IsNullOrEmpty(isCrowdControlEnabledForSiteLocalStored) && bool.TryParse(isCrowdControlEnabledForSiteLocalStored, out _IsCrowdControlCounterEnabled))                
+            ShowCounters = _IsCrowdControlCounterEnabled;
+            OnPropertyChanged(nameof(ShowCounters));
+
+
         }
 
         protected override async void OnAppearing()
         {
-            base.OnAppearing();
+            MainLayout.IsVisible = false;
 
             string savedTheme = Preferences.Get("AppTheme", "Dark");
             bool isDark = savedTheme == "Dark";
@@ -117,7 +127,7 @@ namespace C4iSytemsMobApp
             ThemeSwitch.IsToggled = isDark;
             ThemeStateLabel.Text = isDark ? "On" : "Off";
 
-
+            base.OnAppearing();
 
 
             // If InitializePatronsCounterDisplay is async, await it.
@@ -281,7 +291,13 @@ namespace C4iSytemsMobApp
             }
 
             await StartNFC();
+
+            MainLayout.IsVisible = true;
         }
+                
+
+
+
 
         protected override async void OnDisappearing()
         {
@@ -1271,7 +1287,8 @@ namespace C4iSytemsMobApp
                     {
                         // Valid tag - log activity
                         //LogActivityTask(scannerSettings.tagInfoLabel);
-                      var (isSuccess, msg) = await _logBookServices.LogActivityTask(scannerSettings.tagInfoLabel);
+                        int _scannerType = (int)ScanningType.NFC;
+                        var (isSuccess, msg) = await _logBookServices.LogActivityTask(scannerSettings.tagInfoLabel, _scannerType);
                         if (isSuccess)
                         {
                             await ShowToastMessage(msg);

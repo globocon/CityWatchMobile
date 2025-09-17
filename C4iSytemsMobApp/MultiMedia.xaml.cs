@@ -9,7 +9,7 @@ namespace C4iSytemsMobApp;
 public partial class MultiMedia : ContentPage
 {
     public ObservableCollection<VideoFile> VideoFiles { get; set; } = new();
-
+    private ObservableCollection<MyFileModel> SelectedFiles = new();
     public MultiMedia()
     {
         InitializeComponent();
@@ -155,9 +155,264 @@ public partial class MultiMedia : ContentPage
 
     private void OnStopButtonClicked(object sender, EventArgs e)
     {
-        
+
     }
+
+
+
+    private async void OnPickFileClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var results = await FilePicker.PickMultipleAsync();
+            if (results != null && results.Any())
+            {
+                string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+
+                foreach (var file in results)
+                {
+                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        await DisplayAlert("Invalid File",
+                            $"File '{file.FileName}' is not a supported image type.", "OK");
+                        continue;
+                    }
+
+                    // Default type is twentyfive unless user ticks "rear full page"
+                    string fileType =  "twentyfive";
+
+                    SelectedFiles.Add(new MyFileModel
+                    {
+                        File = file,
+                        FileType = fileType
+                    });
+                }
+
+                if (SelectedFiles.Any())
+                {
+                    await UploadFileToApiAsync();
+                }
+                else
+                {
+                    await DisplayAlert("Notice", "No valid files selected.", "OK");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
+        }
+    }
+
+    private async Task UploadFileToApiAsync()
+    {
+        try
+        {
+            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+
+            using var client = new HttpClient();
+            var content = new MultipartFormDataContent();
+
+            // Add files + types (same index order)
+            foreach (var fileModel in SelectedFiles)
+            {
+                var stream = await fileModel.File.OpenReadAsync();
+                var fileContent = new StreamContent(stream);
+                fileContent.Headers.ContentType =
+                    new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+                // File
+                content.Add(fileContent, "files", fileModel.File.FileName);
+
+                // Type (rear / twentyfive)
+                content.Add(new StringContent(fileModel.FileType), "types");
+            }
+
+            // Add other form data
+            content.Add(new StringContent(guardId.ToString()), "guardId");
+            content.Add(new StringContent(clientSiteId.ToString()), "clientsiteId");
+            content.Add(new StringContent(userId.ToString()), "userId");
+            content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+
+            // Send request
+            var uploadResponse = await client.PostAsync(
+                $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
+                content
+            );
+
+            if (!uploadResponse.IsSuccessStatusCode)
+            {
+                await DisplayAlert("Error", "One or more files failed to upload.", "OK");
+            }
+            else
+            {
+                SelectedFiles.Clear();
+                await DisplayAlert("Success", "All files uploaded successfully.", "OK");
+
+                // Small delay for smoother UI transition
+                await Task.Delay(300);
+
+                
+
+                
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Save & Close failed: {ex.Message}", "OK");
+        }
+    }
+
+
+    private async Task<(int guardId, int clientSiteId, int userId)> GetSecureStorageValues()
+    {
+        int.TryParse(await SecureStorage.GetAsync("GuardId"), out int guardId);
+        int.TryParse(await SecureStorage.GetAsync("SelectedClientSiteId"), out int clientSiteId);
+        int.TryParse(await SecureStorage.GetAsync("UserId"), out int userId);
+
+        if (guardId <= 0)
+        {
+            await DisplayAlert("Error", "Guard ID not found. Please validate the License Number first.", "OK");
+            return (-1, -1, -1);
+        }
+        if (clientSiteId <= 0)
+        {
+            await DisplayAlert("Validation Error", "Please select a valid Client Site.", "OK");
+            return (-1, -1, -1);
+        }
+        if (userId <= 0)
+        {
+            await DisplayAlert("Validation Error", "User ID is invalid. Please log in again.", "OK");
+            return (-1, -1, -1);
+        }
+
+        return (guardId, clientSiteId, userId);
+    }
+
+
+
+    private async void OnPickVideoClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var results = await FilePicker.PickMultipleAsync();
+            if (results != null && results.Any())
+            {
+                // Allowed video extensions
+                string[] allowedExtensions = { ".mp4", ".mov", ".avi", ".mkv" };
+
+                foreach (var file in results)
+                {
+                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        await DisplayAlert("Invalid File",
+                            $"File '{file.FileName}' is not a supported video type.", "OK");
+                        continue;
+                    }
+
+                    // Default type is twentyfive unless user ticks "rear full page"
+                    string fileType =   "video";
+
+                    SelectedFiles.Add(new MyFileModel
+                    {
+                        File = file,
+                        FileType = fileType
+                    });
+                }
+
+                if (SelectedFiles.Any())
+                {
+                    await UploadVideoToApiAsync();
+                }
+                else
+                {
+                    await DisplayAlert("Notice", "No valid videos selected.", "OK");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Video picking failed: {ex.Message}", "OK");
+        }
+    }
+
+    private async Task UploadVideoToApiAsync()
+    {
+        try
+        {
+            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+
+            using var client = new HttpClient();
+            var content = new MultipartFormDataContent();
+
+            // Add videos + types
+            foreach (var fileModel in SelectedFiles)
+            {
+                var stream = await fileModel.File.OpenReadAsync();
+                var fileContent = new StreamContent(stream);
+
+                // Set MIME type based on extension
+                var ext = Path.GetExtension(fileModel.File.FileName).ToLowerInvariant();
+                string mimeType = ext switch
+                {
+                    ".mp4" => "video/mp4",
+                    ".mov" => "video/quicktime",
+                    ".avi" => "video/x-msvideo",
+                    ".mkv" => "video/x-matroska",
+                    _ => "application/octet-stream"
+                };
+
+                fileContent.Headers.ContentType =
+                    new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
+
+                // Add file
+                content.Add(fileContent, "files", fileModel.File.FileName);
+
+                // Add matching type (rear / twentyfive)
+                content.Add(new StringContent(fileModel.FileType), "types");
+            }
+
+            // Add other form data
+            content.Add(new StringContent(guardId.ToString()), "guardId");
+            content.Add(new StringContent(clientSiteId.ToString()), "clientsiteId");
+            content.Add(new StringContent(userId.ToString()), "userId");
+            content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+
+            // Send request
+            var uploadResponse = await client.PostAsync(
+                $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultipleVideos",
+                content
+            );
+
+            if (!uploadResponse.IsSuccessStatusCode)
+            {
+                await DisplayAlert("Error", "One or more videos failed to upload.", "OK");
+            }
+            else
+            {
+                SelectedFiles.Clear();
+                await DisplayAlert("Success", "All videos uploaded successfully.", "OK");
+
+                await Task.Delay(300);
+
+               
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Upload failed: {ex.Message}", "OK");
+        }
+    }
+
+
 }
+
+
+
 public class VideoFile
 {
     public string Label { get; set; }

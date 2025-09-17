@@ -9,12 +9,77 @@
 
     <AbsoluteLayout AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All">
 
-        <!-- Main UI layout -->
+
         <Grid AbsoluteLayout.LayoutBounds="0,0,1,1"
+      AbsoluteLayout.LayoutFlags="All"
+      RowDefinitions="Auto,*,Auto">
+
+            <!-- Header Row -->
+            <Grid ColumnDefinitions="*, Auto" Padding="2" Grid.Row="0">
+                <Label Text="MultiMedia"
+               FontSize="14"
+               FontAttributes="Bold"
+               VerticalOptions="Center"
+               HorizontalOptions="Start"
+               TextColor="Black"/>
+
+                <ImageButton
+            Source="home.png"
+            Clicked="OnBackButtonClicked"
+            HeightRequest="30"
+            WidthRequest="30"
+            BackgroundColor="Transparent"
+            HorizontalOptions="End"
+            VerticalOptions="Center"
+            Grid.Column="1"/>
+            </Grid>
+
+            <!-- Video list -->
+            <ListView x:Name="VideoListView"
+              Grid.Row="1"
+              SeparatorVisibility="None"
+              HasUnevenRows="True"
+              ItemsSource="{Binding VideoFiles}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <StackLayout Padding="5">
+                                <Button Text="{Binding Label}"
+                                FontSize="18"
+                                FontAttributes="Bold"
+                                BackgroundColor="Blue"
+                                TextColor="White"
+                                Clicked="OnVideoButtonClicked"
+                                CommandParameter="{Binding}" />
+                            </StackLayout>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <!-- Buttons Row -->
+            <StackLayout Grid.Row="2" Padding="5" Spacing="5">
+                <Button 
+      Text="+ Add Photo to Logbook"
+      Clicked="OnPickFileClicked"
+      BackgroundColor="Green" 
+      TextColor="White"/>
+                <Button 
+      Text="+ Add Video to Logbook"
+      Clicked="OnPickVideoClicked"
+      BackgroundColor="Green" 
+      TextColor="White"/>
+            </StackLayout>
+
+        </Grid>
+
+
+        <!-- Main UI layout -->
+        <!--<Grid AbsoluteLayout.LayoutBounds="0,0,1,1"
               AbsoluteLayout.LayoutFlags="All"
               RowDefinitions="Auto, *">
 
-            <!-- Header Row -->
+            --><!-- Header Row --><!--
             <Grid ColumnDefinitions="*, Auto" Padding="2">
                 <Label Text="MultiMedia"
                        FontSize="14"
@@ -34,7 +99,7 @@
                     Grid.Column="1"/>
             </Grid>
 
-            <!-- Video list -->
+            --><!-- Video list --><!--
             <ListView x:Name="VideoListView"
                       Grid.Row="1"
                       SeparatorVisibility="None"
@@ -56,7 +121,17 @@
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-        </Grid>
+            <Button 
+            Text="+ Add Photo to Logbook"
+            Clicked="OnPickFileClicked"
+            HorizontalOptions="Center" />
+
+            <Button 
+ Text="+ Add Video to Logbook"
+ Clicked="OnPickVideoClicked"
+ HorizontalOptions="Center" />
+
+        </Grid>-->
 
         <!-- Fullscreen Video Player -->
         <Grid x:Name="FullscreenPlayer"

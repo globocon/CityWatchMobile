@@ -32,7 +32,7 @@ namespace C4iSytemsMobApp.Services
             }            
         }
 
-        public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription)
+        public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription,int scanningType = 0)
         {
             var (guardId, clientSiteId, userId, isError, msg) = await GetSecureStorageValues();
 
@@ -50,7 +50,8 @@ namespace C4iSytemsMobApp.Services
                  $"&clientsiteId={clientSiteId}" +
                  $"&userId={userId}" +
                  $"&activityString={Uri.EscapeDataString(activityDescription)}" +
-                 $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
+                 $"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
+                 $"&scanningType={scanningType}";
 
 
             try

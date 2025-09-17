@@ -182,6 +182,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     public WebIncidentReport()
     {
         InitializeComponent();
+        NavigationPage.SetHasNavigationBar(this, false);
         BindingContext = this; // or to your ViewModel
         //var viewModel = new LocationViewModel();
         //BindingContext = viewModel;
