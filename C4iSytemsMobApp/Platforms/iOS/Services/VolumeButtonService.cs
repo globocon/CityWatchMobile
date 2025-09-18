@@ -14,15 +14,30 @@ namespace C4iSytemsMobApp.Platforms.iOS.Services
 
         public VolumeButtonService()
         {
+            // Activate audio session (required for volume monitoring to work)
+            //var audioSession = AVAudioSession.SharedInstance();
+            //audioSession.SetActive(true, out _);
+
+            var session = AVAudioSession.SharedInstance();
+            session.SetCategory(AVAudioSessionCategory.Playback, AVAudioSessionCategoryOptions.MixWithOthers);
+            session.SetActive(true);
+
             var volumeView = new MPVolumeView
             {
                 ShowsVolumeSlider = false,
                 ShowsRouteButton = false
             };
 
+            // Attach to the current window (not KeyWindow!)
             UIApplication.SharedApplication.InvokeOnMainThread(() =>
             {
-                UIApplication.SharedApplication.KeyWindow?.AddSubview(volumeView);
+                var window = UIApplication.SharedApplication
+                    .ConnectedScenes
+                    .OfType<UIWindowScene>()
+                    .SelectMany(s => s.Windows)
+                    .FirstOrDefault(w => w.IsKeyWindow);
+
+                window?.AddSubview(volumeView);
             });
 
             foreach (var view in volumeView.Subviews)
@@ -33,16 +48,12 @@ namespace C4iSytemsMobApp.Platforms.iOS.Services
 
                     slider.ValueChanged += (sender, e) =>
                     {
-                        float newVolume = slider.Value;
+                        var newVolume = slider.Value;
 
                         if (newVolume > _lastVolume)
-                        {
                             VolumeUpPressed?.Invoke(this, EventArgs.Empty);
-                        }
                         else if (newVolume < _lastVolume)
-                        {
                             VolumeDownPressed?.Invoke(this, EventArgs.Empty);
-                        }
 
                         _lastVolume = newVolume;
                     };
