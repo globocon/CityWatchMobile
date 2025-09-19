@@ -42,9 +42,31 @@
             </Grid>
 
             <!-- Dynamic Activity Buttons -->
-            <ScrollView>
-                <VerticalStackLayout x:Name="ButtonContainer" />
-            </ScrollView>
+            <!-- <ScrollView>
+                <VerticalStackLayout x:Name="ButtonContainer"  />
+            </ScrollView> -->
+
+                <VerticalStackLayout Padding="5">
+                        <CollectionView x:Name="ActivitiesCollection"
+                            HeightRequest="150"
+                            ItemsLayout="VerticalList"
+                            Margin="10,10,10,10">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Frame CornerRadius="5"
+                                            BackgroundColor="Transparent"
+                                            HeightRequest="50"
+                                            Padding="5"
+                                            Margin="2">
+                                        <Button Text="{Binding Name}"
+                                                TextColor="White"
+                                                Clicked="OnActivityClicked" />
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                </VerticalStackLayout>
+
 
             <!-- Custom Log Entry -->
             <Entry x:Name="CustomLogEntry"

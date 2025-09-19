@@ -1,0 +1,4 @@
+{
+    "maui.launch.defaultTarget": "ios",
+    "maui.launch.defaultDevice": "iPhone 16"
+}
