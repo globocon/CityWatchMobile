@@ -118,7 +118,7 @@ public partial class LogActivity : ContentPage
     {
         try
         {
-            ButtonContainer.Children.Clear(); // Clear previous items if reloading
+            //ButtonContainer.Children.Clear(); // Clear previous items if reloading
             var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
             
             var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivities?type=2&siteid={clientSiteId}";
@@ -137,23 +137,36 @@ public partial class LogActivity : ContentPage
 
             // Sort by numeric prefix in Label (e.g., "01", "02", etc.)
             var sortedActivities = activities.OrderBy(a => ExtractLabelPrefix(a.Label)).ToList();
+            ActivitiesCollection.ItemsSource = sortedActivities;
 
-            foreach (var activity in sortedActivities)
+            /*foreach (var activity in sortedActivities)
             {
                 var button = new Button
                 {
                     Text = activity.Name,
                     TextColor = Colors.White,
-                    Margin = new Thickness(5)
+                    Margin = new Thickness(5),
+                    HorizontalOptions = LayoutOptions.Fill,
+                    VerticalOptions = LayoutOptions.Start
                 };
 
-                button.Clicked += (s, e) => MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(activity.Name,0));
+                button.Clicked += (s, e) => MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(activity.Name, 0));
                 ButtonContainer.Children.Add(button);
             }
+            */
         }
         catch (Exception ex)
         {
             await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+        }
+    }
+
+    private async void OnActivityClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button)
+        {
+            string activityName = button.Text;
+            await MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(activityName, 0));
         }
     }
 
