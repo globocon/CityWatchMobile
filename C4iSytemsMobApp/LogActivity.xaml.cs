@@ -120,7 +120,7 @@ public partial class LogActivity : ContentPage
         {
             //ButtonContainer.Children.Clear(); // Clear previous items if reloading
             var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-            
+
             var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivities?type=2&siteid={clientSiteId}";
 
             HttpResponseMessage response = await _httpClient.GetAsync(url);
@@ -166,7 +166,7 @@ public partial class LogActivity : ContentPage
         if (sender is Button button)
         {
             string activityName = button.Text;
-            await MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(activityName, 0));
+            await MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(activityName, 0, "NA"));
         }
     }
 
@@ -219,7 +219,7 @@ public partial class LogActivity : ContentPage
                 return;
             }
 
-           
+
             var bgColorPaleYellow = Color.FromArgb("#fcf8d1");
             var bgColorPaleRed = Color.FromArgb("#ffcccc");
             var bgColorNormal = Color.FromArgb("#F2F2F2"); // default
@@ -271,7 +271,7 @@ public partial class LogActivity : ContentPage
                     });
 
                     string blobUrl = null;
-                    if (!string.IsNullOrWhiteSpace(noteText) && noteText.Length >= 8 &&  noteText.Contains("IR Report", StringComparison.OrdinalIgnoreCase) )
+                    if (!string.IsNullOrWhiteSpace(noteText) && noteText.Length >= 8 && noteText.Contains("IR Report", StringComparison.OrdinalIgnoreCase))
                     {
                         var folder = new string(noteText.Take(8).ToArray());
                         var blobFileName = noteText.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
@@ -535,7 +535,7 @@ public partial class LogActivity : ContentPage
 
     private async void OnPushSendClicked(object sender, EventArgs e)
     {
-       
+
         if (SelectedLogForPush == null)
         {
             await DisplayAlert("Error", "No log selected for notification.", "OK");
@@ -546,12 +546,12 @@ public partial class LogActivity : ContentPage
 
         string existingLog = CustomLogEntry.Text?.Trim() ?? string.Empty;
 
-       
+
 
         // Build the message including the selected log details
-        string logInfo =$" {SelectedLogForPush.Notes}";
+        string logInfo = $" {SelectedLogForPush.Notes}";
 
-       
+
         string messageToSend;
 
         // Check which option is selected
@@ -913,61 +913,10 @@ public partial class LogActivity : ContentPage
 
 
 
-    private async Task LogActivityTask(string activityDescription, int scanningType = 0)
+    private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA")
     {
-        //var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
 
-        //string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
-
-        //if (string.IsNullOrWhiteSpace(gpsCoordinates))
-        //{
-        //    await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
-        //    return;
-        //}
-
-
-        //if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
-        //var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
-        //     $"?guardId={guardId}" +
-        //     $"&clientsiteId={clientSiteId}" +
-        //     $"&userId={userId}" +
-        //     $"&activityString={Uri.EscapeDataString(activityDescription)}" +
-        //     $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
-
-
-        //try
-        //{
-        //    try
-        //    {
-        //        HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
-        //        if (response.IsSuccessStatusCode)
-        //        {
-        //            await ShowToastMessage("Log entry added successfully.");
-        //            _delayCancellationTokenSource = new CancellationTokenSource();
-        //            //CustomLogEntry.Text = string.Empty; // Clear entry after success
-
-        //            await Task.Delay(2000, _delayCancellationTokenSource.Token); // Wait for 2 seconds
-        //            var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
-        //            Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
-        //            //Application.Current.MainPage = new NavigationPage(new MainPage());
-        //        }
-        //        else
-        //        {
-        //            string errorMessage = await response.Content.ReadAsStringAsync();
-        //            await ShowToastMessage($"Failed: {errorMessage}");
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        //await ShowToastMessage($"Error: {ex.Message}");
-        //    }
-        //}
-        //catch (Exception ex)
-        //{
-        //    //await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
-        //}
-
-        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType);
+        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid);
         if (isSuccess)
         {
             await ShowToastMessage(msg);
@@ -977,7 +926,7 @@ public partial class LogActivity : ContentPage
 
             await Task.Delay(2000, _delayCancellationTokenSource.Token); // Wait for 2 seconds
             var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
-            Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));            
+            Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
         }
         else
         {
@@ -1008,10 +957,10 @@ public partial class LogActivity : ContentPage
       $"&userId={userId}" +
       $"&activityString={Uri.EscapeDataString(CustomLogEntry.Text.Trim())}" +
       $"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
-        $"&systemEntry=false";  
+        $"&systemEntry=false";
 
         ;
-        
+
         try
         {
             HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
@@ -1175,7 +1124,7 @@ public partial class LogActivity : ContentPage
         PopupOverlay.IsVisible = true;
     }
 
-   
+
 
     private void OnCameraClicked(object sender, EventArgs e)
     {
@@ -1531,7 +1480,9 @@ public partial class LogActivity : ContentPage
                 {
                     // Valid tag - log activity
                     int _scannerType = (int)ScanningType.NFC;
-                    LogActivityTask(scannerSettings.tagInfoLabel, _scannerType);
+                    var _taguid = serialNumber;
+                    if (!scannerSettings.tagFound) { _taguid = "NA"; }
+                    LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid);
                 }
                 else
                 {
