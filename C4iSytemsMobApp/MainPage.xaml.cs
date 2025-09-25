@@ -1414,7 +1414,9 @@ namespace C4iSytemsMobApp
                         // Valid tag - log activity
                         //LogActivityTask(scannerSettings.tagInfoLabel);
                         int _scannerType = (int)ScanningType.NFC;
-                        var (isSuccess, msg) = await _logBookServices.LogActivityTask(scannerSettings.tagInfoLabel, _scannerType);
+                        var _taguid = serialNumber;
+                        if (!scannerSettings.tagFound) { _taguid = "NA"; }
+                        var (isSuccess, msg) = await _logBookServices.LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid);
                         if (isSuccess)
                         {
                             await ShowToastMessage(msg);

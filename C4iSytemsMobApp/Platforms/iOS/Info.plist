@@ -28,11 +28,12 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
-	<key>NSAppTransportSecurity</key>
+	<!-- Uncomment for testing in http -->
+	<!-- <key>NSAppTransportSecurity</key>
   		<dict>
     		<key>NSAllowsArbitraryLoads</key>
     		<true/>
-  		</dict>
+  		</dict>  -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 		<string>This app needs your location to continue. Please allow location access.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
