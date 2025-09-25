@@ -16,6 +16,7 @@ using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using C4iSytemsMobApp.Enums;
 
+
 namespace C4iSytemsMobApp
 {
     public partial class MainPage : ContentPage, INotifyPropertyChanged
@@ -89,7 +90,19 @@ namespace C4iSytemsMobApp
             }
         }
         private bool _shouldOpenDrawerOnReturn = false;
+        private int _tags;
+        private int _hit;
+        private int _frequency;
+        private int _missed;
+        private string _tour;
 
+        public int Tags { get => _tags; set { _tags = value; OnPropertyChanged(); } }
+        public int Hit { get => _hit; set { _hit = value; OnPropertyChanged(); } }
+        public int Frequency { get => _frequency; set { _frequency = value; OnPropertyChanged(); } }
+        public int Missed { get => _missed; set { _missed = value; OnPropertyChanged(); } }
+        public string Tour { get => _tour; set { _tour = value; OnPropertyChanged(); } }
+
+        private CancellationTokenSource _tagStatusCts;
 
         public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
@@ -293,8 +306,107 @@ namespace C4iSytemsMobApp
             await StartNFC();
 
             MainLayout.IsVisible = true;
+
+
+            // Cancel any previous loop if exists
+            _tagStatusCts?.Cancel();
+            _tagStatusCts = new CancellationTokenSource();
+
+            var timer = new PeriodicTimer(TimeSpan.FromSeconds(1)); // every 1 seconds
+
+            try
+            {
+                while (await timer.WaitForNextTickAsync(_tagStatusCts.Token))
+                {
+                    if (_clientSiteId != null)
+                    {
+                        await LoadTagStatusAsync(_clientSiteId);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Timer was canceled, ignore
+            }
         }
-                
+
+
+
+
+       
+
+        public async Task LoadTagStatusAsync(int? clientId)
+        {
+            if (clientId == null) return;
+
+            try
+            {
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetTagStatus?clientId={clientId}";
+                using var client = new HttpClient();
+                var response = await client.GetAsync(apiUrl);
+                if (!response.IsSuccessStatusCode) return;
+
+                string json = await response.Content.ReadAsStringAsync();
+                var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var result = System.Text.Json.JsonSerializer.Deserialize<List<SiteTagStatus>>(json, options);
+
+                if (result != null && result.Any())
+                {
+                    var first = result.First();
+
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        var formatted = new FormattedString();
+
+                        // Tags
+                        formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = Colors.Gray });
+                        formatted.Spans.Add(new Span { Text = first.TotalTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+
+                        // Hit
+                        formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = Colors.Gray });
+                        formatted.Spans.Add(new Span { Text = first.ScannedTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+
+                        // Fq
+                        formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = Colors.Gray });
+                        formatted.Spans.Add(new Span { Text = first.CompletedRounds.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+
+                        // Missed (clickable)
+                        formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = Colors.Gray });
+                        var missedSpan = new Span
+                        {
+                            Text = first.RemainingTags.ToString(),
+                            FontAttributes = FontAttributes.Bold,
+                            FontSize = 12,
+                            TextColor = Colors.Black
+                        };
+
+                        // Add tap gesture directly to the Span
+                        missedSpan.GestureRecognizers.Add(new TapGestureRecognizer
+                        {
+                            Command = new Command(async () =>
+                            {
+                                await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");
+                            })
+                        });
+
+                        formatted.Spans.Add(missedSpan);
+
+                        // Tour
+                        formatted.Spans.Add(new Span { Text = "   Tour: ", FontSize = 12, TextColor = Colors.Gray });
+                        formatted.Spans.Add(new Span { Text = first.Tour, FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+
+                        // Assign to Label
+                        TagStatusLabel.FormattedText = formatted;
+                    });
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading tag status: {ex.Message}");
+            }
+        }
 
 
 
@@ -311,7 +423,10 @@ namespace C4iSytemsMobApp
             {
                 _hubConnection.StopAsync();
                 _hubConnection.DisposeAsync();
-            }   
+            }
+
+            _tagStatusCts?.Cancel();
+            _tagStatusCts?.Dispose();
         }
 
         private async void LoadLoggedInUser()
@@ -343,23 +458,34 @@ namespace C4iSytemsMobApp
 
         private async void OnManualPositionClicked(object sender, EventArgs e)
         {
+            _tagStatusCts?.Cancel();
+            _tagStatusCts?.Dispose();
+            _tagStatusCts = null;
             Application.Current.MainPage = new NavigationPage(new WebIncidentReport());
         }
 
         private async void OnLogActivityClicked(object sender, EventArgs e)
         {
+            _tagStatusCts?.Cancel();
+            _tagStatusCts?.Dispose();
+            _tagStatusCts = null;
             Application.Current.MainPage = new NavigationPage(new LogActivity()); // Redirect to LogActivityPage
         }
 
         private async void OnAudioClicked(object sender, EventArgs e)
         {
+            _tagStatusCts?.Cancel();
+            _tagStatusCts?.Dispose();
+            _tagStatusCts = null;
             Application.Current.MainPage = new NavigationPage(new Audio());
 
         }
 
         private async void OnMultimediaClicked(object sender, EventArgs e)
         {
-
+            _tagStatusCts?.Cancel();
+            _tagStatusCts?.Dispose();
+            _tagStatusCts = null;
             Application.Current.MainPage = new NavigationPage(new MultiMedia());
 
         }
@@ -1401,7 +1527,15 @@ namespace C4iSytemsMobApp
     }
 
 
-
+    public class SiteTagStatus
+    {
+        public int ClientSiteId { get; set; }
+        public int TotalTags { get; set; }
+        public int ScannedTags { get; set; }
+        public int RemainingTags { get; set; }
+        public int CompletedRounds { get; set; }
+        public string Tour { get; set; }
+    }
 
 
 }

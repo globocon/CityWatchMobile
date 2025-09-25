@@ -18,8 +18,7 @@
                      AbsoluteLayout.LayoutFlags="WidthProportional">
             <Frame Padding="5"
                    CornerRadius="10"
-                   HasShadow="True"
-                   HeightRequest="35"
+                   HasShadow="True"                
                    HorizontalOptions="FillAndExpand">
                 <Frame.Background>
                     <LinearGradientBrush>
@@ -41,7 +40,38 @@
                            FontAttributes="Bold"
                            VerticalOptions="Center"
                            HorizontalOptions="Start" />
+                    <!--<Label FontSize="12"
+       TextColor="Gray"
+       HorizontalOptions="Start"
+       VerticalOptions="Center">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Tags: " />
+                                <Span Text="{Binding Tags}" FontAttributes="Bold" />
+                                <Span Text="   Hit: " />
+                                <Span Text="{Binding Hit}" FontAttributes="Bold" />
+                                <Span Text="   Fq: " />
+                                <Span Text="{Binding Frequency}" FontAttributes="Bold" />
+                                <Span Text="   Missed: " />
+                                <Span Text="{Binding Missed}" FontAttributes="Bold" />
+                                <Span Text="   Tour: " />
+                                <Span Text="{Binding Tour}" FontAttributes="Bold" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>-->
+
+                    <Label x:Name="TagStatusLabel"
+       FontSize="12"
+       TextColor="Gray"
+       HorizontalOptions="Start"
+       VerticalOptions="Center"
+       IsEnabled="True" />
+
+
                 </StackLayout>
+
+                
+
             </Frame>
         </StackLayout>
 
