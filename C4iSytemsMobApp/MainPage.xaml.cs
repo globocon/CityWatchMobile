@@ -486,6 +486,7 @@ namespace C4iSytemsMobApp
         protected override async void OnDisappearing()
         {
             base.OnDisappearing();
+            App.IsVolumeControlEnabledForCounter = false; // Disable custom volume handling
 
             if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
             {
@@ -1077,6 +1078,7 @@ namespace C4iSytemsMobApp
 
         private void OnToggleVolumeControl(object sender, EventArgs e)
         {
+            App.IsVolumeControlEnabledForCounter = !_IsVolumeControlButtonEnabled;
             _IsVolumeControlButtonEnabled = !_IsVolumeControlButtonEnabled;
             VolumeButtonControl.Text = $"Volume Button Control = {(_IsVolumeControlButtonEnabled ? "ON" : "OFF")}";
         }

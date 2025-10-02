@@ -2,6 +2,7 @@
 {
     public partial class App : Application
     {
+        public static bool IsVolumeControlEnabledForCounter { get; set; } = false;
         public App(LoginPage loginPage)
         {
             InitializeComponent();
