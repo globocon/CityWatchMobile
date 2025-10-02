@@ -103,13 +103,25 @@
                          HorizontalOptions="End"
                          HeightRequest="50"
                          Padding="5,1,5,1">
+
+                <ImageButton Source="exl.png"
+WidthRequest="15"
+HeightRequest="15"
+BackgroundColor="Transparent"
+HorizontalOptions="Start"
+VerticalOptions="Center"
+Clicked="OnExclamationClicked" />
                 <ImageButton Source="hamburger.png"
                              WidthRequest="40"
                              HeightRequest="30"
                              BackgroundColor="Transparent"
                              TranslationY="-12"
                              Clicked="OnMenuClicked" />
+               
             </StackLayout>
+
+            <!-- Popup overlay -->
+          
 
             <!-- New UI Changes Starts Here -->
             <!-- Frame for buttons and duress badge -->
@@ -491,6 +503,92 @@
                    Aspect="AspectFit" />
 
         </Grid>
+
+        <Grid x:Name="PopupOverlay" 
+      BackgroundColor="#80000000" 
+      AbsoluteLayout.LayoutBounds="0,0,1,1"
+      AbsoluteLayout.LayoutFlags="All"
+      IsVisible="False">
+
+            <Frame BackgroundColor="White"
+           CornerRadius="10"
+           Padding="10"
+           HorizontalOptions="Fill"
+           VerticalOptions="Center"
+           HasShadow="True"
+           Margin="10">
+
+                <!-- Grid to manage title, headers, collection, and button -->
+                <Grid RowDefinitions="Auto,Auto,*,Auto" ColumnDefinitions="*">
+
+                    <!-- Popup Title -->
+                    <Label Text="Missing Tags" 
+           FontAttributes="Bold"
+           FontSize="12"
+           HorizontalOptions="Center"
+           Grid.Row="0"
+           Margin="0,0,0,5"/>
+
+                    <!-- Table Headers -->
+                    <Grid ColumnDefinitions="*,*,*,*" BackgroundColor="#EEEEEE" Grid.Row="1">
+                        <Frame BorderColor="Gray" Padding="3" HasShadow="False" CornerRadius="0" Grid.Column="0">
+                            <Label Text="Type" FontAttributes="Bold" FontSize="10" HorizontalOptions="Center"/>
+                        </Frame>
+                        <Frame BorderColor="Gray" Padding="3" HasShadow="False" CornerRadius="0" Grid.Column="1">
+                            <Label Text="Label" FontAttributes="Bold" FontSize="10" HorizontalOptions="Center"/>
+                        </Frame>
+                        <Frame BorderColor="Gray" Padding="3" HasShadow="False" CornerRadius="0" Grid.Column="2">
+                            <Label Text="Round" FontAttributes="Bold" FontSize="10" HorizontalOptions="Center"/>
+                        </Frame>
+                        <Frame BorderColor="Gray" Padding="3" HasShadow="False" CornerRadius="0" Grid.Column="3">
+                            <Label Text="Today Scans" FontAttributes="Bold" FontSize="10" HorizontalOptions="Center"/>
+                        </Frame>
+                    </Grid>
+
+                    <!-- Scrollable CollectionView -->
+                    <CollectionView x:Name="PopupCollectionView"
+                    ItemsSource="{Binding TagFields}"
+                    Grid.Row="2">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical"/>
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="*,*,*,*" Padding="0">
+                                    <Frame BorderColor="Gray" Padding="3" HasShadow="False" CornerRadius="0" Grid.Column="0">
+                                        <Label Text="{Binding TagType}" FontSize="10" HorizontalOptions="Center"/>
+                                    </Frame>
+                                    <Frame BorderColor="Gray" Padding="3" HasShadow="False" CornerRadius="0" Grid.Column="1">
+                                        <Label Text="{Binding LabelDescription}" FontSize="10" HorizontalOptions="Center"/>
+                                    </Frame>
+                                    <Frame BorderColor="Gray" Padding="3" HasShadow="False" CornerRadius="0" Grid.Column="2">
+                                        <Label Text="{Binding RoundNumber}" FontSize="10" HorizontalOptions="Center"/>
+                                    </Frame>
+                                    <Frame BorderColor="Gray" Padding="3" HasShadow="False" CornerRadius="0" Grid.Column="3">
+                                        <Label Text="{Binding TodayScanCount}" FontSize="10" HorizontalOptions="Center"/>
+                                    </Frame>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!-- Close button -->
+                    <Button Text="Close"
+            Grid.Row="3"
+            BackgroundColor="Gray"
+            TextColor="White"
+            CornerRadius="6"
+            FontSize="10"
+            HorizontalOptions="Center"
+            Margin="0,5,0,0"
+            Clicked="OnClosePopupClicked"/>
+                </Grid>
+
+
+            </Frame>
+
+        </Grid>
+
 
         <!-- Popup for Countdown -->
         <Grid x:Name="DuressPopup"

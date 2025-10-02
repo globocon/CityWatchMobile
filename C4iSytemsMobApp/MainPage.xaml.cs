@@ -15,6 +15,7 @@ using System.Text.Json.Serialization;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using C4iSytemsMobApp.Enums;
+using System.Collections.ObjectModel;
 
 
 namespace C4iSytemsMobApp
@@ -103,7 +104,7 @@ namespace C4iSytemsMobApp
         public string Tour { get => _tour; set { _tour = value; OnPropertyChanged(); } }
 
         private CancellationTokenSource _tagStatusCts;
-
+        public ObservableCollection<SiteTagStatusPending> TagFields { get; set; } = new ObservableCollection<SiteTagStatusPending>();
         public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
             InitializeComponent();
@@ -127,7 +128,7 @@ namespace C4iSytemsMobApp
             ShowCounters = _IsCrowdControlCounterEnabled;
             OnPropertyChanged(nameof(ShowCounters));
 
-
+            PopupCollectionView.BindingContext = this;
         }
 
         protected override async void OnAppearing()
@@ -409,7 +410,78 @@ namespace C4iSytemsMobApp
         }
 
 
+        public async Task LoadTagStatusPendingAsync(int? clientId)
+        {
+            if (clientId == null) return;
 
+            try
+            {
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetTagStatusPending?clientId={clientId}";
+                using var client = new HttpClient();
+                var response = await client.GetAsync(apiUrl);
+                if (!response.IsSuccessStatusCode) return;
+
+                string json = await response.Content.ReadAsStringAsync();
+                var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var result = System.Text.Json.JsonSerializer.Deserialize<List<SiteTagStatus>>(json, options);
+
+                if (result != null && result.Any())
+                {
+                    var first = result.First();
+
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        var formatted = new FormattedString();
+
+                        // Tags
+                        formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = Colors.Gray });
+                        formatted.Spans.Add(new Span { Text = first.TotalTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+
+                        // Hit
+                        formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = Colors.Gray });
+                        formatted.Spans.Add(new Span { Text = first.ScannedTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+
+                        // Fq
+                        formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = Colors.Gray });
+                        formatted.Spans.Add(new Span { Text = first.CompletedRounds.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+
+                        // Missed (clickable)
+                        formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = Colors.Gray });
+                        var missedSpan = new Span
+                        {
+                            Text = first.RemainingTags.ToString(),
+                            FontAttributes = FontAttributes.Bold,
+                            FontSize = 12,
+                            TextColor = Colors.Black
+                        };
+
+                        // Add tap gesture directly to the Span
+                        missedSpan.GestureRecognizers.Add(new TapGestureRecognizer
+                        {
+                            Command = new Command(async () =>
+                            {
+                                await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");
+                            })
+                        });
+
+                        formatted.Spans.Add(missedSpan);
+
+                        // Tour
+                        formatted.Spans.Add(new Span { Text = "   Tour: ", FontSize = 12, TextColor = Colors.Gray });
+                        formatted.Spans.Add(new Span { Text = first.Tour, FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+
+                        // Assign to Label
+                        TagStatusLabel.FormattedText = formatted;
+                    });
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading tag status: {ex.Message}");
+            }
+        }
 
         protected override async void OnDisappearing()
         {
@@ -1526,8 +1598,86 @@ namespace C4iSytemsMobApp
             return (guardId, clientSiteId, userId);
         }
 
+        private async void OnExclamationClicked(object sender, EventArgs e)
+        {
+            PopupOverlay.IsVisible = true;
+            var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+            if (clientSiteId == null) return;
+            // Call API to get tag fields
+            // Call API to get tag fields for this client site
+            var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
+            if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
+
+            // Clear the existing collection
+            TagFields.Clear();
+
+            // Add fetched fields to the ObservableCollection
+            foreach (var field in fieldsFromApi)
+            {
+                TagFields.Add(field);
+            }
+        }
+
+
+        private void OnClosePopupClicked(object sender, EventArgs e)
+        {
+            PopupOverlay.IsVisible = false;
+        }
+
+
+        // Dummy API call
+        private async Task<List<SiteTagStatusPending>> GetTagFieldsFromApi(int? clientId)
+        {
+            try
+            {
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetTagStatusPending?clientId={clientId}";
+
+                using var client = new HttpClient();
+                var response = await client.GetAsync(apiUrl);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"API call failed with status code: {response.StatusCode}");
+                    return new List<SiteTagStatusPending>();
+                }
+
+                string json = await response.Content.ReadAsStringAsync();
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var result = System.Text.Json.JsonSerializer.Deserialize<List<SiteTagStatusPending>>(json, options);
+
+                return result ?? new List<SiteTagStatusPending>();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error fetching tag fields from API: {ex.Message}");
+                return new List<SiteTagStatusPending>();
+            }
+        }
+
+
     }
 
+
+    public class SiteTagStatusPending
+    {
+
+        public string LabelDescription { get; set; }   // Tag label / description
+        public string TagType { get; set; }            // NFC, BLE, Other
+        public int RoundNumber { get; set; }           // Round number
+        public int TodayScanCount { get; set; }             // How many times scanned today
+
+    }
+
+
+    public class TagField
+    {
+        public string Type { get; set; }
+        public string Label { get; set; }
+    }
 
     public class SiteTagStatus
     {

@@ -4,7 +4,7 @@ namespace C4iSytemsMobApp
     class AppConfig
     {
         //live url and test url ,test only work in localhost ,need https for api
-        public static string ApiBaseUrl { get; set; } = "https://cws-ir.com/api/";
+        //public static string ApiBaseUrl { get; set; } = "https://cws-ir.com/api/";
         public static string MobileSignalRBaseUrl { get; set; } = "https://cws-ir.com";
 
         // ### Test Url ####
@@ -12,7 +12,7 @@ namespace C4iSytemsMobApp
         //public static string MobileSignalRBaseUrl { get; set; } = "http://test.c4i-system.com";
 
 
-        //public static string ApiBaseUrl { get; set; } = "https://localhost:5001/api/";
+        public static string ApiBaseUrl { get; set; } = "https://localhost:44356/api/";
         //public static string MobileSignalRBaseUrl { get; set; } = "https://localhost:5001/api/";
 
         //#### Added for local testing by Binoy
