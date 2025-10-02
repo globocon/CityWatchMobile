@@ -37,22 +37,31 @@ public class MainActivity : MauiAppCompatActivity
 
     public override bool OnKeyDown(Keycode keyCode, KeyEvent e)
     {
-        var volumeService = MauiApplication.Current.Services.GetService<IVolumeButtonService>() as VolumeButtonService;
-        if (keyCode == Keycode.VolumeDown || keyCode == Keycode.VolumeUp)
-        {            
-            if (volumeService != null && volumeService.OnKeyDown(keyCode, e))
+        if (App.IsVolumeControlEnabledForCounter)
+        {
+            var volumeService = MauiApplication.Current.Services.GetService<IVolumeButtonService>() as VolumeButtonService;
+            if (keyCode == Keycode.VolumeDown || keyCode == Keycode.VolumeUp)
             {
-                return true;
+                if (volumeService != null && volumeService.OnKeyDown(keyCode, e))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             else
             {
-                return false;
+                return base.OnKeyDown(keyCode, e);
             }
+
         }
-        else
-        {
+        else { 
             return base.OnKeyDown(keyCode, e);
+
         }
+       
     }        
     
 }
