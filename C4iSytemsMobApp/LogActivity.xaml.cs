@@ -942,7 +942,7 @@ public partial class LogActivity : ContentPage
             return;
         }
 
-        string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+        string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
         if (string.IsNullOrWhiteSpace(gpsCoordinates))
         {
             await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
@@ -1001,9 +1001,9 @@ public partial class LogActivity : ContentPage
 
     private async Task<(int guardId, int clientSiteId, int userId)> GetSecureStorageValues()
     {
-        int.TryParse(await SecureStorage.GetAsync("GuardId"), out int guardId);
-        int.TryParse(await SecureStorage.GetAsync("SelectedClientSiteId"), out int clientSiteId);
-        int.TryParse(await SecureStorage.GetAsync("UserId"), out int userId);
+        int.TryParse(Preferences.Get("GuardId", ""), out int guardId);
+        int.TryParse(Preferences.Get("SelectedClientSiteId", ""), out int clientSiteId);
+        int.TryParse(Preferences.Get("UserId", ""), out int userId);
 
         if (guardId <= 0)
         {
@@ -1291,7 +1291,7 @@ public partial class LogActivity : ContentPage
         try
         {
             var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+            string gpsCoordinates = Preferences.Get("GpsCoordinates","");
 
             using var client = new HttpClient();
             var content = new MultipartFormDataContent();
@@ -1384,7 +1384,7 @@ public partial class LogActivity : ContentPage
     private async Task StartNFC()
     {
         // Check NFC status
-        string isNfcEnabledForSiteLocalStored = await SecureStorage.GetAsync("NfcOnboarded");
+        string isNfcEnabledForSiteLocalStored = Preferences.Get("NfcOnboarded", "");
 
         if (!string.IsNullOrEmpty(isNfcEnabledForSiteLocalStored) && bool.TryParse(isNfcEnabledForSiteLocalStored, out _isNfcEnabledForSite))
         {

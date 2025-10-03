@@ -27,8 +27,8 @@ public partial class LoginPage : ContentPage
 
         try
         {
-            var savedUsername = await SecureStorage.GetAsync("SavedUsername");
-            var savedPassword = await SecureStorage.GetAsync("SavedPassword");
+            var savedUsername = Preferences.Get("SavedUsername", "");
+            var savedPassword = Preferences.Get("SavedPassword", "");
 
             if (!string.IsNullOrEmpty(savedUsername) && !string.IsNullOrEmpty(savedPassword))
             {
@@ -55,14 +55,14 @@ public partial class LoginPage : ContentPage
     {
         try
         {
-            string savedUsername = await SecureStorage.GetAsync("SavedUsername");
-            string savedPassword = await SecureStorage.GetAsync("SavedPassword");
+            string savedUsername = Preferences.Get("SavedUsername", string.Empty);
+            string savedPassword = Preferences.Get("SavedPassword", string.Empty);
 
             if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost") || AppConfig.ApiBaseUrl.Contains("192.168.1."))
             {
                 // Apply default test credentials if the API base URL is for testing
-                usernameEntry.Text = savedUsername ?? "martha_cove";
-                passwordEntry.Text = savedPassword ?? "Qwerty123$";
+                usernameEntry.Text = string.IsNullOrEmpty(savedUsername) ? "martha_cove" : savedUsername;
+                passwordEntry.Text = string.IsNullOrEmpty(savedPassword) ? "Qwerty123$" : savedPassword;
             }
             else
             {
@@ -135,21 +135,21 @@ public partial class LoginPage : ContentPage
 
                     if (responseData != null)
                     {
-                        await SecureStorage.SetAsync("UserId", responseData.UserId.ToString());
-                        await SecureStorage.SetAsync("UserName", responseData.Name);
-                        await SecureStorage.SetAsync("UserRole", responseData.Role);
+                        Preferences.Set("UserId", responseData.UserId.ToString());
+                        Preferences.Set("UserName", responseData.Name);
+                        Preferences.Set("UserRole", responseData.Role);
                     }
 
 
                     if (rememberMeCheckBox.IsChecked)
                     {
-                        await SecureStorage.SetAsync("SavedUsername", username);
-                        await SecureStorage.SetAsync("SavedPassword", password);
+                        Preferences.Set("SavedUsername", username);
+                        Preferences.Set("SavedPassword", password);
                     }
                     else
                     {
-                        SecureStorage.Remove("SavedUsername");
-                        SecureStorage.Remove("SavedPassword");
+                        Preferences.Remove("SavedUsername");
+                        Preferences.Remove("SavedPassword");
                     }
 
                     return new LoginResponse { IsSuccess = true };
@@ -196,7 +196,7 @@ public partial class LoginPage : ContentPage
 
             if (isConfirmed)
             {
-                SecureStorage.RemoveAll(); // Clear SecureStorage (logout)
+                Preferences.Clear(); // Clear preferences (logout)
                 System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the app
             }
         });
@@ -231,7 +231,7 @@ public partial class LoginPage : ContentPage
             {
                 if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost") || AppConfig.ApiBaseUrl.Contains("192.168.1."))
                 {
-                    await SecureStorage.SetAsync("GpsCoordinates", "40.748440,-73.984559");
+                    Preferences.Set("GpsCoordinates", "40.748440,-73.984559");
 
                 }
                 //locationLabel.Text = "Location permission not granted. Please enable it in app settings.";
@@ -249,7 +249,7 @@ public partial class LoginPage : ContentPage
             if (location != null)
             {
 
-                await SecureStorage.SetAsync("GpsCoordinates", location.Latitude.ToString() +','+location.Longitude.ToString());
+                Preferences.Set("GpsCoordinates", location.Latitude.ToString() +','+location.Longitude.ToString());
                 //locationLabel.Text = $"Latitude: {location.Latitude}, Longitude: {location.Longitude}";
             }
             else
