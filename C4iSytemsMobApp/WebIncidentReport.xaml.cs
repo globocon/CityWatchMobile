@@ -158,7 +158,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         {
             await LoadFeedbackTemplates();
             await LoadNotifiedByListAsync();
-            var clientTypeRaw = await SecureStorage.GetAsync("ClientSite");
+            var clientTypeRaw = Preferences.Get("ClientSite", "");
             var clientSite = await GetClientSiteByName(clientTypeRaw);
             await LoadClientAreas(clientSite.Id);
             if (clientSite != null)
@@ -468,18 +468,18 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         {
 
             // Retrieve stored values from SecureStorage
-            var guardId = await SecureStorage.GetAsync("GuardId");
-            var guardName = await SecureStorage.GetAsync("GuardName");
-            var savedLicenseNumber = await SecureStorage.GetAsync("LicenseNumber");
-            var clientSite = await SecureStorage.GetAsync("ClientSite");
-            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
-            var clientSiteId = await SecureStorage.GetAsync("SelectedClientSiteId");
-            var userId = await SecureStorage.GetAsync("UserId");
+            var guardId = Preferences.Get("GuardId", "");
+            var guardName = Preferences.Get("GuardName", "");
+            var savedLicenseNumber = Preferences.Get("LicenseNumber", "");
+            var clientSite = Preferences.Get("ClientSite", "");
+            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            var clientSiteId = Preferences.Get("SelectedClientSiteId", "");
+            var userId = Preferences.Get("UserId", "");
             
 
 
 
-            var clientType = await SecureStorage.GetAsync("ClientType");
+            var clientType = Preferences.Get("ClientType", "");
             string clientTypeNew = Regex.Replace(clientType, @"\s*\(\d+\)$", "").Trim();
             // Validate required values before proceeding
             if (

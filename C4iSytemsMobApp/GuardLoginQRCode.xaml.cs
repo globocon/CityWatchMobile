@@ -22,7 +22,7 @@ public partial class GuardLoginQRCode : ContentPage
         try
         {
           
-            string userName = await SecureStorage.GetAsync("UserName");
+            string userName = Preferences.Get("UserName", "");
             if (!string.IsNullOrEmpty(userName))
             {
                 lblLoggedInUser.Text = $"Welcome, {userName}";
@@ -80,15 +80,15 @@ public partial class GuardLoginQRCode : ContentPage
             }
 
             // Store Guard Details
-            await SecureStorage.SetAsync("GuardId", guardData.GuardId.ToString());
-            await SecureStorage.SetAsync("GuardName", guardData.Name);
+            Preferences.Set("GuardId", guardData.GuardId.ToString());
+            Preferences.Set("GuardName", guardData.Name);
 
             lblGuardName.Text = $"Hello {guardData.Name}. Please verify your details and click Enter Log Book";
             lblGuardName.TextColor = Colors.Green;
             lblGuardName.IsVisible = true;
 
             // Validate Client Site ID
-            string clientSiteIdString = await SecureStorage.GetAsync("ClientSiteId");
+            string clientSiteIdString = Preferences.Get("ClientSiteId", "");
             if (string.IsNullOrWhiteSpace(clientSiteIdString) || !int.TryParse(clientSiteIdString, out int clientSiteId) || clientSiteId <= 0)
             {
                 await DisplayAlert("Validation Error", "Please select a valid Client Site.", "OK");
@@ -96,7 +96,7 @@ public partial class GuardLoginQRCode : ContentPage
             }
 
             // Validate User ID
-            string userIdString = await SecureStorage.GetAsync("UserId");
+            string userIdString = Preferences.Get("UserId", "");
             if (string.IsNullOrWhiteSpace(userIdString) || !int.TryParse(userIdString, out int userId) || userId <= 0)
             {
                 await DisplayAlert("Validation Error", "User ID is invalid. Please log in again.", "OK");
@@ -121,7 +121,7 @@ public partial class GuardLoginQRCode : ContentPage
                             var siteName = siteNameElement.GetString();
                             if (!string.IsNullOrWhiteSpace(siteName))
                             {
-                                await SecureStorage.SetAsync("ClientSite", siteName);
+                                Preferences.Set("ClientSite", siteName);
                             }
                         }
                     }

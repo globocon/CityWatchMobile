@@ -30,7 +30,7 @@ public partial class SOPPage : ContentPage
 
     private async Task<int?> TryGetSecureId(string key, string errorMessage)
     {
-        string idString = await SecureStorage.GetAsync(key);
+        string idString = Preferences.Get(key,"");
 
         if (string.IsNullOrWhiteSpace(idString) || !int.TryParse(idString, out int id) || id <= 0)
         {

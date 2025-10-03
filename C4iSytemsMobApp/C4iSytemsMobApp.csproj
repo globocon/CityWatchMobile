@@ -79,9 +79,6 @@
 	  <Compile Update="GuardSecurityIdTagPage.xaml.cs">
 	    <DependentUpon>GuardSecurityIdTagPage.xaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="MainPage_Old.xaml.cs">
-	    <DependentUpon>MainPage_Old.xaml</DependentUpon>
-	  </Compile>
 	  <Compile Update="NfcScannerTestPage.xaml.cs">
 	    <DependentUpon>NfcScannerTestPage.xaml</DependentUpon>
 	  </Compile>
@@ -113,9 +110,6 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="LoginPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="MainPage_Old.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="MultiMedia.xaml">

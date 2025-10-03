@@ -210,7 +210,7 @@ public partial class MultiMedia : ContentPage
         try
         {
             var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
             using var client = new HttpClient();
             var content = new MultipartFormDataContent();
@@ -268,9 +268,9 @@ public partial class MultiMedia : ContentPage
 
     private async Task<(int guardId, int clientSiteId, int userId)> GetSecureStorageValues()
     {
-        int.TryParse(await SecureStorage.GetAsync("GuardId"), out int guardId);
-        int.TryParse(await SecureStorage.GetAsync("SelectedClientSiteId"), out int clientSiteId);
-        int.TryParse(await SecureStorage.GetAsync("UserId"), out int userId);
+        int.TryParse(Preferences.Get("GuardId", "0"), out int guardId);
+        int.TryParse(Preferences.Get("SelectedClientSiteId","0"), out int clientSiteId);
+        int.TryParse(Preferences.Get("UserId","0"), out int userId);
 
         if (guardId <= 0)
         {
@@ -344,7 +344,7 @@ public partial class MultiMedia : ContentPage
         try
         {
             var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
             using var client = new HttpClient();
             var content = new MultipartFormDataContent();

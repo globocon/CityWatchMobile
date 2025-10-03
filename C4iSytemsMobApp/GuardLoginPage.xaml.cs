@@ -49,7 +49,7 @@ public partial class GuardLoginPage : ContentPage
                 // Store selected client site ID in SecureStorage
                 if (_selectedClientSite != null)
                 {
-                    SecureStorage.SetAsync("SelectedClientSiteId", _selectedClientSite.Id.ToString());
+                    Preferences.Set("SelectedClientSiteId", _selectedClientSite.Id.ToString());
                 }
             }
         }
@@ -97,7 +97,7 @@ public partial class GuardLoginPage : ContentPage
 
         try
         {
-            var savedLicenseNumber = await SecureStorage.GetAsync("SavedLicenseNumber");
+            var savedLicenseNumber = Preferences.Get("SavedLicenseNumber","");
 
             if (!string.IsNullOrEmpty(savedLicenseNumber))
             {
@@ -156,7 +156,7 @@ public partial class GuardLoginPage : ContentPage
     {
         try
         {
-            string userName = await SecureStorage.GetAsync("UserName");
+            string userName = Preferences.Get("UserName","");
             if (!string.IsNullOrEmpty(userName))
             {
                 lblLoggedInUser.Text = $"Welcome, {userName}";
@@ -177,9 +177,9 @@ public partial class GuardLoginPage : ContentPage
         bool confirm = await DisplayAlert("Logout", "Are you sure you want to log out?", "Yes", "No");
         if (confirm)
         {
-            SecureStorage.Remove("UserId");
-            SecureStorage.Remove("UserName");
-            SecureStorage.Remove("UserRole");
+            Preferences.Remove("UserId");
+            Preferences.Remove("UserName");
+            Preferences.Remove("UserRole");
 
             Application.Current.MainPage = new LoginPage();
 
@@ -191,7 +191,7 @@ public partial class GuardLoginPage : ContentPage
     //{
     //    try
     //    {
-    //        string userId = await SecureStorage.GetAsync("UserId");
+    //        string userId = Preferences.Get("UserId","");
 
     //        if (string.IsNullOrEmpty(userId))
     //        {
@@ -219,7 +219,7 @@ public partial class GuardLoginPage : ContentPage
     {
         try
         {
-            string userId = await SecureStorage.GetAsync("UserId");
+            string userId = Preferences.Get("UserId", "");
 
             if (string.IsNullOrEmpty(userId))
             {
@@ -261,7 +261,7 @@ public partial class GuardLoginPage : ContentPage
         try
         {
             // Retrieve the logged-in user's ID from SecureStorage
-            string userId = await SecureStorage.GetAsync("UserId");
+            string userId = Preferences.Get("UserId", "");
             if (string.IsNullOrEmpty(userId)) return;
 
             // Use both userId and clientTypeId in the request
@@ -325,12 +325,12 @@ public partial class GuardLoginPage : ContentPage
                 if (guardData != null && guardData.GuardId > 0) // Ensure guardId is valid
                 {
                     // Store guardId securely
-                    await SecureStorage.SetAsync("GuardId", guardData.GuardId.ToString());
+                    Preferences.Set("GuardId", guardData.GuardId.ToString());
 
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
                         lblGuardName.Text = $"Hello {guardData.Name}. Please verify your details and click Enter Log Book";
-                        SecureStorage.SetAsync("GuardName", guardData.Name);
+                        Preferences.Set("GuardName", guardData.Name);
                         lblGuardName.TextColor = Colors.Green;
                         lblGuardName.IsVisible = true;
 
@@ -362,15 +362,15 @@ public partial class GuardLoginPage : ContentPage
                         txtLicenseNumber.IsEnabled = false;
                         ((Button)sender).IsEnabled = false;
                         // Save license number
-                        SecureStorage.SetAsync("LicenseNumber", licenseNumber);
+                        Preferences.Set("LicenseNumber", licenseNumber);
                         // If "Remember Me" is checked, store the license number securely
                         if (rememberMeCheckBox.IsChecked)
                         {
-                            SecureStorage.SetAsync("SavedLicenseNumber", licenseNumber);
+                            Preferences.Set("SavedLicenseNumber", licenseNumber);
                         }
                         else
                         {
-                            SecureStorage.Remove("SavedLicenseNumber");
+                            Preferences.Remove("SavedLicenseNumber");
                         }
                     });
                 }
@@ -424,7 +424,7 @@ public partial class GuardLoginPage : ContentPage
         try
         {
             // Retrieve GuardId securely
-            string guardIdString = await SecureStorage.GetAsync("GuardId");
+            string guardIdString = Preferences.Get("GuardId", "");
             if (string.IsNullOrWhiteSpace(guardIdString) || !int.TryParse(guardIdString, out int guardId) || guardId <= 0)
             {
                 await DisplayAlert("Error", "Guard ID not found. Please validate the License Number first.", "OK");
@@ -466,7 +466,7 @@ public partial class GuardLoginPage : ContentPage
             }
 
             // Retrieve and validate Client Site ID
-            string clientSiteIdString = await SecureStorage.GetAsync("SelectedClientSiteId");
+            string clientSiteIdString = Preferences.Get("SelectedClientSiteId", "");
             if (string.IsNullOrWhiteSpace(clientSiteIdString) || !int.TryParse(clientSiteIdString, out int clientSiteId) || clientSiteId <= 0)
             {
                 await DisplayAlert("Validation Error", "Please select a valid Client Site.", "OK");
@@ -474,14 +474,14 @@ public partial class GuardLoginPage : ContentPage
             }
 
             // Retrieve and validate User ID
-            string userIdString = await SecureStorage.GetAsync("UserId");
+            string userIdString = Preferences.Get("UserId", "");
             if (string.IsNullOrWhiteSpace(userIdString) || !int.TryParse(userIdString, out int userId) || userId <= 0)
             {
                 await DisplayAlert("Validation Error", "User ID is invalid. Please log in again.", "OK");
                 return;
             }
 
-            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
             if (string.IsNullOrWhiteSpace(gpsCoordinates))
             {
@@ -506,7 +506,7 @@ public partial class GuardLoginPage : ContentPage
                 {
                     if (pickerClientSite.SelectedItem is DropdownItem selectedClientSite)
                     {
-                        await SecureStorage.SetAsync("ClientSite", selectedClientSite.Name.Trim());
+                        Preferences.Set("ClientSite", selectedClientSite.Name.Trim());
                     }
 
                     string selectedClientTypeName = null;
@@ -522,7 +522,7 @@ public partial class GuardLoginPage : ContentPage
 
                     if (!string.IsNullOrEmpty(selectedClientTypeName))
                     {
-                        await SecureStorage.SetAsync("ClientType", selectedClientTypeName);
+                        Preferences.Set("ClientType", selectedClientTypeName);
                     }
 
                     // Check if NFC is onboarded for site
@@ -532,7 +532,7 @@ public partial class GuardLoginPage : ContentPage
                         // If scanner is onboarded, navigate to NFC page
                         if (scannerSettings.Exists(x => x.ToLower().Equals("nfc")))
                         {
-                            await SecureStorage.SetAsync("NfcOnboarded", "true");
+                            Preferences.Set("NfcOnboarded", "true");
                             //check if nfc is available in the device
                             //check if nfc is enabled
                             if (_nfcService.IsSupported && _nfcService.IsAvailable && !NfcIsEnabled)
@@ -545,17 +545,17 @@ public partial class GuardLoginPage : ContentPage
                         }
                         else
                         {
-                            await SecureStorage.SetAsync("NfcOnboarded", "false");
+                            Preferences.Set("NfcOnboarded", "false");
                         }
                     }
 
-                    await SecureStorage.SetAsync("CrowdCountEnabledForSite", "false");
+                    Preferences.Set("CrowdCountEnabledForSite", "false");
                     var _crowdControlsettings = await _crowdControlServices.GetCrowdControlSettingsAsync(clientSiteIdString);
                     if (_crowdControlsettings != null && (_crowdControlsettings?.IsCrowdCountEnabled ?? false))
                     {
                         if (_crowdControlsettings.IsCrowdCountEnabled)
                         {
-                            await SecureStorage.SetAsync("CrowdCountEnabledForSite", "true");
+                            Preferences.Set("CrowdCountEnabledForSite", "true");
                             Application.Current.MainPage = new GuardSecurityIdTagPage();
                         }
                         else
