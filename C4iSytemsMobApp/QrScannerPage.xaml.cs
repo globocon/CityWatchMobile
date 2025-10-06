@@ -75,10 +75,10 @@ public partial class QrScannerPage : ContentPage
             }
 
             // Save extracted values
-            await SecureStorage.SetAsync("UserId", userId.ToString());
-            await SecureStorage.SetAsync("ClientSiteId", clientId.ToString());
-            await SecureStorage.SetAsync("SelectedClientSiteId", clientId.ToString());
-            await SecureStorage.SetAsync("UserName", parts[3]);
+            Preferences.Set("UserId", userId.ToString());
+            Preferences.Set("ClientSiteId", clientId.ToString());
+            Preferences.Set("SelectedClientSiteId", clientId.ToString());
+            Preferences.Set("UserName", parts[3]);
 
             // Turn OFF torch once scanning is finished
             cameraView.IsTorchOn = false;
