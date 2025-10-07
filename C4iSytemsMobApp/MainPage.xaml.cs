@@ -127,8 +127,7 @@ namespace C4iSytemsMobApp
             _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
             _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
 
-            string isCrowdControlEnabledForSiteLocalStored = "false";
-            Task.Run(async () => isCrowdControlEnabledForSiteLocalStored = await SecureStorage.GetAsync("CrowdCountEnabledForSite"));
+            string isCrowdControlEnabledForSiteLocalStored = Preferences.Get("CrowdCountEnabledForSite", "false");
 
             if (!string.IsNullOrEmpty(isCrowdControlEnabledForSiteLocalStored) && bool.TryParse(isCrowdControlEnabledForSiteLocalStored, out _IsCrowdControlCounterEnabled))                
             ShowCounters = _IsCrowdControlCounterEnabled;
@@ -524,7 +523,7 @@ namespace C4iSytemsMobApp
         {
             try
             {
-                string userName = await SecureStorage.GetAsync("UserName");
+                string userName = Preferences.Get("UserName","");
                 if (!string.IsNullOrEmpty(userName))
                 {
                     //lblLoggedInUser.Text = $"Welcome, {userName}";
@@ -542,9 +541,7 @@ namespace C4iSytemsMobApp
 
         private async void LoadSecureData()
         {
-            lblClientSite.Text = $"Client Site: {await SecureStorage.GetAsync("ClientSite") ?? "N/A"}";
-            //lblClientType.Text = $"Client Type: {await SecureStorage.GetAsync("ClientType") ?? "N/A"}";
-            //lblGuardName.Text = $"Guard Name: {await SecureStorage.GetAsync("GuardName") ?? "N/A"}";           
+            lblClientSite.Text = $"Client Site: {Preferences.Get("ClientSite", "N/A")}";                      
         }
 
         private async void OnManualPositionClicked(object sender, EventArgs e)
@@ -627,7 +624,7 @@ namespace C4iSytemsMobApp
 
 
 
-            string gpsCoordinates = await SecureStorage.GetAsync("GpsCoordinates");
+            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
 
             // Validate Guard ID
@@ -676,7 +673,7 @@ namespace C4iSytemsMobApp
 
         private async Task<int?> TryGetSecureId(string key, string errorMessage)
         {
-            string idString = await SecureStorage.GetAsync(key);
+            string idString = Preferences.Get(key, "");
 
             if (string.IsNullOrWhiteSpace(idString) || !int.TryParse(idString, out int id) || id <= 0)
             {
@@ -693,7 +690,7 @@ namespace C4iSytemsMobApp
             {
 
 
-                string clientSiteIdString = await SecureStorage.GetAsync("SelectedClientSiteId");
+                string clientSiteIdString = Preferences.Get("SelectedClientSiteId", "");
                 if (string.IsNullOrWhiteSpace(clientSiteIdString) || !int.TryParse(clientSiteIdString, out int clientSiteId) || clientSiteId <= 0)
                 {
                     return; // No Client Site, stop checking
@@ -746,9 +743,9 @@ namespace C4iSytemsMobApp
             bool confirm = await DisplayAlert("Logout", "Are you sure you want to log out?", "Yes", "No");
             if (confirm)
             {
-                SecureStorage.Remove("UserId");
-                SecureStorage.Remove("UserName");
-                SecureStorage.Remove("UserRole");
+                Preferences.Remove("UserId");
+                Preferences.Remove("UserName");
+                Preferences.Remove("UserRole");
                 Application.Current.MainPage = new LoginPage();
 
                 // Navigate back to login page
@@ -783,7 +780,7 @@ namespace C4iSytemsMobApp
                     {
                         //  throw;
                     }
-                    SecureStorage.RemoveAll(); // Clear SecureStorage (logout)
+                    Preferences.Clear(); // Clear SecureStorage (logout)
                     System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the app
                 }
             });
@@ -934,7 +931,7 @@ namespace C4iSytemsMobApp
                     {
                         int locationId = selectedLocation.Id;
                         string locationName = selectedLocation.Name;
-                        await SecureStorage.SetAsync("CrowdControlSelectedLocation", selectedLocation.Name);
+                        Preferences.Set("CrowdControlSelectedLocation", selectedLocation.Name);
 
                         // Validate Client Site ID            
                         if (_clientSiteId == null || _guardId == null || _userId == null)
@@ -989,7 +986,7 @@ namespace C4iSytemsMobApp
         private async void OnCounterSettingsClicked(object sender, EventArgs e)
         {
             CrowdControlLocationPicker.IsEnabled = _crowdControllocationList.Count > 1;
-            string _CrowdControlSelectedLocation = await SecureStorage.GetAsync("CrowdControlSelectedLocation") ?? "";
+            string _CrowdControlSelectedLocation = Preferences.Get("CrowdControlSelectedLocation","");
             int selectedIndex = 0;
             // Find the index in the list where the Name matches
             if (!string.IsNullOrEmpty(_CrowdControlSelectedLocation))
@@ -1047,7 +1044,7 @@ namespace C4iSytemsMobApp
             {
                 int locationId = selectedLocation.Id;
                 string locationName = selectedLocation.Name;
-                await SecureStorage.SetAsync("CrowdControlSelectedLocation", selectedLocation.Name);
+                Preferences.Set("CrowdControlSelectedLocation", selectedLocation.Name);
 
                 // Validate Client Site ID            
                 if (_clientSiteId == null || _guardId == null || _userId == null)
@@ -1339,7 +1336,7 @@ namespace C4iSytemsMobApp
                     if (response.IsSuccessStatusCode)
                     {
                         string content = await response.Content.ReadAsStringAsync();
-                        SecureStorage.RemoveAll(); // Clear SecureStorage (logout)
+                        Preferences.Clear(); // Clear SecureStorage (logout)
                         System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the appI
                     }
                     else
@@ -1409,7 +1406,7 @@ namespace C4iSytemsMobApp
         private async Task StartNFC()
         {
             // Check NFC status
-            string isNfcEnabledForSiteLocalStored = await SecureStorage.GetAsync("NfcOnboarded");
+            string isNfcEnabledForSiteLocalStored = Preferences.Get("NfcOnboarded", "");
 
             if (!string.IsNullOrEmpty(isNfcEnabledForSiteLocalStored) && bool.TryParse(isNfcEnabledForSiteLocalStored, out _isNfcEnabledForSite))
             {
@@ -1595,9 +1592,9 @@ namespace C4iSytemsMobApp
 
         private async Task<(int guardId, int clientSiteId, int userId)> GetSecureStorageValues()
         {
-            int.TryParse(await SecureStorage.GetAsync("GuardId"), out int guardId);
-            int.TryParse(await SecureStorage.GetAsync("SelectedClientSiteId"), out int clientSiteId);
-            int.TryParse(await SecureStorage.GetAsync("UserId"), out int userId);
+            int.TryParse(Preferences.Get("GuardId","0"), out int guardId);
+            int.TryParse(Preferences.Get("SelectedClientSiteId","0"), out int clientSiteId);
+            int.TryParse(Preferences.Get("UserId","0"), out int userId);
 
             if (guardId <= 0)
             {

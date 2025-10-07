@@ -33,7 +33,7 @@ public partial class GuardSecurityIdTagPage : ContentPage
                 lblGuardName.Text = $"Hello {savedGuardName}. Please select your badge number and click Enter Log Book";
             }
 
-            var savedBadgeNumber = await SecureStorage.GetAsync(savedBadgeKeyName);
+            var savedBadgeNumber = Preferences.Get(savedBadgeKeyName, "");
             if (!string.IsNullOrEmpty(savedBadgeNumber))
             {
                 // Set initial badge number
@@ -78,13 +78,13 @@ public partial class GuardSecurityIdTagPage : ContentPage
         _clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
         _guardId = await TryGetSecureId("GuardId", "Guard ID not found. Please validate the License Number first.");       
         _userId = await TryGetSecureId("UserId", "User ID is invalid. Please log in again.");    
-        savedLicenseNumber = await SecureStorage.GetAsync("SavedLicenseNumber");
-        savedGuardName = await SecureStorage.GetAsync("GuardName");
+        savedLicenseNumber = Preferences.Get("SavedLicenseNumber", "");
+        savedGuardName = Preferences.Get("GuardName", "");
 
     }
     private async Task<int?> TryGetSecureId(string key, string errorMessage)
     {
-        string idString = await SecureStorage.GetAsync(key);
+        string idString = Preferences.Get(key, "");
 
         if (string.IsNullOrWhiteSpace(idString) || !int.TryParse(idString, out int id) || id <= 0)
         {
@@ -100,7 +100,7 @@ public partial class GuardSecurityIdTagPage : ContentPage
     {
         try
         {
-            string userName = await SecureStorage.GetAsync("UserName");
+            string userName = Preferences.Get("UserName", "");
             if (!string.IsNullOrEmpty(userName))
             {
                 lblLoggedInUser.Text = $"Welcome, {userName}";
@@ -121,9 +121,9 @@ public partial class GuardSecurityIdTagPage : ContentPage
         bool confirm = await DisplayAlert("Logout", "Are you sure you want to log out?", "Yes", "No");
         if (confirm)
         {
-            SecureStorage.Remove("UserId");
-            SecureStorage.Remove("UserName");
-            SecureStorage.Remove("UserRole");
+            Preferences.Remove("UserId");
+            Preferences.Remove("UserName");
+            Preferences.Remove("UserRole");
             
 
             Application.Current.MainPage = new LoginPage();
@@ -167,7 +167,7 @@ public partial class GuardSecurityIdTagPage : ContentPage
             {
                 // Save the selected badge number securely
                 var selectedBadgeNumber = numberPicker.Items[numberPicker.SelectedIndex];
-                await SecureStorage.SetAsync(savedBadgeKeyName, selectedBadgeNumber);
+                Preferences.Set(savedBadgeKeyName, selectedBadgeNumber);
             }
             else
             {
