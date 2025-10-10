@@ -15,7 +15,7 @@ namespace C4iSytemsMobApp;
 public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 {
 
-    
+    private readonly HttpClient _httpClient;
     public ObservableCollection<string> UploadedFiles { get; set; } = new();
     private List<string> uploadedServerFileNames = new(); // filenames returned by server
     private readonly string[] allowedExtensions = new[] {
@@ -113,11 +113,158 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         Suggestions = new ObservableCollection<string>(results);
     }
 
+    
+    private bool _showClientTypeAndSite;
+    public bool ShowClientTypeAndSite
+    {
+        get => _showClientTypeAndSite;
+        set
+        {
+            if (_showClientTypeAndSite != value)
+            {
+                _showClientTypeAndSite = value;
+                OnPropertyChanged(nameof(ShowClientTypeAndSite)); // <-- this is needed
+            }
+        }
+    }
+
     public event PropertyChangedEventHandler PropertyChanged;
     protected void OnPropertyChanged(string name) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
+    public ObservableCollection<DropdownItem> ClientTypes { get; set; } = new();
+    public ObservableCollection<DropdownItemWithAddress> ClientSites { get; set; } = new();
+    private DropdownItem _selectedClientType;
+    private DropdownItemWithAddress _selectedClientSite;
+    public DropdownItem SelectedClientType
+    {
+        get => _selectedClientType;
+        set
+        {
+            if (_selectedClientType != value)
+            {
+                _selectedClientType = value;
+                OnPropertyChanged(nameof(SelectedClientType));
 
+                // Load client sites when a client type is selected
+                LoadClientSites(value?.Id ?? 0);
+            }
+        }
+    }
+
+    public DropdownItemWithAddress SelectedClientSite
+    {
+        get => _selectedClientSite;
+        set
+        {
+            if (_selectedClientSite != value)
+            {
+                _selectedClientSite = value;
+                OnPropertyChanged(nameof(SelectedClientSite));
+                
+                // Store selected client site ID in SecureStorage
+                if (_selectedClientSite != null)
+                {
+                    ClientAddress = _selectedClientSite?.Address;                    
+                    OnClientSiteSelectedAsync(_selectedClientSite).ConfigureAwait(false);
+                }
+
+
+            }
+        }
+    }
+
+    private async Task OnClientSiteSelectedAsync(DropdownItemWithAddress selectedSite)
+    {
+        if (selectedSite == null) return;
+
+        // Update address
+        ClientAddress = selectedSite.Address;
+
+      
+
+        // Load related areas if needed
+        var clientSite = await GetClientSiteByName(selectedSite.Name);
+        if (clientSite != null)
+        {
+            _currentClientSite = clientSite;
+            await LoadClientAreas(clientSite.Id);
+        }
+    }
+    private async void LoadClientSites(int clientTypeId)
+    {
+        if (clientTypeId == 0)
+            return;
+
+        try
+        {
+            // Retrieve the logged-in user's ID from Preferences
+            string userId = Preferences.Get("UserId", "");
+            if (string.IsNullOrEmpty(userId))
+                return;
+
+            // Call the new endpoint with Address support
+            var response = await _httpClient.GetFromJsonAsync<List<DropdownItemWithAddress>>(
+                $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSitesByClientTypeWithAdress?userId={Uri.EscapeDataString(userId)}&clientTypeId={clientTypeId}");
+
+            ClientSites.Clear();
+
+            foreach (var site in response ?? new List<DropdownItemWithAddress>())
+            {
+                if (site.Name != "Select")
+                {
+                    // Option 1: Add only the name
+                    // ClientSites.Add(site);
+
+                    // Option 2: Combine name + address for display
+                    ClientSites.Add(new DropdownItemWithAddress
+                    {
+                        Id = site.Id,
+                        Name = $"{site.Name}",
+                        Address = site.Address
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // You can log this for debugging
+            // Debug.WriteLine($"Error loading client sites: {ex.Message}");
+        }
+    }
+
+
+
+    private async void LoadDropdownData()
+    {
+        try
+        {
+            string userId = Preferences.Get("UserId", "");
+
+            if (string.IsNullOrEmpty(userId))
+            {
+              
+                return;
+            }
+
+            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(
+                $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetUserClientTypes?userId={Uri.EscapeDataString(userId)}");
+
+            ClientTypes.Clear();
+
+            foreach (var type in response ?? new List<DropdownItem>())
+            {
+                if (type.Name != "Select")
+                    ClientTypes.Add(type);
+            }
+
+            
+        }
+        catch (Exception ex)
+        {
+           
+        }
+    }
     public async Task<(double Lat, double Lng)?> GetCoordinatesFromPlaceIdAsync(string placeId)
     {
         try
@@ -165,6 +312,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             {
                 _currentClientSite = clientSite;
                 clientAddressEntry.Text = clientSite.Address; //
+                ShowClientTypeAndSite = clientSite.MobAppShowClientTypeandSite;
             }
             else
             {
@@ -182,6 +330,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     public WebIncidentReport()
     {
         InitializeComponent();
+        _httpClient = new HttpClient(); // Initialize it
         NavigationPage.SetHasNavigationBar(this, false);
         BindingContext = this; // or to your ViewModel
         //var viewModel = new LocationViewModel();
@@ -194,7 +343,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         tapGesture.Tapped += (s, e) => ToggleDropdown();
         DropdownBorder.GestureRecognizers.Add(tapGesture);
         DropdownBorder.IsEnabled = false;
-
+        LoadDropdownData();
         // Now you can safely call:
         //viewModel.Suggestions.Clear();
         //viewModel.IsSuggestionsVisible = false;
@@ -475,12 +624,36 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
             var clientSiteId = Preferences.Get("SelectedClientSiteId", "");
             var userId = Preferences.Get("UserId", "");
-            
 
+           
 
 
             var clientType = Preferences.Get("ClientType", "");
             string clientTypeNew = Regex.Replace(clientType, @"\s*\(\d+\)$", "").Trim();
+
+
+            if (ShowClientTypeAndSite)
+            {
+                // Validate dropdown selections
+                if (SelectedClientType == null)
+                {
+                    await DisplayAlert("Validation Error", "Please select a client type.", "OK");
+                    return;
+                }
+
+                if (SelectedClientSite == null)
+                {
+                    await DisplayAlert("Validation Error", "Please select a client site.", "OK");
+                    return;
+                }
+
+                // Use selected values from dropdown if available, otherwise stored values
+                clientSite = SelectedClientSite?.Name ?? clientSite;
+                clientSiteId = SelectedClientSite?.Id.ToString() ?? clientSiteId;
+                clientTypeNew = Regex.Replace(SelectedClientType?.Name ?? clientTypeNew, @"\s*\(\d+\)$", "").Trim();
+            }
+
+
             // Validate required values before proceeding
             if (
                 string.IsNullOrWhiteSpace(guardId) ||
@@ -910,6 +1083,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         public bool DataCollectionEnabled { get; set; }
         public bool IsActive { get; set; }
         public bool IsDosDontList { get; set; }
+        public bool MobAppShowClientTypeandSite { get; set; }
     }
     public class FeedbackTemplateViewModel
     {
@@ -1162,6 +1336,13 @@ public class GooglePlacesAutocompletePrediction
     public string PlaceId { get; set; }
 }
 
+
+public class DropdownItemWithAddress
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Address { get; set; }
+}
 
 
 

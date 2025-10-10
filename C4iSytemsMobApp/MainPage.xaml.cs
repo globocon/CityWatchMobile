@@ -52,7 +52,9 @@ namespace C4iSytemsMobApp
         private readonly IScannerControlServices _scannerControlServices;
         private bool _isNfcEnabledForSite = false;
         bool _isDeviceiOS = false;
+
        
+
         public bool DeviceIsListening
         {
             get => _deviceIsListening;
