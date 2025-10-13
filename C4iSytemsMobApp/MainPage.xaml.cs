@@ -36,7 +36,7 @@ namespace C4iSytemsMobApp
         private bool _TcounterShown = true;
         private bool _IsCrowdControlCounterEnabled = false;
         private HubConnection _hubConnection;
-        bool isDrawerOpen = false;
+        public bool isDrawerOpen = false;
         public event PropertyChangedEventHandler PropertyChanged;
         private int? _clientSiteId;
         private int? _userId;
@@ -52,9 +52,22 @@ namespace C4iSytemsMobApp
         private readonly IScannerControlServices _scannerControlServices;
         private bool _isNfcEnabledForSite = false;
         bool _isDeviceiOS = false;
-
-       
-
+        private int _notificationCount = 0;
+        //private bool HasNotifications = false;
+        public int NotificationCount
+        {
+            get => _notificationCount;
+            set
+            {
+                _notificationCount = value;
+                OnPropertyChanged(nameof(NotificationCount));
+                OnPropertyChanged(nameof(HasNotifications));
+            }
+        }
+        public bool HasNotifications
+        {
+            get => _notificationCount > 0;
+        }
         public bool DeviceIsListening
         {
             get => _deviceIsListening;
@@ -96,7 +109,7 @@ namespace C4iSytemsMobApp
                 if (_IsCrowdControlCounterEnabled) { CounterRow.Height = GridLength.Auto; } else { CounterRow.Height = new GridLength(0); }
             }
         }
-        private bool _shouldOpenDrawerOnReturn = false;
+        public bool _shouldOpenDrawerOnReturn = false;
         private int _tags;
         private int _hit;
         private int _frequency;
@@ -1307,6 +1320,14 @@ namespace C4iSytemsMobApp
             CloseDrawer();
 
         }
+
+        private void OnNotificationsClicked(object sender, EventArgs e)
+        {
+            // Your update check logic here
+            DisplayAlert("Notification", "New feature coming soon...", "OK");
+            NotificationCount += 1;
+            //NotificationIcon.IsVisible = !NotificationIcon.IsVisible;
+        }
         private async void OnSOPClicked(object sender, EventArgs e)
         {
 
@@ -1314,6 +1335,13 @@ namespace C4iSytemsMobApp
             CloseDrawer();
 
         }
+
+        private async void OnDrawerMenuSettingsClicked(object sender, EventArgs e)
+        {
+            Application.Current.MainPage = new MenuSettingsPage();
+            CloseDrawer();
+        }
+
         private async void OnOffDutyClicked(object sender, EventArgs e)
         {
             // Validate Guard ID
@@ -1352,37 +1380,7 @@ namespace C4iSytemsMobApp
             {
                 await DisplayAlert("Exception", $"Unexpected error: {ex.Message}", "OK");
             }
-        }
-
-        private void OnCheckForUpdatesClicked(object sender, EventArgs e)
-        {
-            // Your update check logic here
-            DisplayAlert("Check for Updates", "You are running the latest version.", "OK");
-        }
-
-        private async void OnAboutC4iClicked(object sender, EventArgs e)
-        {
-            //try
-            //{
-            //    Uri uri = new("https://www.c4isystem.com/");
-            //    await Launcher.Default.OpenAsync(uri); // Skip CanOpenAsync
-            //}
-            //catch (Exception ex)
-            //{
-            //    await DisplayAlert("Exception", $"Could not launch URL: {ex.Message}", "OK");
-            //}
-
-            try
-            {
-                Uri uri = new Uri("https://www.c4isystem.com");
-                await Browser.Default.OpenAsync(uri, BrowserLaunchMode.SystemPreferred);
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Exception", $"Could not launch URL: {ex.Message}", "OK");
-                // An unexpected error occurred. No browser may be installed on the device.
-            }
-        }
+        }                
 
         private void OpenDrawer()
         {
