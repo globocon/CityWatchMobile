@@ -628,7 +628,7 @@ namespace C4iSytemsMobApp
                 }
 
                 // Automatically activate duress if not cancelled
-                //await ActivateDuress();
+                await ActivateDuress();
             }
             catch (TaskCanceledException)
             {
