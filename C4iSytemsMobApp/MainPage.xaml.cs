@@ -328,32 +328,44 @@ namespace C4iSytemsMobApp
             MainLayout.IsVisible = true;
 
 
+            // Subscribe to updates
+            TagStatusService.Instance.Subscribe(OnTagStatusUpdated);
+
+            // Start polling for this site
+            TagStatusService.Instance.StartPolling(_clientSiteId);
+
             // Cancel any previous loop if exists
-            _tagStatusCts?.Cancel();
-            _tagStatusCts = new CancellationTokenSource();
+            //_tagStatusCts?.Cancel();
+            //_tagStatusCts = new CancellationTokenSource();
 
-            var timer = new PeriodicTimer(TimeSpan.FromSeconds(1)); // every 1 seconds
+            //var timer = new PeriodicTimer(TimeSpan.FromSeconds(1)); // every 1 seconds
 
-            try
-            {
-                while (await timer.WaitForNextTickAsync(_tagStatusCts.Token))
-                {
-                    if (_clientSiteId != null)
-                    {
-                        await LoadTagStatusAsync(_clientSiteId);
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // Timer was canceled, ignore
-            }
+            //try
+            //{
+            //    while (await timer.WaitForNextTickAsync(_tagStatusCts.Token))
+            //    {
+            //        if (_clientSiteId != null)
+            //        {
+            //            await LoadTagStatusAsync(_clientSiteId);
+            //        }
+            //    }
+            //}
+            //catch (OperationCanceledException)
+            //{
+            //    // Timer was canceled, ignore
+            //}
         }
 
 
 
+        
 
-       
+        private void OnTagStatusUpdated(int? clientId)
+        {
+            // Call your existing LoadTagStatusAsync safely
+            _ = LoadTagStatusAsync(clientId);
+        }
+
 
         public async Task LoadTagStatusAsync(int? clientId)
         {
@@ -517,8 +529,8 @@ namespace C4iSytemsMobApp
                 _hubConnection.DisposeAsync();
             }
 
-            _tagStatusCts?.Cancel();
-            _tagStatusCts?.Dispose();
+            // Unsubscribe safely
+            TagStatusService.Instance.Unsubscribe(OnTagStatusUpdated);
         }
 
         private async void LoadLoggedInUser()
