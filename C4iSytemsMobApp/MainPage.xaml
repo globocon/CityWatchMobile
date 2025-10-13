@@ -319,9 +319,11 @@
                                AbsoluteLayout.LayoutBounds="0,135,1,AutoSize"
                                AbsoluteLayout.LayoutFlags="WidthProportional"
                                HasShadow="True">
-                            <Frame.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnDuressClicked" />
-                            </Frame.GestureRecognizers>
+                            <Frame.Behaviors>
+                                <toolkit:TouchBehavior
+        LongPressCommand="{Binding LongPressCommand}"
+        LongPressDuration="2500" />
+                            </Frame.Behaviors>
                         </Frame>
 
                         <!-- Duress Badge -->
@@ -336,9 +338,11 @@
                                IsVisible="True"
                                ZIndex="120"
                                HasShadow="True">
-                            <Frame.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnDuressClicked" />
-                            </Frame.GestureRecognizers>
+                            <Frame.Behaviors>
+                                <toolkit:TouchBehavior
+        LongPressCommand="{Binding LongPressCommand}"
+        LongPressDuration="2500" />
+                            </Frame.Behaviors>
                             <StackLayout VerticalOptions="CenterAndExpand"
                                          HorizontalOptions="CenterAndExpand"
                                          Spacing="3">

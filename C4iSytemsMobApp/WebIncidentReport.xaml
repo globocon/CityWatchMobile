@@ -293,11 +293,11 @@ TextColor="Black" />
                         <VerticalStackLayout Spacing="5">
 
                             <!-- Section Header -->
-                            <Label Text="Incident Date / Location" 
+                            <!--<Label Text="Incident Date / Location" 
            FontSize="16" 
            FontAttributes="Bold" 
            HorizontalOptions="Center" 
-           Padding="3"/>
+           Padding="3"/>-->
 
                             <!-- Date/Time Label -->
                             <Label Text="Date / Time of Incident or Patrol Onsite" 
@@ -354,45 +354,56 @@ TextColor="Black" />
                                 </VerticalStackLayout>
                             </HorizontalStackLayout>
 
-                            <HorizontalStackLayout Spacing="5">
-                                <Label Text="J:" VerticalOptions="Center" FontSize="14"/>
-                                <Entry x:Name="JobNumberEntry" Placeholder="Enter Job Number" 
-                       />
-                            </HorizontalStackLayout>
-                            <!-- Job Time Input -->
-
-                            <HorizontalStackLayout Spacing="5">
-                                <Label Text="T:" VerticalOptions="Center" FontSize="14"/>
-                                <TimePicker x:Name="JobTimePicker" Format="HH:mm"
-                            />
-                            </HorizontalStackLayout>
+                           
 
 
 
                         </VerticalStackLayout>
                     </Frame>
 
-                    <Frame CornerRadius="5" Padding="5" BorderColor="LightGray">
-                        <VerticalStackLayout Spacing="1">
-                            <!-- Patrol Label -->
-                            <Label Text="Patrol:" FontSize="14"/>
+                <Frame CornerRadius="5" Padding="5" BorderColor="LightGray">
+                    <VerticalStackLayout Spacing="1">
 
-                            <HorizontalStackLayout Spacing="1" Padding="0,1" VerticalOptions="Center">
+                        <Label Text="Patrol:" FontSize="14"/>
 
-                                <!-- External Patrol Checkbox -->
-                                <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-                                    <CheckBox x:Name="PatrolExternalCheckBox" VerticalOptions="Center"/>
-                                    <Label Text="External" VerticalOptions="Center" FontSize="14"/>
-                                </HorizontalStackLayout>
+                        <HorizontalStackLayout Spacing="1" Padding="0,1" VerticalOptions="Center">
 
-                                <!-- Internal Patrol Checkbox -->
-                                <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-                                    <CheckBox x:Name="PatrolInternalCheckBox" VerticalOptions="Center"/>
-                                    <Label Text="Internal" VerticalOptions="Center" FontSize="14"/>
-                                </HorizontalStackLayout>
-
+                            <!-- External Patrol Checkbox -->
+                            <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                                <CheckBox x:Name="PatrolExternalCheckBox" VerticalOptions="Center"/>
+                                <Label Text="External" VerticalOptions="Center" FontSize="14"/>
                             </HorizontalStackLayout>
 
+                            <!-- Internal Patrol Checkbox -->
+                            <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                                <CheckBox x:Name="PatrolInternalCheckBox" VerticalOptions="Center"/>
+                                <Label Text="Internal" VerticalOptions="Center" FontSize="14"/>
+                            </HorizontalStackLayout>
+
+                        </HorizontalStackLayout>
+
+                        <HorizontalStackLayout Spacing="5">
+                            <Label Text="J:" VerticalOptions="Center" FontSize="14"/>
+                            <Entry x:Name="JobNumberEntry" Placeholder="Enter Job Number" 
+/>
+                        </HorizontalStackLayout>
+                        <!-- Job Time Input -->
+
+                        <HorizontalStackLayout Spacing="5">
+                            <Label Text="T:" VerticalOptions="Center" FontSize="14"/>
+                            <TimePicker x:Name="JobTimePicker" Format="HH:mm"
+     />
+                        </HorizontalStackLayout>
+                        <!-- Patrol Label -->
+                      
+
+
+                    </VerticalStackLayout>
+                </Frame>
+
+                <Frame CornerRadius="5" Padding="5" BorderColor="LightGray">
+                        <VerticalStackLayout Spacing="1">
+                           
 
 
                             <!-- Label -->
@@ -424,11 +435,29 @@ TextColor="Black" />
 
                             <VerticalStackLayout Padding="0" Spacing="10">
 
-                                <!-- Grid with Label + CheckBox -->
+                            <Picker x:Name="pickerClientType"
+         Title="Select Client Type"
+         ItemsSource="{Binding ClientTypes}"
+         ItemDisplayBinding="{Binding Name}"
+         SelectedItem="{Binding SelectedClientType, Mode=TwoWay}"
+         IsVisible="{Binding ShowClientTypeAndSite}"
+         />
+
+
+                            <Picker x:Name="pickerClientSite"
+         Title="Select Client Site"
+         ItemsSource="{Binding ClientSites}"
+         ItemDisplayBinding="{Binding Name}"
+         SelectedItem="{Binding SelectedClientSite, Mode=TwoWay}"
+           IsVisible="{Binding ShowClientTypeAndSite}"
+         />
+                        
+
+                        <!-- Grid with Label + CheckBox -->
                                 <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
                                     <Label 
                 Grid.Column="0"
-                Text="Client Address"
+                Text="Client Address :"
                 FontAttributes="None"
                 FontSize="14" 
                 VerticalOptions="Center" />
@@ -440,7 +469,7 @@ TextColor="Black" />
                     CheckedChanged="OnIncidentLocationCheckBoxChanged"
                     IsChecked="{Binding ShowIncidentLocation}" />
                                         <Label 
-                    Text="Incident Location"
+                    Text="Incident Location (Override)"
                     VerticalOptions="Center"
                     FontAttributes="None"
                     FontSize="14" />

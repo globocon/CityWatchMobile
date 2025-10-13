@@ -16,6 +16,9 @@ using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using C4iSytemsMobApp.Enums;
 using System.Collections.ObjectModel;
+using CommunityToolkit.Maui;
+using System.Windows.Input;
+
 
 
 namespace C4iSytemsMobApp
@@ -121,6 +124,8 @@ namespace C4iSytemsMobApp
 
         private CancellationTokenSource _tagStatusCts;
         public ObservableCollection<SiteTagStatusPending> TagFields { get; set; } = new ObservableCollection<SiteTagStatusPending>();
+        public ICommand LongPressCommand { get; }
+        private DateTime _touchStartTime;
         public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
             InitializeComponent();
@@ -143,8 +148,20 @@ namespace C4iSytemsMobApp
             ShowCounters = _IsCrowdControlCounterEnabled;
             OnPropertyChanged(nameof(ShowCounters));
 
+
+            // Temporary command for testing
+            LongPressCommand = new Command(() => OnDuressClicked(sender: null, e: null));
+
             PopupCollectionView.BindingContext = this;
+
+         
         }
+
+        private async Task OnDuressClicked2(object sender, EventArgs e)
+        {
+            // Your existing duress popup logic here
+        }
+
 
         protected override async void OnAppearing()
         {
@@ -599,7 +616,7 @@ namespace C4iSytemsMobApp
                 }
 
                 // Automatically activate duress if not cancelled
-                await ActivateDuress();
+                //await ActivateDuress();
             }
             catch (TaskCanceledException)
             {
