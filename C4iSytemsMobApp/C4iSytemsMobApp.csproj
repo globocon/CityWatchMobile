@@ -73,6 +73,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="MenuSettingsPage.xaml.cs">
+	    <DependentUpon>MenuSettingsPage.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="DownloadsHome.xaml.cs">
 	    <DependentUpon>DownloadsHome.xaml</DependentUpon>
 	  </Compile>
@@ -89,6 +92,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Controls\AnimatedCounter.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="MenuSettingsPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="DownloadsHome.xaml">
