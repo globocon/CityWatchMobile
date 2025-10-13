@@ -1336,6 +1336,13 @@ namespace C4iSytemsMobApp
 
         }
 
+        private void OnRosterClicked(object sender, EventArgs e)
+        {
+
+            DisplayAlert("Roster", "New feature coming soon...", "OK");
+
+        }
+
         private async void OnDrawerMenuSettingsClicked(object sender, EventArgs e)
         {
             Application.Current.MainPage = new MenuSettingsPage();
