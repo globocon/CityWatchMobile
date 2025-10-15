@@ -73,6 +73,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="Views\AddDevicePopup.xaml.cs">
+	    <DependentUpon>AddDevicePopup.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="AddiBeacon.xaml.cs">
+	    <DependentUpon>AddiBeacon.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="MenuSettingsPage.xaml.cs">
 	    <DependentUpon>MenuSettingsPage.xaml</DependentUpon>
 	  </Compile>
@@ -82,12 +88,21 @@
 	  <Compile Update="GuardSecurityIdTagPage.xaml.cs">
 	    <DependentUpon>GuardSecurityIdTagPage.xaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="AddNFCtag.xaml.cs">
+	    <DependentUpon>AddNFCtag.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="NfcScannerTestPage.xaml.cs">
 	    <DependentUpon>NfcScannerTestPage.xaml</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiXaml Update="Views\AddDevicePopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="AddiBeacon.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Audio.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
@@ -119,6 +134,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="MultiMedia.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="AddNFCtag.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="NfcScannerTestPage.xaml">
