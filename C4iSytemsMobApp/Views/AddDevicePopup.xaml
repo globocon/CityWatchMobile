@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               x:Class="C4iSytemsMobApp.Views.AddDevicePopup">
+
+    <Frame Padding="20"
+           CornerRadius="0"
+           HasShadow="False"
+           VerticalOptions="Center"
+           HorizontalOptions="Center"
+           WidthRequest="280"
+           BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
+
+        <VerticalStackLayout Spacing="15">
+
+            <Label Text="Select Option"
+                   FontSize="20"
+                   HorizontalOptions="Center"
+                   FontAttributes="Bold"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
+
+            <Button Text="Add NFC Tag"
+                    Clicked="OnAddNfcClicked" />
+
+            <Button Text="Add IBeacon"
+                    Clicked="OnAddIBeaconClicked" />
+
+            <Button Text="Cancel"
+                    TextColor="Red"
+                    Clicked="OnCancelClicked" />
+        </VerticalStackLayout>
+    </Frame>
+</toolkit:Popup>
