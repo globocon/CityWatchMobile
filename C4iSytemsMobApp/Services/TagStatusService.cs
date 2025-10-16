@@ -8,7 +8,7 @@ namespace C4iSytemsMobApp.Services
 {
     public class TagStatusService
     {
-        private readonly TimeSpan _pollInterval = TimeSpan.FromSeconds(1);
+        private readonly TimeSpan _pollInterval = TimeSpan.FromSeconds(3);
         private readonly List<Action<int?>> _subscribers = new();
         private CancellationTokenSource? _cts;
         private Task? _pollingTask;
