@@ -39,7 +39,10 @@
                            TextColor="Black"
                            FontAttributes="Bold"
                            VerticalOptions="Center"
-                           HorizontalOptions="Start" />
+                           HorizontalOptions="Start" 
+                           Padding="0,0,25,0"
+                           Margin="0,0,10,0"
+                           MaxLines="1" />
                     <!--<Label FontSize="12"
        TextColor="Gray"
        HorizontalOptions="Start"
