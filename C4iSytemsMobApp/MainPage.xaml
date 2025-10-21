@@ -1027,23 +1027,7 @@
                                VerticalOptions="Center"
                                HorizontalOptions="Center"
                                TextColor="{AppThemeBinding Light=White, Dark=Black}" />
-
-
-                        <!--<ImageButton x:Name="NotificationIcon" 
-                                     BackgroundColor="Transparent"
-                                     Padding="0,0,0,0"
-                                     WidthRequest="25"
-                                     HeightRequest="25"
-                                     HorizontalOptions="End"
-                                     VerticalOptions="Center"
-                                     IsVisible="false"
-                                     Clicked="OnNotificationsClicked">
-                            <ImageButton.Source>
-                                <FontImageSource Glyph="&#xf0a2;"
-                                                 FontFamily="FontAwesome"
-                                                 Size="20" />
-                            </ImageButton.Source>
-                        </ImageButton>-->
+                       
                         <Grid WidthRequest="30"
                               HeightRequest="30">
                             <!-- Bell icon -->
@@ -1147,21 +1131,17 @@
                                            Spacing="10"
                                            VerticalOptions="Center"
                                            HorizontalOptions="Center"
-                                           HeightRequest="46">
-                        <ImageButton BackgroundColor="Transparent"
-                                     Padding="0,0,0,0"
-                                     WidthRequest="40"
-                                     HeightRequest="40"
-                                     HorizontalOptions="Center"
-                                     VerticalOptions="Center"
-                                     Clicked="OnDrawerMenuSettingsClicked">
-                            <ImageButton.Source>
-                                <FontImageSource Glyph=""
-                                                 FontFamily="FontAwesome"
-                                                 Color="{AppThemeBinding Light=White, Dark=Black}"
-                                                 Size="30" />
-                            </ImageButton.Source>
-                        </ImageButton>
+                                           HeightRequest="46">                       
+                        <Label Text=""
+                               FontFamily="FontAwesome"
+                               FontSize="25"
+                               TextColor="{AppThemeBinding Light=White, Dark=Black}"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnDrawerMenuSettingsClicked" />
+                            </Label.GestureRecognizers>
+                        </Label>
                     </HorizontalStackLayout>
                 </Frame>
 

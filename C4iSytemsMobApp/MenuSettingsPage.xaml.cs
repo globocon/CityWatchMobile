@@ -76,6 +76,11 @@ public partial class MenuSettingsPage : ContentPage
 
     }
 
+    private async void OnSelectSmartWandClicked(object sender, EventArgs e)
+    {
+        Application.Current.MainPage = new SelectSmartWand();
+    }
+
     private async void OnAboutC4iClicked(object sender, EventArgs e)
     {
         try

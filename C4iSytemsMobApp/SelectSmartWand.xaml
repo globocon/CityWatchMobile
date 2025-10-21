@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="C4iSytemsMobApp.SelectSmartWand"
+             Title="Select Smart Wand">
+    <AbsoluteLayout x:Name="MainLayout"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
+        <Grid x:Name="MainGrid"
+              Padding="5,5,5,5"
+              RowSpacing="1"
+              ColumnSpacing="2"
+              AbsoluteLayout.LayoutBounds="0.5,0.5,0.9,0.4"
+              AbsoluteLayout.LayoutFlags="All"
+              BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="Column1"
+                                  Width="*" />
+                <ColumnDefinition x:Name="Column2"
+                                  Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition x:Name="InfoLabelRow"
+                               Height="Auto" />
+                <RowDefinition x:Name="TagUIDRow"
+                               Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Frame Grid.Row="0"
+                   Grid.ColumnSpan="2"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="FillAndExpand"
+                   BorderColor="Transparent"
+                   Padding="2"
+                   Margin="1,1,1,20"
+                   HasShadow="False">
+                <StackLayout VerticalOptions="StartAndExpand"
+                             HorizontalOptions="FillAndExpand"
+                             Spacing="1">
+                    <Label x:Name="LabelTagInfo"
+                           Text="Smart Wand"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    <!-- Smart Wand Picker -->
+                    <Picker x:Name="pickerSmartWand"
+                            Title="Select Smart Wand"
+                            TitleColor="{AppThemeBinding Light=Black, Dark=White}"
+                            TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                            ItemsSource="{Binding ClientSiteSmartWands}"
+                            ItemDisplayBinding="{Binding Name}"
+                            SelectedIndexChanged="OnSmartWandSelectionChanged"
+                            IsVisible="True" />
+                </StackLayout>
+            </Frame>
+
+
+            <Frame Grid.Row="1"
+                   Grid.Column="0"
+                   x:Name="frame_ButtonSave"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="Fill"
+                   Padding="5"
+                   CornerRadius="15"
+                   HasShadow="False"
+                   IsVisible="True">
+                <Frame.Background>
+                    <LinearGradientBrush>
+                        <GradientStop Color="#007AFF"
+                                      Offset="0.0" />
+                        <GradientStop Color="#0056B3"
+                                      Offset="1.0" />
+                    </LinearGradientBrush>
+                </Frame.Background>
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnSaveTagClicked" />
+                </Frame.GestureRecognizers>
+
+                <Label x:Name="button_label_save"
+                       Text="Save"
+                       VerticalOptions="Center"
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=White, Dark=Black}" />
+
+            </Frame>
+
+            <Frame Grid.Row="1"
+                   Grid.Column="1"
+                   x:Name="frame_ButtonCancel"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="Fill"
+                   Padding="5"
+                   CornerRadius="15"
+                   HasShadow="False"
+                   IsVisible="True">
+                <Frame.Background>
+                    <LinearGradientBrush>
+                        <GradientStop Color="#007AFF"
+                                      Offset="0.0" />
+                        <GradientStop Color="#0056B3"
+                                      Offset="1.0" />
+                    </LinearGradientBrush>
+                </Frame.Background>
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCloseClicked" />
+                </Frame.GestureRecognizers>
+
+                <Label x:Name="button_label_cancel"
+                       Text="Back"
+                       VerticalOptions="Center"
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=White, Dark=Black}" />
+
+            </Frame>
+        </Grid>
+    </AbsoluteLayout>
+</ContentPage>

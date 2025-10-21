@@ -60,6 +60,10 @@
                         Clicked="OnAddTagsClicked"
                         FontAttributes="Bold" />
 
+                <Button Text="Select Smart Wand"
+                        Clicked="OnSelectSmartWandClicked"
+                        FontAttributes="Bold" />
+
                 <Button Text="About C4i System"
                         Clicked="OnAboutC4iClicked"
                         FontAttributes="Bold" />

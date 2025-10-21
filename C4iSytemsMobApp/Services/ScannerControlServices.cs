@@ -32,9 +32,27 @@ namespace C4iSytemsMobApp.Services
             return new List<string>(); // Example return value
         }
 
+        public async Task<List<DropdownItem>?> GetClientSiteSmartWandsAsync(string _clientSiteId)
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetClientSiteSmartWands?siteId={_clientSiteId}";
+            // Here you would typically make an HTTP request to the API endpoint
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            HttpResponseMessage response = await client.GetAsync(apiUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var settings = await response.Content.ReadFromJsonAsync<List<DropdownItem>>();
+                return settings;
+            }
+
+            return new List<DropdownItem>(); // Example return value
+        }
+
         public async Task<TagInfoApiResponse?> FetchTagInfoDetailsAsync(string _clientSiteId, string _tagUid, string _guardId, string _userId)
         {
-            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetNFCtagInfoData?siteId={_clientSiteId}&TagUid={_tagUid}&GuardId={_guardId}&UserId={_userId}";
+            string savedSmartWandIdKeyName = $"{_clientSiteId}_SavedSmartWandId";
+            var savedSmartWandId = Preferences.Get(savedSmartWandIdKeyName, 0);
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetNFCtagInfoData?siteId={_clientSiteId}&TagUid={_tagUid}&GuardId={_guardId}&UserId={_userId}&SmartWandId={savedSmartWandId}";
             // Here you would typically make an HTTP request to the API endpoint
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
@@ -117,5 +135,6 @@ namespace C4iSytemsMobApp.Services
 
             return null; // Example return value
         }
+
     }
 }

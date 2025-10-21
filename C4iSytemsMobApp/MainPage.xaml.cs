@@ -1367,11 +1367,11 @@ namespace C4iSytemsMobApp
 
         }
 
-        private void OnNotificationsClicked(object sender, EventArgs e)
+        private void OnNotificationsClicked(object sender, TappedEventArgs e)
         {
             // Your update check logic here
             DisplayAlert("Notification", "New feature coming soon...", "OK");
-            NotificationCount += 1;
+            //NotificationCount += 1;
             //NotificationIcon.IsVisible = !NotificationIcon.IsVisible;
         }
         private async void OnSOPClicked(object sender, EventArgs e)
@@ -1728,7 +1728,7 @@ namespace C4iSytemsMobApp
             }
         }
 
-
+       
     }
 
 
