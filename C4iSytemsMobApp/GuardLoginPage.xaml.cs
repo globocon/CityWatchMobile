@@ -232,10 +232,20 @@ public partial class GuardLoginPage : ContentPage
 
             ClientTypes.Clear();
 
-            foreach (var type in response ?? new List<DropdownItem>())
+            // Sort alphabetically by Name before adding
+            foreach (var type in (response ?? new List<DropdownItem>())
+                         .Where(t => t.Name != "Select")
+                         .OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase))
             {
-                if (type.Name != "Select")
-                    ClientTypes.Add(type);
+                ClientTypes.Add(type);
+            }
+
+            // If only one item exists, select it automatically
+            if (ClientTypes.Count == 1)
+            {
+                SelectedClientType = ClientTypes[0];
+                textBoxSelectedClientType.Text = SelectedClientType.Name;
+                //textBoxSelectedClientType.IsVisible = true;
             }
 
             // If only one item exists, select it and remove from the list

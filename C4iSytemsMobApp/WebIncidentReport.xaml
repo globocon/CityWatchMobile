@@ -406,27 +406,7 @@ TextColor="Black" />
                            
 
 
-                            <!-- Label -->
-                            <Label 
-    Text="Area / Ward" 
-    FontAttributes="None" 
-    FontSize="14" 
-    VerticalOptions="Start" 
-    HorizontalOptions="Start"
-    LineBreakMode="NoWrap"
-    WidthRequest="100" />
-                            <!-- Adjust width to avoid wrapping -->
-
-                            <!-- Picker -->
-                            <Picker 
-        x:Name="areaPicker"
-       
-        HeightRequest="40"
-        BackgroundColor="White"
-        TextColor="Black"
-        FontSize="14"
-        
-                            />
+              
 
 
 
@@ -537,7 +517,27 @@ TextColor="Black" />
 
                             </VerticalStackLayout>
 
+                        <!-- Label -->
+                        <Label 
+Text="Area / Ward" 
+FontAttributes="None" 
+FontSize="14" 
+VerticalOptions="Start" 
+HorizontalOptions="Start"
+LineBreakMode="NoWrap"
+WidthRequest="100" />
+                        <!-- Adjust width to avoid wrapping -->
 
+                        <!-- Picker -->
+                        <Picker 
+    x:Name="areaPicker"
+   
+    HeightRequest="40"
+    BackgroundColor="White"
+    TextColor="Black"
+    FontSize="14"
+    
+                        />
 
                             <!-- Notes -->
                             <Label Text="NOTE: If WAND points do not exist, or are missing you must take photos AND mention in notes that there are NO WAND points" 
