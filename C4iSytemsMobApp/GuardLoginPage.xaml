@@ -93,26 +93,86 @@
 
             <!-- License Input -->
             <!-- License Input and Remember Me -->
-            <VerticalStackLayout Spacing="10" VerticalOptions="Center">
+            <VerticalStackLayout Spacing="10" VerticalOptions="Center" Padding="20">
 
-                <!-- License + Login Button side-by-side -->
-                <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                <!-- Grid: Row 0 = Entry + Button, Row 1 = Suggestions -->
+                <Grid RowSpacing="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <!-- Entry + Button -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Suggestions -->
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="250"/>
+                        <!-- Entry width -->
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- Button -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Entry -->
                     <Entry x:Name="txtLicenseNumber"
                Placeholder="Enter License Number"
-               WidthRequest="250"/>
+               Grid.Row="0" Grid.Column="0"
+               TextChanged="OnLicenseTextChanged"
+               Focused="OnEntryFocused"/>
 
+                    <!-- Login Button -->
                     <Button Text="Login"
+                Grid.Row="0" Grid.Column="1"
                 Clicked="OnReadClicked"
-                VerticalOptions="Center"/>
-                </HorizontalStackLayout>
+                VerticalOptions="Center"
+                Margin="5,0,0,0"/>
 
-                <!-- Remember Me BELOW the Entry -->
-                <HorizontalStackLayout Spacing="1" VerticalOptions="Center">
+                    <!-- Suggestions -->
+                    <!-- Suggestions list with outer border -->
+                    <Frame Grid.Row="1"
+       Grid.Column="0"
+       HasShadow="False"
+       BorderColor="#ccc"
+       CornerRadius="5"
+       Padding="0"
+       Margin="0"
+       IsVisible="{Binding Source={x:Reference SuggestionsView}, Path=IsVisible}">
+
+                        <CollectionView x:Name="SuggestionsView"
+                    SelectionMode="Single"
+                    HeightRequest="120"
+                    ItemsLayout="VerticalList"
+                    BackgroundColor="White"
+                    SelectionChanged="OnSuggestionSelected"
+                    Margin="0"
+                    
+                    VerticalOptions="Start">
+
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <!-- Just a simple Label, no Frame -->
+                                    <Label Text="{Binding .}" 
+                       FontSize="12" 
+                       Padding="2" 
+                       Margin="0" TextColor="Black" />
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+
+                        </CollectionView>
+                    </Frame>
+
+
+
+                </Grid>
+
+                <!-- Remember Me BELOW -->
+                <!--<HorizontalStackLayout Spacing="1" VerticalOptions="Center">
                     <CheckBox x:Name="rememberMeCheckBox" VerticalOptions="Center"/>
                     <Label Text="Remember Me" VerticalOptions="Center" FontSize="12"/>
-                </HorizontalStackLayout>
+                </HorizontalStackLayout>-->
 
             </VerticalStackLayout>
+
+
+
+
 
             <!-- Guard Name Label (Initially Hidden) -->
             <Label x:Name="lblGuardName"

@@ -1,10 +1,12 @@
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Services;
+using Microsoft.Maui.Controls;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace C4iSytemsMobApp;
 
@@ -20,6 +22,7 @@ public partial class GuardLoginPage : ContentPage
 
     private DropdownItem _selectedClientType;
     private DropdownItem _selectedClientSite;
+
     public DropdownItem SelectedClientType
     {
         get => _selectedClientType;
@@ -30,8 +33,12 @@ public partial class GuardLoginPage : ContentPage
                 _selectedClientType = value;
                 OnPropertyChanged(nameof(SelectedClientType));
 
-                // Load client sites when a client type is selected
+                // Load sites for this type
                 LoadClientSites(value?.Id ?? 0);
+
+                // Save selected type
+                if (_selectedClientType != null)
+                    Preferences.Set("SelectedClientTypeId", _selectedClientType.Id.ToString());
             }
         }
     }
@@ -46,11 +53,8 @@ public partial class GuardLoginPage : ContentPage
                 _selectedClientSite = value;
                 OnPropertyChanged(nameof(SelectedClientSite));
 
-                // Store selected client site ID in SecureStorage
                 if (_selectedClientSite != null)
-                {
                     Preferences.Set("SelectedClientSiteId", _selectedClientSite.Id.ToString());
-                }
             }
         }
     }
@@ -89,7 +93,9 @@ public partial class GuardLoginPage : ContentPage
     #endregion  "NFC Properties"
 
 
-
+    private const string PrefKey = "SavedLicenseNumbers";
+    private List<string> _previousNumbers = new List<string>();
+    private ObservableCollection<string> _filteredSuggestions = new ObservableCollection<string>();
 
     protected override async void OnAppearing()
     {
@@ -101,8 +107,8 @@ public partial class GuardLoginPage : ContentPage
 
             if (!string.IsNullOrEmpty(savedLicenseNumber))
             {
-                txtLicenseNumber.Text = savedLicenseNumber;
-                rememberMeCheckBox.IsChecked = true;
+                //txtLicenseNumber.Text = savedLicenseNumber;
+                //rememberMeCheckBox.IsChecked = true;
             }
         }
         catch (Exception ex)
@@ -123,6 +129,8 @@ public partial class GuardLoginPage : ContentPage
                 await InitializeNFCAsync();
             }
         }
+
+        LoadSavedNumbers(); // Reload preferences every time page appears
     }
 
 
@@ -136,14 +144,149 @@ public partial class GuardLoginPage : ContentPage
 
         BindingContext = this;
         LoadLoggedInUser();
-        LoadDropdownData();
+        //LoadDropdownData();
         if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost") || AppConfig.ApiBaseUrl.Contains("192.168.1."))
         {
             // Set default license number for test environment
             txtLicenseNumber.Text = "569-829-xxx";
         }
+        // Set ItemsSource for suggestions
+        SuggestionsView.ItemsSource = _filteredSuggestions;
 
+        // Load previously saved numbers
+        LoadSavedNumbers();
+        
+       //RestorePreviousSelection();
     }
+
+    private void LoadSavedNumbers()
+    {
+        var json = Preferences.Get(PrefKey, string.Empty);
+        _previousNumbers = string.IsNullOrEmpty(json)
+            ? new List<string>()
+            : JsonSerializer.Deserialize<List<string>>(json);
+    }
+
+    private void SaveNumbers()
+    {
+        var json = JsonSerializer.Serialize(_previousNumbers);
+        Preferences.Set(PrefKey, json);
+    }
+
+    private void SaveNewNumber(string newNumber)
+    {
+        if (string.IsNullOrWhiteSpace(newNumber))
+            return;
+
+        // Load existing numbers from Preferences
+        var json = Preferences.Get(PrefKey, string.Empty);
+        _previousNumbers = string.IsNullOrEmpty(json)
+            ? new List<string>()
+            : JsonSerializer.Deserialize<List<string>>(json);
+
+        // Remove if already exists to avoid duplicates
+        _previousNumbers.RemoveAll(x => x.Equals(newNumber, StringComparison.OrdinalIgnoreCase));
+
+        // Insert at the beginning so it appears first
+        _previousNumbers.Insert(0, newNumber);
+
+        // Save updated list to Preferences
+        SaveNumbers();
+    }
+
+
+    private void OnLicenseTextChanged(object sender, TextChangedEventArgs e)
+    {
+        string query = e.NewTextValue?.Trim() ?? "";
+
+        var matches = string.IsNullOrEmpty(query)
+            ? _previousNumbers
+            : _previousNumbers.Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase))
+                              .ToList();
+
+        // Clear and re-add to ObservableCollection
+        _filteredSuggestions.Clear();
+        foreach (var item in matches)
+            _filteredSuggestions.Add(item);
+
+        SuggestionsView.IsVisible = _filteredSuggestions.Any();
+    }
+
+    private void OnEntryFocused(object sender, FocusEventArgs e)
+    {
+        _filteredSuggestions.Clear();
+        foreach (var item in _previousNumbers)
+            _filteredSuggestions.Add(item);
+
+        SuggestionsView.IsVisible = _filteredSuggestions.Any();
+    }
+
+    private void OnSuggestionSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.CurrentSelection.FirstOrDefault() is string selectedNumber)
+        {
+            SuggestionsView.IsVisible = false;
+            txtLicenseNumber.Text = selectedNumber;
+           
+        }
+
+        ((CollectionView)sender).SelectedItem = null;
+    }
+
+    private void RestorePreviousSelection()
+    {
+        string savedTypeId = Preferences.Get("SelectedClientTypeId", string.Empty);
+        if (!string.IsNullOrEmpty(savedTypeId) && ClientTypes.Any())
+        {
+            var typeItem = ClientTypes.FirstOrDefault(x => x.Id.ToString() == savedTypeId);
+            if (typeItem != null)
+            {
+                // Temporarily show picker to allow binding to update
+                pickerClientType.IsVisible = true;
+
+                SelectedClientType = typeItem;
+                pickerClientType.SelectedItem = typeItem;
+                // Update read-only Entry
+
+
+            }
+        }
+
+        // Optionally restore ClientSite in a similar way
+        
+    }
+
+
+
+    private void RestorePreviousClientSite()
+    {
+        string savedSiteId = Preferences.Get("SelectedClientSiteId", string.Empty);
+
+        if (!string.IsNullOrEmpty(savedSiteId) && ClientSites?.Any() == true)
+        {
+            var siteItem = ClientSites.FirstOrDefault(x => x.Id.ToString() == savedSiteId);
+            if (siteItem != null)
+            {
+                pickerClientSite.IsVisible = true;
+                SelectedClientSite = siteItem;
+                pickerClientSite.SelectedItem = siteItem;
+
+               
+
+                
+            }
+            else
+            {
+               
+            }
+        }
+        else
+        {
+           
+        }
+    }
+
+
 
     protected override async void OnDisappearing()
     {
@@ -215,53 +358,40 @@ public partial class GuardLoginPage : ContentPage
     //    }
     //}
 
-    private async void LoadDropdownData()
+    private async Task LoadDropdownData()
     {
         try
         {
             string userId = Preferences.Get("UserId", "");
+            if (string.IsNullOrEmpty(userId)) return;
 
-            if (string.IsNullOrEmpty(userId))
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetUserClientTypes?userId={Uri.EscapeDataString(userId)}";
+            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(url);
+
+            if (response == null) return;
+
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                Debug.WriteLine("User ID not found.");
-                return;
-            }
+                ClientTypes.Clear();
 
-            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(
-                $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetUserClientTypes?userId={Uri.EscapeDataString(userId)}");
+                foreach (var type in response.Where(t => t.Name != "Select").OrderBy(t => t.Name))
+                    ClientTypes.Add(type);
 
-            ClientTypes.Clear();
-
-            // Sort alphabetically by Name before adding
-            foreach (var type in (response ?? new List<DropdownItem>())
-                         .Where(t => t.Name != "Select")
-                         .OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase))
-            {
-                ClientTypes.Add(type);
-            }
-
-            // If only one item exists, select it automatically
-            if (ClientTypes.Count == 1)
-            {
-                SelectedClientType = ClientTypes[0];
-                textBoxSelectedClientType.Text = SelectedClientType.Name;
-                //textBoxSelectedClientType.IsVisible = true;
-            }
-
-            // If only one item exists, select it and remove from the list
-            if (ClientTypes.Count == 1)
-            {
-                SelectedClientType = ClientTypes[0];  // Automatically select the first item
-                textBoxSelectedClientType.Text = SelectedClientType.Name;
-                //textBoxSelectedClientType.IsVisible = true;// Set TextBox value
-
-            }
+                // Optional: auto-select if only one item
+                if (ClientTypes.Count == 1)
+                {
+                    SelectedClientType = ClientTypes[0];
+                    textBoxSelectedClientType.Text = SelectedClientType.Name;
+                }
+            });
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error loading dropdown: {ex.Message}");
+            await DisplayAlert("Error", "Failed to load client types: " + ex.Message, "OK");
         }
     }
+
+
 
 
     private async void LoadClientSites(int clientTypeId)
@@ -270,15 +400,11 @@ public partial class GuardLoginPage : ContentPage
 
         try
         {
-            // Retrieve the logged-in user's ID from SecureStorage
             string userId = Preferences.Get("UserId", "");
             if (string.IsNullOrEmpty(userId)) return;
 
-            // Use both userId and clientTypeId in the request
-            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(
-              //$"https://cws-ir.com/api/GuardSecurityNumber/GetClientSitesByClientType?userId={userId}&clientTypeId={clientTypeId}");
-              $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSitesByClientType?userId={Uri.EscapeDataString(userId)}&clientTypeId={clientTypeId}");
-
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSitesByClientType?userId={Uri.EscapeDataString(userId)}&clientTypeId={clientTypeId}";
+            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(url);
 
             ClientSites.Clear();
             foreach (var site in response ?? new List<DropdownItem>())
@@ -286,12 +412,25 @@ public partial class GuardLoginPage : ContentPage
                 if (site.Name != "Select")
                     ClientSites.Add(site);
             }
+
+            Debug.WriteLine($"ClientSites loaded: {ClientSites.Count}");
+
+            // Wait for UI to update bindings before restoring
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                RestorePreviousClientSite();
+            });
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Error loading client sites: {ex.Message}");
         }
     }
+
+
+
+
+
 
     public event PropertyChangedEventHandler PropertyChanged;
     protected void OnPropertyChanged(string propertyName)
@@ -324,92 +463,64 @@ public partial class GuardLoginPage : ContentPage
 
         try
         {
-            // Call API to validate the license number
             var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetGuardDetails/{Uri.EscapeDataString(licenseNumber)}";
-            HttpResponseMessage response = await _httpClient.GetAsync(url);
+            var response = await _httpClient.GetAsync(url);
 
-            if (response.IsSuccessStatusCode)
-            {
-                var guardData = await response.Content.ReadFromJsonAsync<GuardResponse>();
-
-                if (guardData != null && guardData.GuardId > 0) // Ensure guardId is valid
-                {
-                    // Store guardId securely
-                    Preferences.Set("GuardId", guardData.GuardId.ToString());
-
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        lblGuardName.Text = $"Hello {guardData.Name}. Please verify your details and click Enter Log Book";
-                        Preferences.Set("GuardName", guardData.Name);
-                        lblGuardName.TextColor = Colors.Green;
-                        lblGuardName.IsVisible = true;
-
-                        // Enable the dropdowns and Enter Logbook button
-                        //pickerClientType.IsEnabled = true;
-                        //pickerClientSite.IsEnabled = true;
-                        //btnEnterLogbook.IsEnabled = true;
-
-                        // Show the hidden controls
-
-                        if (!string.IsNullOrWhiteSpace(textBoxSelectedClientType.Text))
-                        {
-                            pickerClientType.IsVisible = false;
-                            textBoxSelectedClientType.IsVisible = true;
-                        }
-                        else
-                        {
-                            pickerClientType.IsVisible = true;
-                            textBoxSelectedClientType.IsVisible = false;
-                        }
-
-
-
-
-                        pickerClientSite.IsVisible = true;
-                        btnEnterLogbook.IsVisible = true;
-                        ToggleInstructionalTextVisibility();
-                        // Disable the license number Entry and Read button
-                        txtLicenseNumber.IsEnabled = false;
-                        ((Button)sender).IsEnabled = false;
-                        // Save license number
-                        Preferences.Set("LicenseNumber", licenseNumber);
-                        // If "Remember Me" is checked, store the license number securely
-                        if (rememberMeCheckBox.IsChecked)
-                        {
-                            Preferences.Set("SavedLicenseNumber", licenseNumber);
-                        }
-                        else
-                        {
-                            Preferences.Remove("SavedLicenseNumber");
-                        }
-                    });
-                }
-                else
-                {
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        lblGuardName.Text = "Invalid License Number";
-                        lblGuardName.TextColor = Colors.Red;
-                        lblGuardName.IsVisible = true;
-                    });
-                }
-            }
-            else
+            if (!response.IsSuccessStatusCode)
             {
                 string errorResponse = await response.Content.ReadAsStringAsync();
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    lblGuardName.Text = $"{errorResponse ?? "Error: Invalid License Number."}";
-                    lblGuardName.TextColor = Colors.Red;
-                    lblGuardName.IsVisible = true;
-                });
+                lblGuardName.Text = $"{errorResponse ?? "Error: Invalid License Number."}";
+                lblGuardName.TextColor = Colors.Red;
+                lblGuardName.IsVisible = true;
+                return;
             }
+
+            var guardData = await response.Content.ReadFromJsonAsync<GuardResponse>();
+
+            if (guardData == null || guardData.GuardId <= 0)
+            {
+                lblGuardName.Text = "Invalid License Number";
+                lblGuardName.TextColor = Colors.Red;
+                lblGuardName.IsVisible = true;
+                return;
+            }
+
+            // Valid guard, proceed
+            LoadSavedNumbers();
+            SaveNewNumber(licenseNumber);
+            SuggestionsView.IsVisible = false;
+            Preferences.Set("GuardId", guardData.GuardId.ToString());
+            Preferences.Set("GuardName", guardData.Name);
+            Preferences.Set("LicenseNumber", licenseNumber);
+
+            // Disable entry and button
+            txtLicenseNumber.IsEnabled = false;
+            ((Button)sender).IsEnabled = false;
+
+            lblGuardName.Text = $"Hello {guardData.Name}. Please verify your details and click Enter Log Book";
+            lblGuardName.TextColor = Colors.Green;
+            lblGuardName.IsVisible = true;
+
+            // Show UI controls
+            pickerClientType.IsVisible = true;
+            pickerClientSite.IsVisible = true;
+            btnEnterLogbook.IsVisible = true;
+            ToggleInstructionalTextVisibility();
+
+            // Load client types properly
+            await LoadDropdownData(); // <-- await here, make LoadDropdownData async Task
+
+            RestorePreviousSelection();
+
+            if (SelectedClientType != null)
+                pickerClientSite.IsVisible = true;
         }
         catch (Exception ex)
         {
             await DisplayAlert("Error", "Network error: " + ex.Message, "OK");
         }
     }
+
 
 
     private void ToggleInstructionalTextVisibility()
