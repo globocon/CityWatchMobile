@@ -11,10 +11,14 @@ public partial class SelectSmartWand : ContentPage
 {
     public const string ALERT_TITLE = "Smart Wand";
     private readonly IScannerControlServices _scannerControlServices;
+    private IDeviceInfoService infoService;
     public ObservableCollection<DropdownItem> ClientSiteSmartWands { get; set; } = new();
     private int savedClientSiteId;
     private string savedSmartWandIdKeyName;
     private string savedSmartWandNameKeyName;
+    private string devicename;
+    private string deviceid;
+    private string deviceType = "Unknown";
 
     public SelectSmartWand()
     {
@@ -22,6 +26,22 @@ public partial class SelectSmartWand : ContentPage
         NavigationPage.SetHasNavigationBar(this, false);
         _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
         pickerSmartWand.ItemsSource = ClientSiteSmartWands;
+        infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
+        devicename = infoService?.GetDeviceName();
+        deviceid = infoService?.GetDeviceId();
+
+#if ANDROID
+        deviceType = "Android";
+#elif IOS
+        deviceType = "iOS";
+#elif WINDOWS
+        deviceType = "Windows";
+#elif MACCATALYST
+        deviceType = "MacCatalyst";
+#elif TIZEN
+        deviceType = "Tizen";
+#endif
+
     }
 
     protected override async void OnAppearing()
@@ -78,9 +98,27 @@ public partial class SelectSmartWand : ContentPage
     private async void OnSaveTagClicked(object sender, EventArgs e)
     {
         var _selectedSmartWand = (DropdownItem)pickerSmartWand.SelectedItem;
-        Preferences.Set(savedSmartWandIdKeyName, _selectedSmartWand.Id);
-        Preferences.Set(savedSmartWandNameKeyName, _selectedSmartWand.Name);
-        await ShowToastMessage("Smart Wand saved successfully.");
+
+        //check if already registered in db
+        try
+        {
+            var isRegistered = await _scannerControlServices.CheckAndRegisterSmartWandAsync(_selectedSmartWand.Id, deviceid, devicename, deviceType);
+            if (!isRegistered.IsSuccess)
+            {
+                await DisplayAlert(ALERT_TITLE, isRegistered.Message, "OK");
+                return;
+            }
+
+            Preferences.Set(savedSmartWandIdKeyName, _selectedSmartWand.Id);
+            Preferences.Set(savedSmartWandNameKeyName, _selectedSmartWand.Name);
+            await ShowToastMessage(isRegistered.Message);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error registering smartwand: {ex.Message}");
+            await DisplayAlert(ALERT_TITLE, "An error occurred while registering the Smart Wand. Please try again later.", "OK");
+        }
+        
     }
 
     private async void OnCloseClicked(object sender, EventArgs e)

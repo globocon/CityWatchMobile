@@ -1,5 +1,5 @@
-﻿
-using C4iSytemsMobApp.Models;
+﻿using C4iSytemsMobApp.Models;
+
 
 namespace C4iSytemsMobApp.Interface
 {
@@ -10,5 +10,6 @@ namespace C4iSytemsMobApp.Interface
         Task<TagInfoApiResponse?> FetchTagInfoDetailsAsync(string _clientSiteId, string _tagUid, string _guardId, string _userId);
         Task<TagInfoApiResponse?> SaveNFCTagInfoDetailsAsync(string _clientSiteId, string _tagUid, string _guardId, string _userId, string _tagLabel);
         Task<bool> CheckIfGuardHasTagAddAccess(string _guardId);
+        Task<SmartWandDeviceRegister> CheckAndRegisterSmartWandAsync(int _selectedSmartWandId, string deviceid, string devicename, string deviceType);
     }
 }

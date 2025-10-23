@@ -1,6 +1,8 @@
 ﻿using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Devices;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -10,10 +12,28 @@ namespace C4iSytemsMobApp.Services
 {
     public class ScannerControlServices : IScannerControlServices
     {
-
+        private readonly IDeviceInfoService infoService;
+        private string devicename;
+        private string deviceid;
+        private string deviceType = "Unknown";
         public ScannerControlServices()
         {
             // Constructor logic if needed
+            infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
+            devicename = infoService?.GetDeviceName();
+            deviceid = infoService?.GetDeviceId();
+
+#if ANDROID
+        deviceType = "Android";
+#elif IOS
+            deviceType = "iOS";
+#elif WINDOWS
+        deviceType = "Windows";
+#elif MACCATALYST
+        deviceType = "MacCatalyst";
+#elif TIZEN
+        deviceType = "Tizen";
+#endif
         }
 
         public async Task<List<string>?> CheckScannerOnboardedAsync(string _clientSiteId)
@@ -50,6 +70,7 @@ namespace C4iSytemsMobApp.Services
 
         public async Task<TagInfoApiResponse?> FetchTagInfoDetailsAsync(string _clientSiteId, string _tagUid, string _guardId, string _userId)
         {
+            await CheckIfSmartWandIsDeRegisteredAsync(_clientSiteId); // Check if smartwand is deregistered before fetching tag info
             string savedSmartWandIdKeyName = $"{_clientSiteId}_SavedSmartWandId";
             var savedSmartWandId = Preferences.Get(savedSmartWandIdKeyName, 0);
             string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetNFCtagInfoData?siteId={_clientSiteId}&TagUid={_tagUid}&GuardId={_guardId}&UserId={_userId}&SmartWandId={savedSmartWandId}";
@@ -135,6 +156,84 @@ namespace C4iSytemsMobApp.Services
 
             return null; // Example return value
         }
+
+        public async Task<SmartWandDeviceRegister> CheckAndRegisterSmartWandAsync(int _selectedSmartWandId, string deviceid, string devicename, string deviceType)
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/CheckAndRegisterDeviceWithSmartWand";
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            try
+            {
+                SmartWandDeviceRegister csswt = new SmartWandDeviceRegister()
+                {
+                    SmartWandId = _selectedSmartWandId,
+                    DeviceId = deviceid,
+                    DeviceName = devicename,
+                    DeviceType = deviceType,
+                    IsSuccess = false,
+                    Message = null
+                };
+
+                var json = JsonSerializer.Serialize(csswt);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                HttpResponseMessage response = await client.PostAsync(apiUrl, content);
+                if (response.IsSuccessStatusCode)
+                {
+                    var taginfo = await response.Content.ReadFromJsonAsync<SmartWandDeviceRegister>();
+                    return taginfo;
+                }
+                else {
+                    csswt.Message = "Failed to register the Smart Wand device.";
+                    return csswt;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                // Optionally log error or handle it
+                Console.WriteLine($"Error: {ex.Message}");
+                throw;
+            }            
+        }
+
+        public async Task CheckIfSmartWandIsDeRegisteredAsync(string _clientSiteId)
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/CheckIfSmartWandIsDeRegisteredAsync";
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            try
+            {
+                //var json = JsonSerializer.Serialize(deviceid);
+                //var content = new StringContent(json, Encoding.UTF8, "application/json");
+                HttpResponseMessage response = await client.PostAsJsonAsync(apiUrl, deviceid);  //client.PostAsync(apiUrl, content);
+                if (response.IsSuccessStatusCode)
+                {
+                    var taginfo = await response.Content.ReadFromJsonAsync<bool>();                    
+                    if (taginfo)
+                    {
+                        // If the device is deregistered, clear the saved preferences
+                        string savedSmartWandIdKeyName = $"{_clientSiteId}_SavedSmartWandId";
+                        string savedSmartWandNameKeyName = $"{_clientSiteId}_SavedSmartWandName";
+                        Preferences.Remove(savedSmartWandIdKeyName);
+                        Preferences.Remove(savedSmartWandNameKeyName);
+                    }
+                    return;
+                }
+                else
+                {                    
+                    return;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                // Optionally log error or handle it
+                Console.WriteLine($"Error: {ex.Message}");
+                return;
+            }
+        }
+
+
 
     }
 }
