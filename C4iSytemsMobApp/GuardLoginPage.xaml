@@ -69,26 +69,28 @@
 
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="C4iSytemsMobApp.GuardLoginPage"
-             >
-
-    
+             x:Class="C4iSytemsMobApp.GuardLoginPage">
 
 
 
-    <Grid RowDefinitions="*,Auto" Padding="20">
+
+
+    <Grid RowDefinitions="*,Auto"
+          Padding="20">
 
         <!-- Main Content -->
-        <VerticalStackLayout Spacing="15" Grid.Row="0">
+        <VerticalStackLayout Spacing="15"
+                             Grid.Row="0">
 
             <!-- Logged-in User -->
-            <HorizontalStackLayout HorizontalOptions="StartAndExpand" Spacing="10">
+            <HorizontalStackLayout HorizontalOptions="StartAndExpand"
+                                   Spacing="10">
                 <Label x:Name="lblLoggedInUser"
-                   Text="Welcome, Visy"
-                   FontAttributes="Bold"
-                   FontSize="18"
-                   TextColor="Blue"
-                   HorizontalOptions="Start"/>
+                       Text="Welcome, Visy"
+                       FontAttributes="Bold"
+                       FontSize="18"
+                       TextColor="Blue"
+                       HorizontalOptions="Start" />
             </HorizontalStackLayout>
 
             <!-- License Input -->
@@ -176,68 +178,68 @@
 
             <!-- Guard Name Label (Initially Hidden) -->
             <Label x:Name="lblGuardName"
-               Text=""
-               TextColor="Red"
-               FontAttributes="Bold"
-               IsVisible="False"/>
+                   Text=""
+                   TextColor="Red"
+                   FontAttributes="Bold"
+                   IsVisible="False" />
 
             <!-- Instructional Text inside a bordered frame -->
             <Frame x:Name="instructionalFrame"
-       BackgroundColor="Black"
-       Padding="10"
-       CornerRadius="0"
-       Margin="0,8,0,4" 
-                BorderColor="White"
-       HasShadow="False">
+                   BackgroundColor="Black"
+                   Padding="10"
+                   CornerRadius="0"
+                   Margin="0,8,0,4"
+                   BorderColor="White"
+                   HasShadow="False">
                 <VerticalStackLayout x:Name="instructionalTextContainer"
-                         Spacing="6">
+                                     Spacing="6">
 
                     <!-- Instructional Message -->
                     <Label Text="The C4i System acts as your Virtual Supervisor. Sign-On is to occur within 15 min prior to shift start. Check equipment is ok, and WiFi &amp; Dropbox Sync are on with no RED X. Complete IR each shift you notice an issue, even if already reported, repeat report until issue fixed. Quality and Integrity of your field-generated DATA is more important than the quantity of data sets. At end of shift, leave Smart WAND &amp; any computers ON with WiFi connected."
-               FontSize="10"
-               TextColor="White"
-               LineBreakMode="WordWrap"
-               Margin="0,0,0,4" />
+                           FontSize="10"
+                           TextColor="White"
+                           LineBreakMode="WordWrap"
+                           Margin="0,0,0,4" />
 
                     <!-- Safety Warning Message in Orange-Red Frame -->
                     <Frame BackgroundColor="#ea6326"
-               Padding="4"
-               CornerRadius="0"
-               Margin="0,4,0,4"
-               BorderColor="White">
+                           Padding="4"
+                           CornerRadius="0"
+                           Margin="0,4,0,4"
+                           BorderColor="White">
                         <Label Text="⚠ SAFETY IS NO ACCIDENT... STAY ALERT, DON'T GET HURT"
-                   FontAttributes="Bold"
-                   FontSize="9"
-                   TextColor="White"
-                   HorizontalTextAlignment="Center"
-                   LineBreakMode="WordWrap" />
+                               FontAttributes="Bold"
+                               FontSize="9"
+                               TextColor="White"
+                               HorizontalTextAlignment="Center"
+                               LineBreakMode="WordWrap" />
                     </Frame>
 
                     <!-- Declaration Message -->
                     <Label Text="Users signing into C4i System are declaring fitness for duty with a BAC 0.00%, are not under the influence of drugs, use fatigue management strategies, had at least 8 hrs rest since last shift, follow SOPs including regularly and consistently generating data while on duty, and are aware of the 12-hour shift limit. HR Record Management is the individual user's responsibility."
-               FontSize="10"
-               TextColor="White"
-               LineBreakMode="WordWrap"
-               Margin="0,0,0,4" />
+                           FontSize="10"
+                           TextColor="White"
+                           LineBreakMode="WordWrap"
+                           Margin="0,0,0,4" />
 
                 </VerticalStackLayout>
             </Frame>
 
             <!-- Privacy Notice -->
-            <StackLayout x:Name="ConsentSection" >
+            <StackLayout x:Name="ConsentSection">
                 <Label Text="Data, communication, IP address, location, and audio calls are recorded by this system. 
 The data recorded and stored is handled in accordance with local privacy laws and is used for legitimate business purposes, including training, compliance, and quality control."
-           FontSize="10"
-           LineBreakMode="WordWrap"
-           Margin="0,2,0,2" 
-           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                       FontSize="10"
+                       LineBreakMode="WordWrap"
+                       Margin="0,2,0,2"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
                 <Label Text="By logging into this system, you explicitly consent to the recording and storing of data, communications, and audio calls in accordance with these purposes. 
 End-users also agree to use the system honestly and refrain from any actions that could sabotage or compromise the integrity of the data."
-           FontSize="10"
-           LineBreakMode="WordWrap"
-           Margin="0,0,0,4"  
-           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                       FontSize="10"
+                       LineBreakMode="WordWrap"
+                       Margin="0,0,0,4"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
             </StackLayout>
 
 
@@ -251,30 +253,31 @@ End-users also agree to use the system honestly and refrain from any actions tha
 
             <!-- Pickers (Initially Hidden) -->
             <Picker x:Name="pickerClientType"
-                Title="Select Client Type"
-                ItemsSource="{Binding ClientTypes}"
-                ItemDisplayBinding="{Binding Name}"
-                SelectedItem="{Binding SelectedClientType, Mode=TwoWay}"
-                IsVisible="False"/>
+                    Title="Select Client Type"
+                    ItemsSource="{Binding ClientTypes}"
+                    ItemDisplayBinding="{Binding Name}"
+                    SelectedItem="{Binding SelectedClientType, Mode=TwoWay}"
+                    IsVisible="False" />
 
-            <Entry x:Name="textBoxSelectedClientType" 
-       Placeholder="Client Type" 
-       IsReadOnly="True" IsVisible="False" />
+            <Entry x:Name="textBoxSelectedClientType"
+                   Placeholder="Client Type"
+                   IsReadOnly="True"
+                   IsVisible="False" />
 
             <Picker x:Name="pickerClientSite"
-                Title="Select Client Site"
-                ItemsSource="{Binding ClientSites}"
-                ItemDisplayBinding="{Binding Name}"
-                SelectedItem="{Binding SelectedClientSite, Mode=TwoWay}"
-                IsVisible="False"/>
+                    Title="Select Client Site"
+                    ItemsSource="{Binding ClientSites}"
+                    ItemDisplayBinding="{Binding Name}"
+                    SelectedItem="{Binding SelectedClientSite, Mode=TwoWay}"
+                    IsVisible="False" />
 
             <!-- Enter Logbook Button (Initially Hidden) -->
             <Button x:Name="btnEnterLogbook"
-                Text="Enter Logbook"
-                BackgroundColor="Green"
-                TextColor="White"
-                Clicked="OnEnterLogbookClicked"
-                IsVisible="False"/>
+                    Text="Enter Logbook"
+                    BackgroundColor="Green"
+                    TextColor="White"
+                    Clicked="OnEnterLogbookClicked"
+                    IsVisible="False" />
 
         </VerticalStackLayout>
 

@@ -40,8 +40,10 @@ public static class MauiProgram
 
 #if ANDROID
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.Android.Services.VolumeButtonService>();
+        builder.Services.AddSingleton<IDeviceInfoService, Platforms.Android.Services.DeviceInfoService>();
 #elif IOS
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.iOS.Services.VolumeButtonService>();
+        builder.Services.AddSingleton<IDeviceInfoService, Platforms.iOS.Services.DeviceInfoService>();
 #endif
 
 
