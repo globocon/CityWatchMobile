@@ -9,7 +9,7 @@ namespace C4iSytemsMobApp
 
         // ### Test Url ####
         //public static string ApiBaseUrl { get; set; } = "http://test.c4i-system.com/api/";
-        //public static string MobileSignalRBaseUrl { get; set; } = "http://test.c4i-system.com";
+       // public static string MobileSignalRBaseUrl { get; set; } = "http://test.c4i-system.com";
 
 
         //public static string ApiBaseUrl { get; set; } = "https://localhost:44356/api/";

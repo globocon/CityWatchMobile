@@ -252,13 +252,15 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
             ClientTypes.Clear();
 
-            foreach (var type in response ?? new List<DropdownItem>())
+            // Sort alphabetically by Name before adding
+            foreach (var type in (response ?? new List<DropdownItem>())
+                         .Where(t => t.Name != "Select")
+                         .OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase))
             {
-                if (type.Name != "Select")
-                    ClientTypes.Add(type);
+                ClientTypes.Add(type);
             }
 
-            
+
         }
         catch (Exception ex)
         {

@@ -48,7 +48,7 @@
 
                 <VerticalStackLayout Padding="5">
                         <CollectionView x:Name="ActivitiesCollection"
-                            HeightRequest="150"
+                            HeightRequest="115"
                             ItemsLayout="VerticalList"
                             Margin="10,10,10,10">
                             <CollectionView.ItemTemplate>
