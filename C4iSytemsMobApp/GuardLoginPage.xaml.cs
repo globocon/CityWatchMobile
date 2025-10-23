@@ -22,7 +22,7 @@ public partial class GuardLoginPage : ContentPage
 
     private DropdownItem _selectedClientType;
     private DropdownItem _selectedClientSite;
-
+    private bool _suppressSuggestions = false;
     public DropdownItem SelectedClientType
     {
         get => _selectedClientType;
@@ -161,10 +161,20 @@ public partial class GuardLoginPage : ContentPage
 
     private void LoadSavedNumbers()
     {
+        const string PrefKey = "SavedLicenseNumbers";
+
         var json = Preferences.Get(PrefKey, string.Empty);
         _previousNumbers = string.IsNullOrEmpty(json)
             ? new List<string>()
             : JsonSerializer.Deserialize<List<string>>(json);
+
+        
+        if (_previousNumbers != null && _previousNumbers.Any())
+        {
+            txtLicenseNumber.Text = _previousNumbers.Last();  // set last entered license number
+            SuggestionsView.IsVisible = false;
+            SuggestionsFrame.IsVisible = false;
+        }
     }
 
     private void SaveNumbers()
@@ -200,37 +210,44 @@ public partial class GuardLoginPage : ContentPage
         string query = e.NewTextValue?.Trim() ?? "";
 
         var matches = string.IsNullOrEmpty(query)
-            ? _previousNumbers
-            : _previousNumbers.Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase))
-                              .ToList();
+            ? _previousNumbers // show all when empty
+            : _previousNumbers.Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
 
-        // Clear and re-add to ObservableCollection
         _filteredSuggestions.Clear();
         foreach (var item in matches)
             _filteredSuggestions.Add(item);
 
         SuggestionsView.IsVisible = _filteredSuggestions.Any();
+        SuggestionsFrame.IsVisible = _filteredSuggestions.Any();
     }
+
 
     private void OnEntryFocused(object sender, FocusEventArgs e)
     {
-        _filteredSuggestions.Clear();
-        foreach (var item in _previousNumbers)
-            _filteredSuggestions.Add(item);
+        if (string.IsNullOrEmpty(txtLicenseNumber.Text))
+        {
+            _filteredSuggestions.Clear();
+            foreach (var item in _previousNumbers)
+                _filteredSuggestions.Add(item);
 
-        SuggestionsView.IsVisible = _filteredSuggestions.Any();
+            SuggestionsView.IsVisible = _filteredSuggestions.Any();
+            SuggestionsFrame.IsVisible = _filteredSuggestions.Any();
+        }
     }
 
     private void OnSuggestionSelected(object sender, SelectionChangedEventArgs e)
     {
         if (e.CurrentSelection.FirstOrDefault() is string selectedNumber)
         {
-            SuggestionsView.IsVisible = false;
+            //_suppressSuggestions = true; 
             txtLicenseNumber.Text = selectedNumber;
-           
+            //_suppressSuggestions = false;
+
+            SuggestionsView.IsVisible = false;
+            SuggestionsFrame.IsVisible = false;
         }
 
-        ((CollectionView)sender).SelectedItem = null;
+    ((CollectionView)sender).SelectedItem = null;
     }
 
     private void RestorePreviousSelection()
@@ -489,6 +506,7 @@ public partial class GuardLoginPage : ContentPage
             LoadSavedNumbers();
             SaveNewNumber(licenseNumber);
             SuggestionsView.IsVisible = false;
+            SuggestionsFrame.IsVisible = false;
             Preferences.Set("GuardId", guardData.GuardId.ToString());
             Preferences.Set("GuardName", guardData.Name);
             Preferences.Set("LicenseNumber", licenseNumber);
