@@ -76,10 +76,10 @@
 
 
     <Grid RowDefinitions="*,Auto"
-          Padding="20">
+          Padding="5">
 
         <!-- Main Content -->
-        <VerticalStackLayout Spacing="15"
+        <VerticalStackLayout Spacing="10"
                              Grid.Row="0">
 
             <!-- Logged-in User -->
@@ -95,15 +95,18 @@
 
             <!-- License Input -->
             <!-- License Input and Remember Me -->
-            <VerticalStackLayout Spacing="10" VerticalOptions="Center" Padding="20">
+            <VerticalStackLayout Spacing="2" VerticalOptions="Center" Padding="0">
 
-                <Grid RowSpacing="0">
+                <Grid RowSpacing="0" ColumnSpacing="5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
+
+                   
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="250"/>
+                        <ColumnDefinition Width="120"/>
+                       
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
@@ -111,15 +114,17 @@
                     <Entry x:Name="txtLicenseNumber"
                Placeholder="Enter License Number"
                Grid.Row="0" Grid.Column="0"
+               Margin="0,0,2,0"
                TextChanged="OnLicenseTextChanged"
                Focused="OnEntryFocused" />
 
-                    <!-- Login Button -->
+                    <!-- Login Button (wide) -->
                     <Button Text="Login"
                 Grid.Row="0" Grid.Column="1"
-                Clicked="OnReadClicked"
+                WidthRequest="200"
+                Margin="3,0,0,0"
                 VerticalOptions="Center"
-                Margin="5,0,0,0"/>
+                Clicked="OnReadClicked" />
 
                     <!-- Suggestions -->
                     <Frame x:Name="SuggestionsFrame"
@@ -131,25 +136,23 @@
                Padding="0"
                Margin="0"
                IsVisible="False">
-                       
 
                         <CollectionView x:Name="SuggestionsView"
                             SelectionMode="Single"
-                            HeightRequest="120"
+                            HeightRequest="60"
                             ItemsLayout="VerticalList"
                             BackgroundColor="White"
                             SelectionChanged="OnSuggestionSelected"
                             Margin="0"
                             VerticalOptions="Start"
                             IsVisible="False">
-                          
 
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-                                    <Label Text="{Binding .}" 
-                               FontSize="12" 
-                               Padding="2" 
-                               Margin="0" 
+                                    <Label Text="{Binding .}"
+                               FontSize="11"
+                               Padding="1"
+                               Margin="0"
                                TextColor="Black" />
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
@@ -157,6 +160,8 @@
                     </Frame>
                 </Grid>
             </VerticalStackLayout>
+
+
 
 
 
@@ -175,7 +180,7 @@
                    BackgroundColor="Black"
                    Padding="10"
                    CornerRadius="0"
-                   Margin="0,8,0,4"
+                   Margin="0,4,0,4"
                    BorderColor="White"
                    HasShadow="False">
                 <VerticalStackLayout x:Name="instructionalTextContainer"
@@ -213,21 +218,21 @@
             </Frame>
 
             <!-- Privacy Notice -->
-            <StackLayout x:Name="ConsentSection">
-                <Label Text="Data, communication, IP address, location, and audio calls are recorded by this system. 
-The data recorded and stored is handled in accordance with local privacy laws and is used for legitimate business purposes, including training, compliance, and quality control."
-                       FontSize="10"
-                       LineBreakMode="WordWrap"
-                       Margin="0,2,0,2"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+            <StackLayout x:Name="ConsentSection" Spacing="0">
 
-                <Label Text="By logging into this system, you explicitly consent to the recording and storing of data, communications, and audio calls in accordance with these purposes. 
-End-users also agree to use the system honestly and refrain from any actions that could sabotage or compromise the integrity of the data."
-                       FontSize="10"
-                       LineBreakMode="WordWrap"
-                       Margin="0,0,0,4"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                <Label
+        Text="Data, communication, IP address, location, and audio calls are recorded by this system. The data recorded and stored is handled in accordance with local privacy laws and is used for legitimate business purposes, including training, compliance, and quality control."
+        FontSize="10"
+        TextColor="{AppThemeBinding Light=Black, Dark=White}"
+        Margin="0,0,0,8" />
+
+                <Label
+        Text="By logging into this system, you explicitly consent to the recording and storing of data, communications, and audio calls in accordance with these purposes. End-users also agree to use the system honestly and refrain from any actions that could sabotage or compromise the integrity of the data."
+        FontSize="10"
+        TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
             </StackLayout>
+
 
 
 
