@@ -73,8 +73,23 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="PatrolCarPage.xaml.cs">
+	    <DependentUpon>PatrolCarPage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="CustomContractPage.xaml.cs">
+	    <DependentUpon>CustomContractPage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="LogActivityTabbedPage.xaml.cs">
+	    <DependentUpon>LogActivityTabbedPage.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="SelectSmartWand.xaml.cs">
 	    <DependentUpon>SelectSmartWand.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\EditPatrolCarLogPopup.xaml.cs">
+	    <DependentUpon>EditPatrolCarLogPopup.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\EditLogPopup.xaml.cs">
+	    <DependentUpon>EditLogPopup.xaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="Views\AddDevicePopup.xaml.cs">
 	    <DependentUpon>AddDevicePopup.xaml</DependentUpon>
@@ -94,13 +109,25 @@
 	  <Compile Update="AddNFCtag.xaml.cs">
 	    <DependentUpon>AddNFCtag.xaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="NfcScannerTestPage.xaml.cs">
-	    <DependentUpon>NfcScannerTestPage.xaml</DependentUpon>
-	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiXaml Update="PatrolCarPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="CustomContractPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="LogActivityTabbedPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="SelectSmartWand.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\EditPatrolCarLogPopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\EditLogPopup.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\AddDevicePopup.xaml">
@@ -143,9 +170,6 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="AddNFCtag.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="NfcScannerTestPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="QrScannerPage.xaml">
