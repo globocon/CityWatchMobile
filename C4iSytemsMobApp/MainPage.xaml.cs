@@ -613,14 +613,7 @@ namespace C4iSytemsMobApp
             Application.Current.MainPage = new NavigationPage(new WebIncidentReport());
         }
 
-        private async void OnLogActivityClicked(object sender, EventArgs e)
-        {
-            _tagStatusCts?.Cancel();
-            _tagStatusCts?.Dispose();
-            _tagStatusCts = null;
-            Application.Current.MainPage = new NavigationPage(new LogActivity()); // Redirect to LogActivityPage
-        }
-
+        
         private async void OnAudioClicked(object sender, EventArgs e)
         {
             _tagStatusCts?.Cancel();
@@ -1728,7 +1721,14 @@ namespace C4iSytemsMobApp
             }
         }
 
-       
+        private void OnLogActivityClicked(object sender, TappedEventArgs e)
+        {
+            _tagStatusCts?.Cancel();
+            _tagStatusCts?.Dispose();
+            _tagStatusCts = null;
+            //Application.Current.MainPage = new NavigationPage(new LogActivity()); // Redirect to LogActivityPage
+            Application.Current.MainPage = new NavigationPage(new LogActivityTabbedPage()); // Redirect to LogActivityTabbedPage
+        }
     }
 
 

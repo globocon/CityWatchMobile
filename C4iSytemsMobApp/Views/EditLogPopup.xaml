@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               x:Class="C4iSytemsMobApp.Views.EditLogPopup"
+               Size="350,500">
+
+    <VerticalStackLayout Padding="15"
+                         Spacing="10"
+                         BackgroundColor="{AppThemeBinding Light=White, Dark=#333}">
+
+        <Label Text="Edit Log Entry"
+               FontSize="20"
+               FontAttributes="Bold"
+               HorizontalOptions="Center"
+               TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
+
+        <!-- Give ScrollView room to scroll -->
+        <ScrollView HeightRequest="350"
+                    VerticalOptions="FillAndExpand">
+            <VerticalStackLayout x:Name="EditFieldsContainer"
+                                 Spacing="8" />
+        </ScrollView>
+
+        <HorizontalStackLayout HorizontalOptions="Center"
+                               Spacing="20"
+                               Margin="0,10,0,0">
+            <Button Text="Cancel"
+                    Clicked="OnCancelClicked"
+                    WidthRequest="100"
+                    BackgroundColor="#007AFF"
+                    TextColor="White" />
+            <Button Text="Save"
+                    Clicked="OnSaveClicked"
+                    WidthRequest="100"
+                    BackgroundColor="#007AFF"
+                    TextColor="White" />
+        </HorizontalStackLayout>
+    </VerticalStackLayout>
+</toolkit:Popup>

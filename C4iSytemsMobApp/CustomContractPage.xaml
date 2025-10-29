@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:C4iSytemsMobApp"
+             x:Class="C4iSytemsMobApp.CustomContractPage"
+             Title="Custom Logs">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="20"
+          RowSpacing="10">
+
+        <!-- Top Bar -->
+        <Grid ColumnDefinitions="Auto,*,Auto"
+              VerticalOptions="Center"
+              Grid.Row="0">
+            <Label Text="Custom Logs"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Grid.Column="1"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+            <ImageButton Source="home.png"
+                         Clicked="OnHomeClicked"
+                         HeightRequest="30"
+                         WidthRequest="30"
+                         BackgroundColor="Transparent"
+                         HorizontalOptions="End"
+                         VerticalOptions="Center"
+                         Grid.Column="2" />
+        </Grid>
+
+        <!-- Scrollable CollectionView -->
+        <CollectionView x:Name="LogsCollectionView"
+                        Grid.Row="1"
+                        Margin="0,10,0,0"
+                        ItemsSource="{Binding Logs}"
+                        SelectionMode="None"
+                        VerticalOptions="FillAndExpand">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <VerticalStackLayout Margin="0,10,0,0">
+                        <Frame Margin="1"
+                               Padding="5"
+                               CornerRadius="10"
+                               BorderColor="LightGray"
+                               BackgroundColor="{AppThemeBinding Light=#4444, Dark=Black}">
+                            <HorizontalStackLayout VerticalOptions="Center"
+                                                   Spacing="20">
+
+                                <!-- FontAwesome Edit Button -->
+                                <Label Text="&#xf044;"
+                                       FontFamily="FontAwesome"
+                                       FontSize="25"
+                                       TextColor="#007AFF"
+                                       VerticalOptions="Center">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:CustomContractPage}}, Path=BindingContext.EditCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+
+                                <!-- Dynamic Key-Value pairs -->
+                                <CollectionView ItemsSource="{Binding KeyValues}"
+                                                VerticalOptions="Center"
+                                                SelectionMode="None">
+                                    <CollectionView.ItemsLayout>
+                                        <LinearItemsLayout Orientation="Vertical" />
+                                    </CollectionView.ItemsLayout>
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <HorizontalStackLayout Spacing="5">
+                                                <Label Text="{Binding Key}"
+                                                       FontAttributes="Bold"
+                                                       WidthRequest="90"
+                                                       HorizontalTextAlignment="End"
+                                                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                                <Label Text=": "
+                                                       TextColor="Blue"
+                                                       FontSize="16"
+                                                       HorizontalTextAlignment="Start" />
+                                                <Label Text="{Binding Value}"
+                                                       HorizontalTextAlignment="Start"
+                                                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                            </HorizontalStackLayout>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </HorizontalStackLayout>
+                        </Frame>
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Loading Overlay -->
+        <Grid x:Name="LoadingOverlay"
+              BackgroundColor="#80000000"
+              IsVisible="False"
+              Grid.RowSpan="3"
+              VerticalOptions="FillAndExpand"
+              HorizontalOptions="FillAndExpand">
+            <StackLayout VerticalOptions="Center"
+                         HorizontalOptions="Center">
+                <ActivityIndicator IsRunning="True"
+                                   Color="White"
+                                   WidthRequest="50"
+                                   HeightRequest="50" />
+                <Label Text="Loading..."
+                       TextColor="White"
+                       FontSize="18"
+                       HorizontalOptions="Center"
+                       Margin="0,10,0,0" />
+            </StackLayout>
+        </Grid>
+
+    </Grid>
+</ContentPage>
