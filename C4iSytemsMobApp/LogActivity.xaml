@@ -27,14 +27,14 @@
                   Padding="2"
                   Margin="0">
 
-                <Label Text="Log Activity"
+                <!--<Label Text="Log Activity"
                        FontSize="14"
                        FontAttributes="Bold"
                        VerticalOptions="Center"
                        HorizontalOptions="Start"
                        TextColor="Black"
                        Padding="2">
-                </Label>
+                </Label>-->
 
                 <ImageButton Source="home.png"
                              Clicked="OnHomeClicked"
