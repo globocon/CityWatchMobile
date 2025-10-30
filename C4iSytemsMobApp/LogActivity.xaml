@@ -410,6 +410,7 @@ ZIndex="999"
               Placeholder="Enter custom log..."
               AutoSize="TextChanges"
               HeightRequest="275"
+             TextColor="Black"
               FontSize="16"/>
 
                 <HorizontalStackLayout Spacing="12"
@@ -467,7 +468,7 @@ ZIndex="999"
                     Placeholder="Update your log..."
                     AutoSize="TextChanges"
                     HeightRequest="275"
-                    FontSize="16"/>
+                    FontSize="16" TextColor="Black" />
 
                     <HorizontalStackLayout Spacing="12"
                                    HorizontalOptions="Center">

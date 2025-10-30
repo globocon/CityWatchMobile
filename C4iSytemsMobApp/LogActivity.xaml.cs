@@ -78,56 +78,56 @@ public partial class LogActivity : ContentPage
         }
     }
 
-    //protected override async void OnAppearing()
-    //{
-    //    base.OnAppearing();
-
-    //    LoadLogs(); // Call when the page is about to appear
-
-    //    await StartNFC();
-
-    //    // Set up a timer for periodic refresh every 1 second
-    //    _logRefreshTimer = new System.Timers.Timer(1000); // 1 second = 1000 ms
-    //    _logRefreshTimer.Elapsed += async (s, e) =>
-    //    {
-    //        MainThread.BeginInvokeOnMainThread(() =>
-    //        {
-    //            LoadLogs(); // Refresh logs every second
-    //        });
-    //    };
-    //    _logRefreshTimer.AutoReset = true;
-    //    _logRefreshTimer.Start();
-    //}
-
-    private bool _isLoadingLogs = false;
-
     protected override async void OnAppearing()
     {
         base.OnAppearing();
 
-        _ = LoadLogs(); // fire and forget for faster UI load
+        LoadLogs(); // Call when the page is about to appear
 
         await StartNFC();
 
-        _logRefreshTimer = new System.Timers.Timer(3000);
+        // Set up a timer for periodic refresh every 1 second
+        _logRefreshTimer = new System.Timers.Timer(3000); // 1 second = 1000 ms
         _logRefreshTimer.Elapsed += async (s, e) =>
         {
-            if (_isLoadingLogs) return; // skip if already loading
-
-            _isLoadingLogs = true;
-
-            try
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                await MainThread.InvokeOnMainThreadAsync(LoadLogs);
-            }
-            finally
-            {
-                _isLoadingLogs = false;
-            }
+                LoadLogs(); // Refresh logs every second
+            });
         };
         _logRefreshTimer.AutoReset = true;
         _logRefreshTimer.Start();
     }
+
+    //private bool _isLoadingLogs = false;
+
+    //protected override async void OnAppearing()
+    //{
+    //    base.OnAppearing();
+
+    //    _ = LoadLogs(); // fire and forget for faster UI load
+
+    //    await StartNFC();
+
+    //    _logRefreshTimer = new System.Timers.Timer(3000);
+    //    _logRefreshTimer.Elapsed += async (s, e) =>
+    //    {
+    //        if (_isLoadingLogs) return; // skip if already loading
+
+    //        _isLoadingLogs = true;
+
+    //        try
+    //        {
+    //            await MainThread.InvokeOnMainThreadAsync(LoadLogs);
+    //        }
+    //        finally
+    //        {
+    //            _isLoadingLogs = false;
+    //        }
+    //    };
+    //    _logRefreshTimer.AutoReset = true;
+    //    _logRefreshTimer.Start();
+    //}
 
 
 
@@ -215,7 +215,7 @@ public partial class LogActivity : ContentPage
         return int.TryParse(parts[0], out int result) ? result : int.MaxValue;
     }
 
-    private async Task LoadLogs()
+    private async void LoadLogs()
     {
         try
         {
@@ -223,47 +223,47 @@ public partial class LogActivity : ContentPage
             if (guardId <= 0 || clientSiteId <= 0 || userId <= 0)
                 return;
 
-            //var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={clientSiteId}";
-            //var response = await _httpClient.GetAsync(url);
-
-            //if (!response.IsSuccessStatusCode)
-            //{
-            //    await DisplayAlert("Error", "Failed to load site logs.", "OK");
-            //    return;
-            //}
-
-            //var json = await response.Content.ReadAsStringAsync();
-            //var logs = JsonSerializer.Deserialize<List<GuardLogDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            //// If logs haven't changed, don't update UI
-            //if (AreLogsEqual(logs, _lastLogs))
-            //    return;
-
-            //_lastLogs = logs; // Update cache
-
-            //LogDisplayArea.Children.Clear();
-
-            //if (logs == null || logs.Count == 0)
-            //{
-            //    LogDisplayArea.Children.Add(new Label
-            //    {
-            //        Text = "No logs available for today.",
-            //        TextColor = Colors.Gray,
-            //        FontSize = 12
-            //    });
-            //    return;
-            //}
-
-
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={clientSiteId}&lastLogId={_lastLogId}";
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={clientSiteId}";
             var response = await _httpClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await DisplayAlert("Error", "Failed to load site logs.", "OK");
+                return;
+            }
+
             var json = await response.Content.ReadAsStringAsync();
             var logs = JsonSerializer.Deserialize<List<GuardLogDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            if (logs != null && logs.Count > 0)
+            // If logs haven't changed, don't update UI
+            if (AreLogsEqual(logs, _lastLogs))
+                return;
+
+            _lastLogs = logs; // Update cache
+
+            LogDisplayArea.Children.Clear();
+
+            if (logs == null || logs.Count == 0)
             {
-                _lastLogs = logs.OrderByDescending(l => l.Id).ToList();
+                LogDisplayArea.Children.Add(new Label
+                {
+                    Text = "No logs available for today.",
+                    TextColor = Colors.Gray,
+                    FontSize = 12
+                });
+                return;
             }
+
+
+            //var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={clientSiteId}&lastLogId={_lastLogId}";
+            //var response = await _httpClient.GetAsync(url);
+            //var json = await response.Content.ReadAsStringAsync();
+            //var logs = JsonSerializer.Deserialize<List<GuardLogDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            //if (logs != null && logs.Count > 0)
+            //{
+            //    _lastLogs = logs.OrderByDescending(l => l.Id).ToList();
+            //}
 
 
 
@@ -273,7 +273,7 @@ public partial class LogActivity : ContentPage
 
             LogDisplayArea.Children.Clear(); // Refresh UI
 
-            foreach (var log in _lastLogs) // 
+            foreach (var log in logs) // 
 
             {
                 bool isAlarm = false;
