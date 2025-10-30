@@ -46,7 +46,7 @@
                                Padding="5"
                                CornerRadius="10"
                                BorderColor="LightGray"
-                               BackgroundColor="{AppThemeBinding Light=#4444, Dark=Black}">
+                               BackgroundColor="{AppThemeBinding Light=#F2F2F2, Dark=Black}">
                             <HorizontalStackLayout VerticalOptions="Center"
                                                    Spacing="20">
 

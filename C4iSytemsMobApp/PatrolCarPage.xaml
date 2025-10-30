@@ -55,9 +55,9 @@
                                Padding="5"
                                CornerRadius="10"
                                BorderColor="LightGray"
-                               BackgroundColor="{AppThemeBinding Light=#4444, Dark=Black}">
+                               BackgroundColor="{AppThemeBinding Light=#F2F2F2, Dark=Black}">
                             <HorizontalStackLayout VerticalOptions="Center"
-                                                   Spacing="20">
+                                                   Spacing="10">
 
                                 <!-- FontAwesome Edit Button -->
                                 <Label Text="&#xf044;"
@@ -76,14 +76,17 @@
                                                            Margin="1">
                                         <Label Text="{Binding PatrolCar}"
                                                FontAttributes="Bold"
+                                               FontSize="12"
                                                HorizontalTextAlignment="Center"
                                                TextColor="{AppThemeBinding Light=Black, Dark=White}" />
                                     </HorizontalStackLayout>
                                     <HorizontalStackLayout Spacing="5">
                                         <Label Text="Kms: "
+                                               FontSize="12"
                                                HorizontalTextAlignment="End"
                                                TextColor="{AppThemeBinding Light=Black, Dark=White}" />
                                         <Label Text="{Binding MileageText}"
+                                               FontSize="12"
                                                HorizontalTextAlignment="Start"
                                                TextColor="{AppThemeBinding Light=Black, Dark=White}" />
                                     </HorizontalStackLayout>
