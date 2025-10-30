@@ -644,14 +644,17 @@ public partial class LogActivity : ContentPage
                     Margin = new Thickness(2, 4),
                     BackgroundColor = cardBgColor,
                     Content = cardGrid
-                };         
+                };
 
-                LogDisplayArea.Children.Add(logCard);
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    LogDisplayArea.Children.Add(logCard);
+                });
             }
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Error", $"An error occurred while loading logs: {ex.Message}", "OK");
+            await DisplayAlert("Error", $"An error occurred while loading logs: {ex.Message}.Please try again", "OK");
         }
     }
 
