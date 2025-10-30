@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+	<!-- Blue square background -->
+	<rect x="2" y="2" width="20" height="20" rx="4" ry="4" fill="#007BFF"/>
+
+	<!-- White pencil icon -->
+	<path d="M14.69 5.34l3.97 3.97L8.91 19.06H4.94v-3.97l9.75-9.75zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.97 3.97 1.62-1.62z"
+		  fill="#ffffff"/>
+</svg>
+
+

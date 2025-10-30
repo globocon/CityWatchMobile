@@ -21,7 +21,8 @@ public partial class LogActivity : ContentPage
     private List<int> _lastLogIds = new();
     private CancellationTokenSource _delayCancellationTokenSource;
     private List<GuardLogDto> _lastLogs = new();
-
+    private int _lastLogId = 0;
+    private GuardLogDto _selectedLogForEdit;
     public ObservableCollection<MyFileModel> SelectedFiles { get; set; }
      = new ObservableCollection<MyFileModel>();
 
@@ -76,26 +77,59 @@ public partial class LogActivity : ContentPage
         }
     }
 
+    //protected override async void OnAppearing()
+    //{
+    //    base.OnAppearing();
+
+    //    LoadLogs(); // Call when the page is about to appear
+
+    //    await StartNFC();
+
+    //    // Set up a timer for periodic refresh every 1 second
+    //    _logRefreshTimer = new System.Timers.Timer(1000); // 1 second = 1000 ms
+    //    _logRefreshTimer.Elapsed += async (s, e) =>
+    //    {
+    //        MainThread.BeginInvokeOnMainThread(() =>
+    //        {
+    //            LoadLogs(); // Refresh logs every second
+    //        });
+    //    };
+    //    _logRefreshTimer.AutoReset = true;
+    //    _logRefreshTimer.Start();
+    //}
+
+    private bool _isLoadingLogs = false;
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
 
-        LoadLogs(); // Call when the page is about to appear
+        _ = LoadLogs(); // fire and forget for faster UI load
 
         await StartNFC();
 
-        // Set up a timer for periodic refresh every 1 second
-        _logRefreshTimer = new System.Timers.Timer(1000); // 1 second = 1000 ms
+        _logRefreshTimer = new System.Timers.Timer(3000);
         _logRefreshTimer.Elapsed += async (s, e) =>
         {
-            MainThread.BeginInvokeOnMainThread(() =>
+            if (_isLoadingLogs) return; // skip if already loading
+
+            _isLoadingLogs = true;
+
+            try
             {
-                LoadLogs(); // Refresh logs every second
-            });
+                await MainThread.InvokeOnMainThreadAsync(LoadLogs);
+            }
+            finally
+            {
+                _isLoadingLogs = false;
+            }
         };
         _logRefreshTimer.AutoReset = true;
         _logRefreshTimer.Start();
     }
+
+
+
 
     protected override async void OnDisappearing()
     {
@@ -180,7 +214,7 @@ public partial class LogActivity : ContentPage
         return int.TryParse(parts[0], out int result) ? result : int.MaxValue;
     }
 
-    private async void LoadLogs()
+    private async Task LoadLogs()
     {
         try
         {
@@ -188,42 +222,58 @@ public partial class LogActivity : ContentPage
             if (guardId <= 0 || clientSiteId <= 0 || userId <= 0)
                 return;
 
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={clientSiteId}";
+            //var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={clientSiteId}";
+            //var response = await _httpClient.GetAsync(url);
+
+            //if (!response.IsSuccessStatusCode)
+            //{
+            //    await DisplayAlert("Error", "Failed to load site logs.", "OK");
+            //    return;
+            //}
+
+            //var json = await response.Content.ReadAsStringAsync();
+            //var logs = JsonSerializer.Deserialize<List<GuardLogDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            //// If logs haven't changed, don't update UI
+            //if (AreLogsEqual(logs, _lastLogs))
+            //    return;
+
+            //_lastLogs = logs; // Update cache
+
+            //LogDisplayArea.Children.Clear();
+
+            //if (logs == null || logs.Count == 0)
+            //{
+            //    LogDisplayArea.Children.Add(new Label
+            //    {
+            //        Text = "No logs available for today.",
+            //        TextColor = Colors.Gray,
+            //        FontSize = 12
+            //    });
+            //    return;
+            //}
+
+
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={clientSiteId}&lastLogId={_lastLogId}";
             var response = await _httpClient.GetAsync(url);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                await DisplayAlert("Error", "Failed to load site logs.", "OK");
-                return;
-            }
-
             var json = await response.Content.ReadAsStringAsync();
             var logs = JsonSerializer.Deserialize<List<GuardLogDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            // If logs haven't changed, don't update UI
-            if (AreLogsEqual(logs, _lastLogs))
-                return;
-
-            _lastLogs = logs; // Update cache
-
-            LogDisplayArea.Children.Clear();
-
-            if (logs == null || logs.Count == 0)
+            if (logs != null && logs.Count > 0)
             {
-                LogDisplayArea.Children.Add(new Label
-                {
-                    Text = "No logs available for today.",
-                    TextColor = Colors.Gray,
-                    FontSize = 12
-                });
-                return;
+                _lastLogs = logs.OrderByDescending(l => l.Id).ToList();
             }
+
 
 
             var bgColorPaleYellow = Color.FromArgb("#fcf8d1");
             var bgColorPaleRed = Color.FromArgb("#ffcccc");
             var bgColorNormal = Color.FromArgb("#F2F2F2"); // default
-            foreach (var log in logs)
+
+            LogDisplayArea.Children.Clear(); // Refresh UI
+
+            foreach (var log in _lastLogs) // 
+
             {
                 bool isAlarm = false;
                 var contentLayout = new VerticalStackLayout
@@ -236,21 +286,24 @@ public partial class LogActivity : ContentPage
                         FormattedText = new FormattedString
                         {
                             Spans =
-                            {
-                                new Span
-                                {
-                                    Text = log.GuardInitials,
-                                    FontAttributes = FontAttributes.Bold,
-                                    TextColor = Colors.Teal,
-                                    FontSize = 13
-                                },
-                                new Span
-                                {
-                                    Text = $"  {log.EventDateTimeLocal:HH:mm}",
-                                    FontSize = 11,
-                                    TextColor = Colors.Gray
-                                }
-                            }
+                                        {
+
+                                        new Span
+                                      {
+                                          Text = log.GuardInitials,
+                                          FontAttributes = FontAttributes.Bold,
+                                          TextColor = Colors.Teal,
+                                          FontSize = 13
+                                       },
+                                         new Span
+                                        {
+                                          Text = $"  {log.EventDateTimeLocal:HH:mm}",
+                                          FontSize = 11,
+                                          TextColor = Colors.Gray
+                                        }
+
+
+                                        }
                         },
                         Margin = new Thickness(0, 0, 0, 2)
                     }
@@ -384,15 +437,95 @@ public partial class LogActivity : ContentPage
                     }
                     else
                     {
-                        // Original fallback
-                        noteLabel = new Label
+                        var noteText2 = (log.Notes ?? "").Replace("<br>", "\n").Replace("<br/>", "\n");
+                        var formattedText = new FormattedString();
+
+                        // Regex to find all anchor tags
+                        var regex = new System.Text.RegularExpressions.Regex(
+                            "(?<textBefore>[^<]*)<a\\s+href=\"(?<url>[^\"]+)\">(?<text>[^<]+)</a>",
+                            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                        var matches = regex.Matches(noteText2);
+
+                        if (matches.Count > 0)
                         {
-                            Text = noteText,
-                            LineBreakMode = LineBreakMode.WordWrap,
-                            TextColor = Colors.Black,
-                            FontSize = 12,
-                            Margin = new Thickness(0, 0, 0, 10)
-                        };
+                            int lastIndex = 0;
+                            foreach (System.Text.RegularExpressions.Match match in matches)
+                            {
+                                // Add text before the link
+                                var textBefore = match.Groups["textBefore"].Value;
+                                if (!string.IsNullOrEmpty(textBefore))
+                                {
+                                    formattedText.Spans.Add(new Span
+                                    {
+                                        Text = textBefore,
+                                        TextColor = Colors.Black,
+                                        FontSize = 12
+                                    });
+                                }
+
+                                // Add clickable link
+                                var url2 = match.Groups["url"].Value;
+                                var linkText = match.Groups["text"].Value;
+
+                                var linkSpan = new Span
+                                {
+                                    Text = linkText,
+                                    TextColor = Colors.Blue,
+                                    TextDecorations = TextDecorations.Underline,
+                                    FontSize = 12
+                                };
+
+                                var tapGesture = new TapGestureRecognizer();
+                                tapGesture.Tapped += async (s, e) =>
+                                {
+                                    try
+                                    {
+                                        await Browser.Default.OpenAsync(url2, BrowserLaunchMode.SystemPreferred);
+                                    }
+                                    catch
+                                    {
+                                        await Application.Current.MainPage.DisplayAlert("Error", "Unable to open link.", "OK");
+                                    }
+                                };
+                                linkSpan.GestureRecognizers.Add(tapGesture);
+
+                                formattedText.Spans.Add(linkSpan);
+
+                                // Move pointer
+                                lastIndex = match.Index + match.Length;
+                            }
+
+                            // Add any text remaining after last link
+                            if (lastIndex < noteText2.Length)
+                            {
+                                formattedText.Spans.Add(new Span
+                                {
+                                    Text = noteText2.Substring(lastIndex),
+                                    TextColor = Colors.Black,
+                                    FontSize = 12
+                                });
+                            }
+
+                            noteLabel = new Label
+                            {
+                                FormattedText = formattedText,
+                                LineBreakMode = LineBreakMode.WordWrap,
+                                Margin = new Thickness(0, 0, 0, 10)
+                            };
+                        }
+                        else
+                        {
+                            // No links ? normal label
+                            noteLabel = new Label
+                            {
+                                Text = noteText2,
+                                LineBreakMode = LineBreakMode.WordWrap,
+                                TextColor = Colors.Black,
+                                FontSize = 12,
+                                Margin = new Thickness(0, 0, 0, 10)
+                            };
+                        }
                     }
                 }
 
@@ -474,6 +607,35 @@ public partial class LogActivity : ContentPage
                     cardGrid.Add(actionButton, 1, 0);
                 }
 
+
+                if (log.GuardId.HasValue
+      && log.GuardId.Value == guardId
+      && log.IrEntryType != 1
+      && log.IsSystemEntry == false
+      && (log.ImageUrls == null || log.ImageUrls.Count == 0)
+      && !(log.Notes?.Contains("Mob app image upload", StringComparison.OrdinalIgnoreCase) ?? false))
+                {
+                    var editButton = new ImageButton
+                    {
+                        Source = "edit.png", // a pencil or edit icon in Resources/Images
+                        BackgroundColor = Colors.Transparent,
+                        HeightRequest = 30,
+                        WidthRequest = 30,
+                        HorizontalOptions = LayoutOptions.End,
+                        VerticalOptions = LayoutOptions.Start,
+                        CornerRadius = 6,
+                        Padding = 2
+                    };
+
+                    editButton.Clicked += async (s, e) =>
+                    {
+                        ShowEditLogPopup(log);
+                    };
+
+                    // Optionally combine with alarm button
+                    cardGrid.Add(editButton, 1, 0);
+                }
+
                 var logCard = new Frame
                 {
                     CornerRadius = 8,
@@ -489,6 +651,191 @@ public partial class LogActivity : ContentPage
         catch (Exception ex)
         {
             await DisplayAlert("Error", $"An error occurred while loading logs: {ex.Message}", "OK");
+        }
+    }
+
+
+
+
+
+
+
+
+    private async void OnPickFileClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var results = await FilePicker.PickMultipleAsync();
+            if (results != null && results.Any())
+            {
+                string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+
+                foreach (var file in results)
+                {
+                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        await DisplayAlert("Invalid File",
+                            $"File '{file.FileName}' is not a supported image type.", "OK");
+                        continue;
+                    }
+
+                    // Default type is twentyfive unless user ticks "rear full page"
+                    string fileType = "twentyfive";
+
+                    SelectedFiles.Add(new MyFileModel
+                    {
+                        File = file,
+                        FileType = fileType
+                    });
+                }
+
+                if (SelectedFiles.Any())
+                {
+                    await UploadFileToApiAsync();
+                }
+                else
+                {
+                    await DisplayAlert("Notice", "No valid files selected.", "OK");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
+        }
+    }
+
+    private async Task UploadFileToApiAsync()
+    {
+        try
+        {
+            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+
+            using var client = new HttpClient();
+            var content = new MultipartFormDataContent();
+
+            // Add files + types (same index order)
+            foreach (var fileModel in SelectedFiles)
+            {
+                var stream = await fileModel.File.OpenReadAsync();
+                var fileContent = new StreamContent(stream);
+                fileContent.Headers.ContentType =
+                    new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+                // File
+                content.Add(fileContent, "files", fileModel.File.FileName);
+
+                // Type (rear / twentyfive)
+                content.Add(new StringContent(fileModel.FileType), "types");
+            }
+
+            // Add other form data
+            content.Add(new StringContent(guardId.ToString()), "guardId");
+            content.Add(new StringContent(clientSiteId.ToString()), "clientsiteId");
+            content.Add(new StringContent(userId.ToString()), "userId");
+            content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+
+            // Send request
+            var uploadResponse = await client.PostAsync(
+                $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
+                content
+            );
+
+            if (!uploadResponse.IsSuccessStatusCode)
+            {
+                await DisplayAlert("Error", "One or more files failed to upload.", "OK");
+            }
+            else
+            {
+                SelectedFiles.Clear();
+                await DisplayAlert("Success", "All files uploaded successfully.", "OK");
+
+                // Small delay for smoother UI transition
+                await Task.Delay(300);
+
+
+
+
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Save & Close failed: {ex.Message}", "OK");
+        }
+    }
+
+
+    // Show popup and preload existing note
+    private void ShowEditLogPopup(GuardLogDto log)
+    {
+        _selectedLogForEdit = log;
+        EditLogPopupEntry.Text = log.Notes;
+        EditLogPopupOverlay.IsVisible = true;
+    }
+
+    // Hide popup without saving
+    private void OnEditLogCancelClicked(object sender, EventArgs e)
+    {
+        EditLogPopupOverlay.IsVisible = false;
+        _selectedLogForEdit = null;
+    }
+
+    // Save updated note
+    private async void OnEditLogSaveClicked(object sender, EventArgs e)
+    {
+        if (_selectedLogForEdit == null)
+            return;
+
+        string newNotes = EditLogPopupEntry.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(newNotes))
+        {
+            await Application.Current.MainPage.DisplayAlert("Validation", "Please enter a note.", "OK");
+            return;
+        }
+
+        try
+        {
+            var updateRequest = new
+            {
+                Id = _selectedLogForEdit.Id,
+                GuardId = _selectedLogForEdit.GuardId,
+                Notes = newNotes
+            };
+
+
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UpdateGuardLogNotes" +
+             $"?id={_selectedLogForEdit.Id}" +
+             $"&notes={Uri.EscapeDataString(newNotes.Trim())}";
+
+            try
+            {
+                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await ShowToastMessage("Log updated successfully.");
+                    LoadLogs();
+
+                    EditLogPopupOverlay.IsVisible = false;
+
+                }
+                else
+                {
+                    string errorMessage = await response.Content.ReadAsStringAsync();
+                    await ShowToastMessage($"Failed: {errorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowToastMessage($"Error: {ex.Message}");
+            }
+
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert("Error", $"Failed to update: {ex.Message}", "OK");
         }
     }
     private void chkPushAcknowledge_CheckedChanged(object sender, CheckedChangedEventArgs e)
@@ -544,7 +891,7 @@ public partial class LogActivity : ContentPage
         var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
         if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
 
-        string existingLog = CustomLogEntry.Text?.Trim() ?? string.Empty;
+        //string existingLog = CustomLogEntry.Text?.Trim() ?? string.Empty;
 
 
 
@@ -569,7 +916,9 @@ public partial class LogActivity : ContentPage
             messageToSend = logInfo;
         }
 
-        int rcPushMessageId = SelectedLogForPush.rcPushMessageId ?? 0;
+        int rcPushMessageId = int.TryParse(SelectedLogForPush.RcPushMessageId, out var id)
+    ? id
+    : 0;
 
         var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SavePushNotificationTestMessage" +
                      $"?guardId={guardId}" +
@@ -934,9 +1283,50 @@ public partial class LogActivity : ContentPage
         }
     }
 
-    private async void OnAddLogEntryClicked(object sender, EventArgs e)
+    private async void OnAddLogEntryNewClicked(object sender, EventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(CustomLogEntry.Text))
+        ShowCustomLogPopup();
+    }
+
+    private void ShowCustomLogPopup()
+    {
+        CustomLogPopupEntry.Text = string.Empty; // Ensure fresh input
+        CustomLogPopupOverlay.IsVisible = true;
+    }
+
+    private void HideCustomLogPopup()
+    {
+        CustomLogPopupOverlay.IsVisible = false;
+    }
+
+    private void OnCustomLogCancelClicked(object sender, EventArgs e)
+    {
+        HideCustomLogPopup();
+    }
+
+
+    private async void OnCustomLogSaveClicked(object sender, EventArgs e)
+    {
+        if (CustomLogPopupEntry == null)
+        {
+            await DisplayAlert("Error", "Text box not available. Please reopen the popup.", "OK");
+            return;
+        }
+
+        var text = CustomLogPopupEntry.Text?.Trim();
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            await DisplayAlert("Error", "Please enter a custom log!", "OK");
+            return;
+        }
+
+        await SaveCustomLog(text);
+    }
+
+    private async Task SaveCustomLog(string log)
+    {
+        if (string.IsNullOrWhiteSpace(log))
         {
             await DisplayAlert("Error", "Log entry cannot be empty", "OK");
             return;
@@ -950,16 +1340,16 @@ public partial class LogActivity : ContentPage
         }
 
         var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-        if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
-        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
-      $"?guardId={guardId}" +
-      $"&clientsiteId={clientSiteId}" +
-      $"&userId={userId}" +
-      $"&activityString={Uri.EscapeDataString(CustomLogEntry.Text.Trim())}" +
-      $"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
-        $"&systemEntry=false";
+        if (guardId <= 0 || clientSiteId <= 0 || userId <= 0)
+            return;
 
-        ;
+        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
+        $"?guardId={guardId}" +
+        $"&clientsiteId={clientSiteId}" +
+        $"&userId={userId}" +
+        $"&activityString={Uri.EscapeDataString(log.Trim())}" +
+        $"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
+        $"&systemEntry=false";
 
         try
         {
@@ -967,24 +1357,11 @@ public partial class LogActivity : ContentPage
             if (response.IsSuccessStatusCode)
             {
                 await ShowToastMessage("Log entry added successfully.");
-                CustomLogEntry.Text = string.Empty;
 
-                // Cancel any previous delay token
-                _delayCancellationTokenSource?.Cancel();
-                _delayCancellationTokenSource = new CancellationTokenSource();
+                // Close Popup
+                HideCustomLogPopup();
 
-                try
-                {
-                    await Task.Delay(2000, _delayCancellationTokenSource.Token);
 
-                    // Only navigate if user hasn't typed anything in those 2 seconds
-                    var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
-                    Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
-                }
-                catch (TaskCanceledException)
-                {
-                    // Navigation canceled due to user typing
-                }
             }
             else
             {
@@ -994,8 +1371,75 @@ public partial class LogActivity : ContentPage
         }
         catch (Exception ex)
         {
-            //await ShowToastMessage($"Error: {ex.Message}");
+            // Log silently or toast error
+            // await ShowToastMessage($"Error: {ex.Message}");
         }
+    }
+
+
+
+    private async void OnAddLogEntryClicked(object sender, EventArgs e)
+    {
+        //if (string.IsNullOrWhiteSpace(CustomLogEntry.Text))
+        //{
+        //    await DisplayAlert("Error", "Log entry cannot be empty", "OK");
+        //    return;
+        //}
+
+        //  string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+        //  if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        //  {
+        //      await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+        //      return;
+        //  }
+
+        //  var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+        //  if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
+        //  var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
+        //$"?guardId={guardId}" +
+        //$"&clientsiteId={clientSiteId}" +
+        //$"&userId={userId}" +
+        //$"&activityString={Uri.EscapeDataString(CustomLogEntry.Text.Trim())}" +
+        //$"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
+        //  $"&systemEntry=false";
+
+        //  ;
+
+        //  try
+        //  {
+        //      HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+        //      if (response.IsSuccessStatusCode)
+        //      {
+        //          await ShowToastMessage("Log entry added successfully.");
+        //          //CustomLogEntry.Text = string.Empty;
+
+        //          // Cancel any previous delay token
+        //          _delayCancellationTokenSource?.Cancel();
+        //          _delayCancellationTokenSource = new CancellationTokenSource();
+
+        //          try
+        //          {
+        //              await Task.Delay(2000, _delayCancellationTokenSource.Token);
+
+        //              // Only navigate if user hasn't typed anything in those 2 seconds
+        //              var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+        //              Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+        //          }
+        //          catch (TaskCanceledException)
+        //          {
+        //              // Navigation canceled due to user typing
+        //          }
+        //      }
+        //      else
+        //      {
+        //          string errorMessage = await response.Content.ReadAsStringAsync();
+        //          await ShowToastMessage($"Failed: {errorMessage}");
+        //      }
+        //  }
+        //  catch (Exception ex)
+        //  {
+        //      //await ShowToastMessage($"Error: {ex.Message}");
+        //  }
 
     }
 
@@ -1094,11 +1538,11 @@ public partial class LogActivity : ContentPage
 
     private void CustomLogEntry_TextChanged(object sender, TextChangedEventArgs e)
     {
-        if (!string.IsNullOrWhiteSpace(CustomLogEntry.Text))
-        {
-            // If there's any text in the textbox, cancel the navigation
-            _delayCancellationTokenSource?.Cancel();
-        }
+        //if (!string.IsNullOrWhiteSpace(CustomLogEntry.Text))
+        //{
+        //    // If there's any text in the textbox, cancel the navigation
+        //    _delayCancellationTokenSource?.Cancel();
+        //}
     }
 
     private bool AreLogsEqual(List<GuardLogDto> newLogs, List<GuardLogDto> oldLogs)
@@ -1164,44 +1608,44 @@ public partial class LogActivity : ContentPage
                 chkWithinField.IsChecked = true;
         }
     }
-    private async void OnPickFileClicked(object sender, EventArgs e)
-    {
-        try
-        {
-            var results = await FilePicker.PickMultipleAsync(); // Multiple files
-            if (results != null && results.Any())
-            {
-                // Allowed file extensions
-                string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+    //private async void OnPickFileClicked(object sender, EventArgs e)
+    //{
+    //    try
+    //    {
+    //        var results = await FilePicker.PickMultipleAsync(); // Multiple files
+    //        if (results != null && results.Any())
+    //        {
+    //            // Allowed file extensions
+    //            string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
 
-                // Determine the file type based on the checkboxes
-                string fileType = chkRearFullPage.IsChecked ? "rear" : "twentyfive";
+    //            // Determine the file type based on the checkboxes
+    //            string fileType = chkRearFullPage.IsChecked ? "rear" : "twentyfive";
 
-                foreach (var file in results)
-                {
-                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                    if (!allowedExtensions.Contains(extension))
-                    {
-                        await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
-                        continue; // Skip this file
-                    }
+    //            foreach (var file in results)
+    //            {
+    //                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+    //                if (!allowedExtensions.Contains(extension))
+    //                {
+    //                    await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
+    //                    continue; // Skip this file
+    //                }
 
-                    SelectedFiles.Add(new MyFileModel
-                    {
-                        File = file,
-                        FileType = fileType
-                    });
-                }
-            }
+    //                SelectedFiles.Add(new MyFileModel
+    //                {
+    //                    File = file,
+    //                    FileType = fileType
+    //                });
+    //            }
+    //        }
 
-            // Show the file list only if it has items
-            FilesCollection.IsVisible = SelectedFiles.Any();
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
-        }
-    }
+    //        // Show the file list only if it has items
+    //        FilesCollection.IsVisible = SelectedFiles.Any();
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
+    //    }
+    //}
 
 
 
@@ -1291,7 +1735,7 @@ public partial class LogActivity : ContentPage
         try
         {
             var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-            string gpsCoordinates = Preferences.Get("GpsCoordinates","");
+            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
             using var client = new HttpClient();
             var content = new MultipartFormDataContent();
@@ -1573,15 +2017,21 @@ public class ActivityModel
 public class GuardLogDto
 {
     public int Id { get; set; }
-    public DateTime EventDateTime { get; set; }
-    public string EventDateTimeLocal { get; set; } // For frontend use
-    public string EventDateTimeZoneShort { get; set; } // For frontend use
+
+    public DateTime? EventDateTime { get; set; }
+    public string EventDateTimeLocal { get; set; }  // Changed to string
+    public string EventDateTimeZoneShort { get; set; }
 
     public string Notes { get; set; }
-    public List<string> ImageUrls { get; set; }
     public string GuardInitials { get; set; }
-    public int IrEntryType { get; set; }
-    public bool IsSystemEntry { get; set; }
-    public int? rcPushMessageId { get; set; }
+
+    public int? IrEntryType { get; set; }
+    public bool? IsSystemEntry { get; set; }
+    public string RcPushMessageId { get; set; }  // Changed to string
+
+    public int? GuardId { get; set; }
+
+    public List<string> ImageUrls { get; set; } = new List<string>();
 }
+
 
