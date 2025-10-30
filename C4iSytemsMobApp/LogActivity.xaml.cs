@@ -2,6 +2,7 @@ using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
+using CommunityToolkit.Maui;
 using Plugin.NFC;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -643,7 +644,7 @@ public partial class LogActivity : ContentPage
                     Margin = new Thickness(2, 4),
                     BackgroundColor = cardBgColor,
                     Content = cardGrid
-                };
+                };         
 
                 LogDisplayArea.Children.Add(logCard);
             }
@@ -850,6 +851,7 @@ public partial class LogActivity : ContentPage
             txtPushMessage.Text = string.Empty;
         }
     }
+
 
     private void chkPushMessageBack_CheckedChanged(object sender, CheckedChangedEventArgs e)
     {
@@ -1996,7 +1998,6 @@ public partial class LogActivity : ContentPage
 
 
     #endregion "NFC Methods"
-
 }
 
 

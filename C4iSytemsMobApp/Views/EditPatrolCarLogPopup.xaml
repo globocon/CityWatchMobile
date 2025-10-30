@@ -1,0 +1,57 @@
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               x:Class="C4iSytemsMobApp.Views.EditPatrolCarLogPopup"
+               >
+
+    <VerticalStackLayout Padding="15"
+                         Spacing="10"
+                         Margin="10"
+                         BackgroundColor="{AppThemeBinding Light=White, Dark=#333}">
+
+        <Label Text="Edit Patrol Car Log"
+               FontSize="20"
+               FontAttributes="Bold"
+               HorizontalOptions="Center" />
+
+        <!-- Scrollable content area -->
+        <ScrollView 
+                    VerticalOptions="FillAndExpand">
+            <VerticalStackLayout Spacing="12">
+
+                <Label Text="{Binding Log.PatrolCar}"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+                <Entry x:Name="MileageEntry"
+                       Placeholder="Enter kms"
+                       Keyboard="Text"
+                       FontSize="16"
+                       Text="{Binding Log.Mileage, Mode=TwoWay}"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}">
+                    <Entry.Behaviors>
+                        <toolkit:CharactersValidationBehavior CharacterType="Digit"
+                                                              MaximumLength="10" />
+                    </Entry.Behaviors>
+                </Entry>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Buttons -->
+        <HorizontalStackLayout HorizontalOptions="Center"
+                               Spacing="20">
+            <Button Text="Cancel"
+                    Clicked="OnCancelClicked"
+                    WidthRequest="100"
+                    BackgroundColor="#007AFF"
+                    TextColor="White" />
+            <Button Text="Save"
+                    Clicked="OnSaveClicked"
+                    WidthRequest="100"
+                    BackgroundColor="#007AFF"
+                    TextColor="White" />
+        </HorizontalStackLayout>
+    </VerticalStackLayout>
+</toolkit:Popup>
