@@ -921,9 +921,7 @@ public partial class LogActivity : ContentPage
             messageToSend = logInfo;
         }
 
-        int rcPushMessageId = int.TryParse(SelectedLogForPush.RcPushMessageId, out var id)
-    ? id
-    : 0;
+        long rcPushMessageId = SelectedLogForPush?.RcPushMessageId ?? 0;
 
         var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SavePushNotificationTestMessage" +
                      $"?guardId={guardId}" +
@@ -2031,7 +2029,7 @@ public class GuardLogDto
 
     public int? IrEntryType { get; set; }
     public bool? IsSystemEntry { get; set; }
-    public string RcPushMessageId { get; set; }  // Changed to string
+    public long? RcPushMessageId { get; set; }  // Changed to string
 
     public int? GuardId { get; set; }
 

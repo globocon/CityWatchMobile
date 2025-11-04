@@ -121,7 +121,7 @@
                     <!-- Login Button (wide) -->
                     <Button Text="Login"
                 Grid.Row="0" Grid.Column="1"
-                WidthRequest="200"
+                WidthRequest="150"
                 Margin="3,0,0,0"
                 VerticalOptions="Center"
                 Clicked="OnReadClicked" />
@@ -139,7 +139,7 @@
 
                         <CollectionView x:Name="SuggestionsView"
                             SelectionMode="Single"
-                            HeightRequest="60"
+                            HeightRequest="40"
                             ItemsLayout="VerticalList"
                             BackgroundColor="White"
                             SelectionChanged="OnSuggestionSelected"
@@ -153,7 +153,7 @@
                                FontSize="11"
                                Padding="1"
                                Margin="0"
-                               TextColor="Black" />
+                               TextColor="Black" TextDecorations="Underline" />
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
                         </CollectionView>
