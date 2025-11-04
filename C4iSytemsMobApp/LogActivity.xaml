@@ -25,7 +25,7 @@
                      Padding="5,10,5,10">
       
                 <ScrollView VerticalScrollBarVisibility="Always"
-            HeightRequest="230"
+            HeightRequest="235"
             Padding="10,0,10,0">
                     <!-- Adds space between scrollbar and content -->
                     <VerticalStackLayout>
@@ -41,7 +41,8 @@
                            Margin="0,1">
                                         <Button Text="{Binding Name}"
                                 TextColor="White"
-                                FontSize="12"
+                                FontSize="13"
+                                Margin="0,0,0,2"
                                 Padding="4,0"
                                 HorizontalOptions="FillAndExpand"
                                 VerticalOptions="Center"                             
