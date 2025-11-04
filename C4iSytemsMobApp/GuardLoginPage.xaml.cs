@@ -551,6 +551,12 @@ public partial class GuardLoginPage : ContentPage
             lblGuardName.IsVisible = true;
 
             // Show UI controls
+
+            hrStatusLayout.IsVisible = true;
+            SetLedColor(ledHR1, guardData.HR1Status);
+            SetLedColor(ledHR2, guardData.HR2Status);
+            SetLedColor(ledHR3, guardData.HR3Status);
+
             pickerClientType.IsVisible = true;
             pickerClientSite.IsVisible = true;
             btnEnterLogbook.IsVisible = true;
@@ -570,6 +576,24 @@ public partial class GuardLoginPage : ContentPage
         }
     }
 
+    private void SetLedColor(BoxView led, string status)
+    {
+        switch (status?.Trim().ToLower())
+        {
+            case "red":
+                led.Color = Colors.Red;
+                break;
+            case "yellow":
+                led.Color = Colors.Yellow;
+                break;
+            case "green":
+                led.Color = Colors.Green;
+                break;
+            default:
+                led.Color = Colors.Gray;
+                break;
+        }
+    }
 
 
     private void ToggleInstructionalTextVisibility()
@@ -824,6 +848,13 @@ public class GuardResponse
 {
     public string Name { get; set; }
     public int GuardId { get; set; }
+    public string SecurityNo { get; set; }
+    public bool IsActive { get; set; }
+
+    public string HR1Status { get; set; }
+    public string HR2Status { get; set; }
+    public string HR3Status { get; set; }
+    public bool GuardLockStatusBasedOnRedDoc { get; set; }
 }
 public class DropdownItem
 {
