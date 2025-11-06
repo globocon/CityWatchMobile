@@ -1,4 +1,4 @@
-using C4iSytemsMobApp.Enums;
+﻿using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using CommunityToolkit.Maui;
@@ -66,6 +66,7 @@ public partial class LogActivity : ContentPage
         LoadSecureData();
         LoadActivities();
         FilesCollection.ItemsSource = SelectedFiles;
+        
         _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
         _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
     }
@@ -543,12 +544,22 @@ public partial class LogActivity : ContentPage
                 }
 
 
+                bool hasImages = (log.ImageUrls != null && log.ImageUrls.Any()) ||
+                 (log.RearFileUrls != null && log.RearFileUrls.Any());
+
+                bool notesContainUploadText = log.Notes?.Contains(
+                    "Mob app image upload",
+                    StringComparison.OrdinalIgnoreCase) ?? false;
+
                 if (log.GuardId.HasValue
       && log.GuardId.Value == _guardId
       && log.IrEntryType != 1
       && log.IsSystemEntry == false
-      && (log.ImageUrls == null || log.ImageUrls.Count == 0)
-      && !(log.Notes?.Contains("Mob app image upload", StringComparison.OrdinalIgnoreCase) ?? false))
+      //&& (log.ImageUrls == null || log.ImageUrls.Count == 0)
+      //&& !(log.Notes?.Contains("Mob app image upload", StringComparison.OrdinalIgnoreCase) ?? false)
+      
+      
+      )
                 {
                     var editButton = new ImageButton
                     {
@@ -562,10 +573,18 @@ public partial class LogActivity : ContentPage
                         Padding = 2
                     };
 
+                  
+
+
                     editButton.Clicked += async (s, e) =>
                     {
-                        ShowEditLogPopup(log);
+                        // Decide which popup to show based on images
+                        if ((hasImages || notesContainUploadText))
+                            ShowEditLogImagePopup(log);
+                        else
+                            ShowEditLogPopup(log);
                     };
+
 
                     // Optionally combine with alarm button
                     cardGrid.Add(editButton, 1, 0);
@@ -601,40 +620,76 @@ public partial class LogActivity : ContentPage
     {
         try
         {
-            var results = await FilePicker.PickMultipleAsync();
+            var results = await FilePicker.PickMultipleAsync(); // Multiple files
             if (results != null && results.Any())
             {
+                // Allowed file extensions
                 string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+
+                // Determine the file type based on the checkboxes
+                string fileType = chkRearFullPage.IsChecked ? "rear" : "twentyfive";
 
                 foreach (var file in results)
                 {
                     var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
                     if (!allowedExtensions.Contains(extension))
                     {
-                        await DisplayAlert("Invalid File",
-                            $"File '{file.FileName}' is not a supported image type.", "OK");
-                        continue;
+                        await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
+                        continue; // Skip this file
                     }
-
-                    // Default type is twentyfive unless user ticks "rear full page"
-                    string fileType = "twentyfive";
 
                     SelectedFiles.Add(new MyFileModel
                     {
                         File = file,
-                        FileType = fileType
+                        FileType = fileType,
+                        IsNew = true // Mark as new file
                     });
                 }
-
-                if (SelectedFiles.Any())
-                {
-                    await UploadFileToApiAsync();
-                }
-                else
-                {
-                    await DisplayAlert("Notice", "No valid files selected.", "OK");
-                }
             }
+
+            // Show the file list only if it has items
+            FilesCollection.IsVisible = SelectedFiles.Any();
+
+            ShowPopup();
+
+
+
+
+
+            //var results = await FilePicker.PickMultipleAsync();
+            //if (results != null && results.Any())
+            //{
+            //    string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+
+            //    foreach (var file in results)
+            //    {
+            //        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            //        if (!allowedExtensions.Contains(extension))
+            //        {
+            //            await DisplayAlert("Invalid File",
+            //                $"File '{file.FileName}' is not a supported image type.", "OK");
+            //            continue;
+            //        }
+
+            //        // Default type is twentyfive unless user ticks "rear full page"
+            //        string fileType = "twentyfive";
+
+            //        SelectedFiles.Add(new MyFileModel
+            //        {
+            //            File = file,
+            //            FileType = fileType
+            //        });
+            //    }
+
+            //    if (SelectedFiles.Any())
+            //    {
+            //        await UploadFileToApiAsync();
+            //    }
+            //    else
+            //    {
+            //        await DisplayAlert("Notice", "No valid files selected.", "OK");
+            //    }
+            //}
         }
         catch (Exception ex)
         {
@@ -703,12 +758,71 @@ public partial class LogActivity : ContentPage
 
 
     // Show popup and preload existing note
+    private void ShowEditLogImagePopup(GuardLogDto log)
+    {
+        _selectedLogForEdit = log;
+        EditLogPopupEntry.Text = log.Notes;
+
+        SelectedFiles.Clear();
+
+        // Load 25% images
+        if (log.ImageUrls != null && log.ImageUrls.Any())
+        {
+            foreach (var imageUrl in log.ImageUrls)
+            {
+                if (!string.IsNullOrWhiteSpace(imageUrl))
+                {
+                    var fileName = Path.GetFileName(imageUrl);
+
+                    SelectedFiles.Add(new MyFileModel
+                    {
+                        File = new FileResult(fileName),
+                        FileType = "twentyfive", // 25% file
+                        IsNew = false,
+                        LogBookId = log.Id,
+                    });
+                }
+            }
+        }
+
+        // Load rear/full-page images
+        if (log.RearFileUrls != null && log.RearFileUrls.Any())
+        {
+            foreach (var imageUrl in log.RearFileUrls)
+            {
+                if (!string.IsNullOrWhiteSpace(imageUrl))
+                {
+                    var fileName = Path.GetFileName(imageUrl);
+
+                    SelectedFiles.Add(new MyFileModel
+                    {
+                        File = new FileResult(fileName),
+                        FileType = "rear", // rear/full-page file
+                        IsNew = false,
+                        LogBookId = log.Id,
+                    });
+                }
+            }
+        }
+
+        // Bind to CollectionView
+        FilesCollectionEditImage.ItemsSource = SelectedFiles;
+        FilesCollectionEditImage.IsVisible = SelectedFiles.Any();
+        PopupOverlayEditImage.IsVisible = true; 
+
+    }
+
+
     private void ShowEditLogPopup(GuardLogDto log)
     {
         _selectedLogForEdit = log;
         EditLogPopupEntry.Text = log.Notes;
+
+
         EditLogPopupOverlay.IsVisible = true;
+
     }
+
 
     // Hide popup without saving
     private void OnEditLogCancelClicked(object sender, EventArgs e)
@@ -1109,6 +1223,115 @@ public partial class LogActivity : ContentPage
                 chkWithinField.IsChecked = true;
         }
     }
+    // edit image checkboxes
+    private void OnEditCheckboxCheckedChanged(object sender, CheckedChangedEventArgs e)
+    {
+        if (!(sender is CheckBox changedCheckBox))
+            return;
+
+        // If this checkbox is checked
+        if (e.Value)
+        {
+            // Uncheck the other checkbox
+            if (changedCheckBox == chkEditRearFullPage)
+                chkEditWithinField.IsChecked = false;
+            else if (changedCheckBox == chkEditWithinField)
+                chkEditRearFullPage.IsChecked = false;
+        }
+        else
+        {
+            // If both are unchecked, default to WithinField
+            if (!chkEditRearFullPage.IsChecked && !chkEditWithinField.IsChecked)
+                chkEditWithinField.IsChecked = true;
+        }
+    }
+
+    //private async void OnPickFileClicked(object sender, EventArgs e)
+    //{
+    //    try
+    //    {
+    //        var results = await FilePicker.PickMultipleAsync(); // Multiple files
+    //        if (results != null && results.Any())
+    //        {
+    //            // Allowed file extensions
+    //            string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+
+    //            // Determine the file type based on the checkboxes
+    //            string fileType = chkRearFullPage.IsChecked ? "rear" : "twentyfive";
+
+    //            foreach (var file in results)
+    //            {
+    //                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+    //                if (!allowedExtensions.Contains(extension))
+    //                {
+    //                    await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
+    //                    continue; // Skip this file
+    //                }
+
+    //                SelectedFiles.Add(new MyFileModel
+    //                {
+    //                    File = file,
+    //                    FileType = fileType
+    //                });
+    //            }
+    //        }
+
+    //        // Show the file list only if it has items
+    //        FilesCollection.IsVisible = SelectedFiles.Any();
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
+    //    }
+    //}
+
+
+    private async void OnEditPickFileClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var results = await FilePicker.PickMultipleAsync(); // Allow multiple file selection
+            if (results != null && results.Any())
+            {
+                // Allowed image formats
+                string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+
+                // Determine the file type from checkboxes
+                string fileType = chkEditRearFullPage.IsChecked ? "rear" : "twentyfive";
+
+                foreach (var file in results)
+                {
+                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
+                        continue;
+                    }
+
+                    SelectedFiles.Add(new MyFileModel
+                    {
+                        File = file,
+                        FileType = fileType,
+                        IsNew = true,
+                        LogBookId = _selectedLogForEdit.Id
+                    });
+                }
+            }
+
+            // Show the file list only if it has items
+            FilesCollectionEditImage.IsVisible = SelectedFiles.Any();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
+        }
+    }
+
+
+
+
+
     private async void OnDownloadFileClicked(object sender, EventArgs e)
     {
         if (sender is Button btn && btn.BindingContext is FileResult file)
@@ -1128,6 +1351,114 @@ public partial class LogActivity : ContentPage
             FilesCollection.IsVisible = files.Any();
         }
     }
+
+    private async void OnEditDeleteFileClicked(object sender, EventArgs e)
+    {
+        if (sender is Button btn && btn.BindingContext is MyFileModel file)
+        {
+           
+
+            var files = (ObservableCollection<MyFileModel>)FilesCollectionEditImage.ItemsSource;
+
+            // If it's an existing file (already in DB)
+            if (!file.IsNew )
+            {
+                try
+                {
+
+                    using var client = new HttpClient();
+                    var content = new MultipartFormDataContent();
+                    content.Add(new StringContent(file.LogBookId.ToString()), "logbookId");
+                    content.Add(new StringContent(file.FileName), "fileName");
+
+                    var response = await client.PostAsync($"{AppConfig.ApiBaseUrl}GuardSecurityNumber/DeleteFile", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        files.Remove(file);
+                        await DisplayAlert("Deleted", "File deleted successfully.", "OK");
+                    }
+                    else
+                    {
+                        await DisplayAlert("Error", "Failed to delete file from database.", "OK");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlert("Error", $"Delete failed: {ex.Message}", "OK");
+                }
+            }
+            else
+            {
+                // It's a new file (not yet uploaded)
+                files.Remove(file);
+            }
+
+            // Hide list if no items remain
+            FilesCollectionEditImage.IsVisible = files.Any();
+        }
+    }
+
+
+    //    private async void OnSaveAndCloseClicked(object sender, EventArgs e)
+    //    {
+    //        try
+    //        {
+    //            using var client = new HttpClient();
+
+    //            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+    //            if (guardId <= 0 || clientSiteId <= 0 || userId <= 0)
+    //            {
+    //                await DisplayAlert("Error", "Invalid session. Please login again.", "OK");
+    //                return;
+    //            }
+
+    //            //  Build ONE multipart content for all files
+    //            var content = new MultipartFormDataContent
+    //        {
+    //            { new StringContent("rear"), "type" }, // or "twentyfive"
+    //            { new StringContent(guardId.ToString()), "guardId" },
+    //            { new StringContent(AppConfig.ApiBaseUrl), "url" }
+    //        };
+
+    //            //Add all files into the same request
+    //            foreach (var file in SelectedFiles)
+    //            {
+    //                if (file == null)
+    //                    continue;
+
+    //                var stream = await file.OpenReadAsync();
+    //                var fileContent = new StreamContent(stream);
+    //                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+    //                content.Add(fileContent, "files", file.FileName);
+    //                // "files" should match your backend handler's expected parameter name
+    //            }
+
+    //            //Send one request with all files
+    //            var uploadResponse = await client.PostAsync(
+    //    $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
+    //    content
+    //);
+
+    //            if (!uploadResponse.IsSuccessStatusCode)
+    //            {
+    //                await DisplayAlert("Error", "One or more files failed to upload.", "OK");
+    //            }
+    //            else
+    //            {
+    //                // Clear files only after successful upload
+    //                SelectedFiles.Clear();
+    //                await DisplayAlert("Success", "Activity saved and all files uploaded successfully.", "OK");
+    //            }
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            await DisplayAlert("Error", $"Save & Close failed: {ex.Message}", "OK");
+    //        }
+    //    }
+
+
     private async void OnSaveAndCloseClicked(object sender, EventArgs e)
     {
         try
@@ -1193,6 +1524,96 @@ public partial class LogActivity : ContentPage
                 // Hide the file list control
                 FilesCollection.IsVisible = false;
 
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Save & Close failed: {ex.Message}", "OK");
+        }
+    }
+
+    private async void OnEditSaveAndCloseClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+
+            using var client = new HttpClient();
+            var content = new MultipartFormDataContent();
+
+            if (_selectedLogForEdit == null)
+            {
+                await DisplayAlert("Error", "No log selected for editing.", "OK");
+                return;
+            }
+
+            // Filter only new files to upload
+            var newFiles = SelectedFiles.Where(f => f.IsNew).ToList();
+            if (!newFiles.Any())
+            {
+                PopupOverlayEditImage.IsVisible = false;
+                //await DisplayAlert("Info", "No new files to upload.", "OK");
+                return;
+            }
+
+            // Add files + their types (same index order)
+            foreach (var fileModel in newFiles)
+            {
+
+              
+                    var stream = await fileModel.File.OpenReadAsync();
+                    var fileContent = new StreamContent(stream);
+                    fileContent.Headers.ContentType =
+                        new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+                    // Add file
+                    content.Add(fileContent, "files", fileModel.File.FileName);
+
+                    // Add matching type (rear / twentyfive / etc.)
+                    content.Add(new StringContent(fileModel.FileType), "types");
+
+               
+            
+            }
+
+            // Add form data
+            content.Add(new StringContent(_selectedLogForEdit.Id.ToString()), "logbookId");
+
+
+            // Send request
+            var uploadResponse = await client.PostAsync(
+                $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultipleEdit",
+                content
+            );
+
+            if (!uploadResponse.IsSuccessStatusCode)
+            {
+                await DisplayAlert("Error", "One or more files failed to upload.", "OK");
+            }
+            else
+            {
+                SelectedFiles.Clear();
+                await DisplayAlert("Success", "All files uploaded successfully.", "OK");
+
+                // Small delay for smoother UI transition
+                await Task.Delay(300);
+
+                // Hide the Edit popup
+                PopupOverlayEditImage.IsVisible = false;
+
+                // Reset Edit checkboxes
+                chkEditRearFullPage.IsChecked = false;
+                chkEditWithinField.IsChecked = true;
+
+                // Clear file list
+                if (FilesCollectionEditImage.ItemsSource is ObservableCollection<MyFileModel> files)
+                {
+                    files.Clear();
+                }
+
+                // Hide file list control
+                FilesCollectionEditImage.IsVisible = false;
             }
         }
         catch (Exception ex)
@@ -1386,6 +1807,25 @@ public partial class LogActivity : ContentPage
         
     }
 
+    private void OnEditClosePopupClicked(object sender, EventArgs e)
+    {
+        // Hide the edit popup
+        PopupOverlayEditImage.IsVisible = false;
+
+        // Reset checkboxes to default values
+        chkEditRearFullPage.IsChecked = false;
+        chkEditWithinField.IsChecked = true;
+
+        // Clear the edit file list
+        if (FilesCollectionEditImage.ItemsSource is ObservableCollection<MyFileModel> files)
+        {
+            files.Clear();
+        }
+
+        // Hide the file list view
+        FilesCollectionEditImage.IsVisible = false;
+    }
+
     #region "NFC Methods"
 
     private async Task StartNFC()
@@ -1566,6 +2006,10 @@ public class MyFileModel
     public FileResult File { get; set; }
     public string FileType { get; set; }  // rear / twentyfive / etc
     public string FileName => File?.FileName; // <-- useful for UI binding
+
+    public bool IsNew { get; set; } = true;  // true → newly added via picker
+
+    public int? LogBookId { get; set; }  // null for new files, set for existing files from DB
 }
 public class ActivityModel
 {
@@ -1593,6 +2037,7 @@ public class GuardLogDto
     public int? GuardId { get; set; }
 
     public List<string> ImageUrls { get; set; } = new List<string>();
+    public List<string> RearFileUrls { get; set; } = new List<string>();
 }
 
 

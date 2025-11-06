@@ -1,71 +1,4 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!--<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="C4iSytemsMobApp.GuardLoginPage"
-             Title="GuardLoginPage">
-
-    <VerticalStackLayout Padding="20" Spacing="15">
-
-
-        <HorizontalStackLayout HorizontalOptions="StartAndExpand" Spacing="10">
-            <Label x:Name="lblLoggedInUser"
-            Text="Welcome, Visy"
-            FontAttributes="Bold"
-            FontSize="18"
-            TextColor="Blue"
-            HorizontalOptions="Start"/>
-        </HorizontalStackLayout>
-
-
-        <HorizontalStackLayout Spacing="10">
-            <Entry x:Name="txtLicenseNumber"
-            Placeholder="Enter License Number"
-            WidthRequest="250"/>
-            <Button Text="Login"
-            Clicked="OnReadClicked"/>
-        </HorizontalStackLayout>
-
-
-        <Label x:Name="lblGuardName"
-        Text=""
-        TextColor="Red"
-        FontAttributes="Bold"
-        IsVisible="False"/>
-
-
-        <Picker x:Name="pickerClientType"
-        Title="Select Client Type"
-        ItemsSource="{Binding ClientTypes}"
-        ItemDisplayBinding="{Binding Name}"
-        SelectedItem="{Binding SelectedClientType, Mode=TwoWay}"
-        IsVisible="False"/>
-
-
-        <Picker x:Name="pickerClientSite"
-        Title="Select Client Site"
-        ItemsSource="{Binding ClientSites}"
-        ItemDisplayBinding="{Binding Name}"
-        SelectedItem="{Binding SelectedClientSite, Mode=TwoWay}"
-        IsVisible="False"/>
-
-
-        <Button x:Name="btnEnterLogbook"
-        Text="Enter Logbook"
-        BackgroundColor="Green"
-        TextColor="White"
-        Clicked="OnEnterLogbookClicked"
-        IsVisible="False"/>
-
-
-        <Image Source="c4ilogo.jpg"
-        Aspect="AspectFit"
-        HeightRequest="50"
-        HorizontalOptions="Center"
-        VerticalOptions="End"/>
-
-    </VerticalStackLayout>
-
-</ContentPage>-->
 
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -76,10 +9,10 @@
 
 
     <Grid RowDefinitions="*,Auto"
-          Padding="5">
+          Padding="15,0,15,15">
 
         <!-- Main Content -->
-        <VerticalStackLayout Spacing="10"
+        <VerticalStackLayout Spacing="5"
                              Grid.Row="0">
 
             <!-- Logged-in User -->
@@ -99,66 +32,74 @@
 
                 <Grid RowSpacing="0" ColumnSpacing="5">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                   
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="120"/>
-                       
-                        <ColumnDefinition Width="Auto"/>
+                        <!-- Entry = 70%, Button = 30% -->
+                        <ColumnDefinition Width="6*" />
+                        <ColumnDefinition Width="4*" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- Entry -->
+                    <!-- License Entry -->
                     <Entry x:Name="txtLicenseNumber"
-               Placeholder="Enter License Number"
-               Grid.Row="0" Grid.Column="0"
-               Margin="0,0,2,0"
-               TextChanged="OnLicenseTextChanged"
-               Focused="OnEntryFocused" />
+           Placeholder="Enter License Number"
+           Grid.Row="0"
+           Grid.Column="0"
+           Margin="0,0,2,0"
+           TextChanged="OnLicenseTextChanged"
+           Focused="OnEntryFocused" />
 
-                    <!-- Login Button (wide) -->
-                    <Button Text="Login"
-                Grid.Row="0" Grid.Column="1"
-                WidthRequest="150"
-                Margin="3,0,0,0"
-                VerticalOptions="Center"
-                Clicked="OnReadClicked" />
+                    <!-- Login Button -->
+                    <Button x:Name="btnLogin"
+            Text="Login"
+            Grid.Row="0"
+            Grid.Column="1"
+            Margin="2,0,0,0"
+            VerticalOptions="Center"
+            Clicked="OnReadClicked" />
 
                     <!-- Suggestions -->
                     <Frame x:Name="SuggestionsFrame"
-               Grid.Row="1"
-               Grid.Column="0"
-               HasShadow="False"
-               BorderColor="#ccc"
-               CornerRadius="5"
-               Padding="0"
-               Margin="0"
-               IsVisible="False">
+           Grid.Row="1"
+           Grid.Column="0"
+           HasShadow="False"
+           BorderColor="#ccc"
+           CornerRadius="5"
+           Padding="0"
+           Margin="0"
+           IsVisible="False"
+           HorizontalOptions="FillAndExpand">
+                      
 
-                        <CollectionView x:Name="SuggestionsView"
+                        <ScrollView VerticalScrollBarVisibility="Always"
+                    Orientation="Vertical">
+                            <CollectionView x:Name="SuggestionsView"
                             SelectionMode="Single"
-                            HeightRequest="40"
+                            HeightRequest="50"
                             ItemsLayout="VerticalList"
                             BackgroundColor="White"
                             SelectionChanged="OnSuggestionSelected"
                             Margin="0"
                             VerticalOptions="Start"
                             IsVisible="False">
-
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate>
-                                    <Label Text="{Binding .}"
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Label Text="{Binding .}"
                                FontSize="11"
                                Padding="1"
                                Margin="0"
-                               TextColor="Black" TextDecorations="Underline" />
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                               TextColor="Black"
+                               TextDecorations="Underline" />
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </ScrollView>
                     </Frame>
                 </Grid>
+
+
             </VerticalStackLayout>
 
 
@@ -265,7 +206,7 @@
 
             <!-- Enter Logbook Button (Initially Hidden) -->
             <Button x:Name="btnEnterLogbook"
-                    Text="Enter Logbook"
+                    Text="Access C4i System"
                     BackgroundColor="Green"
                     TextColor="White"
                     Clicked="OnEnterLogbookClicked"

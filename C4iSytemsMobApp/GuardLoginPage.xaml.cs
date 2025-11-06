@@ -104,7 +104,7 @@ public partial class GuardLoginPage : ContentPage
 
         try
         {
-            var savedLicenseNumber = Preferences.Get("SavedLicenseNumber","");
+            var savedLicenseNumber = Preferences.Get("SavedLicenseNumber", "");
 
             if (!string.IsNullOrEmpty(savedLicenseNumber))
             {
@@ -157,8 +157,8 @@ public partial class GuardLoginPage : ContentPage
 
         // Load previously saved numbers
         LoadSavedNumbers();
-        
-       //RestorePreviousSelection();
+
+        //RestorePreviousSelection();
     }
 
     private void LoadSavedNumbers()
@@ -182,7 +182,7 @@ public partial class GuardLoginPage : ContentPage
             _previousNumbers = _previousNumbers.OrderBy(x => x).ToList();
 
             // Set last entered value to textbox
-           // txtLicenseNumber.Text = _previousNumbers.Last();
+            // txtLicenseNumber.Text = _previousNumbers.Last();
 
             // Load full list into suggestion view
             _filteredSuggestions.Clear();
@@ -251,12 +251,12 @@ public partial class GuardLoginPage : ContentPage
     {
         //if (string.IsNullOrEmpty(txtLicenseNumber.Text))
         //{
-            _filteredSuggestions.Clear();
-            foreach (var item in _previousNumbers)
-                _filteredSuggestions.Add(item);
+        _filteredSuggestions.Clear();
+        foreach (var item in _previousNumbers)
+            _filteredSuggestions.Add(item);
 
-            SuggestionsView.IsVisible = _filteredSuggestions.Any();
-            SuggestionsFrame.IsVisible = _filteredSuggestions.Any();
+        SuggestionsView.IsVisible = _filteredSuggestions.Any();
+        SuggestionsFrame.IsVisible = _filteredSuggestions.Any();
         //}
     }
 
@@ -300,7 +300,7 @@ public partial class GuardLoginPage : ContentPage
         }
 
         // Optionally restore ClientSite in a similar way
-        
+
     }
 
 
@@ -318,18 +318,18 @@ public partial class GuardLoginPage : ContentPage
                 SelectedClientSite = siteItem;
                 pickerClientSite.SelectedItem = siteItem;
 
-               
 
-                
+
+
             }
             else
             {
-               
+
             }
         }
         else
         {
-           
+
         }
     }
 
@@ -346,7 +346,7 @@ public partial class GuardLoginPage : ContentPage
     {
         try
         {
-            string userName = Preferences.Get("UserName","");
+            string userName = Preferences.Get("UserName", "");
             if (!string.IsNullOrEmpty(userName))
             {
                 lblLoggedInUser.Text = $"Welcome, {userName}";
@@ -495,6 +495,7 @@ public partial class GuardLoginPage : ContentPage
         return true;
     }
 
+    bool isLoggedIn = false;
 
     private async void OnReadClicked(object sender, EventArgs e)
     {
@@ -532,43 +533,70 @@ public partial class GuardLoginPage : ContentPage
                 return;
             }
 
-            // Valid guard, proceed
-            //LoadSavedNumbers();
-            SaveNewNumber(licenseNumber);
-            Preferences.Set(LastNumberKey, licenseNumber);
-            SuggestionsView.IsVisible = false;
-            SuggestionsFrame.IsVisible = false;
-            Preferences.Set("GuardId", guardData.GuardId.ToString());
-            Preferences.Set("GuardName", guardData.Name);
-            Preferences.Set("LicenseNumber", licenseNumber);
+            if (!isLoggedIn)
+            {
 
-            // Disable entry and button
-            txtLicenseNumber.IsEnabled = false;
-            ((Button)sender).IsEnabled = false;
 
-            lblGuardName.Text = $"Hello {guardData.Name}. Please verify your details and click Enter Log Book";
-            lblGuardName.TextColor = Colors.Green;
-            lblGuardName.IsVisible = true;
+                // Valid guard, proceed
+                //LoadSavedNumbers();
+                SaveNewNumber(licenseNumber);
+                Preferences.Set(LastNumberKey, licenseNumber);
+                SuggestionsView.IsVisible = false;
+                SuggestionsFrame.IsVisible = false;
+                Preferences.Set("GuardId", guardData.GuardId.ToString());
+                Preferences.Set("GuardName", guardData.Name);
+                Preferences.Set("LicenseNumber", licenseNumber);
 
-            // Show UI controls
 
-            hrStatusLayout.IsVisible = true;
-            SetLedColor(ledHR1, guardData.HR1Status);
-            SetLedColor(ledHR2, guardData.HR2Status);
-            SetLedColor(ledHR3, guardData.HR3Status);
+                isLoggedIn = true;
+                btnLogin.Text = "Go Back"; // Change button text
+                // Disable entry and button
+                txtLicenseNumber.IsEnabled = false;
+                //((Button)sender).IsEnabled = false;
 
-            pickerClientType.IsVisible = true;
-            pickerClientSite.IsVisible = true;
-            btnEnterLogbook.IsVisible = true;
-            ToggleInstructionalTextVisibility();
+                lblGuardName.Text = $"Hello {guardData.Name}.  Please verify that your details are correct, then click \"Access C4i System.\"";
+                lblGuardName.TextColor = Colors.Green;
+                lblGuardName.IsVisible = true;
 
-            // Load client types properly
-            await LoadDropdownData(); // <-- await here, make LoadDropdownData async Task
+                // Show UI controls
 
-            RestorePreviousSelection();
+                hrStatusLayout.IsVisible = true;
+                SetLedColor(ledHR1, guardData.HR1Status);
+                SetLedColor(ledHR2, guardData.HR2Status);
+                SetLedColor(ledHR3, guardData.HR3Status);
 
-            if (SelectedClientType != null)
+                pickerClientType.IsVisible = true;
                 pickerClientSite.IsVisible = true;
+                btnEnterLogbook.IsVisible = true;
+                ToggleInstructionalTextVisibility();
+
+                // Load client types properly
+                await LoadDropdownData(); // <-- await here, make LoadDropdownData async Task
+
+                RestorePreviousSelection();
+
+                if (SelectedClientType != null)
+                    pickerClientSite.IsVisible = true;
+
+            }
+
+            else
+            {
+                // Handle "Back" or "Clear" action
+              
+                isLoggedIn = false;
+                btnLogin.Text = "Login"; // Change text back
+                lblGuardName.Text = string.Empty;               
+                lblGuardName.IsVisible = false;
+                txtLicenseNumber.IsEnabled = true; // Re-enable entry
+                txtLicenseNumber.Text = string.Empty; // Clear text
+                SuggestionsFrame.IsVisible = true; // Hide suggestions
+                hrStatusLayout.IsVisible = false;
+                pickerClientType.IsVisible = false;
+                pickerClientSite.IsVisible = false;
+                btnEnterLogbook.IsVisible = false;
+                ToggleInstructionalTextVisibility();
+            }
         }
         catch (Exception ex)
         {
@@ -753,7 +781,7 @@ public partial class GuardLoginPage : ContentPage
                             Application.Current.MainPage = new GuardSecurityIdTagPage();
                         }
                         else
-                        {                            
+                        {
                             var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
                             Application.Current.MainPage = new MainPage(volumeButtonService);
                         }
@@ -790,7 +818,7 @@ public partial class GuardLoginPage : ContentPage
         try
         {
             await _nfcService.InitializeAsync();
-            SubscribeToNFCEvents();            
+            SubscribeToNFCEvents();
             // Some delay to prevent Java.Lang.IllegalStateException on Android
             await Task.Delay(500);
             //await StartListeningIfNotiOS();
