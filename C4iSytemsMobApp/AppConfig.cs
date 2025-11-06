@@ -9,9 +9,9 @@ namespace C4iSytemsMobApp
         public static string MobileSignalRRCBaseUrl { get; set; } = "https://rc.cws-ir.com";
 
         // ### Test Url ####
-        ////public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.34:92";
-        ////public static string MobileSignalRBaseUrl { get; set; } = "http://test.c4i-system.com";
-        ////public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
+        //public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.34:92";
+        //public static string MobileSignalRBaseUrl { get; set; } = "http://test.c4i-system.com";
+        //public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
 
 
 

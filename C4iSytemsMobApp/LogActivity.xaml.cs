@@ -168,10 +168,7 @@ public partial class LogActivity : ContentPage
             return;
 
         _isLogsLoading = true;
-
-        int totallogscount = 0;
-        int currentlog = 0;
-
+       
         try
         {
             if (_guardId <= 0 || _clientSiteId <= 0 || _userId <= 0)
@@ -207,10 +204,9 @@ public partial class LogActivity : ContentPage
             var bgColorNormal = Color.FromArgb("#F2F2F2"); // default
 
             LogDisplayArea.Children.Clear(); // Refresh UI
-            totallogscount = logs.Count;
+            
             foreach (var log in logs) // 
-            {
-                TotalLogsInfo.Text = $"Today's Logs: (loading {++currentlog} / {totallogscount})";
+            {                
                 bool isAlarm = false;
                 var contentLayout = new VerticalStackLayout
                 {
@@ -611,8 +607,7 @@ public partial class LogActivity : ContentPage
         }
         finally
         {
-            _isLogsLoading = false;
-            TotalLogsInfo.Text = "Today's Logs:";
+            _isLogsLoading = false;            
         }
     }
 
