@@ -168,6 +168,9 @@ public partial class LogActivity : ContentPage
 
         _isLogsLoading = true;
 
+        int totallogscount = 0;
+        int currentlog = 0;
+
         try
         {
             if (_guardId <= 0 || _clientSiteId <= 0 || _userId <= 0)
@@ -184,7 +187,7 @@ public partial class LogActivity : ContentPage
 
             var json = await response.Content.ReadAsStringAsync();
             var logs = JsonSerializer.Deserialize<List<GuardLogDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                        
+            
             LogDisplayArea.Children.Clear();
 
             if (logs == null || logs.Count == 0)
@@ -203,10 +206,10 @@ public partial class LogActivity : ContentPage
             var bgColorNormal = Color.FromArgb("#F2F2F2"); // default
 
             LogDisplayArea.Children.Clear(); // Refresh UI
-
+            totallogscount = logs.Count;
             foreach (var log in logs) // 
-
             {
+                TotalLogsInfo.Text = $"Today's Logs: (loading {++currentlog} / {totallogscount})";
                 bool isAlarm = false;
                 var contentLayout = new VerticalStackLayout
                 {
@@ -590,9 +593,9 @@ public partial class LogActivity : ContentPage
         finally
         {
             _isLogsLoading = false;
+            TotalLogsInfo.Text = "Today's Logs:";
         }
     }
-
 
     private async void OnPickFileClicked(object sender, EventArgs e)
     {
@@ -1234,19 +1237,19 @@ public partial class LogActivity : ContentPage
                 .WithAutomaticReconnect()
                 .Build();
 
-            _hubConnection.Closed += async (error) =>
-            {
-                Debug.WriteLine($"Connection closed. Reason: {error?.Message}");
-                // Optionally attempt reconnect
-                await Task.Delay(3000);
-                await _hubConnection.StartAsync();
-            };
+            //_hubConnection.Closed += async (error) =>
+            //{
+            //    Debug.WriteLine($"Connection closed. Reason: {error?.Message}");
+            //    // Optionally attempt reconnect
+            //    await Task.Delay(3000);
+            //    await _hubConnection.StartAsync();
+            //};
 
-            _hubConnection.Reconnecting += error =>
-            {
-                Debug.WriteLine($"Reconnecting due to: {error?.Message}");
-                return Task.CompletedTask;
-            };
+            //_hubConnection.Reconnecting += error =>
+            //{
+            //    Debug.WriteLine($"Reconnecting due to: {error?.Message}");
+            //    return Task.CompletedTask;
+            //};
 
 
             _hubConnection.Reconnected += connectionId =>
@@ -1321,19 +1324,19 @@ public partial class LogActivity : ContentPage
                 .WithAutomaticReconnect()
                 .Build();
 
-            _hubConnectionRC.Closed += async (error) =>
-            {
-                Debug.WriteLine($"RC Connection closed. Reason: {error?.Message}");
-                // Optionally attempt reconnect
-                await Task.Delay(3000);
-                await _hubConnectionRC.StartAsync();
-            };
+            //_hubConnectionRC.Closed += async (error) =>
+            //{
+            //    Debug.WriteLine($"RC Connection closed. Reason: {error?.Message}");
+            //    // Optionally attempt reconnect
+            //    await Task.Delay(3000);
+            //    await _hubConnectionRC.StartAsync();
+            //};
 
-            _hubConnectionRC.Reconnecting += error =>
-            {
-                Debug.WriteLine($"RC Reconnecting due to: {error?.Message}");
-                return Task.CompletedTask;
-            };
+            //_hubConnectionRC.Reconnecting += error =>
+            //{
+            //    Debug.WriteLine($"RC Reconnecting due to: {error?.Message}");
+            //    return Task.CompletedTask;
+            //};
 
 
             _hubConnectionRC.Reconnected += connectionId =>

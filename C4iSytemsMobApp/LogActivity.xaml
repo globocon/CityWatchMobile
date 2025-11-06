@@ -130,7 +130,7 @@ TextColor="White"/>-->
         </StackLayout>
 
         <!-- Fixed Title -->
-        <Label Grid.Row="1"
+        <Label x:Name="TotalLogsInfo"  Grid.Row="1"
                Text="Today's Logs:"
                FontSize="14"
                FontAttributes="Bold"
