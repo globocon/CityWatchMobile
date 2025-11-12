@@ -9,10 +9,10 @@
 
 
     <Grid RowDefinitions="*,Auto"
-          Padding="15,0,15,15">
+          Padding="15,15,15,15">
 
         <!-- Main Content -->
-        <VerticalStackLayout Spacing="5"
+        <VerticalStackLayout Spacing="18"
                              Grid.Row="0">
 
             <!-- Logged-in User -->
@@ -30,7 +30,7 @@
             <!-- License Input and Remember Me -->
             <VerticalStackLayout Spacing="2" VerticalOptions="Center" Padding="0">
 
-                <Grid RowSpacing="0" ColumnSpacing="5">
+                <Grid RowSpacing="5" ColumnSpacing="5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -215,50 +215,72 @@
 
             <!-- HR Status Indicators -->
             <HorizontalStackLayout x:Name="hrStatusLayout"
-                       Spacing="20"
-                       Margin="0,10,0,0"
-                       IsVisible="False">
+                       Spacing="60"
+                       Margin="0,20,0,0"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       IsVisible="False"
+                       BackgroundColor="Transparent">
 
                 <!-- HR1 -->
-                <VerticalStackLayout>
-                    <HorizontalStackLayout Spacing="5">
-                        <BoxView x:Name="ledHR1"
-                     WidthRequest="15"
-                     HeightRequest="15"
-                     CornerRadius="7.5"
-                     Color="Gray"
-                     VerticalOptions="Center" />
-                        <Label Text="HR1 (C4i)" FontAttributes="Bold" VerticalOptions="Center"/>
-                    </HorizontalStackLayout>
+                <VerticalStackLayout Spacing="6"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center">
+                    <BoxView x:Name="ledHR1"
+                 WidthRequest="20"
+                 HeightRequest="20"
+                 CornerRadius="10"
+                 Color="Gray"
+                 HorizontalOptions="Center" BackgroundColor="Transparent" />
+                    <Label Text="HR1 (C4i)"
+               FontAttributes="Bold"
+               FontSize="12"
+               TextColor="White"
+               HorizontalOptions="Center"
+               VerticalOptions="Center" />
                 </VerticalStackLayout>
 
                 <!-- HR2 -->
-                <VerticalStackLayout>
-                    <HorizontalStackLayout Spacing="5">
-                        <BoxView x:Name="ledHR2"
-                     WidthRequest="15"
-                     HeightRequest="15"
-                     CornerRadius="7.5"
-                     Color="Gray"
-                     VerticalOptions="Center" />
-                        <Label Text="HR2 (Client)" FontAttributes="Bold" VerticalOptions="Center"/>
-                    </HorizontalStackLayout>
+                <VerticalStackLayout Spacing="6"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"                              
+                             BackgroundColor="Transparent"        >
+                    <BoxView x:Name="ledHR2"
+                 WidthRequest="20"
+                 HeightRequest="20"
+                 CornerRadius="10"
+                 Color="Gray"
+                 HorizontalOptions="Center" BackgroundColor="Transparent" />
+                    <Label Text="HR2 (Client)"
+               FontAttributes="Bold"
+               FontSize="12"
+               TextColor="White"
+               HorizontalOptions="Center"
+               VerticalOptions="Center" />
                 </VerticalStackLayout>
 
                 <!-- HR3 -->
-                <VerticalStackLayout>
-                    <HorizontalStackLayout Spacing="5">
-                        <BoxView x:Name="ledHR3"
-                     WidthRequest="15"
-                     HeightRequest="15"
-                     CornerRadius="7.5"
-                     Color="Gray"
-                     VerticalOptions="Center" />
-                        <Label Text="HR3 (Special)" FontAttributes="Bold" VerticalOptions="Center"/>
-                    </HorizontalStackLayout>
+                <VerticalStackLayout Spacing="6"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center" BackgroundColor="Transparent">
+                    <BoxView x:Name="ledHR3"
+                 WidthRequest="20"
+                 HeightRequest="20"
+                 CornerRadius="10"
+                 Color="Gray" BackgroundColor="Transparent"
+                 HorizontalOptions="Center" />
+                    <Label Text="HR3 (Special)"
+               FontAttributes="Bold"
+               FontSize="12"
+               TextColor="White"
+               HorizontalOptions="Center"
+               VerticalOptions="Center" />
                 </VerticalStackLayout>
 
             </HorizontalStackLayout>
+
+
+
 
 
         </VerticalStackLayout>
