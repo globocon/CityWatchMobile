@@ -340,25 +340,28 @@ TextColor="Black" />
                             <!-- Do you seek financial reimbursement? -->
                             <Label Text="Do you seek financial reimbursement?" FontAttributes="Bold" />
 
-                            <HorizontalStackLayout Spacing="30" Padding="10,0">
-                                <!-- NO Option -->
-                                <VerticalStackLayout>
-                                    <CheckBox x:Name="reimbursementNoCheckBox" IsChecked="True" />
-                                    <Label Text="NO (n/a)" FontSize="12" />
-                                </VerticalStackLayout>
+                        <HorizontalStackLayout Spacing="30" Padding="10,0">
+                            <!-- NO Option -->
+                            <VerticalStackLayout>
+                                <CheckBox x:Name="reimbursementNoCheckBox"
+                  IsChecked="True"
+                  CheckedChanged="OnReimbursementNoCheckedChanged" />
+                                <Label Text="NO (n/a)" FontSize="12" />
+                            </VerticalStackLayout>
 
-                                <!-- YES Option -->
-                                <VerticalStackLayout>
-                                    <CheckBox x:Name="reimbursementYesCheckBox" />
-                                    <Label Text="YES (&amp; Receipt Attached + PayID/BSB)" FontSize="12" />
-                                </VerticalStackLayout>
-                            </HorizontalStackLayout>
-
-                           
-
+                            <!-- YES Option -->
+                            <VerticalStackLayout>
+                                <CheckBox x:Name="reimbursementYesCheckBox"
+                  CheckedChanged="OnReimbursementYesCheckedChanged" />
+                                <Label Text="YES (&amp; Receipt Attached + PayID/BSB)" FontSize="12" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
 
 
-                        </VerticalStackLayout>
+
+
+
+                    </VerticalStackLayout>
                     </Frame>
 
                 <Frame CornerRadius="5" Padding="5" BorderColor="LightGray">
@@ -367,20 +370,23 @@ TextColor="Black" />
                         <Label Text="Patrol:" FontSize="14"/>
 
                         <HorizontalStackLayout Spacing="1" Padding="0,1" VerticalOptions="Center">
-
                             <!-- External Patrol Checkbox -->
                             <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-                                <CheckBox x:Name="PatrolExternalCheckBox" VerticalOptions="Center"/>
-                                <Label Text="External" VerticalOptions="Center" FontSize="14"/>
+                                <CheckBox x:Name="PatrolExternalCheckBox"
+                  VerticalOptions="Center"
+                  CheckedChanged="OnPatrolExternalCheckedChanged" />
+                                <Label Text="External" VerticalOptions="Center" FontSize="14" />
                             </HorizontalStackLayout>
 
                             <!-- Internal Patrol Checkbox -->
                             <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-                                <CheckBox x:Name="PatrolInternalCheckBox" VerticalOptions="Center"/>
-                                <Label Text="Internal" VerticalOptions="Center" FontSize="14"/>
+                                <CheckBox x:Name="PatrolInternalCheckBox"
+                  VerticalOptions="Center"
+                  CheckedChanged="OnPatrolInternalCheckedChanged" />
+                                <Label Text="Internal" VerticalOptions="Center" FontSize="14" />
                             </HorizontalStackLayout>
-
                         </HorizontalStackLayout>
+
 
                         <HorizontalStackLayout Spacing="5">
                             <Label Text="J:" VerticalOptions="Center" FontSize="14"/>

@@ -1,6 +1,7 @@
 
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
+using C4iSytemsMobApp.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net.Http.Headers;
@@ -113,7 +114,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         Suggestions = new ObservableCollection<string>(results);
     }
 
-    
+
     private bool _showClientTypeAndSite;
     public bool ShowClientTypeAndSite
     {
@@ -161,11 +162,11 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             {
                 _selectedClientSite = value;
                 OnPropertyChanged(nameof(SelectedClientSite));
-                
+
                 // Store selected client site ID in SecureStorage
                 if (_selectedClientSite != null)
                 {
-                    ClientAddress = _selectedClientSite?.Address;                    
+                    ClientAddress = _selectedClientSite?.Address;
                     OnClientSiteSelectedAsync(_selectedClientSite).ConfigureAwait(false);
                 }
 
@@ -181,7 +182,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         // Update address
         ClientAddress = selectedSite.Address;
 
-      
+
 
         // Load related areas if needed
         var clientSite = await GetClientSiteByName(selectedSite.Name);
@@ -243,7 +244,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
             if (string.IsNullOrEmpty(userId))
             {
-              
+
                 return;
             }
 
@@ -264,7 +265,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-           
+
         }
     }
     public async Task<(double Lat, double Lng)?> GetCoordinatesFromPlaceIdAsync(string placeId)
@@ -296,7 +297,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
 
 
-    
+
 
 
     protected override async void OnAppearing()
@@ -320,16 +321,21 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             {
                 await DisplayAlert("Not Found", $"No site found with the name '{clientTypeRaw}'.", "OK");
             }
+
+            // Prefill only AFTER data sources are ready
+            if (_reusedReport != null)
+            {
+                PrefillForm(_reusedReport);
+            }
         }
         catch (Exception ex)
         {
             await DisplayAlert("Error", $"Failed to load client site info.\n\n{ex.Message}", "OK");
         }
     }
+    IncidentRequest _reusedReport;
 
-
-
-    public WebIncidentReport()
+    public WebIncidentReport(IncidentRequest reusedReport = null)
     {
         InitializeComponent();
         _httpClient = new HttpClient(); // Initialize it
@@ -349,9 +355,147 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         // Now you can safely call:
         //viewModel.Suggestions.Clear();
         //viewModel.IsSuggestionsVisible = false;
+
+
+        // store for later use
+        _reusedReport = reusedReport;
     }
 
 
+    private void PrefillForm(IncidentRequest reusedReport)
+    {
+        if (reusedReport == null)
+            return;
+
+        try
+        {
+            // --- Pre-fill Event Checkboxes ---
+            var evt = reusedReport.EventType;
+            if (evt != null)
+            {
+                chkHrRelated.IsChecked = evt.HrRelated;
+                chkOhsMatters.IsChecked = evt.OhsMatters;
+                chkSecurityBreach.IsChecked = evt.SecurtyBreach;
+                chkEquipmentDamage.IsChecked = evt.EquipmentDamage;
+                chkCctvRelated.IsChecked = evt.Thermal;
+                chkEmergencyServices.IsChecked = evt.Emergency;
+                chkColourCodeAlert.IsChecked = evt.SiteColour;
+                chkHealthRestraints.IsChecked = evt.HealthDepart;
+                chkGeneralPatrol.IsChecked = evt.GeneralSecurity;
+                chkAlarmActive.IsChecked = evt.AlarmActive;
+                chkAlarmDisabled.IsChecked = evt.AlarmDisabled;
+                chkClientOnsite.IsChecked = evt.AuthorisedPerson;
+                chkEquipmentCarried.IsChecked = evt.Equipment;
+                chkOtherCategories.IsChecked = evt.Other;
+            }
+
+            // --- Colour Code Logic ---
+            if (evt != null && evt.SiteColour && ColourCodeList != null)
+            {
+                DropdownBorder.IsEnabled = true;
+
+                // Match colour code from saved report
+                var matchedItem = ColourCodeList
+                    .FirstOrDefault(x => x.Text == reusedReport.SiteColourCode);
+
+                if (matchedItem != null)
+                {
+                    // Use same logic as OnColourCodeSelected()
+                    SelectedColourLabel.Text = matchedItem.TemplateName;
+                    SelectedColourLabel.TextColor = Color.FromArgb(matchedItem.TextColor);
+                    SelectedColourLabel.BackgroundColor = Color.FromArgb(matchedItem.BackgroundColour);
+                    ColourCodeDropdown.IsVisible = false;
+                    ColourCodeDropdown.SelectedItem = matchedItem.TemplateName;
+
+                    // Load template types for this colour
+                    if (TemplateTypesList.Contains(matchedItem.FeedbackTypeName))
+                    {
+                        templateTypesPicker.SelectedItem = matchedItem.FeedbackTypeName;
+                        LoadTemplatesByType(matchedItem.FeedbackTypeName);
+                    }
+
+                    // Select template by ID
+                    var matchingTemplate = FilteredTemplatesList?
+                        .FirstOrDefault(t => t.TemplateId == matchedItem.TemplateId);
+
+                    if (matchingTemplate != null)
+                    {
+                        templatesPicker.SelectedItem = matchingTemplate;
+                        descriptionEditor.Text = matchingTemplate.Text;
+                    }
+                }
+            }
+
+            // --- Camera Radio Buttons ---
+            rbYes.IsChecked = reusedReport.BodyCameraYes;
+            rbNo.IsChecked = reusedReport.BodyCameraNo;
+
+            // --- Dropdowns and Pickers ---
+            GuardMonthPicker.SelectedItem = reusedReport.Officer?.GuardMonth;
+            NotifiedByEntry.Text = reusedReport.Officer?.NotifiedBy;
+
+            // --- Dates ---
+            if (reusedReport.DateLocation?.IncidentDate != null)
+            {
+                incidentDatePicker.Date = reusedReport.DateLocation.IncidentDate.Value.Date;
+                incidentTimePicker.Time = reusedReport.DateLocation.IncidentDate.Value.TimeOfDay;
+                enableDateTimeCheckBox.IsChecked = true;
+            }
+
+            reportDatePickerOffsite.Date = reusedReport.DateLocation?.ReportDate ?? DateTime.Today;
+
+            // --- Client and Description Info ---
+         
+            descriptionEditor.Text = reusedReport.Feedback ?? "";
+
+            PatrolExternalCheckBox.IsChecked = reusedReport.DateLocation?.PatrolExternal ?? false;
+            PatrolInternalCheckBox.IsChecked = reusedReport.DateLocation?.PatrolInternal ?? false;
+            JobNumberEntry.Text = reusedReport.DateLocation?.JobNumber ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(reusedReport?.DateLocation?.JobTime))
+            {
+                if (TimeSpan.TryParse(reusedReport.DateLocation.JobTime, out var parsedTime))
+                {
+                    JobTimePicker.Time = parsedTime;
+                }
+                else
+                {
+                    // fallback in case string isn't a valid time
+                    //JobTimePicker.Time = DateTime.Now.TimeOfDay;
+                }
+            }
+            reimbursementNoCheckBox.IsChecked = reusedReport.DateLocation?.ReimbursementNo ?? false;
+            reimbursementYesCheckBox.IsChecked = reusedReport.DateLocation?.ReimbursementYes ?? false;
+            supervisorEntry.Text = reusedReport.ReportedBy ?? string.Empty;
+            incidentLocationCheckBox.IsChecked = reusedReport.DateLocation?.ShowIncidentLocationAddress ?? false;
+            //ApplyIncidentLocationState(incidentLocationCheckBox.IsChecked);
+            clientAddressEntry.Text = reusedReport.DateLocation?.ClientAddress ?? "";
+
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error pre-filling IR form: {ex.Message}");
+        }
+    }
+
+    private void ApplyIncidentLocationState(bool isChecked)
+    {
+        if (isChecked)
+        {
+            //_savedClientAddress = ClientAddress;
+            //ClientAddress = string.Empty;
+            IsSearchEnabled = true;
+            Suggestions.Clear();
+            IsSuggestionsVisible = false;
+        }
+        else
+        {
+            //IsSearchEnabled = false;
+            IsSuggestionsVisible = false;
+            ClientAddress = _savedClientAddress;
+            Suggestions.Clear();
+        }
+    }
 
     public async Task LoadNotifiedByListAsync()
     {
@@ -394,7 +538,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     public async Task<ClientSite> GetClientSiteByName(string name)
     {
         using var httpClient = new HttpClient();
-      
+
         var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSiteByName?name={Uri.EscapeDataString(name)}";
 
         var response = await httpClient.GetAsync(url);
@@ -627,7 +771,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             var clientSiteId = Preferences.Get("SelectedClientSiteId", "");
             var userId = Preferences.Get("UserId", "");
 
-           
+
 
 
             var clientType = Preferences.Get("ClientType", "");
@@ -662,10 +806,10 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 string.IsNullOrWhiteSpace(guardName) ||
                 string.IsNullOrWhiteSpace(savedLicenseNumber) ||
                 string.IsNullOrWhiteSpace(clientSite) ||
-                string.IsNullOrWhiteSpace(clientTypeNew)||
+                string.IsNullOrWhiteSpace(clientTypeNew) ||
                 string.IsNullOrWhiteSpace(userId) ||
                 string.IsNullOrWhiteSpace(gpsCoordinates)
-                
+
 
                 )
             {
@@ -736,27 +880,27 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
 
 
-         
+
 
             var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ProcessIrSubmit?gps={gpsCoordinates}&UserId={userId}&IRguardId={guardId}&IRclientSiteId={clientSiteId}";
-            
+
             var selectedColourCode = ColourCodeDropdown.SelectedItem as FeedbackTemplateViewModel;
 
             int? selectedColourCodeId = selectedColourCode?.TemplateId;
 
             DateTime reportDateTime = new DateTime();
 
-           
-          
-                reportDateTime = new DateTime(
-                    reportDatePickerOffsite.Date.Year,
-                    reportDatePickerOffsite.Date.Month,
-                    reportDatePickerOffsite.Date.Day,
-                    reportTimePickerOffsite.Time.Hours,
-                    reportTimePickerOffsite.Time.Minutes,
-                    0
-                );
-           
+
+
+            reportDateTime = new DateTime(
+                reportDatePickerOffsite.Date.Year,
+                reportDatePickerOffsite.Date.Month,
+                reportDatePickerOffsite.Date.Day,
+                reportTimePickerOffsite.Time.Hours,
+                reportTimePickerOffsite.Time.Minutes,
+                0
+            );
+
 
             if (_currentClientSite == null)
             {
@@ -807,8 +951,8 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
             var Report = new IncidentRequest
             {
-                ReportReference= IrSession.ReportReference,
-               
+                ReportReference = IrSession.ReportReference,
+
                 EventType = new EventType
                 {
                     HrRelated = chkHrRelated?.IsChecked ?? false,
@@ -889,10 +1033,11 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 },
                 LinkedSerialNos = null,
                 Feedback = descriptionEditor?.Text ?? string.Empty,
-                ReportedBy = null,
+                ReportedBy = supervisorEntry?.Text ?? string.Empty,
                 FeedbackType = _selectedTemplate?.Type ?? 0,
                 FeedbackTemplates = _selectedTemplate?.TemplateId ?? 0,
-                PSPFName = "[SEC=UNOFFICIAL]"
+                PSPFName = "[SEC=UNOFFICIAL]",
+                
             };
 
 
@@ -928,31 +1073,60 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
 
             // Send the object as JSON and get the response as a strongly-typed list
-            using var httpClient = new HttpClient();
-            var response = await httpClient.PostAsJsonAsync(url, Report);
-            //using var httpClient = new HttpClient();
-            //var response = await httpClient.PostAsJsonAsync("", Report);
+            ProcessIrResponse result;
 
-            var result = await response.Content.ReadFromJsonAsync<ProcessIrResponse>();
+            bool IsTestMode = false; // Set to false for real API call
 
-            if (!string.IsNullOrEmpty(result?.FileName))
+
+
+            if (IsTestMode)
             {
+                //  Step 1: Create a fake API response object
+                result = new ProcessIrResponse
+                {
+                    Success = true,
+                    FileName = "TestReport_12345.pdf",
+                    Domin = "TestDomain",
+                    Errors = new List<ProcessIrError>()
+                };
+
+                // Step 2: Simulate saving the current form data
+                IRPreferenceHelper.Save(Report);
+
+                // Step 3: Construct a fake download URL
                 var staticBaseUrl = "https://cws-ir.com/Pdf/ToDropbox/";
                 var fullDownloadUrl = $"{staticBaseUrl}{Uri.EscapeDataString(result.FileName)}";
 
-                Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, (result?.Domin)));
+                // Step 4: Simulate page navigation
+                Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, result.Domin));
 
+                // Step 5: Notify user
+                await DisplayAlert("Test Mode", "Form data saved locally — no API call made.", "OK");
             }
             else
             {
-                var errorMessages = string.Join("\n", result?.Errors.Select(e => $"{e.Code}: {e.Message}"));
-                await DisplayAlert("Error", $"Failed to generate report:\n{errorMessages}", "OK");
+                // Real API call
+                using var httpClient = new HttpClient();
+                var response = await httpClient.PostAsJsonAsync(url, Report);
+
+                result = await response.Content.ReadFromJsonAsync<ProcessIrResponse>();
+
+                if (!string.IsNullOrEmpty(result?.FileName))
+                {
+                    IRPreferenceHelper.Save(Report);
+                    var staticBaseUrl = "https://cws-ir.com/Pdf/ToDropbox/";
+                    var fullDownloadUrl = $"{staticBaseUrl}{Uri.EscapeDataString(result.FileName)}";
+
+                    Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, (result?.Domin)));
+                }
+                else
+                {
+                    var errorMessages = string.Join("\n", result?.Errors?.Select(e => $"{e.Code}: {e.Message}") ?? new[] { "Unknown error" });
+                    await DisplayAlert("Error", $"Failed to generate report:\n{errorMessages}", "OK");
+
+                }
+
             }
-            // Use 'templates' as needed
-            IrSession.ReportReference = Guid.NewGuid().ToString();
-            var error = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Error: {response.StatusCode}, Details: {error}");
-            await DisplayAlert("Success", "Incident submitted successfully.", "OK");
         }
         catch (Exception ex)
         {
@@ -986,6 +1160,54 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         }
     }
 
+
+    private void OnPatrolExternalCheckedChanged(object sender, CheckedChangedEventArgs e)
+    {
+        if (e.Value)
+        {
+            // Uncheck the other one
+            PatrolInternalCheckBox.CheckedChanged -= OnPatrolInternalCheckedChanged;
+            PatrolInternalCheckBox.IsChecked = false;
+            PatrolInternalCheckBox.CheckedChanged += OnPatrolInternalCheckedChanged;
+        }
+    }
+
+    private void OnPatrolInternalCheckedChanged(object sender, CheckedChangedEventArgs e)
+    {
+        if (e.Value)
+        {
+            // Uncheck the other one
+            PatrolExternalCheckBox.CheckedChanged -= OnPatrolExternalCheckedChanged;
+            PatrolExternalCheckBox.IsChecked = false;
+            PatrolExternalCheckBox.CheckedChanged += OnPatrolExternalCheckedChanged;
+        }
+    }
+
+
+    private void OnReimbursementNoCheckedChanged(object sender, CheckedChangedEventArgs e)
+    {
+        if (e.Value)
+        {
+            // Uncheck YES when NO is checked
+            reimbursementYesCheckBox.CheckedChanged -= OnReimbursementYesCheckedChanged;
+            reimbursementYesCheckBox.IsChecked = false;
+            reimbursementYesCheckBox.CheckedChanged += OnReimbursementYesCheckedChanged;
+        }
+    }
+
+    private void OnReimbursementYesCheckedChanged(object sender, CheckedChangedEventArgs e)
+    {
+        if (e.Value)
+        {
+            // Uncheck NO when YES is checked
+            reimbursementNoCheckBox.CheckedChanged -= OnReimbursementNoCheckedChanged;
+            reimbursementNoCheckBox.IsChecked = false;
+            reimbursementNoCheckBox.CheckedChanged += OnReimbursementNoCheckedChanged;
+        }
+    }
+
+
+
     private void templatesPicker_SelectedIndexChanged(object sender, EventArgs e)
     {
         if (templatesPicker.SelectedItem is FeedbackTemplateViewModel selectedTemplate &&
@@ -1004,9 +1226,9 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
     private void OnClientAddressTextChanged(object sender, TextChangedEventArgs e)
     {
-       
-           ClientAddress = e.NewTextValue;
-        
+
+        ClientAddress = e.NewTextValue;
+
     }
 
     private void OnSuggestionSelected(object sender, SelectionChangedEventArgs e)
@@ -1031,22 +1253,22 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     }
     private void OnIncidentLocationCheckBoxChanged(object sender, CheckedChangedEventArgs e)
     {
-      
-            if (e.Value) // Checkbox is checked
-            {
-                _savedClientAddress = ClientAddress;
-                ClientAddress = string.Empty;
-               // vm.IsSuggestionsVisible = true;
-                IsSearchEnabled = true;
-            }
-            else // Checkbox is unchecked
-            {
-                IsSearchEnabled = false;
-                IsSuggestionsVisible = false;
-                ClientAddress = _savedClientAddress;
-                Suggestions.Clear();
-            }
-        
+
+        if (e.Value) // Checkbox is checked
+        {
+            _savedClientAddress = ClientAddress;
+            ClientAddress = string.Empty;
+            // vm.IsSuggestionsVisible = true;
+            IsSearchEnabled = true;
+        }
+        else // Checkbox is unchecked
+        {
+            IsSearchEnabled = false;
+            IsSuggestionsVisible = false;
+            ClientAddress = _savedClientAddress;
+            Suggestions.Clear();
+        }
+
     }
 
 
@@ -1355,7 +1577,7 @@ public class GooglePlacesService
 
     public async Task<List<string>> GetSuggestionsAsync(string input)
     {
-        
+
         var url = $"https://maps.googleapis.com/maps/api/place/autocomplete/json?input={Uri.EscapeDataString(input)}&types=address&components=country:au&key={_apiKey}";
         using var client = new HttpClient();
         var json = await client.GetStringAsync(url);

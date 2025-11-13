@@ -1,4 +1,5 @@
 using C4iSytemsMobApp.Interface;
+using C4iSytemsMobApp.Services;
 
 namespace C4iSytemsMobApp;
 
@@ -8,6 +9,7 @@ public partial class DownloadIr : ContentPage
     private string _thirdPartyDomain;
     public DownloadIr(string downloadUrl,string thirdPartyDomin)
 	{
+        NavigationPage.SetHasNavigationBar(this, false);
         InitializeComponent();
         _downloadUrl = downloadUrl;
         _thirdPartyDomain = thirdPartyDomin;
@@ -69,5 +71,26 @@ public partial class DownloadIr : ContentPage
 
         //Application.Current.MainPage = new MainPage();
     }
+
+
+    private async void OnReuseClicked(object sender, EventArgs e)
+    {
+        var lastRequest = IRPreferenceHelper.Load();
+
+        if (lastRequest == null)
+        {
+            await DisplayAlert("No Data", "No previous IR found to reuse.", "OK");
+            return;
+        }
+
+        // Reset values that must be new each time
+        lastRequest.Id = 0;
+        lastRequest.ReportReference = Guid.NewGuid().ToString();
+        lastRequest.ReportedBy = string.Empty;
+
+        // Navigate to form page with prefilled data
+        Application.Current.MainPage = new NavigationPage(new WebIncidentReport(lastRequest));
+    }
+
 
 }

@@ -5,7 +5,7 @@
              >
 
     <ScrollView>
-        <StackLayout Padding="3" Spacing="3" VerticalOptions="StartAndExpand">
+        <StackLayout Padding="2" Spacing="2" VerticalOptions="StartAndExpand">
 
             <!-- Top Buttons Row -->
         <Grid ColumnDefinitions="*,*">
@@ -30,34 +30,98 @@
         </Grid>
 
         <!-- Title -->
-        <Label Text="Incident Report Submitted Successfully"
-               FontSize="22"
-               FontAttributes="Bold"
-               TextColor="DarkGreen"
-               HorizontalTextAlignment="Center" />
+        <Label 
+    Text="Incident Report Submitted Successfully"
+    FontSize="20"
+    FontAttributes="Bold"
+    TextColor="DarkGreen"
+    HorizontalTextAlignment="Center"
+    Padding="10,5,10,5" />
 
-        <!-- Download Button -->
-        <Button Text="Download Report"
-                FontSize="18"
-                BackgroundColor="DarkGreen"
-                TextColor="White"
-                Clicked="OnDownloadClicked"
-                CornerRadius="10"
-                Padding="10,5"
-                HorizontalOptions="Center" />
+            <!-- Download Button -->
+            <Button 
+    Text="Download Report"
+    Clicked="OnDownloadClicked"
+    FontSize="14"
+    BackgroundColor="DarkGreen"
+    TextColor="White"
+    CornerRadius="10"
+    Padding="8,4"
+    WidthRequest="300"
+    HeightRequest="40"
+    HorizontalOptions="Center"
+    Margin="0,0,0,10" />
+            <!-- Adds spacing below this button -->
 
-        <!-- Thank You Note -->
-            <Label x:Name="ThankYouLabel"
-       Text="Thank you! Your report has been emailed to CityWatch HQ and, if needed, to the client as well."
-       FontSize="14"
-       TextColor="Black"
-       HorizontalTextAlignment="Center" />
+            <!-- Re-use content button -->
+            <Button 
+    Text="Re-use content for another IR?"
+    Clicked="OnReuseClicked"
+    FontSize="14"
+    BackgroundColor="White"
+    TextColor="Green"
+    BorderColor="Green"
+    BorderWidth="2"
+    CornerRadius="10"
+    Padding="8,4"
+    WidthRequest="300"
+    HeightRequest="40"
+    HorizontalOptions="Center"
+    ImageSource="playnew.png"
+    ContentLayout="Left,10" />
 
-            <!-- Mental Health Info -->
-        <Label Text="Some incidents may be traumatic. Mental Health and EAP resources are available in the Tools menu."
-               FontSize="13"
-               TextColor="Gray"
-               HorizontalTextAlignment="Center" />
+
+
+            <!-- Thank You Note -->
+            <Label 
+    x:Name="ThankYouLabel"
+    Text="Thank you! Your report has been emailed to CityWatch HQ and, if needed, to the client as well."
+    FontSize="13"
+    HorizontalTextAlignment="Center"
+    Padding="10"
+     />
+
+
+
+            <Frame
+    Padding="12"
+    Margin="8"
+    CornerRadius="10"
+    BorderColor="OrangeRed"
+    BackgroundColor="#FFF8E1"
+    HasShadow="True">
+
+                <VerticalStackLayout Spacing="8">
+
+                    <!-- Header section: icon + heading text -->
+                    <HorizontalStackLayout
+    Spacing="8"
+    VerticalOptions="Center"
+    HorizontalOptions="Center">
+
+                        <Image
+        Source="warning.png"
+        WidthRequest="40"
+        HeightRequest="40"
+        VerticalOptions="Center"
+        HorizontalOptions="Center" />
+                    </HorizontalStackLayout>
+
+                    <!-- Content paragraphs -->
+                    <Label
+            Text="Subject to site SOP's, some events will require the Client to be called on their mobile or SMS sent to alert them (e.g. FIRE issue, EPA issue, Flood, Break In etc)."
+            FontSize="13"
+            TextColor="Black"
+            LineBreakMode="WordWrap" />
+
+                    <Label
+            Text="Some incidents can be traumatic and stressful. Under 'Tools' hyperlink on system, all guards have access to Mental Health Support Weblinks and confidential Employee Assistance Programs (EAP)."
+            FontSize="13"
+            TextColor="Black"
+            LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+            </Frame>
+
 
         </StackLayout>
     </ScrollView>
