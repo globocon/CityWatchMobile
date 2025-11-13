@@ -37,6 +37,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IScannerControlServices, ScannerControlServices>();
         builder.Services.AddSingleton<ILogBookServices, LogBookServices>();
         builder.Services.AddSingleton<INfcService, NfcService>();
+        builder.Services.AddSingleton<IAppUpdateService, AppUpdateService>();
 
 #if ANDROID
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.Android.Services.VolumeButtonService>();
@@ -51,7 +52,8 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
-
-		return builder.Build();
+        // This line allows DI to create your App(LoginPage, IAppUpdateService)
+        builder.Services.AddSingleton<App>();
+        return builder.Build();
 	}
 }
