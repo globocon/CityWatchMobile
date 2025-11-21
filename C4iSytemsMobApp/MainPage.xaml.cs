@@ -18,7 +18,7 @@ using C4iSytemsMobApp.Enums;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Maui;
 using System.Windows.Input;
-
+using C4iSytemsMobApp.Data.DbServices;
 
 
 namespace C4iSytemsMobApp
@@ -28,7 +28,7 @@ namespace C4iSytemsMobApp
         private readonly HttpClient _httpClient;
         private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
         private readonly IVolumeButtonService _volumeButtonService;
-        private readonly ILogBookServices _logBookServices;
+        private readonly ILogBookServices _logBookServices;        
         private int _pcounter = 0;
         private int _CurrentCounter = 0;
         private int _totalpatrons = 0;
@@ -125,10 +125,16 @@ namespace C4iSytemsMobApp
         //private CancellationTokenSource _tagStatusCts;
         public ObservableCollection<SiteTagStatusPending> TagFields { get; set; } = new ObservableCollection<SiteTagStatusPending>();
         public ICommand LongPressCommand { get; }
-        //private DateTime _touchStartTime;
+        public string OnlineText { get; set; }
+        public Color OnlineColor { get; set; }
+        public string SyncStatusText { get; set; }
         public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
             InitializeComponent();
+            App.ConnectivityChangedEvent += OnConnectivityChanged;
+            OnConnectivityChanged(App.IsOnline);
+            UpdateCacheLabel(SyncState.SyncedCount);
+            UpdateSyncStatusLabel(SyncState.SyncingStatus);
             _volumeButtonService = volumeButtonService;
             BindingContext = this;
             NavigationPage.SetHasNavigationBar(this, false);
@@ -140,7 +146,7 @@ namespace C4iSytemsMobApp
             duressCheckTimer.Start();
             _shouldOpenDrawerOnReturn = showDrawerOnStart ?? false; // Defaults to false if null
             _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
-            _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
+            _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();            
 
             string isCrowdControlEnabledForSiteLocalStored = Preferences.Get("CrowdCountEnabledForSite", "false");
 
@@ -155,6 +161,40 @@ namespace C4iSytemsMobApp
             PopupCollectionView.BindingContext = this;
 
 
+        }
+                
+        public void OnConnectivityChanged(bool isOnline)
+        {
+            OnlineText = isOnline ? "Online" : "Offline";
+            OnlineColor = isOnline ? Colors.Green : Colors.Red;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineText)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineColor))); 
+        }
+        private void UpdateCacheLabel(int ccheCount)
+        {
+            CchStatusLabel.Text = $"Cch:{ccheCount}";
+        }
+
+        private void UpdateSyncStatusLabel(string syncstatus)
+        {
+            SyncStatusText = syncstatus;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SyncStatusText)));
+        }
+
+        private void SyncState_SyncedCountChanged(object sender, int newCount)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                UpdateCacheLabel(newCount);
+            });
+        }
+
+        private void SyncState_SyncingStatusChanged(object sender, string newStatus)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                UpdateSyncStatusLabel(newStatus);
+            });
         }
 
         private async Task OnDuressClicked2(object sender, EventArgs e)
@@ -180,7 +220,8 @@ namespace C4iSytemsMobApp
                 OpenDrawer();
             }
 
-
+            SyncState.SyncedCountChanged += SyncState_SyncedCountChanged;
+            SyncState.SyncingStatusChanged += SyncState_SyncingStatusChanged;
             // If InitializePatronsCounterDisplay is async, await it.
             await InitializePatronsCounterDisplay();  // Execution Order - 1
             await StartNFC(); // Execution Order - 2
@@ -423,6 +464,10 @@ namespace C4iSytemsMobApp
 
             // Unsubscribe safely
             //TagStatusService.Instance.Unsubscribe(OnTagStatusUpdated);
+
+            App.ConnectivityChangedEvent -= OnConnectivityChanged;
+            SyncState.SyncedCountChanged -= SyncState_SyncedCountChanged;
+            SyncState.SyncingStatusChanged -= SyncState_SyncingStatusChanged;
         }
 
         private async void LoadLoggedInUser()
@@ -1294,6 +1339,24 @@ namespace C4iSytemsMobApp
             ThemeStateLabel.Text = isDark ? "On" : "Off";
         }
 
+        private async Task LogScannedDataToCache(string _TagUid, ScanningType _scannerType)
+        {
+            await ShowToastMessage($"Tag scanned. Logging activity to Cache...");
+            var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType,_clientSiteId.Value,_userId.Value,_guardId.Value);
+            if (isSuccess)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    SyncState.SyncedCount = _ChaceCount;
+                });
+                await ShowToastMessage(msg);
+            }
+            else
+            {
+                await DisplayAlert("Error", msg ?? "Failed to save tag scan", "OK");
+            }
+        }
+
         #region "NFC Methods"
 
         private async Task StartNFC()
@@ -1384,6 +1447,13 @@ namespace C4iSytemsMobApp
             }
             else if (!string.IsNullOrEmpty(serialNumber))
             {
+                if (!App.IsOnline)
+                {
+                    // Log To Cache                    
+                    await LogScannedDataToCache(serialNumber, ScanningType.NFC);
+                    return;
+                }
+
                 await ShowToastMessage($"Tag scanned. Logging activity...");
                 var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
                 if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;

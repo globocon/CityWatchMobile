@@ -1,3 +1,5 @@
+using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Services;
 using Microsoft.Maui.Controls;
@@ -17,6 +19,7 @@ public partial class GuardLoginPage : ContentPage
     private readonly IScannerControlServices _scannerControlServices;
     private readonly ICrowdControlServices _crowdControlServices;
     private readonly INfcService _nfcService;
+    private readonly IScanDataDbServices _scanDataDbService;
 
     public ObservableCollection<DropdownItem> ClientTypes { get; set; } = new();
     public ObservableCollection<DropdownItem> ClientSites { get; set; } = new();
@@ -143,6 +146,7 @@ public partial class GuardLoginPage : ContentPage
         _crowdControlServices = crowdControlServices;
         _scannerControlServices = scannerControlServices;
         _nfcService = IPlatformApplication.Current.Services.GetService<INfcService>();
+        _scanDataDbService = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
 
         BindingContext = this;
         LoadLoggedInUser();
@@ -726,6 +730,11 @@ public partial class GuardLoginPage : ContentPage
                 var response = await client.GetAsync(apiUrl);
                 if (response.IsSuccessStatusCode)
                 {
+                    string contentData = await response.Content.ReadAsStringAsync();
+                    var responseJson = JsonSerializer.Deserialize<JsonElement>(contentData);
+                    int tourMode = responseJson.GetProperty("tourMode").GetInt32();
+                    App.TourMode = (PatrolTouringMode)tourMode;
+
                     if (pickerClientSite.SelectedItem is DropdownItem selectedClientSite)
                     {
                         Preferences.Set("ClientSite", selectedClientSite.Name.Trim());
@@ -769,6 +778,15 @@ public partial class GuardLoginPage : ContentPage
                         {
                             Preferences.Set("NfcOnboarded", "false");
                         }
+
+
+                        //Get all the smartwand tags asscosiated with the site
+                        var swtags = await _scannerControlServices.GetSmartWandTagsForSite(clientSiteIdString);
+                        if (swtags != null && swtags.Count > 0)
+                        {
+                            await _scanDataDbService.RefreshSmartWandTagsList(swtags);
+                        }
+
                     }
 
                     Preferences.Set("CrowdCountEnabledForSite", "false");
@@ -795,6 +813,7 @@ public partial class GuardLoginPage : ContentPage
                     //Application.Current.MainPage = new MainPage();
                     // await Shell.Current.GoToAsync("//Multimedia");
                     //await DisplayAlert("Success", "Guard successfully logged in.", "OK");
+
 
                 }
                 else

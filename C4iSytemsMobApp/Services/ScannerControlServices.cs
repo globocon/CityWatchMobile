@@ -1,8 +1,11 @@
-﻿using C4iSytemsMobApp.Enums;
+﻿using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Data.Entity;
+using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
+using System;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -13,6 +16,7 @@ namespace C4iSytemsMobApp.Services
     public class ScannerControlServices : IScannerControlServices
     {
         private readonly IDeviceInfoService infoService;
+        private readonly IScanDataDbServices _scanDataDbServices;
         private string devicename;
         private string deviceid;
         private string deviceType = "Unknown";
@@ -20,11 +24,12 @@ namespace C4iSytemsMobApp.Services
         {
             // Constructor logic if needed
             infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
+            _scanDataDbServices = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
             devicename = infoService?.GetDeviceName();
             deviceid = infoService?.GetDeviceId();
 
 #if ANDROID
-        deviceType = "Android";
+            deviceType = "Android";
 #elif IOS
             deviceType = "iOS";
 #elif WINDOWS
@@ -182,7 +187,8 @@ namespace C4iSytemsMobApp.Services
                     var taginfo = await response.Content.ReadFromJsonAsync<SmartWandDeviceRegister>();
                     return taginfo;
                 }
-                else {
+                else
+                {
                     csswt.Message = "Failed to register the Smart Wand device.";
                     return csswt;
                 }
@@ -193,7 +199,7 @@ namespace C4iSytemsMobApp.Services
                 // Optionally log error or handle it
                 Console.WriteLine($"Error: {ex.Message}");
                 throw;
-            }            
+            }
         }
 
         public async Task CheckIfSmartWandIsDeRegisteredAsync(string _clientSiteId)
@@ -208,7 +214,7 @@ namespace C4iSytemsMobApp.Services
                 HttpResponseMessage response = await client.PostAsJsonAsync(apiUrl, deviceid);  //client.PostAsync(apiUrl, content);
                 if (response.IsSuccessStatusCode)
                 {
-                    var taginfo = await response.Content.ReadFromJsonAsync<bool>();                    
+                    var taginfo = await response.Content.ReadFromJsonAsync<bool>();
                     if (taginfo)
                     {
                         // If the device is deregistered, clear the saved preferences
@@ -220,7 +226,7 @@ namespace C4iSytemsMobApp.Services
                     return;
                 }
                 else
-                {                    
+                {
                     return;
                 }
 
@@ -233,7 +239,81 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
+        public async Task<List<ClientSiteSmartWandTagsLocal>> GetSmartWandTagsForSite(string siteId)
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetClientSiteAllSmartWandTags?siteId={siteId}";
+            // Here you would typically make an HTTP request to the API endpoint
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            HttpResponseMessage response = await client.GetAsync(apiUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var settings = await response.Content.ReadFromJsonAsync<List<ClientSiteSmartWandTagsLocal>>();
+                return settings;
+            }
 
+            return new List<ClientSiteSmartWandTagsLocal>(); // Example return value
+        }
+
+        public async Task<(bool isSuccess, string errorMessage, int cachecount)> SaveScanDataToLocalCache(string _TagUid, ScanningType _scannerType,
+            int? LoggedInClientSiteId, int? LoggedInUserId, int? LoggedInGuardId)
+        {
+            int _ChaceCount = 0;
+
+            if (!LoggedInClientSiteId.HasValue) return (false, "Invalid ClientSite !!!", _ChaceCount);
+
+            if (!LoggedInUserId.HasValue) return (false, "Invalid User Id !!!", _ChaceCount);
+
+            if (!LoggedInGuardId.HasValue) return (false, "Invalid Guard Id !!!", _ChaceCount);
+
+            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string savedSmartWandIdKeyName = $"{LoggedInClientSiteId.Value}_SavedSmartWandId";
+            var savedSmartWandId = Preferences.Get(savedSmartWandIdKeyName, 0);
+            if (string.IsNullOrWhiteSpace(gpsCoordinates))
+            {
+                return (false, "GPS coordinates not available. Please ensure location services are enabled", _ChaceCount);
+            }
+
+            var _lastTagScannedRecord = _scanDataDbServices.GetLastScannedTagDateTime(LoggedInClientSiteId.Value, _TagUid);
+            //Check if scanned tag recently with in a minute from the same site          
+            if (_lastTagScannedRecord != null && _lastTagScannedRecord.LoggedInClientSiteId == LoggedInClientSiteId && (DateTime.UtcNow - _lastTagScannedRecord.HitUtcDateTime).TotalSeconds < 60)
+            {
+                return (false, "Tag already scanned !!!", _ChaceCount);
+            }
+
+
+            if (App.TourMode == PatrolTouringMode.STND)
+            {
+                var TagInfoDetails = _scanDataDbServices.GetSmartWandTagDetailOfTag(_TagUid);
+
+                if (TagInfoDetails != null && TagInfoDetails.ClientSiteId != LoggedInClientSiteId)
+                {
+                    return (false, "Tag does not belong to logged in site. Please check.", _ChaceCount);
+                }
+            }
+
+            ClientSiteSmartWandTagsHitLogCache newrecord = new ClientSiteSmartWandTagsHitLogCache()
+            {
+
+                LoggedInClientSiteId = LoggedInClientSiteId.Value,
+                LoggedInUserId = LoggedInUserId.Value,
+                LoggedInGuardId = LoggedInGuardId.Value,
+                TagUId = _TagUid,
+                TagsTypeId = (int)_scannerType,
+                HitUtcDateTime = DateTime.UtcNow,
+                HitLocalDateTime = DateTime.Now,
+                LastModifiedUtc = DateTime.Now,
+                SmartWandId = savedSmartWandId,
+                GPScoordinates = gpsCoordinates,
+                IsSynced = false,
+                UniqueRecordId = Guid.NewGuid(),
+            };
+
+            await _scanDataDbServices.SaveScanData(newrecord);
+            _ChaceCount = _scanDataDbServices.GetCacheRecordsCount();
+
+            return (true, "Tag scan record saved to cache.", _ChaceCount);
+        }
 
     }
 }
