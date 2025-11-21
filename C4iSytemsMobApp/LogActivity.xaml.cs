@@ -1821,6 +1821,24 @@ public partial class LogActivity : ContentPage
         FilesCollectionEditImage.IsVisible = false;
     }
 
+    private async Task LogScannedDataToCache(string _TagUid, ScanningType _scannerType)
+    {
+        await ShowToastMessage($"Tag scanned. Logging activity to Cache...");
+        var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
+        if (isSuccess)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                SyncState.SyncedCount = _ChaceCount;
+            });
+            await ShowToastMessage(msg);
+        }
+        else
+        {
+            await DisplayAlert("Error", msg ?? "Failed to save tag scan", "OK");
+        }
+    }
+
     #region "NFC Methods"
 
     private async Task StartNFC()
@@ -1911,9 +1929,16 @@ public partial class LogActivity : ContentPage
         }
         else if (!string.IsNullOrEmpty(serialNumber))
         {
-            await ShowToastMessage($"Tag scanned. Logging activity...");
             if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
 
+            if (!App.IsOnline)
+            {
+                // Log To Cache                    
+                await LogScannedDataToCache(serialNumber, ScanningType.NFC);
+                return;
+            }
+
+            await ShowToastMessage($"Tag scanned. Logging activity...");
             var scannerSettings = await _scannerControlServices.FetchTagInfoDetailsAsync(_clientSiteId.ToString(), serialNumber, _guardId.ToString(), _userId.ToString());
             if (scannerSettings != null)
             {

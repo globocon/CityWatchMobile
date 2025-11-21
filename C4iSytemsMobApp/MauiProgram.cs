@@ -1,7 +1,15 @@
-﻿using C4iSytemsMobApp.Interface;
+﻿//using Android.Net;
+using C4iSytemsMobApp.Data;
+using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Services;
 using CommunityToolkit.Maui;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Controls.Hosting;
+using Microsoft.Maui.Hosting;
+using System.IO;
 using ZXing.Net.Maui.Controls;
 
 namespace C4iSytemsMobApp;
@@ -38,6 +46,17 @@ public static class MauiProgram
         builder.Services.AddSingleton<ILogBookServices, LogBookServices>();
         builder.Services.AddSingleton<INfcService, NfcService>();
         builder.Services.AddSingleton<IAppUpdateService, AppUpdateService>();
+        builder.Services.AddSingleton<IScanDataDbServices, ScanDataDbServices>();
+        builder.Services.AddSingleton<ConnectivityListener>();
+        builder.Services.AddSingleton<ISyncApiService,SyncApiService>();
+        // Register DbContext factory so each consumer gets a new context
+        builder.Services.AddTransient<AppDbContext>();
+        builder.Services.AddSingleton<SyncService>(sp =>
+        {
+            // Provide factory to create new AppDbContext for each usage
+            return new SyncService(() => sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ISyncApiService>());
+        });
+        
 
 #if ANDROID
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.Android.Services.VolumeButtonService>();
@@ -54,6 +73,16 @@ public static class MauiProgram
 #endif
         // This line allows DI to create your App(LoginPage, IAppUpdateService)
         builder.Services.AddSingleton<App>();
-        return builder.Build();
-	}
+
+        var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlite($"Filename={dbPath}"));
+
+        var app = builder.Build();
+
+        // Start connectivity watcher
+        var connListener = app.Services.GetService<ConnectivityListener>();
+
+        return app;
+    }
 }

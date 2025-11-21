@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35806.99 d17.13
+VisualStudioVersion = 17.13.35806.99
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C4iSytemsMobApp", "C4iSytemsMobApp\C4iSytemsMobApp.csproj", "{454F0E34-B9A2-4BFF-9C6B-6E1AA57287C5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C4iSytemsMobApp.DbMigrator", "C4iSytemsMobApp.DbMigrator\C4iSytemsMobApp.DbMigrator.csproj", "{F56E3ABA-9579-494C-8DBC-DE62A68146FA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C4iSytemsMobApp.Data", "C4iSytemsMobApp.Data\C4iSytemsMobApp.Data.csproj", "{46E4E4FA-B5A5-4202-B434-92616E22C673}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,6 +21,14 @@ Global
 		{454F0E34-B9A2-4BFF-9C6B-6E1AA57287C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{454F0E34-B9A2-4BFF-9C6B-6E1AA57287C5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{454F0E34-B9A2-4BFF-9C6B-6E1AA57287C5}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{F56E3ABA-9579-494C-8DBC-DE62A68146FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F56E3ABA-9579-494C-8DBC-DE62A68146FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F56E3ABA-9579-494C-8DBC-DE62A68146FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F56E3ABA-9579-494C-8DBC-DE62A68146FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46E4E4FA-B5A5-4202-B434-92616E22C673}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46E4E4FA-B5A5-4202-B434-92616E22C673}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46E4E4FA-B5A5-4202-B434-92616E22C673}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46E4E4FA-B5A5-4202-B434-92616E22C673}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

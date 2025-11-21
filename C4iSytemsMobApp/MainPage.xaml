@@ -39,7 +39,7 @@
                            TextColor="Black"
                            FontAttributes="Bold"
                            VerticalOptions="Center"
-                           HorizontalOptions="Start" 
+                           HorizontalOptions="Start"
                            Padding="0,0,25,0"
                            Margin="0,0,10,0"
                            MaxLines="1" />
@@ -69,7 +69,25 @@
                            HorizontalOptions="Start"
                            VerticalOptions="Center"
                            IsEnabled="True" />
+                    <StackLayout  Orientation="Horizontal"
+                                  Padding="0"
+                                  Spacing="0"
+                                  HorizontalOptions="FillAndExpand">
 
+                        <Label Text="{Binding OnlineText}"
+                               TextColor="{Binding OnlineColor}"
+                               FontSize="8"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Start" />
+
+                        <Label Text="{Binding SyncStatusText}"
+                               TextColor="Black"
+                               FontSize="8"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Start"
+                               Padding="3,0,0,0" />
+
+                    </StackLayout>
 
                 </StackLayout>
 
@@ -104,22 +122,41 @@
                          Grid.ColumnSpan="2"
                          Orientation="Horizontal"
                          HorizontalOptions="End"
-                         HeightRequest="50"
+                         HeightRequest="55"
                          Padding="5,1,5,1">
 
-                <!--<ImageButton Source="exl.png"
-                             WidthRequest="15"
-                             HeightRequest="15"
-                             BackgroundColor="Transparent"
-                             HorizontalOptions="Start"
-                             VerticalOptions="Center"
-                             Clicked="OnExclamationClicked" />-->
-                <ImageButton Source="hamburger.png"
-                             WidthRequest="40"
-                             HeightRequest="30"
-                             BackgroundColor="Transparent"
-                             TranslationY="-12"
-                             Clicked="OnMenuClicked" />
+                <VerticalStackLayout Padding="0"
+                                     Spacing="0"
+                                     VerticalOptions="FillAndExpand">
+
+                    <ImageButton Source="hamburger.png"
+                                 WidthRequest="40"
+                                 HeightRequest="30"
+                                 BackgroundColor="Transparent"
+                                 TranslationY="-1"
+                                 Clicked="OnMenuClicked" />
+
+                    <Label x:Name="CchStatusLabel"
+                           FontSize="8"
+                           Text="Cch:0"
+                           Padding="5,0,0,0"
+                           FontAttributes="Bold"
+                           TextColor="Black"
+                           TranslationY="-2"
+                           IsEnabled="True" />
+
+                    <!--<Label Text="{Binding OnlineText}"
+                           TextColor="{Binding OnlineColor}"
+                           FontSize="8"
+                           Padding="5,0,0,0"
+                           FontAttributes="Bold"
+                           TranslationY="-8"
+                           HorizontalOptions="Start" />-->
+
+                </VerticalStackLayout>
+
+
+
 
             </StackLayout>
 
@@ -323,9 +360,8 @@
                                AbsoluteLayout.LayoutFlags="WidthProportional"
                                HasShadow="True">
                             <Frame.Behaviors>
-                                <toolkit:TouchBehavior
-        LongPressCommand="{Binding LongPressCommand}"
-        LongPressDuration="2500" />
+                                <toolkit:TouchBehavior LongPressCommand="{Binding LongPressCommand}"
+                                                       LongPressDuration="2500" />
                             </Frame.Behaviors>
                         </Frame>
 
@@ -342,9 +378,8 @@
                                ZIndex="120"
                                HasShadow="True">
                             <Frame.Behaviors>
-                                <toolkit:TouchBehavior
-        LongPressCommand="{Binding LongPressCommand}"
-        LongPressDuration="2500" />
+                                <toolkit:TouchBehavior LongPressCommand="{Binding LongPressCommand}"
+                                                       LongPressDuration="2500" />
                             </Frame.Behaviors>
                             <StackLayout VerticalOptions="CenterAndExpand"
                                          HorizontalOptions="CenterAndExpand"
@@ -539,9 +574,9 @@
 
                     <!-- Table Headers -->
                     <Grid ColumnDefinitions="*,150,*,*"
-      BackgroundColor="#EEEEEE"
-      Grid.Row="1">
-                    <!--<Grid ColumnDefinitions="*,*,*,*"
+                          BackgroundColor="#EEEEEE"
+                          Grid.Row="1">
+                        <!--<Grid ColumnDefinitions="*,*,*,*"
                           BackgroundColor="#EEEEEE"
                           Grid.Row="1">-->
                         <Frame BorderColor="Gray"
@@ -1030,7 +1065,7 @@
                                VerticalOptions="Center"
                                HorizontalOptions="Center"
                                TextColor="{AppThemeBinding Light=White, Dark=Black}" />
-                       
+
                         <Grid WidthRequest="30"
                               HeightRequest="30">
                             <!-- Bell icon -->
@@ -1041,7 +1076,8 @@
                                    HorizontalOptions="End" />
 
                             <!-- Notification badge -->
-                            <Frame BackgroundColor="White" BorderColor="Red"
+                            <Frame BackgroundColor="White"
+                                   BorderColor="Red"
                                    CornerRadius="10"
                                    HeightRequest="15"
                                    WidthRequest="16"
@@ -1134,7 +1170,7 @@
                                            Spacing="10"
                                            VerticalOptions="Center"
                                            HorizontalOptions="Center"
-                                           HeightRequest="46">                       
+                                           HeightRequest="46">
                         <Label Text=""
                                FontFamily="FontAwesome"
                                FontSize="25"
@@ -1149,7 +1185,7 @@
                 </Frame>
 
                 <Button Text="Off Duty"
-                        Clicked="OnOffDutyClicked" />                                
+                        Clicked="OnOffDutyClicked" />
 
             </VerticalStackLayout>
 
