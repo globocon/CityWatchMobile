@@ -15,7 +15,7 @@ public partial class LoginPage : ContentPage
     {
         InitializeComponent();
         _httpClient = new HttpClient();
-        lblAppVersion.Text = $"Version {GetAppVersion()}";       
+        lblAppVersion.Text = $"Version {App.CurrentAppVersion}";       
         LoadSavedCredentials();
        
 
@@ -179,11 +179,11 @@ public partial class LoginPage : ContentPage
     //    Application.Current.MainPage = new NfcScannerTestPage(nfcScannerTestPage);
     //}
 
-    private string GetAppVersion()
-    {
-        var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version?.ToString() ?? "1.28.1";
-    }
+    //private string GetAppVersion()
+    //{
+    //    var version = Assembly.GetExecutingAssembly().GetName().Version;
+    //    return version?.ToString() ?? "1.28.1";
+    //}
 
 
     protected override bool OnBackButtonPressed()

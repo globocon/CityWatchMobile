@@ -8,12 +8,14 @@ public partial class MenuSettingsPage : ContentPage
 {
 
     private readonly IScannerControlServices _scannerControlServices;
+    private readonly IAppUpdateService _appUpdateService;
     public MenuSettingsPage()
-	{
-		InitializeComponent();
+    {
+        InitializeComponent();
         _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
+        _appUpdateService = IPlatformApplication.Current.Services.GetService<IAppUpdateService>();
     }
-           
+
     private void OnBackClicked(object sender, EventArgs e)
     {
         var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
@@ -27,13 +29,14 @@ public partial class MenuSettingsPage : ContentPage
         var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
         var np = new MainPage(volumeButtonService, true);
         np._shouldOpenDrawerOnReturn = false;
-        Application.Current.MainPage = np;                
+        Application.Current.MainPage = np;
     }
 
-    private void OnCheckForUpdatesClicked(object sender, EventArgs e)
+    private async void OnCheckForUpdatesClicked(object sender, EventArgs e)
     {
         // Your update check logic here
-        DisplayAlert("Check for Updates", "You are running the latest version.", "OK");
+        //DisplayAlert("Check for Updates", "You are running the latest version.", "OK");
+        await CheckForUpdatesAsync();
     }
 
     private async void OnAddTagsClicked(object sender, EventArgs e)
@@ -61,7 +64,7 @@ public partial class MenuSettingsPage : ContentPage
             switch (action)
             {
                 case "NFC":
-                    Application.Current.MainPage = new AddNFCtag();      
+                    Application.Current.MainPage = new AddNFCtag();
                     //await Application.Current.MainPage.Navigation.PushAsync(new AddNFCtag());
                     break;
                 case "IBeacon":
@@ -107,4 +110,39 @@ public partial class MenuSettingsPage : ContentPage
 
         return id;
     }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            // Show loading overlay
+            // LoadingOverlay.IsVisible = true;
+            // Check for updates after UI is ready
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                //await Task.Delay(1500); // give a moment for UI to load
+                bool updateAvailable = await _appUpdateService.CheckForUpdateAsync();
+                if (!updateAvailable)
+                {
+                    await DisplayAlert("Info", $"Current Version ({App.CurrentAppVersion}) \nServer Version  ({App.CurrentAppVersion}) \nYou are running on the latest version.", "OK");
+                }
+            });
+
+            // Hide loading overlay
+            // LoadingOverlay.IsVisible = false;
+
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to check for updates: {ex.Message}", "OK");
+        }
+        finally
+        {
+            // Hide loading overlay
+            // LoadingOverlay.IsVisible = false;
+        }
+
+    }
+
+
 }

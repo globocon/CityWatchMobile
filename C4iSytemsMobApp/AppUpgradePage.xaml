@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:C4iSytemsMobApp"
+             x:Class="C4iSytemsMobApp.AppUpgradePage"
+             Title="App Upgrade">
+
+    <!-- Adaptive Spacing -->
+    <ContentPage.Padding>
+        <OnPlatform x:TypeArguments="Thickness">
+            <On Platform="Android"
+                Value="0,0,0,0" />
+            <On Platform="iOS"
+                Value="20,60,20,40" />
+        </OnPlatform>
+    </ContentPage.Padding>
+
+    <Grid RowDefinitions="*,Auto,Auto"
+          ColumnDefinitions="*"
+          BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
+        <!-- Center Section: Logo + Text + Animated Dots -->
+        <VerticalStackLayout Grid.Row="0"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             Spacing="{OnPlatform Android=15, iOS=25}">
+            <!-- Centered Logo -->
+            <Image Source="c4ilogo.jpg"
+                   WidthRequest="150"
+                   HeightRequest="130"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+            <!-- Checking Text -->
+            <Label x:Name="lblAppVersionChecking"
+                   Text="Checking for updates"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+            <!-- Animated Dots -->
+            <Label x:Name="lblDots"
+                   Text="..."
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+        </VerticalStackLayout>
+        <!-- Bottom Version Text -->
+        <Label x:Name="lblAppVersion"
+               Text="Version:"
+               Grid.Row="2"
+               HorizontalOptions="Center"
+               VerticalOptions="End"
+               FontSize="14"
+               FontAttributes="Bold"
+               Margin="{OnPlatform Android='0,10,0,20', iOS='0,20,0,30'}"
+               TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+        <!-- Enhanced Loading Overlay -->
+        <Grid x:Name="LoadingOverlay"
+              BackgroundColor="#80000000"
+              IsVisible="False"
+              Grid.RowSpan="3"
+              VerticalOptions="FillAndExpand"
+              HorizontalOptions="FillAndExpand">
+            <Frame BackgroundColor="#2A2A2A"
+                   Opacity="0.95"
+                   Padding="30"
+                   CornerRadius="25"
+                   HasShadow="True"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   WidthRequest="220">
+                <VerticalStackLayout Spacing="20"
+                                     HorizontalOptions="Center">
+                    <ActivityIndicator IsRunning="True"
+                                       WidthRequest="50"
+                                       HeightRequest="50" />
+                    <Label Text="Please wait..."
+                           TextColor="White"
+                           FontSize="18"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Frame>
+        </Grid>
+    </Grid>
+</ContentPage>

@@ -94,6 +94,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="AppUpgradePage.xaml.cs">
+	    <DependentUpon>AppUpgradePage.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="PatrolCarPage.xaml.cs">
 	    <DependentUpon>PatrolCarPage.xaml</DependentUpon>
 	  </Compile>
@@ -136,6 +139,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiXaml Update="AppUpgradePage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="PatrolCarPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
