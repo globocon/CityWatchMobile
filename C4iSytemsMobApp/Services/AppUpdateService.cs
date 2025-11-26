@@ -56,7 +56,7 @@ namespace C4iSytemsMobApp.Services
                 }
                 else
                 {
-                    // User chose not to update
+                    // User choose not to update
                     // User declined the update
                     await Application.Current.MainPage.DisplayAlert(
                         "Update Required",

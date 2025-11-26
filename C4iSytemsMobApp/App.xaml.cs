@@ -1,25 +1,28 @@
 ﻿using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
+using System.Reflection;
 //using CommunityToolkit.Mvvm.Messaging;
 
 namespace C4iSytemsMobApp
 {
     public partial class App : Application
     {
-        public static bool IsVolumeControlEnabledForCounter { get; set; } = false;
-        private readonly IAppUpdateService _appUpdateService;
+        public static bool IsVolumeControlEnabledForCounter { get; set; } = false;        
         public static PatrolTouringMode TourMode { get; set; } = PatrolTouringMode.STND;
         public static bool IsOnline { get; private set; }
         // Global event that any page/VM can subscribe to
         public static event Action<bool>? ConnectivityChangedEvent;
                
+        public static string CurrentAppVersion { get; private set; }
 
-        public App(LoginPage loginPage, IAppUpdateService appUpdateService)
+        public App(AppUpgradePage upgradePage)
         {
             InitializeComponent();
 
             // Initialize current status
             IsOnline = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+
+            CurrentAppVersion = GetAppVersion();
 
             // Listen for changes
             Connectivity.ConnectivityChanged += (s, e) =>
@@ -35,24 +38,17 @@ namespace C4iSytemsMobApp
             // Load saved theme preference or default to dark
             string savedTheme = Preferences.Get("AppTheme", "Dark"); // default is Dark
             Application.Current.UserAppTheme = savedTheme == "Dark" ? AppTheme.Dark : AppTheme.Light;
-            _appUpdateService = appUpdateService;
-            MainPage = new NavigationPage(loginPage);
-#if !DEBUG
-            // Check for updates after UI is ready
-            MainThread.BeginInvokeOnMainThread(async () =>
-            {
-                await Task.Delay(1500); // give a moment for UI to load
-                bool updateAvailable = await _appUpdateService.CheckForUpdateAsync();
-                if (!updateAvailable)
-                {
-                    // Redirect to login page
-                    MainPage = new NavigationPage(loginPage);
-                }
-            });
-#endif
+            MainPage = new NavigationPage(upgradePage);
+        }
 
+        private string GetAppVersion()
+        {
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            return version?.ToString() ?? "1.28.1";
         }
     }
+
+
 
     public class ConnectivityMessage
     {

@@ -41,6 +41,7 @@ public static class MauiProgram
 
         // Register LoginPage with HttpClient dependency
         builder.Services.AddTransient<LoginPage>();
+        builder.Services.AddTransient<AppUpgradePage>();
         builder.Services.AddSingleton<ICrowdControlServices, CrowdControlServices>();
         builder.Services.AddSingleton<IScannerControlServices, ScannerControlServices>();
         builder.Services.AddSingleton<ILogBookServices, LogBookServices>();
