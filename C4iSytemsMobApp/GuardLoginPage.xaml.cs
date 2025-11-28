@@ -788,6 +788,10 @@ public partial class GuardLoginPage : ContentPage
                         }
 
                     }
+                    else
+                    {
+                        Preferences.Set("NfcOnboarded", "false");
+                    }
 
                     Preferences.Set("CrowdCountEnabledForSite", "false");
                     var _crowdControlsettings = await _crowdControlServices.GetCrowdControlSettingsAsync(clientSiteIdString);

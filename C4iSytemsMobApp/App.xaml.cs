@@ -50,15 +50,15 @@ namespace C4iSytemsMobApp
 
 
 
-    public class ConnectivityMessage
-    {
-        public bool IsOnline { get; }
+    //public class ConnectivityMessage
+    //{
+    //    public bool IsOnline1 { get; }
 
-        public ConnectivityMessage(bool isOnline)
-        {
-            IsOnline = isOnline;
-        }
-    }
+    //    public ConnectivityMessage(bool isOnline)
+    //    {
+    //        IsOnline1 = isOnline;
+    //    }
+    //}
 
     public static class SyncState
     {
