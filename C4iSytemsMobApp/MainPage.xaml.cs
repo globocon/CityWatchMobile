@@ -28,7 +28,7 @@ namespace C4iSytemsMobApp
         private readonly HttpClient _httpClient;
         private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
         private readonly IVolumeButtonService _volumeButtonService;
-        private readonly ILogBookServices _logBookServices;        
+        private readonly ILogBookServices _logBookServices;
         private int _pcounter = 0;
         private int _CurrentCounter = 0;
         private int _totalpatrons = 0;
@@ -146,7 +146,7 @@ namespace C4iSytemsMobApp
             duressCheckTimer.Start();
             _shouldOpenDrawerOnReturn = showDrawerOnStart ?? false; // Defaults to false if null
             _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
-            _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();            
+            _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
 
             string isCrowdControlEnabledForSiteLocalStored = Preferences.Get("CrowdCountEnabledForSite", "false");
 
@@ -162,13 +162,13 @@ namespace C4iSytemsMobApp
 
 
         }
-                
+
         public void OnConnectivityChanged(bool isOnline)
         {
             OnlineText = isOnline ? "Online" : "Offline";
             OnlineColor = isOnline ? Colors.Green : Colors.Red;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineText)));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineColor))); 
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineColor)));
         }
         private void UpdateCacheLabel(int ccheCount)
         {
@@ -183,6 +183,8 @@ namespace C4iSytemsMobApp
 
         private void SyncState_SyncedCountChanged(object sender, int newCount)
         {
+            if (!_isNfcEnabledForSite) return;
+
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 UpdateCacheLabel(newCount);
@@ -191,6 +193,8 @@ namespace C4iSytemsMobApp
 
         private void SyncState_SyncingStatusChanged(object sender, string newStatus)
         {
+            if (!_isNfcEnabledForSite) return;
+
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 UpdateSyncStatusLabel(newStatus);
@@ -227,43 +231,14 @@ namespace C4iSytemsMobApp
             await StartNFC(); // Execution Order - 2
             await SetupHubConnection();  // Execution Order - 3
 
+            if (!_isNfcEnabledForSite)
+            {
+                CchStatusLabel.IsVisible = false;
+                CchStatusLabel.IsEnabled = false;
+            }
+
             MainLayout.IsVisible = true;
-
-
-            ////// Subscribe to updates
-            ////TagStatusService.Instance.Subscribe(OnTagStatusUpdated);
-
-            ////// Start polling for this site
-            ////TagStatusService.Instance.StartPolling(_clientSiteId);
-
-            // Cancel any previous loop if exists
-            //_tagStatusCts?.Cancel();
-            //_tagStatusCts = new CancellationTokenSource();
-
-            //var timer = new PeriodicTimer(TimeSpan.FromSeconds(1)); // every 1 seconds
-
-            //try
-            //{
-            //    while (await timer.WaitForNextTickAsync(_tagStatusCts.Token))
-            //    {
-            //        if (_clientSiteId != null)
-            //        {
-            //            await LoadTagStatusAsync(_clientSiteId);
-            //        }
-            //    }
-            //}
-            //catch (OperationCanceledException)
-            //{
-            //    // Timer was canceled, ignore
-            //}
         }
-
-
-        //private void OnTagStatusUpdated(int? clientId)
-        //{
-        //    // Call your existing LoadTagStatusAsync safely
-        //    _ = LoadTagStatusAsync(clientId);
-        //}
 
 
         public async Task LoadTagStatusAsync(int? clientId)
@@ -1342,7 +1317,7 @@ namespace C4iSytemsMobApp
         private async Task LogScannedDataToCache(string _TagUid, ScanningType _scannerType)
         {
             await ShowToastMessage($"Tag scanned. Logging activity to Cache...");
-            var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType,_clientSiteId.Value,_userId.Value,_guardId.Value);
+            var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
             if (isSuccess)
             {
                 MainThread.BeginInvokeOnMainThread(() =>
@@ -1384,7 +1359,7 @@ namespace C4iSytemsMobApp
                         await AutoStartAsync().ConfigureAwait(false);
                     }
                 }
-            }
+            }       
 
         }
 
