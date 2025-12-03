@@ -82,6 +82,7 @@
 		<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
 		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.100" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
+		<PackageReference Include="Plugin.BLE" Version="3.2.0" />
 		<PackageReference Include="Plugin.Maui.Audio" Version="3.0.1" />
 		<PackageReference Include="Plugin.MediaManager" Version="1.2.2" />
 		<PackageReference Include="Plugin.NFC" Version="0.1.26" />
@@ -96,6 +97,9 @@
 	<ItemGroup>
 	  <Compile Update="AppUpgradePage.xaml.cs">
 	    <DependentUpon>AppUpgradePage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="iBeaconScannerPage.xaml.cs">
+	    <DependentUpon>iBeaconScannerPage.xaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="PatrolCarPage.xaml.cs">
 	    <DependentUpon>PatrolCarPage.xaml</DependentUpon>
@@ -140,6 +144,9 @@
 
 	<ItemGroup>
 	  <MauiXaml Update="AppUpgradePage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="iBeaconScannerPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="PatrolCarPage.xaml">

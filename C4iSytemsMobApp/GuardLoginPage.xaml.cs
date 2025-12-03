@@ -587,10 +587,10 @@ public partial class GuardLoginPage : ContentPage
             else
             {
                 // Handle "Back" or "Clear" action
-              
+
                 isLoggedIn = false;
                 btnLogin.Text = "Login"; // Change text back
-                lblGuardName.Text = string.Empty;               
+                lblGuardName.Text = string.Empty;
                 lblGuardName.IsVisible = false;
                 txtLicenseNumber.IsEnabled = true; // Re-enable entry
                 txtLicenseNumber.Text = string.Empty; // Clear text
@@ -757,9 +757,16 @@ public partial class GuardLoginPage : ContentPage
                     }
 
                     // Check if NFC is onboarded for site
+                    Preferences.Set("NfcOnboarded", "false");
+                    Preferences.Set("iBeaconOnboarded", "false");
                     var scannerSettings = await _scannerControlServices.CheckScannerOnboardedAsync(clientSiteIdString);
                     if (scannerSettings != null && scannerSettings.Count > 0)
                     {
+                        if (scannerSettings.Exists(x => x.ToLower().Equals("bluetooth")))
+                        {
+                            Preferences.Set("iBeaconOnboarded", "true");
+                        }
+
                         // If scanner is onboarded, navigate to NFC page
                         if (scannerSettings.Exists(x => x.ToLower().Equals("nfc")))
                         {
@@ -780,6 +787,7 @@ public partial class GuardLoginPage : ContentPage
                         }
 
 
+
                         //Get all the smartwand tags asscosiated with the site
                         var swtags = await _scannerControlServices.GetSmartWandTagsForSite(clientSiteIdString);
                         if (swtags != null && swtags.Count > 0)
@@ -788,10 +796,7 @@ public partial class GuardLoginPage : ContentPage
                         }
 
                     }
-                    else
-                    {
-                        Preferences.Set("NfcOnboarded", "false");
-                    }
+
 
                     Preferences.Set("CrowdCountEnabledForSite", "false");
                     var _crowdControlsettings = await _crowdControlServices.GetCrowdControlSettingsAsync(clientSiteIdString);

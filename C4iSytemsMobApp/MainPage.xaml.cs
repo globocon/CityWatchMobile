@@ -29,6 +29,7 @@ namespace C4iSytemsMobApp
         private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
         private readonly IVolumeButtonService _volumeButtonService;
         private readonly ILogBookServices _logBookServices;
+        private readonly SyncService _syncService;
         private int _pcounter = 0;
         private int _CurrentCounter = 0;
         private int _totalpatrons = 0;
@@ -133,6 +134,7 @@ namespace C4iSytemsMobApp
             InitializeComponent();
             App.ConnectivityChangedEvent += OnConnectivityChanged;
             OnConnectivityChanged(App.IsOnline);
+            _syncService = IPlatformApplication.Current.Services.GetService<SyncService>();            
             UpdateCacheLabel(SyncState.SyncedCount);
             UpdateSyncStatusLabel(SyncState.SyncingStatus);
             _volumeButtonService = volumeButtonService;
@@ -183,7 +185,7 @@ namespace C4iSytemsMobApp
 
         private void SyncState_SyncedCountChanged(object sender, int newCount)
         {
-            if (!_isNfcEnabledForSite) return;
+            //if (!_isNfcEnabledForSite) return;
 
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -193,7 +195,7 @@ namespace C4iSytemsMobApp
 
         private void SyncState_SyncingStatusChanged(object sender, string newStatus)
         {
-            if (!_isNfcEnabledForSite) return;
+            //if (!_isNfcEnabledForSite) return;
 
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -224,18 +226,25 @@ namespace C4iSytemsMobApp
                 OpenDrawer();
             }
 
+            
+
             SyncState.SyncedCountChanged += SyncState_SyncedCountChanged;
-            SyncState.SyncingStatusChanged += SyncState_SyncingStatusChanged;
+            SyncState.SyncingStatusChanged += SyncState_SyncingStatusChanged;        
+            var cc = await _syncService.GetCurrentCacheCountAsync();
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                SyncState.SyncedCount = cc;
+            });
             // If InitializePatronsCounterDisplay is async, await it.
             await InitializePatronsCounterDisplay();  // Execution Order - 1
             await StartNFC(); // Execution Order - 2
             await SetupHubConnection();  // Execution Order - 3
 
-            if (!_isNfcEnabledForSite)
-            {
-                CchStatusLabel.IsVisible = false;
-                CchStatusLabel.IsEnabled = false;
-            }
+            //if (!_isNfcEnabledForSite)
+            //{
+            //    CchStatusLabel.IsVisible = false;
+            //    CchStatusLabel.IsEnabled = false;
+            //}
 
             MainLayout.IsVisible = true;
         }
@@ -1433,7 +1442,7 @@ namespace C4iSytemsMobApp
                 var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
                 if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
 
-                var scannerSettings = await _scannerControlServices.FetchTagInfoDetailsAsync(clientSiteId.ToString(), serialNumber, guardId.ToString(), userId.ToString());
+                var scannerSettings = await _scannerControlServices.FetchTagInfoDetailsAsync(clientSiteId.ToString(), serialNumber, guardId.ToString(), userId.ToString(), ScanningType.NFC);
                 if (scannerSettings != null)
                 {
                     if (scannerSettings.IsSuccess)

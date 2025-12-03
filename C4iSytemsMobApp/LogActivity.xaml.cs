@@ -1939,7 +1939,7 @@ public partial class LogActivity : ContentPage
             }
 
             await ShowToastMessage($"Tag scanned. Logging activity...");
-            var scannerSettings = await _scannerControlServices.FetchTagInfoDetailsAsync(_clientSiteId.ToString(), serialNumber, _guardId.ToString(), _userId.ToString());
+            var scannerSettings = await _scannerControlServices.FetchTagInfoDetailsAsync(_clientSiteId.ToString(), serialNumber, _guardId.ToString(), _userId.ToString(), ScanningType.NFC);
             if (scannerSettings != null)
             {
                 if (scannerSettings.IsSuccess)

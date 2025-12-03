@@ -21,25 +21,38 @@ namespace C4iSytemsMobApp.Services
 
         private async void Connectivity_ConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
         {
-            if (e.NetworkAccess == NetworkAccess.Internet)
+            await SyncOfflineRecords();
+        }
+
+        public async Task CheckAndSyncOnStartupAsync()
+        {
+            await SyncOfflineRecords();
+        }
+
+
+        private async Task SyncOfflineRecords()
+        {
+            if (Connectivity.NetworkAccess == NetworkAccess.Internet)
             {
-                // Device came online → Push pending sync
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     SyncState.SyncingStatus = "(Syncing offline records in progress..)";
                 });
+
                 await _syncService.SyncAsync();
+
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     SyncState.SyncingStatus = " ";
                 });
 
-                var _ChaceCount = await _syncService.GetCurrentCacheCountAsync();
+                var count = await _syncService.GetCurrentCacheCountAsync();
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    SyncState.SyncedCount = _ChaceCount;
+                    SyncState.SyncedCount = count;
                 });
             }
         }
+
     }
 }
