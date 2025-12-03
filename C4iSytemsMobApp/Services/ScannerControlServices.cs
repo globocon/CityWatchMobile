@@ -1,6 +1,7 @@
 ﻿using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Data.Entity;
 using C4iSytemsMobApp.Enums;
+using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using Microsoft.Maui.Controls;
@@ -33,7 +34,7 @@ namespace C4iSytemsMobApp.Services
 #elif IOS
             deviceType = "iOS";
 #elif WINDOWS
-        deviceType = "Windows";
+            deviceType = "Windows";
 #elif MACCATALYST
         deviceType = "MacCatalyst";
 #elif TIZEN
@@ -73,12 +74,12 @@ namespace C4iSytemsMobApp.Services
             return new List<DropdownItem>(); // Example return value
         }
 
-        public async Task<TagInfoApiResponse?> FetchTagInfoDetailsAsync(string _clientSiteId, string _tagUid, string _guardId, string _userId)
+        public async Task<TagInfoApiResponse?> FetchTagInfoDetailsAsync(string _clientSiteId, string _tagUid, string _guardId, string _userId, ScanningType _scannerType)
         {
             await CheckIfSmartWandIsDeRegisteredAsync(_clientSiteId); // Check if smartwand is deregistered before fetching tag info
             string savedSmartWandIdKeyName = $"{_clientSiteId}_SavedSmartWandId";
             var savedSmartWandId = Preferences.Get(savedSmartWandIdKeyName, 0);
-            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetNFCtagInfoData?siteId={_clientSiteId}&TagUid={_tagUid}&GuardId={_guardId}&UserId={_userId}&SmartWandId={savedSmartWandId}";
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetScannerTagInfoData?siteId={_clientSiteId}&TagUid={_tagUid}&GuardId={_guardId}&UserId={_userId}&TagsTypeId={(int)_scannerType}&SmartWandId={savedSmartWandId}";
             // Here you would typically make an HTTP request to the API endpoint
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
@@ -259,6 +260,7 @@ namespace C4iSytemsMobApp.Services
             int? LoggedInClientSiteId, int? LoggedInUserId, int? LoggedInGuardId)
         {
             int _ChaceCount = 0;
+            var message = "";
 
             if (!LoggedInClientSiteId.HasValue) return (false, "Invalid ClientSite !!!", _ChaceCount);
 
@@ -277,19 +279,33 @@ namespace C4iSytemsMobApp.Services
             var _lastTagScannedRecord = _scanDataDbServices.GetLastScannedTagDateTime(LoggedInClientSiteId.Value, _TagUid);
             //Check if scanned tag recently with in a minute from the same site          
             if (_lastTagScannedRecord != null && _lastTagScannedRecord.LoggedInClientSiteId == LoggedInClientSiteId && (DateTime.UtcNow - _lastTagScannedRecord.HitUtcDateTime).TotalSeconds < 60)
-            {
-                return (false, "Tag already scanned !!!", _ChaceCount);
+            {                 
+                if (_scannerType == ScanningType.NFC)
+                    message = "Tag already scanned !!!";
+                else if (_scannerType == ScanningType.BLUETOOTH)
+                    message = "iBeacon already scanned !!!";
+
+                return (false, message, _ChaceCount);
             }
 
 
+            var TagInfoDetails = _scanDataDbServices.GetSmartWandTagDetailOfTag(_TagUid);
             if (App.TourMode == PatrolTouringMode.STND)
             {
-                var TagInfoDetails = _scanDataDbServices.GetSmartWandTagDetailOfTag(_TagUid);
-
                 if (TagInfoDetails != null && TagInfoDetails.ClientSiteId != LoggedInClientSiteId)
-                {
-                    return (false, "Tag does not belong to logged in site. Please check.", _ChaceCount);
+                {                    
+                    if (_scannerType == ScanningType.NFC)
+                        message = "Tag does not belong to logged in site. Please check.";
+                    else if (_scannerType == ScanningType.BLUETOOTH)
+                        message = "iBeacon does not belong to logged in site. Please check.";
+
+                    return (false, message, _ChaceCount);
                 }
+            }
+
+            if(TagInfoDetails == null && _scannerType == ScanningType.BLUETOOTH)
+            {
+                return (false, "iBeacon not found.", _ChaceCount);
             }
 
             ClientSiteSmartWandTagsHitLogCache newrecord = new ClientSiteSmartWandTagsHitLogCache()
@@ -301,18 +317,28 @@ namespace C4iSytemsMobApp.Services
                 TagUId = _TagUid,
                 TagsTypeId = (int)_scannerType,
                 HitUtcDateTime = DateTime.UtcNow,
-                HitLocalDateTime = DateTime.Now,
+                HitLocalDateTime = DateTime.UtcNow.ToLocalTime(),
                 LastModifiedUtc = DateTime.Now,
                 SmartWandId = savedSmartWandId,
                 GPScoordinates = gpsCoordinates,
                 IsSynced = false,
                 UniqueRecordId = Guid.NewGuid(),
+                EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+                EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+                EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+                EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+                EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
             };
 
             await _scanDataDbServices.SaveScanData(newrecord);
             _ChaceCount = _scanDataDbServices.GetCacheRecordsCount();
+                       
+            if (_scannerType == ScanningType.NFC)
+                message = "Tag scan record saved to cache.";
+            else if (_scannerType == ScanningType.BLUETOOTH)
+                message = "iBeacon scan record saved to cache.";
 
-            return (true, "Tag scan record saved to cache.", _ChaceCount);
+            return (true, message, _ChaceCount);
         }
 
     }

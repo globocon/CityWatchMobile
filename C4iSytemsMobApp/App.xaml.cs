@@ -1,5 +1,6 @@
 ﻿using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
+using C4iSytemsMobApp.Services;
 using System.Reflection;
 //using CommunityToolkit.Mvvm.Messaging;
 
@@ -15,7 +16,7 @@ namespace C4iSytemsMobApp
                
         public static string CurrentAppVersion { get; private set; }
 
-        public App(AppUpgradePage upgradePage)
+        public App(AppUpgradePage upgradePage, ConnectivityListener connectivityListener)
         {
             InitializeComponent();
 
@@ -39,6 +40,19 @@ namespace C4iSytemsMobApp
             string savedTheme = Preferences.Get("AppTheme", "Dark"); // default is Dark
             Application.Current.UserAppTheme = savedTheme == "Dark" ? AppTheme.Dark : AppTheme.Light;
             MainPage = new NavigationPage(upgradePage);
+
+            // 🔥 RUN STARTUP SYNC AFTER APP LOADS
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await connectivityListener.CheckAndSyncOnStartupAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Startup sync failed: " + ex.Message);
+                }
+            });
         }
 
         private string GetAppVersion()
@@ -48,17 +62,6 @@ namespace C4iSytemsMobApp
         }
     }
 
-
-
-    //public class ConnectivityMessage
-    //{
-    //    public bool IsOnline1 { get; }
-
-    //    public ConnectivityMessage(bool isOnline)
-    //    {
-    //        IsOnline1 = isOnline;
-    //    }
-    //}
 
     public static class SyncState
     {

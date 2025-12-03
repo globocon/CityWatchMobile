@@ -26,25 +26,34 @@ namespace C4iSytemsMobApp.Services
             if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
                 return;
 
-
-            using var db = _dbFactory();
-            var unsynced = await db.ClientSiteSmartWandTagsHitLogCache.Where(o => !o.IsSynced).ToListAsync();
-            if (unsynced.Count == 0) return;
-
-
-            var ok = await _api.PushSmartWandTagsHitLogCacheAsync(unsynced);
-            if (ok == null) return;
-
-
-            foreach (var o in unsynced)
+            try
             {
-                var r = ok.Where(x=> x.Id == o.Id && x.IsSynced && x.UniqueRecordId == o.UniqueRecordId).FirstOrDefault();
-                if(r != null)
+                using var db = _dbFactory();
+                var unsynced = await db.ClientSiteSmartWandTagsHitLogCache.Where(o => !o.IsSynced).ToListAsync();
+                if (unsynced.Count == 0) return;
+
+
+                var ok = await _api.PushSmartWandTagsHitLogCacheAsync(unsynced);
+                if (ok == null) return;
+
+
+                foreach (var o in unsynced)
                 {
-                    db.ClientSiteSmartWandTagsHitLogCache.Remove(o);
-                }                
-            }            
-            await db.SaveChangesAsync();
+                    var r = ok.Where(x => x.Id == o.Id && x.IsSynced && x.UniqueRecordId == o.UniqueRecordId).FirstOrDefault();
+                    if (r != null)
+                    {
+                        db.ClientSiteSmartWandTagsHitLogCache.Remove(o);
+                    }
+                }
+                await db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+               // throw;
+            }
+
+           
         }
 
         public async Task<int> GetCurrentCacheCountAsync()

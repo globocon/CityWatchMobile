@@ -1,4 +1,5 @@
-﻿using C4iSytemsMobApp.Interface;
+﻿using C4iSytemsMobApp.Helpers;
+using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using System;
 using System.Net.Http.Json;
@@ -10,7 +11,7 @@ namespace C4iSytemsMobApp.Services
     {
         int guardId;
         int clientSiteId;
-        int userId; 
+        int userId;
         bool isError;
         string msg;
         public LogBookServices()
@@ -40,7 +41,7 @@ namespace C4iSytemsMobApp.Services
 
         public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, int scanningType = 0, string tagUID = "NA")
         {
-           // var (guardId, clientSiteId, userId, isError, msg) = await GetSecureStorageValues();
+            // var (guardId, clientSiteId, userId, isError, msg) = await GetSecureStorageValues();
 
             string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
@@ -51,38 +52,58 @@ namespace C4iSytemsMobApp.Services
 
 
             if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return (false, msg);
-            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
-                 $"?guardId={guardId}" +
-                 $"&clientsiteId={clientSiteId}" +
-                 $"&userId={userId}" +
-                 $"&activityString={Uri.EscapeDataString(activityDescription)}" +
-                 $"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
-                 $"&scanningType={scanningType}" +
-                 $"&tagUID={Uri.EscapeDataString(tagUID)}";
-                                    
-                try
+
+            PostActivityRequest request = new PostActivityRequest()
+            {
+                guardId = guardId,
+                clientsiteId = clientSiteId,
+                userId = userId,
+                activityString = activityDescription,
+                gps = gpsCoordinates,
+                systemEntry = true,
+                scanningType = scanningType,
+                tagUID = tagUID,
+                EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+                EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+                EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+                EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+                EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+            };
+
+            //var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
+            //     $"?guardId={guardId}" +
+            //     $"&clientsiteId={clientSiteId}" +
+            //     $"&userId={userId}" +
+            //     $"&activityString={Uri.EscapeDataString(activityDescription)}" +
+            //     $"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
+            //     $"&scanningType={scanningType}" +
+            //     $"&tagUID={Uri.EscapeDataString(tagUID)}";
+
+            try
+            {
+                var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity";
+                HttpClient _httpClient = new HttpClient();
+                HttpResponseMessage response = await _httpClient.PostAsJsonAsync(apiUrl, request);           
+
+                if (response.IsSuccessStatusCode)
                 {
-                    HttpClient _httpClient = new HttpClient();
-                    HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return (true, "Log entry added successfully.");
-                    }
-                    else
-                    {
-                        string errorMessage = await response.Content.ReadAsStringAsync();
-                        return (false, $"Failed: {errorMessage}");
-                    }
+                    return (true, "Log entry added successfully.");
                 }
-                catch (Exception ex)
+                else
                 {
-                    return (false, $"Failed: {ex.Message}");
+                    string errorMessage = await response.Content.ReadAsStringAsync();
+                    return (false, $"Failed: {errorMessage}");
                 }
-            
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Failed: {ex.Message}");
+            }
+
         }
 
         private void GetSecureStorageValues()
-        {            
+        {
             string msg = string.Empty;
             int.TryParse(Preferences.Get("GuardId", "0"), out guardId);
             int.TryParse(Preferences.Get("SelectedClientSiteId", "0"), out clientSiteId);
@@ -102,7 +123,7 @@ namespace C4iSytemsMobApp.Services
             {
                 msg = "User ID is invalid. Please log in again.";
                 isError = true;
-            }                        
+            }
         }
 
         public async Task<Dictionary<string, string>> GetCustomFieldConfigAsync()
@@ -112,7 +133,7 @@ namespace C4iSytemsMobApp.Services
         public async Task<List<Dictionary<string, string?>>> GetCustomFieldLogsAsync()
         {
             try
-            {                
+            {
                 var apiUrl = $"{AppConfig.ApiBaseUrl}LogBook/GetCustomFieldLogs?siteId={clientSiteId}";
 
                 HttpClient _httpClient = new HttpClient();

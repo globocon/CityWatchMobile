@@ -106,7 +106,7 @@ namespace C4iSytemsMobApp.Services
             await using var input = await response.Content.ReadAsStreamAsync();
             await using var output = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
 
-            var buffer = new byte[8192];
+            var buffer = new byte[256 * 1024];  // read 256 kb of data
             long totalRead = 0;
             int bytesRead;
 
