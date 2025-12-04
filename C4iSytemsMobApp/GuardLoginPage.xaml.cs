@@ -1,6 +1,8 @@
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Enums;
+using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
+using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Services;
 using Microsoft.Maui.Controls;
 using System;
@@ -716,18 +718,37 @@ public partial class GuardLoginPage : ContentPage
             }
 
             // API URL
-            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin" +
-                         $"?guardId={guardId}" +
-                         $"&clientsiteId={clientSiteId}" +
-                         $"&userId={userId}" +
-                         $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
+            //var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin" +
+            //             $"?guardId={guardId}" +
+            //             $"&clientsiteId={clientSiteId}" +
+            //             $"&userId={userId}" +
+            //             $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
 
             //string apiUrl = $"https://cws-ir.com/api/GuardSecurityNumber/EnterGuardLogin?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
 
+            PostActivityRequest request = new PostActivityRequest()
+            {
+                guardId = guardId,
+                clientsiteId = clientSiteId,
+                userId = userId,
+                activityString = "Logbook Logged In (Mob App)",
+                gps = gpsCoordinates,
+                systemEntry = true,
+                scanningType = 0,
+                tagUID = "NA",
+                EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+                EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+                EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+                EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+                EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+            };
 
+
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin";
             using (HttpClient client = new HttpClient())
             {
-                var response = await client.GetAsync(apiUrl);
+                // var response = await client.GetAsync(apiUrl);
+                HttpResponseMessage response = await client.PostAsJsonAsync(apiUrl, request);
                 if (response.IsSuccessStatusCode)
                 {
                     string contentData = await response.Content.ReadAsStringAsync();

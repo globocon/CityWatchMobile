@@ -30,6 +30,6 @@
 	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 	<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 	<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-	<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33" />
+	<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 	<uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
 </manifest>
