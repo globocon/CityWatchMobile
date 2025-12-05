@@ -991,18 +991,15 @@ public partial class LogActivity : ContentPage
     }
 
 
-    private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA")
+    private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = true)
     {
 
         var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid);
         if (isSuccess)
         {
             await ShowToastMessage(msg);
-            //////await ShowToastMessage("Log entry added successfully.");
-            ////_delayCancellationTokenSource = new CancellationTokenSource();
-            //////CustomLogEntry.Text = string.Empty; // Clear entry after success
-
-            ////await Task.Delay(2000, _delayCancellationTokenSource.Token); // Wait for 2 seconds
+            HideCustomLogPopup();
+            
             var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
             Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
         }
@@ -1067,33 +1064,39 @@ public partial class LogActivity : ContentPage
             return;
         }
 
-        if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
 
-        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
-        $"?guardId={_guardId}" +
-        $"&clientsiteId={_clientSiteId}" +
-        $"&userId={_userId}" +
-        $"&activityString={Uri.EscapeDataString(log.Trim())}" +
-        $"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
-        $"&systemEntry=false";
+        
+
+
+        //if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
+
+        //var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
+        //$"?guardId={_guardId}" +
+        //$"&clientsiteId={_clientSiteId}" +
+        //$"&userId={_userId}" +
+        //$"&activityString={Uri.EscapeDataString(log.Trim())}" +
+        //$"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
+        //$"&systemEntry=false";
 
         try
         {
-            HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
-            if (response.IsSuccessStatusCode)
-            {
-                await ShowToastMessage("Log entry added successfully.");
+            await MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(log.Trim(), 0, "NA", false));
 
-                // Close Popup
-                HideCustomLogPopup();
+            //HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
+            //if (response.IsSuccessStatusCode)
+            //{
+            //    await ShowToastMessage("Log entry added successfully.");
+
+            //    // Close Popup
+            //    HideCustomLogPopup();
 
 
-            }
-            else
-            {
-                string errorMessage = await response.Content.ReadAsStringAsync();
-                await ShowToastMessage($"Failed: {errorMessage}");
-            }
+            //}
+            //else
+            //{
+            //    string errorMessage = await response.Content.ReadAsStringAsync();
+            //    await ShowToastMessage($"Failed: {errorMessage}");
+            //}
         }
         catch (Exception ex)
         {

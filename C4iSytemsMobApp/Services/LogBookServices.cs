@@ -39,7 +39,7 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
-        public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, int scanningType = 0, string tagUID = "NA")
+        public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, int scanningType = 0, string tagUID = "NA", bool IsSystemEntry = true)
         {
             // var (guardId, clientSiteId, userId, isError, msg) = await GetSecureStorageValues();
 
@@ -60,7 +60,7 @@ namespace C4iSytemsMobApp.Services
                 userId = userId,
                 activityString = activityDescription,
                 gps = gpsCoordinates,
-                systemEntry = true,
+                systemEntry = IsSystemEntry,
                 scanningType = scanningType,
                 tagUID = tagUID,
                 EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
