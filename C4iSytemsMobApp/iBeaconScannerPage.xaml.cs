@@ -86,7 +86,7 @@ public partial class iBeaconScannerPage : ContentPage
 
         var msgDataArray = msgdata.Split("-");
         var serialNumber = msgDataArray[0];
-        var deviceName = msgDataArray[1];
+        var deviceName = msgDataArray[1] ?? " ";
 
         if (!string.IsNullOrEmpty(serialNumber))
         {
@@ -117,16 +117,16 @@ public partial class iBeaconScannerPage : ContentPage
                 else
                 {
                     var newmsg = scannerSettings?.message ?? "Unknown error";
-                    DisplayLog($"Error: {newmsg}");
-                    await DisplayAlert(ALERT_TITLE, newmsg, "OK");
+                    DisplayLog($"Error: {deviceName}/{newmsg}");
+                    // await DisplayAlert(ALERT_TITLE, newmsg, "OK");
                     return;
                 }
             }
             else
             {
                 var newmsg = scannerSettings?.message ?? "Unknown error";
-                DisplayLog($"Error: {newmsg}");
-                await DisplayAlert(ALERT_TITLE, newmsg, "OK");
+                DisplayLog($"Error: {deviceName}/{newmsg}");
+                // await DisplayAlert(ALERT_TITLE, newmsg, "OK");
                 return;
             }
 
@@ -150,7 +150,7 @@ public partial class iBeaconScannerPage : ContentPage
         {
             var newmsg = msg ?? "Failed to save tag scan";
             DisplayLog($"Error: {newmsg}");
-            await DisplayAlert("Error", newmsg, "OK");
+            //await DisplayAlert("Error", newmsg, "OK");
         }
     }
 

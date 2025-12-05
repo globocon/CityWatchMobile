@@ -39,10 +39,10 @@ namespace C4iSytemsMobApp.Services
                 return;
             }
 
-            MessageBus.Send("INFO", $"^^^^^^^^^^^^^^^^^^^^^^^^^^^\nScanning for iBeacon devices. Please wait...");
+            MessageBus.Send("INFO", $"Scanning for iBeacon devices. Please wait...");
             _deviceFound = new List<DeviceFound>();
             await _adapter.StartScanningForDevicesAsync();            
-            MessageBus.Send("INFO", $"iBeacon Scanning Completed. Processing scanned data...\n^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            MessageBus.Send("INFO", $"iBeacon Scanning Completed. Processing scanned data.");
             await ProcessDeviceFound(_deviceFound);
         }
 
@@ -51,8 +51,8 @@ namespace C4iSytemsMobApp.Services
             var device = e.Device;
             try
             {
-                if (device.Name?.ToLower().StartsWith("inode") == true)
-                {
+                //if (device.Name?.ToLower().StartsWith("inode") == true)
+                //{
                     //MessageBus.Send("INFO", $"Device Discovered \nName: {device.Name}\nMAC:{GuidToMac(device.Id.ToString())}\n------------------------------");
                     var Macid = GuidToMac(device.Id.ToString());
                    // MessageBus.Send("DATA", $"{Macid}-{device.Name}");                   
@@ -65,7 +65,7 @@ namespace C4iSytemsMobApp.Services
                             DeviceName = device.Name
                         });
                     }
-                }
+                //}
 
             }
             catch (Exception ex)
@@ -97,6 +97,7 @@ namespace C4iSytemsMobApp.Services
             foreach(var d in deviceFound) 
             {
                 MessageBus.Send("DATA", $"{d.MacID}-{d.DeviceName}");
+                await Task.Delay(300); // wait 300 ms before sending next message.
             }
         }
 
