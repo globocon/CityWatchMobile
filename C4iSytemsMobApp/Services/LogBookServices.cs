@@ -60,7 +60,7 @@ namespace C4iSytemsMobApp.Services
                 userId = userId,
                 activityString = activityDescription,
                 gps = gpsCoordinates,
-                systemEntry = IsSystemEntry,
+                systemEntry = false,
                 scanningType = scanningType,
                 tagUID = tagUID,
                 EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
