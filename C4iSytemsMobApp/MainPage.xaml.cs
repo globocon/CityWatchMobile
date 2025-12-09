@@ -1,24 +1,26 @@
 ﻿using C4iSytemsMobApp.Controls;
+using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Services;
+using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Maui.Devices.Sensors;
+using Plugin.BLE.Abstractions.Contracts;
 using Plugin.NFC;
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using CommunityToolkit.Maui.Alerts;
-using CommunityToolkit.Maui.Core;
-using C4iSytemsMobApp.Enums;
-using System.Collections.ObjectModel;
-using CommunityToolkit.Maui;
 using System.Windows.Input;
-using C4iSytemsMobApp.Data.DbServices;
+using static Microsoft.Maui.ApplicationModel.Permissions;
 
 
 namespace C4iSytemsMobApp
@@ -129,12 +131,20 @@ namespace C4iSytemsMobApp
         public string OnlineText { get; set; }
         public Color OnlineColor { get; set; }
         public string SyncStatusText { get; set; }
+
+        private IBeaconScanner scanner = new();
+        public const string BLE_ALERT_TITLE = "iBeacon";
+        private bool _isBleEnabledForSite = false;
+        private bool _hasBlePermission = false;
+        private bool BleScannerOnOff { get; set; }
+        public Color BleOnOffColor { get; set; }
+
         public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
             InitializeComponent();
             App.ConnectivityChangedEvent += OnConnectivityChanged;
             OnConnectivityChanged(App.IsOnline);
-            _syncService = IPlatformApplication.Current.Services.GetService<SyncService>();            
+            _syncService = IPlatformApplication.Current.Services.GetService<SyncService>();
             UpdateCacheLabel(SyncState.SyncedCount);
             UpdateSyncStatusLabel(SyncState.SyncingStatus);
             _volumeButtonService = volumeButtonService;
@@ -161,7 +171,8 @@ namespace C4iSytemsMobApp
             LongPressCommand = new Command(() => OnDuressClicked(sender: null, e: null));
 
             PopupCollectionView.BindingContext = this;
-
+            CheckBleEnabledForSite();
+            scanner.OnStateChanged += BluetoothStateChanged;
 
         }
 
@@ -226,19 +237,19 @@ namespace C4iSytemsMobApp
                 OpenDrawer();
             }
 
-            
+
 
             SyncState.SyncedCountChanged += SyncState_SyncedCountChanged;
-            SyncState.SyncingStatusChanged += SyncState_SyncingStatusChanged;        
+            SyncState.SyncingStatusChanged += SyncState_SyncingStatusChanged;
             var cc = await _syncService.GetCurrentCacheCountAsync();
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 SyncState.SyncedCount = cc;
             });
-            // If InitializePatronsCounterDisplay is async, await it.
             await InitializePatronsCounterDisplay();  // Execution Order - 1
             await StartNFC(); // Execution Order - 2
-            await SetupHubConnection();  // Execution Order - 3
+            await StartBLEScanner(); // Execution Order - 3
+            await SetupHubConnection();  // Execution Order - 4
 
             //if (!_isNfcEnabledForSite)
             //{
@@ -1368,7 +1379,7 @@ namespace C4iSytemsMobApp
                         await AutoStartAsync().ConfigureAwait(false);
                     }
                 }
-            }       
+            }
 
         }
 
@@ -1530,6 +1541,71 @@ namespace C4iSytemsMobApp
 
 
         #endregion "NFC Methods"
+
+
+        #region "BLE Methods"
+
+        private bool CheckBleEnabledForSite()
+        {
+            string isiBeaconEnabledForSiteLocalStored = Preferences.Get("iBeaconOnboarded", "");
+            if (!string.IsNullOrEmpty(isiBeaconEnabledForSiteLocalStored) && bool.TryParse(isiBeaconEnabledForSiteLocalStored, out _isBleEnabledForSite))
+            {
+                return _isBleEnabledForSite;
+            }
+            return false;
+        }
+        private async Task StartBLEScanner()
+        {
+            if (_isBleEnabledForSite)
+            {
+                _hasBlePermission = await PermissionService.CheckAndRequestPermissionsAsync();
+
+                if (!_hasBlePermission)
+                {
+                    await DisplayAlert(BLE_ALERT_TITLE, "Bluetooth or Location permission is required to scan for iBeacons.", "OK");
+                    return;
+                }
+                await scanner.StartScanningAsync();
+            }
+        }
+
+        private async Task StopBLEScanner()
+        {
+            if (_isBleEnabledForSite)
+            {
+                await scanner.StopScanningAsync();
+            }
+        }
+
+        private void BluetoothStateChanged(BluetoothState newState)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                DisplayAlert(BLE_ALERT_TITLE, $"Bluetooth State changed: {newState}", "OK");
+                OnBleOnOffChanged();
+            });
+
+            if (newState == BluetoothState.On)
+            {
+                //Console.WriteLine("Bluetooth is ON — start scanning");
+                StartBLEScanner();
+            }
+            else if (newState == BluetoothState.Off)
+            {
+                Console.WriteLine("Bluetooth is OFF — stop scanning");
+                StopBLEScanner();
+            }
+        }
+
+        public void OnBleOnOffChanged()
+        {
+            BleScannerOnOff = scanner.GetCurrentState() == BluetoothState.On ? true : false;
+            BleOnOffColor = BleScannerOnOff ? Colors.Green : Colors.Red;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BleScannerOnOff)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BleOnOffColor)));
+        }
+
+        #endregion "BLE Methods"
 
         private async Task ShowToastMessage(string message)
         {

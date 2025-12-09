@@ -12,14 +12,18 @@ namespace C4iSytemsMobApp.Services
 {
     public class IBeaconScanner
     {
+        private readonly IBluetoothLE _ble;
         private readonly IAdapter _adapter;
         private List<DeviceFound> _deviceFound;
+        public event Action<BluetoothState> OnStateChanged;
 
         public IBeaconScanner()
         {
+            _ble = CrossBluetoothLE.Current;
+            _ble.StateChanged += BleStateChanged;
             _adapter = CrossBluetoothLE.Current.Adapter;
             _adapter.ScanTimeout = 10000;
-            _adapter.ScanMode = ScanMode.Balanced;
+            _adapter.ScanMode = ScanMode.LowPower;
             //var scanFilterOptions = new ScanFilterOptions();
             //scanFilterOptions.ServiceUuids = new[] { guid1, guid2, etc }; // cross platform filter
             //scanFilterOptions.ManufacturerDataFilters = new[] { new ManufacturerDataFilter(1), new ManufacturerDataFilter(2) }; // android only filter
@@ -125,6 +129,19 @@ namespace C4iSytemsMobApp.Services
         {
             await _adapter.StopScanningForDevicesAsync();
             MessageBus.Send("INFO", $"^^^^^^^^^^^^^^^^^^^^^^^^^^^\niBeacon Scanning Stopped....\n^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+        }
+
+        private void BleStateChanged(object sender, Plugin.BLE.Abstractions.EventArgs.BluetoothStateChangedArgs e)
+        {
+            Console.WriteLine($"Bluetooth state changed: {e.NewState}");
+
+            // Notify UI or logic
+            OnStateChanged?.Invoke(e.NewState);
+        }
+
+        public BluetoothState GetCurrentState()
+        {
+            return _ble.State;
         }
     }
 
