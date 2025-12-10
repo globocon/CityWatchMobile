@@ -1102,6 +1102,9 @@
                 <Button Text="Roster"
                         Clicked="OnRosterClicked" />
 
+                <Button Text="PCAR Route"
+         Clicked="OnPcarClicked" />
+
                 <Button Text="SOP’s"
                         Clicked="OnSOPClicked" />
 

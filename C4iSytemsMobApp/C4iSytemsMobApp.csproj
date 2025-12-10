@@ -158,6 +158,9 @@
 	  <MauiXaml Update="LogActivityTabbedPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="PcarRute.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="SelectSmartWand.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

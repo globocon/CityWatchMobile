@@ -1835,7 +1835,12 @@ namespace C4iSytemsMobApp
             }
         }
 
+        private void OnPcarClicked(object sender, EventArgs e)
+        {
 
+            Application.Current.MainPage = new NavigationPage(new PcarRute()); // Redirect to LogActivityTabbedPage
+
+        }
 
     }
 

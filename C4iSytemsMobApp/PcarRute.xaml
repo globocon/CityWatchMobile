@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="C4iSytemsMobApp.PcarRute">
+
+    <AbsoluteLayout>
+
+        <ScrollView AbsoluteLayout.LayoutBounds="0,0,1,1"
+                    AbsoluteLayout.LayoutFlags="All">
+
+            <VerticalStackLayout Padding="10" Spacing="10">
+
+                <!-- Header Row -->
+                <Grid ColumnDefinitions="*,Auto" Padding="0,5">
+
+                    <!-- Title Centered -->
+                    <Label Text="PCAR Route Status"
+           Grid.Column="0"
+           HorizontalOptions="Center"
+           VerticalOptions="Center"
+           FontSize="18"
+           FontAttributes="Bold" />
+
+                    <!-- Home Button -->
+                    <ImageButton Source="home.png"
+                 Grid.Column="1"
+                 HeightRequest="30"
+                 WidthRequest="30"
+                 BackgroundColor="Transparent"
+                 Clicked="OnHomeClicked" />
+
+                </Grid>
+
+
+                <Label x:Name="CurrentDateLabel"
+       FontSize="16"
+       FontAttributes="Bold"
+       TextColor="Black"
+       HorizontalOptions="Center"
+       Margin="0,10,0,0" />
+                <!-- Dynamic Sites from API -->
+                <CollectionView x:Name="SiteListView"
+                ItemsSource="{Binding SiteList}"
+                Margin="0,5,0,5">
+
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="6"/>
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+
+                            <!-- Ultra-compact site card -->
+                            <Frame BorderColor="#D6C1A7"
+                   BackgroundColor="#FFF8F1"
+                   CornerRadius="10"
+                   Padding="8"
+                   Margin="8,2"
+                   HasShadow="False">
+
+                                <VerticalStackLayout Spacing="4">
+
+                                    <!-- Location icon + Site name -->
+                                    <Grid ColumnDefinitions="Auto,*"
+      VerticalOptions="Center">
+
+                                        <ImageButton Source="location.png"
+                 HeightRequest="14"
+                 WidthRequest="14"
+                 BackgroundColor="Transparent"
+                 Padding="0"
+                 Margin="0,0,5,0"
+                 Command="{Binding OpenMapsCommand}" />
+
+                                        <Label Grid.Column="1"
+           Text="{Binding SiteName}"
+           FontSize="14"
+           FontAttributes="Bold"
+           TextColor="#333"
+           VerticalOptions="Center" />
+                                    </Grid>
+
+
+                                    <!-- Address -->
+                                    <Label Text="{Binding Address}"
+                           FontSize="11"
+                           TextColor="#555"
+                           LineBreakMode="TailTruncation"
+                           Margin="0,-2,0,0"/>
+
+                                    <!-- Grid for Visits -->
+                                    <Grid Margin="0,2,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <!-- For #Visits label -->
+                                            <ColumnDefinition Width="*"/>
+                                            <!-- For checkboxes -->
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Static #Visits label -->
+                                        <Label Text="#Visits"
+           FontSize="11"
+           TextColor="#555"
+           VerticalOptions="Center"
+           Grid.Column="0"
+           Margin="0,0,4,0"/>
+
+                                        <!-- Checkboxes -->
+                                        <StackLayout Orientation="Horizontal"
+                 Spacing="2"
+                 Grid.Column="1">
+                                            <BindableLayout.ItemsSource>
+                                                <Binding Path="Visits"/>
+                                            </BindableLayout.ItemsSource>
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Frame HeightRequest="18"
+                       WidthRequest="18"
+                       CornerRadius="3"
+                       Padding="0"
+                       Margin="2,0,0,0"
+                       BorderColor="#C2C2C2"
+                       BackgroundColor="{Binding StatusColor}">
+
+                                                        <Frame.GestureRecognizers>
+                                                            <TapGestureRecognizer Command="{Binding ToggleCheckCommand}" />
+                                                        </Frame.GestureRecognizers>
+
+                                                        <Label Text="✔"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           FontSize="10"
+                           IsVisible="{Binding IsChecked}" />
+                                                    </Frame>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </StackLayout>
+
+                                    </Grid>
+
+
+
+
+                                </VerticalStackLayout>
+
+                            </Frame>
+
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                </CollectionView>
+
+
+
+
+
+            </VerticalStackLayout>
+
+        </ScrollView>
+
+        <Grid x:Name="EditTimePopupOverlay"
+      BackgroundColor="#80000000"
+      IsVisible="False"
+      ZIndex="999"
+      AbsoluteLayout.LayoutBounds="0,0,1,1"
+      AbsoluteLayout.LayoutFlags="All"
+      VerticalOptions="FillAndExpand"
+      HorizontalOptions="FillAndExpand">
+
+            <Frame BackgroundColor="White"
+           CornerRadius="12"
+           Padding="15"
+           Margin="12"
+           HasShadow="True"
+           VerticalOptions="Center"
+           HorizontalOptions="Center"
+           MaximumWidthRequest="480"
+           HeightRequest="300">
+
+                <VerticalStackLayout Spacing="15">
+
+                    <Label Text="Edit Time Entry"
+               FontSize="18"
+               TextColor="Black"
+               FontAttributes="Bold"
+               HorizontalOptions="Center"/>
+
+                    <!-- Time On Site -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Time On Site"
+                   FontSize="14"
+                   TextColor="Black"/>
+                        <TimePicker x:Name="TimeOnSitePicker"   Format="HH:mm" />
+                    </VerticalStackLayout>
+
+                    <!-- Time Off Site -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Time Off Site"
+                   FontSize="14"
+                   TextColor="Black"/>
+                        <TimePicker x:Name="TimeOffSitePicker"  Format="HH:mm" />
+                    </VerticalStackLayout>
+
+                    <HorizontalStackLayout Spacing="12"
+                               HorizontalOptions="Center">
+
+                        <Button 
+    x:Name="SaveTimeButton"
+    Text="Save"
+    Clicked="OnTimePopupSaveClicked"
+    BackgroundColor="#007bff"
+    TextColor="White"
+    FontSize="14"
+    CornerRadius="6" />
+
+                        <Button Text="Cancel"
+                    Clicked="OnTimePopupCancelClicked"
+                    BackgroundColor="Gray"
+                    TextColor="White"
+                    FontSize="14"
+                    CornerRadius="6"/>
+                    </HorizontalStackLayout>
+
+                </VerticalStackLayout>
+            </Frame>
+        </Grid>
+
+    </AbsoluteLayout>
+
+
+    
+
+</ContentPage>
