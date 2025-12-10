@@ -7,7 +7,7 @@ public partial class LogActivityTabbedPage
     private readonly ILogBookServices _logBookServices;
     bool showCustomLogs = false;
     bool showPatrolCarLogs = false;
-    bool showBLEiBeaconTab = false;
+    //bool showBLEiBeaconTab = false;
     public LogActivityTabbedPage()
     {
         InitializeComponent();
@@ -21,8 +21,8 @@ public partial class LogActivityTabbedPage
         await LoadTabsAsync();
 
         // Conditionally add tabs       
-        if (showBLEiBeaconTab)
-            Children.Add(new iBeaconScannerPage { Title = "iBeacon Scanner" });
+        //if (showBLEiBeaconTab)
+        //    Children.Add(new iBeaconScannerPage { Title = "iBeacon Scanner" });
 
         if (showCustomLogs)
             Children.Add(new CustomContractPage { Title = "Custom Logs" });
@@ -33,17 +33,17 @@ public partial class LogActivityTabbedPage
 
     private async Task LoadTabsAsync()
     {
-        try
-        {            
-            string isNfcEnabledForSiteLocalStored = Preferences.Get("iBeaconOnboarded", "");            
-            if (!string.IsNullOrEmpty(isNfcEnabledForSiteLocalStored) && bool.TryParse(isNfcEnabledForSiteLocalStored, out showBLEiBeaconTab))
-            {
-            }
-        }
-        catch (Exception)
-        {
+        //try
+        //{            
+        //    string isNfcEnabledForSiteLocalStored = Preferences.Get("iBeaconOnboarded", "");            
+        //    if (!string.IsNullOrEmpty(isNfcEnabledForSiteLocalStored) && bool.TryParse(isNfcEnabledForSiteLocalStored, out showBLEiBeaconTab))
+        //    {
+        //    }
+        //}
+        //catch (Exception)
+        //{
 
-        }
+        //}
 
         try
         {

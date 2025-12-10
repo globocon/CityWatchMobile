@@ -14,63 +14,61 @@ namespace C4iSytemsMobApp.Services
     {
         private readonly IBluetoothLE _ble;
         private readonly IAdapter _adapter;
+        private bool _runScanLoop = false;
+        private bool _isRestarting = false;
+                
+        // public int RssiThreshold { get; set; } = -80; // default: ignore weaker than -80
         private List<DeviceFound> _deviceFound;
         public event Action<BluetoothState> OnStateChanged;
+        public Func<List<DeviceFound>, Task>? OnDeviceFoundAsync;
+        public event Action<bool>? OnScanningInProgress;
 
         public IBeaconScanner()
         {
             _ble = CrossBluetoothLE.Current;
             _ble.StateChanged += BleStateChanged;
-            _adapter = CrossBluetoothLE.Current.Adapter;
-            _adapter.ScanTimeout = 10000;
-            _adapter.ScanMode = ScanMode.LowPower;
-            //var scanFilterOptions = new ScanFilterOptions();
-            //scanFilterOptions.ServiceUuids = new[] { guid1, guid2, etc }; // cross platform filter
-            //scanFilterOptions.ManufacturerDataFilters = new[] { new ManufacturerDataFilter(1), new ManufacturerDataFilter(2) }; // android only filter
-            //scanFilterOptions.DeviceAddresses = new[] { "80:6F:B0:43:8D:3B", "80:6F:B0:25:C3:15" }; // android only filter
-
-            //_adapter.DeviceDiscovered += (s, a) => deviceList.Add(a.Device);
+            _adapter = _ble.Adapter;
+            //_adapter.ScanTimeout = 10000;
+            _adapter.ScanMode = ScanMode.LowPower;           
             _adapter.DeviceDiscovered += OnDeviceDiscovered;
             _adapter.DeviceAdvertised += OnDeviceAdvertised;
+            // _adapter.ScanTimeoutElapsed += (s, e) => RestartScanIfNeeded();
         }
 
         public async Task StartScanningAsync()
         {
-            if (CrossBluetoothLE.Current.State == BluetoothState.Off)
-            {
-                //Console.WriteLine("Bluetooth is OFF.");
-                MessageBus.Send("INFO","Bluetooth is OFF.");
-                return;
-            }
+            //if (CrossBluetoothLE.Current.State == BluetoothState.Off)
+            //{
+            //    //Console.WriteLine("Bluetooth is OFF.");
+            //    MessageBus.Send("INFO", "Bluetooth is OFF.");
+            //    return;
+            //}
 
-            MessageBus.Send("INFO", $"Scanning for iBeacon devices. Please wait...");
-            _deviceFound = new List<DeviceFound>();
-            await _adapter.StartScanningForDevicesAsync();            
-            MessageBus.Send("INFO", $"iBeacon Scanning Completed. Processing scanned data.");
-            await ProcessDeviceFound(_deviceFound);
+            //MessageBus.Send("INFO", $"Scanning for iBeacon devices. Please wait...");
+            //_deviceFound = new List<DeviceFound>();
+            //await _adapter.StartScanningForDevicesAsync();
+            //MessageBus.Send("INFO", $"iBeacon Scanning Completed. Processing scanned data.");
+            //await ProcessDeviceFound(_deviceFound);
         }
 
         private async void OnDeviceDiscovered(object sender, DeviceEventArgs e)
         {
+            // Ignore weak RSSI
+            //if (e.Device.Rssi < RssiThreshold)
+            //    return;
+
             var device = e.Device;
             try
             {
-                //if (device.Name?.ToLower().StartsWith("inode") == true)
-                //{
-                    //MessageBus.Send("INFO", $"Device Discovered \nName: {device.Name}\nMAC:{GuidToMac(device.Id.ToString())}\n------------------------------");
-                    var Macid = GuidToMac(device.Id.ToString());
-                   // MessageBus.Send("DATA", $"{Macid}-{device.Name}");                   
-
-                    if (!_deviceFound.Any(d => d.MacID == Macid))
+                var Macid = GuidToMac(device.Id.ToString());
+                if (!_deviceFound.Any(d => d.MacID == Macid))
+                {
+                    _deviceFound.Add(new DeviceFound
                     {
-                        _deviceFound.Add(new DeviceFound
-                        {
-                            MacID = Macid,
-                            DeviceName = device.Name
-                        });
-                    }
-                //}
-
+                        MacID = Macid,
+                        DeviceName = device.Name
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -96,9 +94,96 @@ namespace C4iSytemsMobApp.Services
             //}
         }
 
+        public void Start()
+        {
+            if (CrossBluetoothLE.Current.State == BluetoothState.Off)
+            {
+                // MessageBus.Send("INFO", "Bluetooth is OFF.");
+                return;
+            }
+
+            if (_runScanLoop) return;
+
+            _runScanLoop = true;
+            Task.Run(async () => await ScanLoop());
+        }
+
+        public async Task Stop()
+        {
+            _runScanLoop = false;
+
+            if (_adapter.IsScanning)
+            {
+                await _adapter.StopScanningForDevicesAsync();
+            }
+            OnScanningInProgress?.Invoke(false);
+        }
+
+
+        private async Task ScanLoop()
+        {
+            while (_runScanLoop)
+            {
+                if (!_adapter.IsScanning)
+                {
+                    try
+                    {
+                        _deviceFound = new List<DeviceFound>();
+                        OnScanningInProgress?.Invoke(true);
+                        await _adapter.StartScanningForDevicesAsync();
+                        OnScanningInProgress?.Invoke(false);
+                        if (OnDeviceFoundAsync != null)
+                        {
+                            if (_deviceFound.Count > 0)
+                            {
+                                await OnDeviceFoundAsync.Invoke(_deviceFound);
+                                await Task.Delay(200);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        OnScanningInProgress?.Invoke(false);
+                        await Task.Delay(2000);
+                    }
+                }
+
+                await Task.Delay(200);
+            }
+        }
+
+        private async void RestartScanIfNeeded()
+        {
+            if (!_runScanLoop || _isRestarting)
+                return;
+
+            _isRestarting = true;
+            await Task.Delay(500);
+
+            try
+            {
+                if (_runScanLoop)
+                {
+                    _deviceFound = new List<DeviceFound>();
+                    OnScanningInProgress?.Invoke(true);
+                    await _adapter.StartScanningForDevicesAsync();
+                    OnScanningInProgress?.Invoke(false);
+                    if (OnDeviceFoundAsync != null)
+                        await OnDeviceFoundAsync.Invoke(_deviceFound);
+                    await Task.Delay(200);
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+
+            _isRestarting = false;
+        }
+
         private async Task ProcessDeviceFound(List<DeviceFound> deviceFound)
         {
-            foreach(var d in deviceFound) 
+            foreach (var d in deviceFound)
             {
                 MessageBus.Send("DATA", $"{d.MacID}-{d.DeviceName}");
                 await Task.Delay(300); // wait 300 ms before sending next message.
@@ -127,13 +212,19 @@ namespace C4iSytemsMobApp.Services
 
         public async Task StopScanningAsync()
         {
-            await _adapter.StopScanningForDevicesAsync();
-            MessageBus.Send("INFO", $"^^^^^^^^^^^^^^^^^^^^^^^^^^^\niBeacon Scanning Stopped....\n^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            //await _adapter.StopScanningForDevicesAsync();
+            //MessageBus.Send("INFO", $"^^^^^^^^^^^^^^^^^^^^^^^^^^^\niBeacon Scanning Stopped....\n^^^^^^^^^^^^^^^^^^^^^^^^^^^");
         }
 
         private void BleStateChanged(object sender, Plugin.BLE.Abstractions.EventArgs.BluetoothStateChangedArgs e)
         {
             Console.WriteLine($"Bluetooth state changed: {e.NewState}");
+
+            if (e.NewState != BluetoothState.On)
+            {
+                // If Bluetooth turned off, stop scanning
+                _ = Stop();
+            }
 
             // Notify UI or logic
             OnStateChanged?.Invoke(e.NewState);
@@ -143,6 +234,7 @@ namespace C4iSytemsMobApp.Services
         {
             return _ble.State;
         }
+
     }
 
     public class DeviceFound

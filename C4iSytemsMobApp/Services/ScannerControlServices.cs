@@ -341,5 +341,17 @@ namespace C4iSytemsMobApp.Services
             return (true, message, _ChaceCount);
         }
 
+
+        public async Task<bool> CheckIfTagExistsForSiteInLocalDb(string _TagUid)
+        {
+            var rtn = false;
+            var _TagFound = _scanDataDbServices.GetSmartWandTagDetailOfTag(_TagUid);            
+            if (_TagFound != null)
+            {
+                rtn = true;
+            }
+            return rtn;
+        }
+
     }
 }

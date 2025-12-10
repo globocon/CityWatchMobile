@@ -74,11 +74,20 @@
                                   Spacing="0"
                                   HorizontalOptions="FillAndExpand">
 
+                        <Label x:Name="PulseLabel"
+                               Text="&#xf2ce;"
+                               FontFamily="FontAwesome"
+                               FontSize="8"
+                               TextColor="{Binding BleOnOffColor}"
+                               HorizontalOptions="Start"
+                               Padding="2,0,0,0"/>
+
                         <Label Text="{Binding OnlineText}"
                                TextColor="{Binding OnlineColor}"
                                FontSize="8"
                                FontAttributes="Bold"
-                               HorizontalOptions="Start" />
+                               HorizontalOptions="Start"
+                               Padding="3,0,0,0"/>
 
                         <Label Text="{Binding SyncStatusText}"
                                TextColor="Black"
