@@ -20,23 +20,31 @@ namespace C4iSytemsMobApp.Data.DbServices
     }
 
     public class ScanDataDbServices : IScanDataDbServices
-    {
-        private readonly AppDbContext _db;
-        public ScanDataDbServices(AppDbContext db) {
-            _db = db;
+    {       
+        private readonly Func<AppDbContext> _dbFactory;
+        public ScanDataDbServices(Func<AppDbContext> dbFactory) {
+            _dbFactory = dbFactory;
         }
 
-        public async Task<List<ClientSiteSmartWandTagsHitLogCache>> GetAllSavedScanDataAsync() => await _db.ClientSiteSmartWandTagsHitLogCache.AsNoTracking().ToListAsync();
+        public async Task<List<ClientSiteSmartWandTagsHitLogCache>> GetAllSavedScanDataAsync() {
+            using var _db = _dbFactory();
+            return await _db.ClientSiteSmartWandTagsHitLogCache.AsNoTracking().ToListAsync(); 
+        }
 
-        public int GetCacheRecordsCount() => _db.ClientSiteSmartWandTagsHitLogCache.Count();
+        public int GetCacheRecordsCount() {
+            using var _db = _dbFactory();
+            return _db.ClientSiteSmartWandTagsHitLogCache.Count();
+        }
 
         public async Task SaveScanData(ClientSiteSmartWandTagsHitLogCache record)
         {
-            _db.ClientSiteSmartWandTagsHitLogCache.Add(record);
-            await _db.SaveChangesAsync();
+            using var newdb = _dbFactory();
+            newdb.ClientSiteSmartWandTagsHitLogCache.Add(record);
+            await newdb.SaveChangesAsync();
         }
 
         public async Task RefreshSmartWandTagsList(List<ClientSiteSmartWandTagsLocal> swtags) {
+            using var _db = _dbFactory();
             var r = await _db.ClientSiteSmartWandTagsLocal.ToListAsync();
             _db.ClientSiteSmartWandTagsLocal.RemoveRange(r);
             await _db.AddRangeAsync(swtags);
@@ -45,6 +53,7 @@ namespace C4iSytemsMobApp.Data.DbServices
 
         public ClientSiteSmartWandTagsHitLogCache GetLastScannedTagDateTime(int siteId, string tagUid)
         {
+            using var _db = _dbFactory();
             return _db.ClientSiteSmartWandTagsHitLogCache
                 .Where(x => x.TagUId == tagUid && x.LoggedInClientSiteId == siteId)
                 .OrderByDescending(x => x.HitUtcDateTime)
@@ -53,7 +62,8 @@ namespace C4iSytemsMobApp.Data.DbServices
         }
         public ClientSiteSmartWandTagsLocal GetSmartWandTagDetailOfTag(string tagUid)
         {
-            return _db.ClientSiteSmartWandTagsLocal.Where(x=> x.UId == tagUid).FirstOrDefault();
+            using var _db = _dbFactory();
+            return _db.ClientSiteSmartWandTagsLocal.Where(x => x.UId == tagUid).FirstOrDefault();
         }
     }
 }

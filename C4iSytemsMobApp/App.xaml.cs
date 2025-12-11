@@ -29,7 +29,9 @@ namespace C4iSytemsMobApp
             Connectivity.ConnectivityChanged += (s, e) =>
             {
                 IsOnline = e.NetworkAccess == NetworkAccess.Internet;
-                // Notify UI
+                //var service = IPlatformApplication.Current.Services.GetService<ISyncApiService>();
+                //(service as SyncApiService)?.ResetClient();
+                //// Notify UI
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     ConnectivityChangedEvent?.Invoke(IsOnline);
@@ -41,7 +43,7 @@ namespace C4iSytemsMobApp
             Application.Current.UserAppTheme = savedTheme == "Dark" ? AppTheme.Dark : AppTheme.Light;
             MainPage = new NavigationPage(upgradePage);
 
-            // 🔥 RUN STARTUP SYNC AFTER APP LOADS
+            // RUN STARTUP SYNC AFTER APP LOADS
             Task.Run(async () =>
             {
                 try

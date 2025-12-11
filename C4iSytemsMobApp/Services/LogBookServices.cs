@@ -25,7 +25,6 @@ namespace C4iSytemsMobApp.Services
         {
             // Here you would typically make an HTTP request to the API endpoint
             HttpClient client = new HttpClient();
-            //client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
             try
             {
                 HttpResponseMessage response = await client.GetAsync(_apiurl);
@@ -41,8 +40,6 @@ namespace C4iSytemsMobApp.Services
 
         public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, int scanningType = 0, string tagUID = "NA", bool IsSystemEntry = true)
         {
-            // var (guardId, clientSiteId, userId, isError, msg) = await GetSecureStorageValues();
-
             string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
             if (string.IsNullOrWhiteSpace(gpsCoordinates))
@@ -70,35 +67,32 @@ namespace C4iSytemsMobApp.Services
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
             };
 
-            //var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
-            //     $"?guardId={guardId}" +
-            //     $"&clientsiteId={clientSiteId}" +
-            //     $"&userId={userId}" +
-            //     $"&activityString={Uri.EscapeDataString(activityDescription)}" +
-            //     $"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
-            //     $"&scanningType={scanningType}" +
-            //     $"&tagUID={Uri.EscapeDataString(tagUID)}";
-
+            
             try
             {
-                var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity";
-                HttpClient _httpClient = new HttpClient();
-                HttpResponseMessage response = await _httpClient.PostAsJsonAsync(apiUrl, request);           
+                using (HttpClient _httpClient = new HttpClient())
+                {
+                    var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity";
 
-                if (response.IsSuccessStatusCode)
-                {
-                    return (true, "Log entry added successfully.");
+                    HttpResponseMessage response = await _httpClient.PostAsJsonAsync(apiUrl, request);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        return (true, "Log entry added successfully.");
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        return (false, $"Failed: {errorMessage}");
+                    }
+
                 }
-                else
-                {
-                    string errorMessage = await response.Content.ReadAsStringAsync();
-                    return (false, $"Failed: {errorMessage}");
-                }
+
             }
             catch (Exception ex)
             {
                 return (false, $"Failed: {ex.Message}");
-            }
+            }            
 
         }
 
@@ -132,11 +126,12 @@ namespace C4iSytemsMobApp.Services
         }
         public async Task<List<Dictionary<string, string?>>> GetCustomFieldLogsAsync()
         {
+            HttpClient _httpClient = new HttpClient();
             try
             {
                 var apiUrl = $"{AppConfig.ApiBaseUrl}LogBook/GetCustomFieldLogs?siteId={clientSiteId}";
 
-                HttpClient _httpClient = new HttpClient();
+
                 HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
                 response.EnsureSuccessStatusCode();
                 var rows = await response.Content.ReadFromJsonAsync<List<Dictionary<string, string?>>>();
@@ -146,6 +141,10 @@ namespace C4iSytemsMobApp.Services
             {
                 Console.WriteLine($"Error fetching Custom Field logs: {ex.Message}");
                 return new List<Dictionary<string, string?>>();
+            }
+            finally
+            {
+                _httpClient.Dispose();
             }
         }
         public async Task<(bool isSuccess, string errorMessage)> SaveCustomFieldLogAsync(Dictionary<string, string> record)
