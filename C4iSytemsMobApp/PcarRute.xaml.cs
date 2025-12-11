@@ -1,6 +1,7 @@
 ﻿using C4iSytemsMobApp.Interface;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
+using Plugin.BLE.Abstractions;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -21,23 +22,51 @@ public partial class PcarRute : ContentPage
     private int? _clientSiteId;
     private int? _userId;
     private int? _guardId;
-    
+
+    //public PcarRute()
+    //{
+    //    InitializeComponent();
+
+    //    LoadSecureData();
+    //    NavigationPage.SetHasNavigationBar(this, false);
+
+    //    infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
+
+    //    deviceid = infoService?.GetDeviceId();
+    //    // Show deviceId in the label
+    //    DeviceIdLabel.Text = $"Device ID: {deviceid}";
+    //    _viewModel = new PcarRouteViewModel();
+    //    BindingContext = _viewModel;
+    //    CurrentDateLabel.Text = DateTime.Now.ToString("ddd d MMM yyyy");
+    //    Task.Run(async () => await _viewModel.LoadRealData(deviceid));
+    //}
+
     public PcarRute()
     {
         InitializeComponent();
-
-        LoadSecureData();
         NavigationPage.SetHasNavigationBar(this, false);
-
-        deviceid = infoService?.GetDeviceId();
 
         _viewModel = new PcarRouteViewModel();
         BindingContext = _viewModel;
+
+        infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
+        deviceid = infoService?.GetDeviceId();
+      
         CurrentDateLabel.Text = DateTime.Now.ToString("ddd d MMM yyyy");
-        Task.Run(async () => await _viewModel.LoadRealData(deviceid));
+
+        // Load secure storage FIRST
+        _ = InitializePage();
     }
 
-    private async void LoadSecureData()
+    private async Task InitializePage()
+    {
+        await LoadSecureData();   // ENSURES IDs exist before API call
+
+        // Now load real data properly ON UI THREAD
+        await _viewModel.LoadRealData(deviceid);
+    }
+
+    private async Task LoadSecureData()
     {
         var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
         _clientSiteId = clientSiteId;
@@ -242,9 +271,11 @@ public class PcarRouteViewModel : INotifyPropertyChanged
     {
         try
         {
+           
             using var http = new HttpClient();
             // Pass the real deviceId from the method parameter
             var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetPcarDetails?deviceId={deviceId}";
+            //var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetPcarDetails?deviceId=7ea8b144337cb38c";
 
             var response = await http.GetAsync(url);
             var json = await response.Content.ReadAsStringAsync();

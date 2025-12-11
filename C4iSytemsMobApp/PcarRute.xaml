@@ -30,12 +30,11 @@
                  Clicked="OnHomeClicked" />
 
                 </Grid>
-
+              
 
                 <Label x:Name="CurrentDateLabel"
        FontSize="16"
-       FontAttributes="Bold"
-       TextColor="Black"
+       FontAttributes="Bold"    
        HorizontalOptions="Center"
        Margin="0,10,0,0" />
                 <!-- Dynamic Sites from API -->
@@ -181,24 +180,30 @@
 
                     <Label Text="Edit Time Entry"
                FontSize="18"
-               TextColor="Black"
+               
                FontAttributes="Bold"
                HorizontalOptions="Center"/>
 
                     <!-- Time On Site -->
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Time On Site"
+                        <Label Text="Time On Site"  TextColor="Black"
                    FontSize="14"
-                   TextColor="Black"/>
-                        <TimePicker x:Name="TimeOnSitePicker"   Format="HH:mm" />
+                   />
+                        <TimePicker x:Name="TimeOnSitePicker"   Format="HH:mm" TextColor="Black"
+            BackgroundColor="White"
+            HeightRequest="45"
+            Margin="0,4" />
                     </VerticalStackLayout>
 
                     <!-- Time Off Site -->
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Time Off Site"
+                        <Label Text="Time Off Site"  TextColor="Black"
                    FontSize="14"
-                   TextColor="Black"/>
-                        <TimePicker x:Name="TimeOffSitePicker"  Format="HH:mm" />
+                   />
+                        <TimePicker x:Name="TimeOffSitePicker"  Format="HH:mm" TextColor="Black"
+            BackgroundColor="White"
+            HeightRequest="45"
+            Margin="0,4" />
                     </VerticalStackLayout>
 
                     <HorizontalStackLayout Spacing="12"
