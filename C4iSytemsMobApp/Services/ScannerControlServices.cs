@@ -46,13 +46,15 @@ namespace C4iSytemsMobApp.Services
         {
             string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetScannerControlSettings?siteId={_clientSiteId}";
             // Here you would typically make an HTTP request to the API endpoint
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
-            HttpResponseMessage response = await client.GetAsync(apiUrl);
-            if (response.IsSuccessStatusCode)
+            using (HttpClient client = new HttpClient())
             {
-                var settings = await response.Content.ReadFromJsonAsync<List<string>>();
-                return settings;
+                client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var settings = await response.Content.ReadFromJsonAsync<List<string>>();
+                    return settings;
+                }
             }
 
             return new List<string>(); // Example return value
@@ -62,15 +64,16 @@ namespace C4iSytemsMobApp.Services
         {
             string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetClientSiteSmartWands?siteId={_clientSiteId}";
             // Here you would typically make an HTTP request to the API endpoint
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
-            HttpResponseMessage response = await client.GetAsync(apiUrl);
-            if (response.IsSuccessStatusCode)
+            using (HttpClient client = new HttpClient())
             {
-                var settings = await response.Content.ReadFromJsonAsync<List<DropdownItem>>();
-                return settings;
+                client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var settings = await response.Content.ReadFromJsonAsync<List<DropdownItem>>();
+                    return settings;
+                }
             }
-
             return new List<DropdownItem>(); // Example return value
         }
 
@@ -97,6 +100,10 @@ namespace C4iSytemsMobApp.Services
                 // Optionally log error or handle it
                 Console.WriteLine($"Error: {ex.Message}");
             }
+            finally
+            {
+                client.Dispose();
+            }
 
             return null; // Example return value
         }
@@ -120,6 +127,10 @@ namespace C4iSytemsMobApp.Services
             {
                 // Optionally log error or handle it
                 Console.WriteLine($"Error: {ex.Message}");
+            }
+            finally
+            {
+                client.Dispose();
             }
 
             return false; // Example return value
@@ -158,6 +169,10 @@ namespace C4iSytemsMobApp.Services
             {
                 // Optionally log error or handle it
                 Console.WriteLine($"Error: {ex.Message}");
+            }
+            finally
+            {
+                client.Dispose();
             }
 
             return null; // Example return value
@@ -201,6 +216,10 @@ namespace C4iSytemsMobApp.Services
                 Console.WriteLine($"Error: {ex.Message}");
                 throw;
             }
+            finally
+            {
+                client.Dispose();
+            }
         }
 
         public async Task CheckIfSmartWandIsDeRegisteredAsync(string _clientSiteId)
@@ -238,20 +257,27 @@ namespace C4iSytemsMobApp.Services
                 Console.WriteLine($"Error: {ex.Message}");
                 return;
             }
+            finally
+            {
+                client.Dispose();
+            }
         }
 
         public async Task<List<ClientSiteSmartWandTagsLocal>> GetSmartWandTagsForSite(string siteId)
         {
             string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetClientSiteAllSmartWandTags?siteId={siteId}";
             // Here you would typically make an HTTP request to the API endpoint
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
-            HttpResponseMessage response = await client.GetAsync(apiUrl);
-            if (response.IsSuccessStatusCode)
-            {
-                var settings = await response.Content.ReadFromJsonAsync<List<ClientSiteSmartWandTagsLocal>>();
-                return settings;
+            using (HttpClient client = new HttpClient())
+            {                
+                client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var settings = await response.Content.ReadFromJsonAsync<List<ClientSiteSmartWandTagsLocal>>();
+                    return settings;
+                }
             }
+                
 
             return new List<ClientSiteSmartWandTagsLocal>(); // Example return value
         }

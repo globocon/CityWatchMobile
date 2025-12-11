@@ -1,4 +1,5 @@
 ﻿using C4iSytemsMobApp.Data.Entity;
+using System.Net;
 using System.Net.Http.Json;
 
 
@@ -10,56 +11,51 @@ namespace C4iSytemsMobApp.Services
         
     }
     public class SyncApiService: ISyncApiService
-    {
-        //private readonly HttpClient _http;
+    {        
         string gpsCoordinates;
         int guardId;
         int clientSiteId;
         int userId;
         bool isError;
         string msg;
-
         public SyncApiService()
-        {
-            //_http = new() { BaseAddress = new Uri($"{AppConfig.ApiBaseUrl}") };
+        { 
             GetSecureStorageValues();
             gpsCoordinates = Preferences.Get("GpsCoordinates", "");
         }
+
         public async Task<List<ClientSiteSmartWandTagsHitLogCache>> PushSmartWandTagsHitLogCacheAsync(List<ClientSiteSmartWandTagsHitLogCache> records)
         {
-            var apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SyncOfflineSmartWandTagHitData";
-            
+
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                return null;
+
+           var apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SyncOfflineSmartWandTagHitData";
+
             try
             {
-                HttpClient _httpClient = new HttpClient();
-                HttpResponseMessage response = await _httpClient.PostAsJsonAsync(apiUrl, records);
-                //HttpResponseMessage response = await _http.PostAsJsonAsync(apiUrl, records);
-                if (response.IsSuccessStatusCode)
+                using (HttpClient _http = new HttpClient())
                 {
-                    var settings = await response.Content.ReadFromJsonAsync<List<ClientSiteSmartWandTagsHitLogCache>>();
-                    return settings;
+                    await Task.Delay(3000);
+                    HttpResponseMessage response = await _http.PostAsJsonAsync(apiUrl, records);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var settings = await response.Content.ReadFromJsonAsync<List<ClientSiteSmartWandTagsHitLogCache>>();
+                        return settings;
+
+                    }
+                    else
+                    {
+                        throw new Exception("Error in syncing records");
+                    }
+                }
                    
-                }
-                else
-                {
-                    throw new Exception("Error in syncing records");
-                }
             }
             catch (Exception ex)
             {
                 throw;
             }
-
-            //try
-            //{
-            //    var resp = await _http.PostAsJsonAsync("orders/sync", records);
-            //    return resp.IsSuccessStatusCode;
-            //}
-            //catch { return false; }
         }
-
-       
-
         private void GetSecureStorageValues()
         {
             string msg = string.Empty;

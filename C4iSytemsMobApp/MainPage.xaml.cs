@@ -140,6 +140,8 @@ namespace C4iSytemsMobApp
         private bool BleScannerOnOff { get; set; }
         public Color BleOnOffColor { get; set; }
         private bool _pulseActive = false;
+        private CancellationTokenSource _pulseCts;
+
 
         public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
@@ -183,19 +185,30 @@ namespace C4iSytemsMobApp
 
         public void OnConnectivityChanged(bool isOnline)
         {
-            OnlineText = isOnline ? "Online" : "Offline";
-            OnlineColor = isOnline ? Colors.Green : Colors.Red;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineText)));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineColor)));
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                OnlineText = isOnline ? "Online" : "Offline";
+                OnlineColor = isOnline ? Colors.Green : Colors.Red;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineText)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineColor)));
+            });            
         }
         private void UpdateCacheLabel(int ccheCount)
         {
-            CchStatusLabel.Text = $"Cch:{ccheCount}";
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                CchStatusLabel.Text = $"Cch:{ccheCount}";
+            });
+            
         }
         private void UpdateSyncStatusLabel(string syncstatus)
         {
-            SyncStatusText = syncstatus;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SyncStatusText)));
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                SyncStatusText = syncstatus;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SyncStatusText)));
+            });
+            
         }
         private void SyncState_SyncedCountChanged(object sender, int newCount)
         {
@@ -247,17 +260,41 @@ namespace C4iSytemsMobApp
             });
             await InitializePatronsCounterDisplay();  // Execution Order - 1
             await StartNFC(); // Execution Order - 2
-            _ = RunPulseLoop();
+            if (_isBleEnabledForSite) { StartPulse(); }
             StartBLEScanner(); // Execution Order - 3
             await SetupHubConnection();  // Execution Order - 4
 
-            //if (!_isNfcEnabledForSite)
-            //{
-            //    CchStatusLabel.IsVisible = false;
-            //    CchStatusLabel.IsEnabled = false;
-            //}
-
             MainLayout.IsVisible = true;
+        }
+
+        protected override async void OnDisappearing()
+        {
+            base.OnDisappearing();
+            App.IsVolumeControlEnabledForCounter = false; // Disable custom volume handling
+
+            // Stop NFC listening
+            if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
+            {
+                await StopListening();
+            }
+
+            // Stop bluetooth scanning 
+            StopPulse();
+            await StopBLEScanner();
+
+
+            if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
+            {
+                _hubConnection.StopAsync();
+                _hubConnection.DisposeAsync();
+            }
+
+            // Unsubscribe safely
+            //TagStatusService.Instance.Unsubscribe(OnTagStatusUpdated);
+
+            App.ConnectivityChangedEvent -= OnConnectivityChanged;
+            SyncState.SyncedCountChanged -= SyncState_SyncedCountChanged;
+            SyncState.SyncingStatusChanged -= SyncState_SyncingStatusChanged;
         }
 
 
@@ -442,35 +479,7 @@ namespace C4iSytemsMobApp
             }
         }
 
-        protected override async void OnDisappearing()
-        {
-            base.OnDisappearing();
-            App.IsVolumeControlEnabledForCounter = false; // Disable custom volume handling
-
-            // Stop NFC listening
-            if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
-            {
-                await StopListening();
-            }
-
-            // Stop bluetooth scanning                           
-            await StopBLEScanner();
-
-
-            if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
-            {
-                _hubConnection.StopAsync();
-                _hubConnection.DisposeAsync();
-            }
-
-            // Unsubscribe safely
-            //TagStatusService.Instance.Unsubscribe(OnTagStatusUpdated);
-
-            App.ConnectivityChangedEvent -= OnConnectivityChanged;
-            SyncState.SyncedCountChanged -= SyncState_SyncedCountChanged;
-            SyncState.SyncingStatusChanged -= SyncState_SyncingStatusChanged;
-        }
-
+        
         private async void LoadLoggedInUser()
         {
             try
@@ -1574,13 +1583,13 @@ namespace C4iSytemsMobApp
 
                 if (!_hasBlePermission)
                 {
-                    await DisplayAlert(BLE_ALERT_TITLE, "Bluetooth or Location permission is required to scan for iBeacons.", "OK");
+                    await ShowAlert(BLE_ALERT_TITLE, "Bluetooth or Location permission is required to scan for iBeacons.");
                     return;
                 }
 
                 if (scanner.GetCurrentState() == BluetoothState.Off)
                 {
-                    await DisplayAlert(BLE_ALERT_TITLE, "Please switch on Bluetooth to scan for iBeacons.", "OK");
+                    await ShowAlert(BLE_ALERT_TITLE, "Please switch on Bluetooth to scan for iBeacons.");
                     return;
                 }
 
@@ -1607,11 +1616,13 @@ namespace C4iSytemsMobApp
             if (newState == BluetoothState.On)
             {
                 //Console.WriteLine("Bluetooth is ON — start scanning");
+                if (_isBleEnabledForSite) { StartPulse(); }
                 StartBLEScanner();
             }
             else if (newState == BluetoothState.Off)
             {
                 Console.WriteLine("Bluetooth is OFF — stop scanning");
+                StopPulse();
                 StopBLEScanner();
             }
         }
@@ -1636,18 +1647,36 @@ namespace C4iSytemsMobApp
         private void OnScanningInProgress(bool status)
         {
             _pulseActive = status;
+
+            if (status)
+                StartPulse();
+            else
+                StopPulse();
+        }
+        private void StartPulse()
+        {
+            // Cancel old loop first (if running)
+            _pulseCts?.Cancel();
+            _pulseCts = new CancellationTokenSource();
+
+            _ = RunPulseLoop(_pulseCts.Token);
+        }
+        private void StopPulse()
+        {
+            _pulseCts?.Cancel();
         }
 
-        private async Task RunPulseLoop()
+
+        private async Task RunPulseLoop(CancellationToken token)
         {
-            while (true)
+            while (!token.IsCancellationRequested)
             {
                 if (_pulseActive && _isBleEnabledForSite && BleScannerOnOff)
                 {
                     await MainThread.InvokeOnMainThreadAsync(async () =>
                     {
-                        await PulseLabel.ScaleTo(1.3, 400);
-                        await PulseLabel.ScaleTo(1.0, 400);
+                        await PulseLabel.ScaleTo(1.3, 400, Easing.CubicInOut);
+                        await PulseLabel.ScaleTo(1.0, 400, Easing.CubicInOut);
                     });
                 }
                 else
@@ -1657,10 +1686,17 @@ namespace C4iSytemsMobApp
                         PulseLabel.Scale = 1;
                     });
 
-                    await Task.Delay(100);
+                    await Task.Delay(300, token).ContinueWith(t => { });
                 }
             }
+
+            // Reset to normal size when cancelled
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                PulseLabel.Scale = 1;
+            });
         }
+
 
         private async Task ProcessBLEData(DeviceFound device)
         {
@@ -1679,7 +1715,7 @@ namespace C4iSytemsMobApp
                 if (!App.IsOnline)
                 {
                     // Log To Cache                    
-                    await LogScannedDataToCache(serialNumber, deviceName, ScanningType.BLUETOOTH);
+                    await LogBLEScannedDataToCache(serialNumber, deviceName, ScanningType.BLUETOOTH);
                     return;
                 }
                 await ShowToastMessage($"Device Found:{deviceName}. Logging activity...");
@@ -1700,14 +1736,14 @@ namespace C4iSytemsMobApp
                     else
                     {
                         var newmsg = $"Error: {scannerSettings?.message ?? "Unknown error"}";
-                        await DisplayAlert(BLE_ALERT_TITLE, newmsg, "OK");
+                        await ShowToastMessage($"Error: {newmsg}");
                         return;
                     }
                 }
                 else
                 {
                     var newmsg = $"Error: {scannerSettings?.message ?? "Unknown error"}";
-                    await DisplayAlert(BLE_ALERT_TITLE, newmsg, "OK");
+                    await ShowToastMessage($"Error: {newmsg}");
                     return;
                 }
 
@@ -1716,7 +1752,7 @@ namespace C4iSytemsMobApp
         }
 
 
-        private async Task LogScannedDataToCache(string _TagUid, string _deviceName, ScanningType _scannerType)
+        private async Task LogBLEScannedDataToCache(string _TagUid, string _deviceName, ScanningType _scannerType)
         {
             await ShowToastMessage($"Bluetooth Device Found:{_deviceName}. Logging activity to Cache.");
             var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
@@ -1731,7 +1767,7 @@ namespace C4iSytemsMobApp
             else
             {
                 var newmsg = msg ?? "Failed to save tag scan";
-                await DisplayAlert(BLE_ALERT_TITLE, $"Error: {newmsg}", "OK");
+                await ShowToastMessage($"Error: {newmsg}");
             }
         }
 
@@ -1756,7 +1792,7 @@ namespace C4iSytemsMobApp
                     alertHead = BLE_ALERT_TITLE;
                 }
 
-                await DisplayAlert(alertHead, msg ?? "Failed to log activity", "OK");
+                await ShowAlert(alertHead,$"{msg ?? "Failed to log activity"}");
             }
         }
 
@@ -1768,6 +1804,13 @@ namespace C4iSytemsMobApp
             });
         }
 
+        private Task ShowAlert(string alertHead,string message)
+        {
+            return MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                DisplayAlert(alertHead, message, "OK");
+            });
+        }
 
         private async Task<(int guardId, int clientSiteId, int userId)> GetSecureStorageValues()
         {
