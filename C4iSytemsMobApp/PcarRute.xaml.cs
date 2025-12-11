@@ -243,7 +243,8 @@ public class PcarRouteViewModel : INotifyPropertyChanged
         try
         {
             using var http = new HttpClient();
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetPcarDetails?deviceId=123";
+            // Pass the real deviceId from the method parameter
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetPcarDetails?deviceId={deviceId}";
 
             var response = await http.GetAsync(url);
             var json = await response.Content.ReadAsStringAsync();
