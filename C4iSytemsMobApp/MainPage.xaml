@@ -1030,19 +1030,19 @@
               AbsoluteLayout.LayoutFlags="HeightProportional"
               TranslationX="-250"
               ZIndex="10">
-            
+
             <ScrollView>
 
                 <VerticalStackLayout Padding="20"
                                  Spacing="20"
                                  VerticalOptions="FillAndExpand">
 
-                <!-- Top section: Menu title and main buttons -->
-                <Label Text="Menu"
+                    <!-- Top section: Menu title and main buttons -->
+                    <Label Text="Menu"
                        FontAttributes="Bold"
                        FontSize="20" />
 
-                <Frame CornerRadius="9"
+                    <Frame CornerRadius="9"
                        HasShadow="False"
                        BorderColor="Transparent"
                        Margin="0,0,0,0"
@@ -1051,33 +1051,33 @@
                        HorizontalOptions="Fill"
                        VerticalOptions="Center"
                        BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
-                    <Frame.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnNotificationsClicked" />
-                    </Frame.GestureRecognizers>
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNotificationsClicked" />
+                        </Frame.GestureRecognizers>
 
-                    <HorizontalStackLayout Padding="15,0"
+                        <HorizontalStackLayout Padding="15,0"
                                            Spacing="10"
                                            VerticalOptions="Center"
                                            HorizontalOptions="Center"
                                            HeightRequest="46">
 
-                        <Label Text="Notifications"
+                            <Label Text="Notifications"
                                FontSize="13"
                                VerticalOptions="Center"
                                HorizontalOptions="Center"
                                TextColor="{AppThemeBinding Light=White, Dark=Black}" />
 
-                        <Grid WidthRequest="30"
+                            <Grid WidthRequest="30"
                               HeightRequest="30">
-                            <!-- Bell icon -->
-                            <Image Source="{FontImageSource Glyph=&#xf0a2;, FontFamily=FontAwesome, Size=30}"
+                                <!-- Bell icon -->
+                                <Image Source="{FontImageSource Glyph=&#xf0a2;, FontFamily=FontAwesome, Size=30}"
                                    x:Name="NotificationIcon"
                                    IsVisible="{Binding HasNotifications}"
                                    VerticalOptions="Center"
                                    HorizontalOptions="End" />
 
-                            <!-- Notification badge -->
-                            <Frame BackgroundColor="White"
+                                <!-- Notification badge -->
+                                <Frame BackgroundColor="White"
                                    BorderColor="Red"
                                    CornerRadius="10"
                                    HeightRequest="15"
@@ -1089,35 +1089,35 @@
                                    TranslationX="5"
                                    TranslationY="-3"
                                    HasShadow="False">
-                                <Label Text="{Binding NotificationCount}"
+                                    <Label Text="{Binding NotificationCount}"
                                        TextColor="Red"
                                        FontSize="9"
                                        HorizontalOptions="Center"
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
-                            </Frame>
-                        </Grid>
-                    </HorizontalStackLayout>
-                </Frame>
+                                </Frame>
+                            </Grid>
+                        </HorizontalStackLayout>
+                    </Frame>
 
-                <!--<Button Text="Roster"
+                    <!--<Button Text="Roster"
                         Clicked="OnRosterClicked" />-->
 
-                <Button Text="PCAR Route"
+                    <Button Text="PCAR Route"
                         Clicked="OnPcarClicked" />
 
-                <Button Text="SOP’s"
+                    <Button Text="SOP’s"
                         Clicked="OnSOPClicked" />
 
-                <Button Text="Tools"
+                    <Button Text="Tools"
                         Clicked="OnToolsClicked" />
 
-                <Button Text="Downloads"
+                    <Button Text="Downloads"
                         Clicked="OnDownloadsClicked" />
 
 
 
-                <Frame CornerRadius="9"
+                    <Frame CornerRadius="9"
                        HasShadow="False"
                        BorderColor="Transparent"
                        Margin="0,0,0,0"
@@ -1127,37 +1127,37 @@
                        VerticalOptions="Center"
                        BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
 
-                    <HorizontalStackLayout Padding="15,0"
+                        <HorizontalStackLayout Padding="15,0"
                                            Spacing="10"
                                            VerticalOptions="Center"
                                            HorizontalOptions="FillAndExpand"
                                            HeightRequest="46">
 
-                        <Label Text="Dark Mode"
+                            <Label Text="Dark Mode"
                                FontSize="13"
                                VerticalOptions="Center"
                                HorizontalOptions="StartAndExpand"
                                TextColor="{AppThemeBinding Light=White, Dark=Black}" />
 
-                        <Switch x:Name="ThemeSwitch"
+                            <Switch x:Name="ThemeSwitch"
                                 VerticalOptions="Center"
                                 Toggled="OnThemeSwitchToggled"
                                 OnColor="White"
                                 ThumbColor="Gray"
                                 Scale="0.9" />
 
-                        <Label x:Name="ThemeStateLabel"
+                            <Label x:Name="ThemeStateLabel"
                                Text="On"
                                FontSize="13"
                                FontAttributes="Bold"
                                VerticalOptions="Center"
                                HorizontalOptions="End"
                                TextColor="{AppThemeBinding Light=White, Dark=Black}" />
-                    </HorizontalStackLayout>
-                </Frame>
+                        </HorizontalStackLayout>
+                    </Frame>
 
-                <!-- Settings Button -->
-                <Frame CornerRadius="9"
+                    <!-- Settings Button -->
+                    <Frame CornerRadius="9"
                        HasShadow="False"
                        BorderColor="Transparent"
                        Margin="0,0,0,0"
@@ -1166,32 +1166,32 @@
                        HorizontalOptions="Fill"
                        VerticalOptions="Center"
                        BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
-                    <Frame.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnDrawerMenuSettingsClicked" />
-                    </Frame.GestureRecognizers>
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnDrawerMenuSettingsClicked" />
+                        </Frame.GestureRecognizers>
 
-                    <HorizontalStackLayout Padding="0,0"
+                        <HorizontalStackLayout Padding="0,0"
                                            Spacing="10"
                                            VerticalOptions="Center"
                                            HorizontalOptions="Center"
                                            HeightRequest="46">
-                        <Label Text=""
+                            <Label Text=""
                                FontFamily="FontAwesome"
                                FontSize="25"
                                TextColor="{AppThemeBinding Light=White, Dark=Black}"
                                VerticalOptions="Center"
                                HorizontalOptions="Center">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnDrawerMenuSettingsClicked" />
-                            </Label.GestureRecognizers>
-                        </Label>
-                    </HorizontalStackLayout>
-                </Frame>
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnDrawerMenuSettingsClicked" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </HorizontalStackLayout>
+                    </Frame>
 
-                <Button Text="Off Duty"
+                    <Button Text="Off Duty"
                         Clicked="OnOffDutyClicked" />
 
-            </VerticalStackLayout>
+                </VerticalStackLayout>
             </ScrollView>
         </Grid>
 
