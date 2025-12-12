@@ -1030,9 +1030,10 @@
               AbsoluteLayout.LayoutFlags="HeightProportional"
               TranslationX="-250"
               ZIndex="10">
+            
+            <ScrollView>
 
-
-            <VerticalStackLayout Padding="20"
+                <VerticalStackLayout Padding="20"
                                  Spacing="20"
                                  VerticalOptions="FillAndExpand">
 
@@ -1099,11 +1100,11 @@
                     </HorizontalStackLayout>
                 </Frame>
 
-                <Button Text="Roster"
-                        Clicked="OnRosterClicked" />
+                <!--<Button Text="Roster"
+                        Clicked="OnRosterClicked" />-->
 
                 <Button Text="PCAR Route"
-         Clicked="OnPcarClicked" />
+                        Clicked="OnPcarClicked" />
 
                 <Button Text="SOP’s"
                         Clicked="OnSOPClicked" />
@@ -1191,7 +1192,7 @@
                         Clicked="OnOffDutyClicked" />
 
             </VerticalStackLayout>
-
+            </ScrollView>
         </Grid>
 
 
