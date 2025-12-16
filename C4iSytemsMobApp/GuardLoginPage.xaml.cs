@@ -4,6 +4,8 @@ using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Services;
+using C4iSytemsMobApp.Views;
+using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls;
 using System;
 using System.Collections.ObjectModel;
@@ -558,6 +560,8 @@ public partial class GuardLoginPage : ContentPage
                 btnLogin.Text = "Go Back"; // Change button text
                 // Disable entry and button
                 txtLicenseNumber.IsEnabled = false;
+                btnRegister.IsEnabled = false;
+                btnRegister.IsVisible = false;
                 //((Button)sender).IsEnabled = false;
 
                 lblGuardName.Text = $"Hello {guardData.Name}.  Please verify that your details are correct, then click \"Access C4i System.\"";
@@ -914,10 +918,33 @@ public partial class GuardLoginPage : ContentPage
 
 
 
+
+
     #endregion "NFC Methods"
 
+    private async void OnRegisterNewGuardClicked(object sender, EventArgs e)
+    {
+        var popup = new RegisterNewGuardPopup();
+        var result = await this.ShowPopupAsync(popup);
 
+        if (result is string action)
+        {
+            //if (!(Application.Current.MainPage is NavigationPage))
+            //    Application.Current.MainPage = new NavigationPage(Application.Current.MainPage);
 
+            switch (action)
+            {
+                case "Cancel":
+                    // Just close silently
+                    break;
+                default:
+                    // Handle all other actions here
+                    txtLicenseNumber.Text = action;
+                    OnReadClicked(null, null);
+                    break;
+            }
+        }
+    }
 }
 
 // Model class for API response
