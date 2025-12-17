@@ -24,6 +24,7 @@ public partial class GuardLoginPage : ContentPage
     private readonly ICrowdControlServices _crowdControlServices;
     private readonly INfcService _nfcService;
     private readonly IScanDataDbServices _scanDataDbService;
+    private bool _isNewGuard = false;
 
     public ObservableCollection<DropdownItem> ClientTypes { get; set; } = new();
     public ObservableCollection<DropdownItem> ClientSites { get; set; } = new();
@@ -745,6 +746,7 @@ public partial class GuardLoginPage : ContentPage
                 EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
                 EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                IsNewGuard = _isNewGuard
             };
 
 
@@ -929,20 +931,21 @@ public partial class GuardLoginPage : ContentPage
 
         if (result is string action)
         {
-            //if (!(Application.Current.MainPage is NavigationPage))
-            //    Application.Current.MainPage = new NavigationPage(Application.Current.MainPage);
-
-            switch (action)
+            if (!string.IsNullOrEmpty(action))
             {
-                case "Cancel":
-                    // Just close silently
-                    break;
-                default:
-                    // Handle all other actions here
-                    txtLicenseNumber.Text = action;
-                    OnReadClicked(null, null);
-                    break;
-            }
+                switch (action)
+                {
+                    case "Cancel":
+                        // Just close silently
+                        break;
+                    default:
+                        // Handle all other actions here
+                        txtLicenseNumber.Text = action;
+                        _isNewGuard = true;
+                        OnReadClicked(null, null);
+                        break;
+                }
+            }                
         }
     }
 }
