@@ -68,6 +68,7 @@ namespace C4iSytemsMobApp.Services
                 EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
                 EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                IsNewGuard = false
             };
 
             //var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +

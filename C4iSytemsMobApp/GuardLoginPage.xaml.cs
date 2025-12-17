@@ -4,6 +4,8 @@ using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Services;
+using C4iSytemsMobApp.Views;
+using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls;
 using System;
 using System.Collections.ObjectModel;
@@ -22,6 +24,7 @@ public partial class GuardLoginPage : ContentPage
     private readonly ICrowdControlServices _crowdControlServices;
     private readonly INfcService _nfcService;
     private readonly IScanDataDbServices _scanDataDbService;
+    private bool _isNewGuard = false;
 
     public ObservableCollection<DropdownItem> ClientTypes { get; set; } = new();
     public ObservableCollection<DropdownItem> ClientSites { get; set; } = new();
@@ -558,6 +561,8 @@ public partial class GuardLoginPage : ContentPage
                 btnLogin.Text = "Go Back"; // Change button text
                 // Disable entry and button
                 txtLicenseNumber.IsEnabled = false;
+                btnRegister.IsEnabled = false;
+                btnRegister.IsVisible = false;
                 //((Button)sender).IsEnabled = false;
 
                 lblGuardName.Text = $"Hello {guardData.Name}.  Please verify that your details are correct, then click \"Access C4i System.\"";
@@ -741,6 +746,7 @@ public partial class GuardLoginPage : ContentPage
                 EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
                 EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                IsNewGuard = _isNewGuard
             };
 
 
@@ -914,10 +920,34 @@ public partial class GuardLoginPage : ContentPage
 
 
 
+
+
     #endregion "NFC Methods"
 
+    private async void OnRegisterNewGuardClicked(object sender, EventArgs e)
+    {
+        var popup = new RegisterNewGuardPopup();
+        var result = await this.ShowPopupAsync(popup);
 
-
+        if (result is string action)
+        {
+            if (!string.IsNullOrEmpty(action))
+            {
+                switch (action)
+                {
+                    case "Cancel":
+                        // Just close silently
+                        break;
+                    default:
+                        // Handle all other actions here
+                        txtLicenseNumber.Text = action;
+                        _isNewGuard = true;
+                        OnReadClicked(null, null);
+                        break;
+                }
+            }                
+        }
+    }
 }
 
 // Model class for API response

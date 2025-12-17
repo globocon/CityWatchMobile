@@ -113,6 +113,9 @@
 	  <Compile Update="SelectSmartWand.xaml.cs">
 	    <DependentUpon>SelectSmartWand.xaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="Views\RegisterNewGuardPopup.xaml.cs">
+	    <DependentUpon>RegisterNewGuardPopup.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="Views\DownloadProgressPopup.xaml.cs">
 	    <DependentUpon>DownloadProgressPopup.xaml</DependentUpon>
 	  </Compile>
@@ -162,6 +165,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="SelectSmartWand.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\RegisterNewGuardPopup.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\DownloadProgressPopup.xaml">
