@@ -266,7 +266,7 @@ public partial class RegisterNewGuardPopup : Popup
     private bool SecurityNumberIsNotValid(string SecurityNo)
     {
         if (string.IsNullOrWhiteSpace(SecurityNo))
-            return false;
+            return true;
 
         // same number pattern
         // e.g: 0000, 1111, 222222 etc.
@@ -290,4 +290,5 @@ public partial class RegisterNewGuardPopup : Popup
         SecurityNumberBorder.Stroke = securityNumberValid ? Colors.Transparent : Colors.Red;
         SecurityNumberErrorLabel.IsVisible = !securityNumberValid;
     }
+    
 }
