@@ -25,6 +25,7 @@ public partial class GuardLoginPage : ContentPage
     private readonly INfcService _nfcService;
     private readonly IScanDataDbServices _scanDataDbService;
     private bool _isNewGuard = false;
+    private bool _isPopupOpen = false;
 
     public ObservableCollection<DropdownItem> ClientTypes { get; set; } = new();
     public ObservableCollection<DropdownItem> ClientSites { get; set; } = new();
@@ -606,6 +607,8 @@ public partial class GuardLoginPage : ContentPage
                 pickerClientType.IsVisible = false;
                 pickerClientSite.IsVisible = false;
                 btnEnterLogbook.IsVisible = false;
+                btnRegister.IsEnabled = true;
+                btnRegister.IsVisible = true;
                 ToggleInstructionalTextVisibility();
             }
         }
@@ -926,6 +929,8 @@ public partial class GuardLoginPage : ContentPage
 
     private async void OnRegisterNewGuardClicked(object sender, EventArgs e)
     {
+        _isPopupOpen = true;
+
         var popup = new RegisterNewGuardPopup();
         var result = await this.ShowPopupAsync(popup);
 
@@ -947,6 +952,8 @@ public partial class GuardLoginPage : ContentPage
                 }
             }                
         }
+
+        _isPopupOpen = false;
     }
 }
 

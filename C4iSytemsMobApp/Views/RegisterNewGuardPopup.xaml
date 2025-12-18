@@ -2,181 +2,188 @@
 <toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-               x:Class="C4iSytemsMobApp.Views.RegisterNewGuardPopup">
+               x:Class="C4iSytemsMobApp.Views.RegisterNewGuardPopup"
+               CanBeDismissedByTappingOutsideOfPopup="False">
+  
+        
+        
+        <Frame Padding="10,0,10,0"
+               Margin="20"
+               CornerRadius="0"
+               HasShadow="False"
+               VerticalOptions="Center"
+               HorizontalOptions="Center"
+               WidthRequest="280"
+               HeightRequest="600"
+               BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
 
-    <Frame Padding="10,0,10,0"
-           Margin="0,0,0,0"
-           CornerRadius="0"
-           HasShadow="False"
-           VerticalOptions="Center"
-           HorizontalOptions="Center"
-           WidthRequest="280"
-           HeightRequest="650"
-           BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
+            <ScrollView>
+                <VerticalStackLayout Spacing="3">
 
-        <ScrollView>
-            <VerticalStackLayout Spacing="5">
+                    <Label Text="Security Number"
+                           FontSize="14"
+                           HorizontalOptions="StartAndExpand"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    <Border x:Name="SecurityNumberBorder"
+                            Stroke="Transparent"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 6">
+                        <Entry x:Name="GuardSecurityNumberEntry"
+                               Keyboard="Text"
+                               TextChanged="OnSecurityNumberTextChanged" />
+                    </Border>
+                    <Label x:Name="SecurityNumberErrorLabel"
+                           Text="Security Number is invalid."
+                           FontSize="10"
+                           TextColor="Red"
+                           IsVisible="False" />
 
-                <Label Text="Security Number"
-                       FontSize="14"
-                       HorizontalOptions="StartAndExpand"
-                       FontAttributes="Bold"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                <Border x:Name="SecurityNumberBorder"
-                        Stroke="Transparent"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 6">
-                    <Entry x:Name="GuardSecurityNumberEntry"
-                           Keyboard="Text"
-                           TextChanged="OnSecurityNumberTextChanged" />
-                </Border>
-                <Label x:Name="SecurityNumberErrorLabel"
-                       Text="Security Number is invalid."
-                       FontSize="10"
-                       TextColor="Red"
-                       IsVisible="False" />
-                
-                <Label Text="Full Name"
-                       FontSize="14"
-                       HorizontalOptions="StartAndExpand"
-                       FontAttributes="Bold"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                <Border x:Name="FullNameBorder"
-                        Stroke="Transparent"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 6">
-                    <Entry x:Name="GuardFullNameEntry"
-                           Keyboard="Text"
-                           TextChanged="OnFullNameTextChanged" />
-                </Border>
-                <Label x:Name="FullNameErrorLabel"
-                       Text="Full Name is required."
-                       FontSize="10"
-                       TextColor="Red"
-                       IsVisible="False" />
+                    <Label Text="Full Name"
+                           FontSize="14"
+                           HorizontalOptions="StartAndExpand"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    <Border x:Name="FullNameBorder"
+                            Stroke="Transparent"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 6">
+                        <Entry x:Name="GuardFullNameEntry"
+                               Keyboard="Text"
+                               TextChanged="OnFullNameTextChanged" />
+                    </Border>
+                    <Label x:Name="FullNameErrorLabel"
+                           Text="Full Name is required."
+                           FontSize="10"
+                           TextColor="Red"
+                           IsVisible="False" />
 
-                <Label Text="Initials"
-                       FontSize="14"
-                       HorizontalOptions="StartAndExpand"
-                       FontAttributes="Bold"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                <Border x:Name="GuardInitialsBorder"
-                        Stroke="Transparent"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 6">
-                    <Entry x:Name="GuardInitials"
-                           Keyboard="Text"
-                           TextChanged="OnGuardInitialsTextChanged" />
-                </Border>
-                <Label x:Name="GuardInitialsErrorLabel"
-                       Text="Initials is required."
-                       FontSize="10"
-                       TextColor="Red"
-                       IsVisible="False" />
+                    <Label Text="Initials"
+                           FontSize="14"
+                           HorizontalOptions="StartAndExpand"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    <Border x:Name="GuardInitialsBorder"
+                            Stroke="Transparent"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 6">
+                        <Entry x:Name="GuardInitials"
+                               Keyboard="Text"
+                               TextChanged="OnGuardInitialsTextChanged" />
+                    </Border>
+                    <Label x:Name="GuardInitialsErrorLabel"
+                           Text="Initials is required."
+                           FontSize="10"
+                           TextColor="Red"
+                           IsVisible="False" />
 
-                <Label Text="Gender"
-                       FontSize="14"
-                       HorizontalOptions="StartAndExpand"
-                       FontAttributes="Bold"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                <Border x:Name="GuardGenderBorder"
-                        Stroke="Transparent"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 6">
-                    <Picker x:Name="pickerGuardGender"
-                            ItemsSource="{Binding Genders}"
-                            ItemDisplayBinding="{Binding Name}"
-                            IsVisible="True"
-                            SelectedIndexChanged="OnGuardGenderSelected" />
-                </Border>
-                <Label x:Name="GuardGenderErrorLabel"
-                       Text="Please select an option."
-                       FontSize="10"
-                       TextColor="Red"
-                       IsVisible="False" />
+                    <Label Text="Gender"
+                           FontSize="14"
+                           HorizontalOptions="StartAndExpand"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    <Border x:Name="GuardGenderBorder"
+                            Stroke="Transparent"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 6">
+                        <Picker x:Name="pickerGuardGender"
+                                ItemsSource="{Binding Genders}"
+                                ItemDisplayBinding="{Binding Name}"
+                                IsVisible="True"
+                                SelectedIndexChanged="OnGuardGenderSelected" />
+                    </Border>
+                    <Label x:Name="GuardGenderErrorLabel"
+                           Text="Please select an option."
+                           FontSize="10"
+                           TextColor="Red"
+                           IsVisible="False" />
 
 
-                <Label Text="State"
-                       FontSize="14"
-                       HorizontalOptions="StartAndExpand"
-                       FontAttributes="Bold"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                <Border x:Name="GuardStatesBorder"
-                        Stroke="Transparent"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 6">
-                    <Picker x:Name="pickerGuardState"
-                            ItemsSource="{Binding States}"
-                            ItemDisplayBinding="{Binding Name}"
-                            IsVisible="True"
-                            SelectedIndexChanged="OnGuardStateSelected"/>
-                </Border>
-                <Label x:Name="GuardStateErrorLabel"
-                       Text="Please select an option."
-                       FontSize="10"
-                       TextColor="Red"
-                       IsVisible="False" />
+                    <Label Text="State"
+                           FontSize="14"
+                           HorizontalOptions="StartAndExpand"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    <Border x:Name="GuardStatesBorder"
+                            Stroke="Transparent"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 6">
+                        <Picker x:Name="pickerGuardState"
+                                ItemsSource="{Binding States}"
+                                ItemDisplayBinding="{Binding Name}"
+                                IsVisible="True"
+                                SelectedIndexChanged="OnGuardStateSelected" />
+                    </Border>
+                    <Label x:Name="GuardStateErrorLabel"
+                           Text="Please select an option."
+                           FontSize="10"
+                           TextColor="Red"
+                           IsVisible="False" />
 
-                <Label Text="Personal(Private) Email"
-                       FontSize="14"
-                       HorizontalOptions="StartAndExpand"
-                       FontAttributes="Bold"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                <Border x:Name="EmailBorder"
-                        Stroke="Transparent"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 6">
-                    <Entry x:Name="GuardEmail"
-                           Keyboard="Email"
-                           TextChanged="OnEmailTextChanged" />
-                </Border>
+                    <Label Text="Personal(Private) Email"
+                           FontSize="14"
+                           HorizontalOptions="StartAndExpand"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    <Border x:Name="EmailBorder"
+                            Stroke="Transparent"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 6">
+                        <Entry x:Name="GuardEmail"
+                               Keyboard="Email"
+                               TextChanged="OnEmailTextChanged" />
+                    </Border>
 
-                <Label x:Name="EmailErrorLabel"
-                       Text="Please enter a valid email address"
-                       FontSize="10"
-                       TextColor="Red"
-                       IsVisible="False" />
+                    <Label x:Name="EmailErrorLabel"
+                           Text="Please enter a valid email address"
+                           FontSize="10"
+                           TextColor="Red"
+                           IsVisible="False" />
 
-                <Label Text="Personal(Private) Mobile"
-                       FontSize="14"
-                       HorizontalOptions="StartAndExpand"
-                       FontAttributes="Bold"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                <Border x:Name="MobileBorder"
-                        Stroke="Transparent"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 6">
-                    <Entry x:Name="GuardMobile"
-                           Keyboard="Telephone"
-                           MaxLength="15"
-                           TextChanged="OnMobileTextChanged" />
-                </Border>
+                    <Label Text="Personal(Private) Mobile"
+                           FontSize="14"
+                           HorizontalOptions="StartAndExpand"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    <Border x:Name="MobileBorder"
+                            Stroke="Transparent"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 6">
+                        <Entry x:Name="GuardMobile"
+                               Keyboard="Telephone"
+                               MaxLength="15"
+                               TextChanged="OnMobileTextChanged" />
+                    </Border>
 
-                <Label x:Name="MobileErrorLabel"
-                       Text="Enter valid Australian mobile (04XXXXXXXX or +614XXXXXXXX)"
-                       FontSize="10"
-                       TextColor="Red"
-                       IsVisible="False" />
+                    <Label x:Name="MobileErrorLabel"
+                           Text="Enter valid Australian mobile (04XXXXXXXX or +614XXXXXXXX)"
+                           FontSize="10"
+                           TextColor="Red"
+                           IsVisible="False" />
 
-                <HorizontalStackLayout Spacing="5"
-                                       HorizontalOptions="CenterAndExpand">
-                    <Button Text="Save"
-                            BackgroundColor="Green"
-                            TextColor="White"
-                            Padding="1,0,0,0"
-                            HorizontalOptions="CenterAndExpand"
-                            VerticalOptions="Center"
-                            Clicked="OnSaveClicked" />
+                    <HorizontalStackLayout Spacing="5"
+                                           Margin="10"
+                                           HorizontalOptions="CenterAndExpand">
+                        <Button Text="Save"
+                                BackgroundColor="Green"
+                                TextColor="White"
+                                Padding="1,0,0,0"
+                                WidthRequest="80"
+                                HorizontalOptions="CenterAndExpand"
+                                VerticalOptions="Center"
+                                Clicked="OnSaveClicked" />
 
-                    <Button Text="Cancel"
-                            BackgroundColor="Blue"
-                            TextColor="White"
-                            Padding="1,0,0,0"
-                            HorizontalOptions="CenterAndExpand"
-                            VerticalOptions="Center"
-                            Clicked="OnCancelClicked" />
-                </HorizontalStackLayout>
-            </VerticalStackLayout>
-        </ScrollView>
-    </Frame>
+                        <Button Text="Cancel"
+                                BackgroundColor="Blue"
+                                TextColor="White"
+                                Padding="1,0,0,0"
+                                WidthRequest="80"
+                                HorizontalOptions="CenterAndExpand"
+                                VerticalOptions="Center"
+                                Clicked="OnCancelClicked" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </ScrollView>
+        </Frame>
+    
 </toolkit:Popup>
