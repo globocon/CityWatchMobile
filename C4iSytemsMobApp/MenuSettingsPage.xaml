@@ -60,6 +60,45 @@
                         Clicked="OnAddTagsClicked"
                         FontAttributes="Bold" />
 
+                <Frame CornerRadius="9"
+                       HasShadow="False"
+                       BorderColor="Transparent"
+                       Margin="0,0,0,0"
+                       Padding="0"
+                       HeightRequest="46"
+                       HorizontalOptions="Fill"
+                       VerticalOptions="Center"
+                       BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
+
+                    <HorizontalStackLayout Padding="15,0"
+                                           Spacing="10"
+                                           VerticalOptions="Center"
+                                           HorizontalOptions="FillAndExpand"
+                                           HeightRequest="46">
+
+                        <Label Text="Dark Mode"
+                               FontSize="13"
+                               VerticalOptions="Center"
+                               HorizontalOptions="StartAndExpand"
+                               TextColor="{AppThemeBinding Light=White, Dark=Black}" />
+
+                        <Switch x:Name="ThemeSwitch"
+                                VerticalOptions="Center"
+                                Toggled="OnThemeSwitchToggled"
+                                OnColor="White"
+                                ThumbColor="Gray"
+                                Scale="0.9" />
+
+                        <Label x:Name="ThemeStateLabel"
+                               Text="On"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center"
+                               HorizontalOptions="End"
+                               TextColor="{AppThemeBinding Light=White, Dark=Black}" />
+                    </HorizontalStackLayout>
+                </Frame>
+
                 <Button Text="Select Smart Wand"
                         Clicked="OnSelectSmartWandClicked"
                         FontAttributes="Bold" />

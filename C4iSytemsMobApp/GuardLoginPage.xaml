@@ -106,7 +106,7 @@
                             Grid.Row="1"
                             Grid.Column="1"
                             Text="Register"
-                            BackgroundColor="Yellow"
+                            BackgroundColor="#f5b402"
                             Margin="2,0,0,0"
                             VerticalOptions="Center"
                             Clicked="OnRegisterNewGuardClicked" />
@@ -244,7 +244,7 @@
                     <Label Text="HR1 (C4i)"
                            FontAttributes="Bold"
                            FontSize="12"
-                           TextColor="White"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
                            HorizontalOptions="Center"
                            VerticalOptions="Center" />
                 </VerticalStackLayout>
@@ -264,7 +264,7 @@
                     <Label Text="HR2 (Client)"
                            FontAttributes="Bold"
                            FontSize="12"
-                           TextColor="White"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
                            HorizontalOptions="Center"
                            VerticalOptions="Center" />
                 </VerticalStackLayout>
@@ -284,7 +284,7 @@
                     <Label Text="HR3 (Special)"
                            FontAttributes="Bold"
                            FontSize="12"
-                           TextColor="White"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
                            HorizontalOptions="Center"
                            VerticalOptions="Center" />
                 </VerticalStackLayout>

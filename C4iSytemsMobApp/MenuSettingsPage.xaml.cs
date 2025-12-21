@@ -23,6 +23,16 @@ public partial class MenuSettingsPage : ContentPage
         //Application.Current.MainPage = new MainPage(true);
     }
 
+    protected override async void OnAppearing()
+    {        
+        // Load theme preference
+        string savedTheme = Preferences.Get("AppTheme", "Light");
+        bool isDark = savedTheme == "Dark";
+        ThemeSwitch.IsToggled = isDark;
+        ThemeStateLabel.Text = isDark ? "On" : "Off";
+
+        base.OnAppearing();
+    }
 
     private async void OnHomeClicked(object sender, EventArgs e)
     {
@@ -77,6 +87,20 @@ public partial class MenuSettingsPage : ContentPage
             }
         }
 
+    }
+
+    private void OnThemeSwitchToggled(object sender, ToggledEventArgs e)
+    {
+        bool isDark = e.Value;
+
+        // Set the app theme
+        Application.Current.UserAppTheme = isDark ? AppTheme.Dark : AppTheme.Light;
+
+        // Save preference
+        Preferences.Set("AppTheme", isDark ? "Dark" : "Light");
+
+        // Optional: update label
+        ThemeStateLabel.Text = isDark ? "On" : "Off";
     }
 
     private async void OnSelectSmartWandClicked(object sender, EventArgs e)

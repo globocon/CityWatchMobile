@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:C4iSytemsMobApp"
+             x:Class="C4iSytemsMobApp.HrRecordsPage"
+             Title="HR Records">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto"
+          Padding="20"
+          RowSpacing="10">
+
+        <!-- Top Bar -->
+        <Grid ColumnDefinitions="Auto,*,Auto"
+              VerticalOptions="Center"
+              Grid.Row="0">
+            <Label Text="Compliance"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Grid.Column="1"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+            <!-- Home Button -->
+            <ImageButton Source="home.png"
+                         Clicked="OnHomeClicked"
+                         HeightRequest="30"
+                         WidthRequest="30"
+                         BackgroundColor="Transparent"
+                         HorizontalOptions="End"
+                         VerticalOptions="Center"
+                         Grid.Column="2" />
+        </Grid>
+
+        <!-- Settings Button -->
+        <Frame CornerRadius="9"
+               Grid.Row="1"
+               HasShadow="False"
+               BorderColor="Transparent"
+               Margin="5,0,0,0"
+               Padding="1"
+               HeightRequest="46"
+               HorizontalOptions="Fill"
+               VerticalOptions="Center">
+
+            <Frame.Background>
+                <LinearGradientBrush>
+                    <GradientStop Color="#007AFF"
+                                  Offset="0.0" />
+                    <GradientStop Color="#0056B3"
+                                  Offset="1.0" />
+                </LinearGradientBrush>
+            </Frame.Background>
+            <Frame.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnAddComplianceClicked" />
+            </Frame.GestureRecognizers>
+
+            <HorizontalStackLayout Padding="0,0"
+                                   Spacing="10"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center"
+                                   HeightRequest="46">
+                <Label Text="&#xf067;"
+                       TextColor="White"
+                       FontFamily="FontAwesome"
+                       FontSize="15"
+                       VerticalOptions="Center"
+                       HorizontalOptions="Center">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAddComplianceClicked" />
+                    </Label.GestureRecognizers>
+                </Label>
+
+                <Label x:Name="AddCompliance"
+                       Padding="1,1,3,3"
+                       Text="Add Compaliance"
+                       TextColor="White"
+                       FontSize="20"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+            </HorizontalStackLayout>
+        </Frame>
+
+        <!-- Scrollable CollectionView -->
+        <CollectionView x:Name="LogsCollectionView"
+                        Grid.Row="2"
+                        Margin="0,10,0,0"
+                        ItemsSource="{Binding HrRecords}"
+                        SelectionMode="None"
+                        VerticalOptions="FillAndExpand">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <!-- WRAPPER: controls spacing between items -->
+                    <Grid Margin="0,0,0,5">
+                        <SwipeView>
+                            <!-- Swipe RIGHT → Delete (Left Side) -->
+                            <SwipeView.LeftItems>
+                                <SwipeItems Mode="Execute">
+                                    <SwipeItem />
+                                    <SwipeItemView HorizontalOptions="Start"
+                                                   Command="{Binding Source={RelativeSource AncestorType={x:Type local:HrRecordsPage}},
+                                                   Path=BindingContext.DeleteCommand}"
+                                                   CommandParameter="{Binding .}">
+                                        <Grid BackgroundColor="Red"
+                                              HorizontalOptions="StartAndExpand"
+                                              VerticalOptions="Fill">
+
+                                            <Label Text="&#xf014;"
+                                                   FontFamily="FontAwesome"
+                                                   FontSize="28"
+                                                   TextColor="White"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center" />
+                                        </Grid>
+                                    </SwipeItemView>
+                                </SwipeItems>
+
+                            </SwipeView.LeftItems>
+
+                            <!-- Swipe LEFT → Edit (Right Side) -->
+                            <SwipeView.RightItems>
+                                <SwipeItems Mode="Execute">
+                                    <SwipeItem Text="Edit"
+                                               BackgroundColor="Green"
+                                               Command="{Binding Source={RelativeSource AncestorType={x:Type local:HrRecordsPage}},
+                                                     Path=BindingContext.EditCommand}"
+                                               CommandParameter="{Binding .}" />
+                                </SwipeItems>
+                            </SwipeView.RightItems>
+
+                            <!-- Card Content -->
+                            <Frame Margin="1"
+                                   Padding="15"
+                                   CornerRadius="10"
+                                   BorderColor="LightGray"
+                                   BackgroundColor="Green">
+
+                                <!-- Status-based background -->
+                                <Frame.Triggers>
+                                    <DataTrigger TargetType="Frame"
+                                                 Binding="{Binding StatusColor}"
+                                                 Value="green">
+                                        <Setter Property="BackgroundColor"
+                                                Value="#05b02d" />
+                                    </DataTrigger>
+
+                                    <DataTrigger TargetType="Frame"
+                                                 Binding="{Binding StatusColor}"
+                                                 Value="red">
+                                        <Setter Property="BackgroundColor"
+                                                Value="#f0201d" />
+                                    </DataTrigger>
+
+                                    <DataTrigger TargetType="Frame"
+                                                 Binding="{Binding StatusColor}"
+                                                 Value="yellow">
+                                        <Setter Property="BackgroundColor"
+                                                Value="Yellow" />
+                                    </DataTrigger>
+                                </Frame.Triggers>
+
+                                <!-- MAIN LAYOUT -->
+                                <Grid VerticalOptions="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                        <ColumnDefinition Width="*"></ColumnDefinition>
+                                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Edit Icon (Left) -->
+                                    <!--<Grid Grid.Column="0"
+                                          Padding="0"
+                                          VerticalOptions="Center">
+                                        <Frame BackgroundColor="#FFEBEE">
+                                            <Label Text="&#xf044;"
+                                                   FontFamily="FontAwesome"
+                                                   FontSize="25"
+                                                   TextColor="#007AFF"
+                                                   VerticalOptions="Center">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:HrRecordsPage}},
+                                      Path=BindingContext.EditCommand}"
+                                                                          CommandParameter="{Binding .}" />
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                        </Frame>
+                                    </Grid>-->
+
+                                    <!-- Text Content (Center) -->
+                                    <VerticalStackLayout Grid.Column="1"
+                                                         Margin="10,0"
+                                                         VerticalOptions="Center">
+
+                                        <HorizontalStackLayout Spacing="5">
+                                            <Label Text="HR Group: "
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="Black">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="green">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="red">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="yellow">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+
+                                            <Label Text="{Binding HrGroupText}"
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="Black">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="green">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="red">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="yellow">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </HorizontalStackLayout>
+                                        
+                                        <Grid ColumnDefinitions="Auto,*"
+                                              ColumnSpacing="5">
+                                            <Label Text="Desc: "
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="Black"
+                                                   VerticalOptions="Start">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="green">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="red">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="yellow">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding Description}"
+                                                   FontAttributes="Bold"
+                                                   FontSize="12"
+                                                   TextColor="Black"
+                                                   LineBreakMode="WordWrap"
+                                                   HorizontalOptions="FillAndExpand">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="green">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="red">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="yellow">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </Grid>
+                                        
+                                        <HorizontalStackLayout Spacing="5">
+                                            <Label Text="Expiry Date: "
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="Black">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="green">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="red">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="yellow">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+
+                                            <Label Text="{Binding ExpiryDate, StringFormat='{0:dd-MMM-yyyy}'}"
+                                                   FontAttributes="Bold"
+                                                   FontSize="12"
+                                                   TextColor="Black">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="green">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="red">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="yellow">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </HorizontalStackLayout>
+
+                                        <Grid ColumnDefinitions="Auto,*"
+                                              ColumnSpacing="5">
+                                            <Label Text="File: "
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="Black"
+                                                   VerticalOptions="Start">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="green">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="red">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="yellow">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding FileName}"
+                                                   FontAttributes="Bold"
+                                                   FontSize="12"
+                                                   TextColor="Black"
+                                                   LineBreakMode="WordWrap"
+                                                   HorizontalOptions="FillAndExpand">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="green">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="red">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="yellow">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </Grid>
+                                    </VerticalStackLayout>
+
+                                    <!-- Delete Icon (Right) -->
+                                    <!--<Grid Grid.Column="2"
+                                          Padding="0"
+                                          VerticalOptions="Center">
+                                        <Frame BackgroundColor="#FFEBEE">
+                                            <Label Text="&#xf014;"
+                                                   FontFamily="FontAwesome"
+                                                   FontSize="25"
+                                                   TextColor="#d12b28"
+                                                   VerticalOptions="Center"
+                                                   HorizontalOptions="End">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:HrRecordsPage}},
+                                      Path=BindingContext.DeleteCommand}"
+                                                                          CommandParameter="{Binding .}" />
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                        </Frame>
+
+                                    </Grid>-->
+
+                                </Grid>
+                            </Frame>
+
+                        </SwipeView>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+
+        <!-- Loading Overlay -->
+        <Grid x:Name="LoadingOverlay"
+              BackgroundColor="#80000000"
+              IsVisible="False"
+              Grid.RowSpan="3"
+              VerticalOptions="FillAndExpand"
+              HorizontalOptions="FillAndExpand">
+            <StackLayout VerticalOptions="Center"
+                         HorizontalOptions="Center">
+                <ActivityIndicator IsRunning="True"
+                                   Color="White"
+                                   WidthRequest="50"
+                                   HeightRequest="50" />
+                <Label Text="Loading..."
+                       TextColor="White"
+                       FontSize="18"
+                       HorizontalOptions="Center"
+                       Margin="0,10,0,0" />
+            </StackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>
+
+
