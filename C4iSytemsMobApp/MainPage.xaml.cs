@@ -133,7 +133,7 @@ namespace C4iSytemsMobApp
         public Color OnlineColor { get; set; }
         public string SyncStatusText { get; set; }
 
-        private IBeaconScanner scanner = new();
+        private IBeaconScanner scanner;
         public const string BLE_ALERT_TITLE = "iBeacon";
         private bool _isBleEnabledForSite = false;
         private bool _hasBlePermission = false;
@@ -146,6 +146,16 @@ namespace C4iSytemsMobApp
         public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
             InitializeComponent();
+            try
+            {
+                scanner = new();
+            }
+            catch (Exception ex)
+            {
+
+               Console.WriteLine($"Error initializing scanner: {ex.Message}");
+            }
+            
             App.ConnectivityChangedEvent += OnConnectivityChanged;
             OnConnectivityChanged(App.IsOnline);
             _syncService = IPlatformApplication.Current.Services.GetService<SyncService>();
@@ -176,11 +186,13 @@ namespace C4iSytemsMobApp
 
             PopupCollectionView.BindingContext = this;
             BleOnOffColor = Colors.Black;
-            CheckBleEnabledForSite();
-            scanner.OnStateChanged += BluetoothStateChanged;
-            scanner.OnScanningInProgress += OnScanningInProgress;
-            scanner.OnDeviceFoundAsync += OnDeviceFoundAsync;
-
+            if (scanner.IsBluetoothSupported)
+            {
+                CheckBleEnabledForSite();
+                scanner.OnStateChanged += BluetoothStateChanged;
+                scanner.OnScanningInProgress += OnScanningInProgress;
+                scanner.OnDeviceFoundAsync += OnDeviceFoundAsync;
+            }
         }
 
         public void OnConnectivityChanged(bool isOnline)
@@ -191,7 +203,7 @@ namespace C4iSytemsMobApp
                 OnlineColor = isOnline ? Colors.Green : Colors.Red;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineText)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineColor)));
-            });            
+            });
         }
         private void UpdateCacheLabel(int ccheCount)
         {
@@ -199,7 +211,7 @@ namespace C4iSytemsMobApp
             {
                 CchStatusLabel.Text = $"Cch:{ccheCount}";
             });
-            
+
         }
         private void UpdateSyncStatusLabel(string syncstatus)
         {
@@ -208,7 +220,7 @@ namespace C4iSytemsMobApp
                 SyncStatusText = syncstatus;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SyncStatusText)));
             });
-            
+
         }
         private void SyncState_SyncedCountChanged(object sender, int newCount)
         {
@@ -479,7 +491,7 @@ namespace C4iSytemsMobApp
             }
         }
 
-        
+
         private async void LoadLoggedInUser()
         {
             try
@@ -1570,14 +1582,14 @@ namespace C4iSytemsMobApp
             {
                 bool.TryParse(isiBeaconEnabledForSiteLocalStored, out _isBleEnabledForSite);
             }
-            if (_isBleEnabledForSite)
+            if (_isBleEnabledForSite && scanner.IsBluetoothSupported)
             {
                 BleOnOffChanged();
             }
         }
         private async Task StartBLEScanner()
         {
-            if (_isBleEnabledForSite)
+            if (_isBleEnabledForSite && scanner.IsBluetoothSupported)
             {
                 _hasBlePermission = await PermissionService.CheckAndRequestPermissionsAsync();
 
@@ -1599,7 +1611,7 @@ namespace C4iSytemsMobApp
 
         private async Task StopBLEScanner()
         {
-            if (_isBleEnabledForSite)
+            if (_isBleEnabledForSite && scanner.IsBluetoothSupported)
             {
                 await scanner.Stop();
             }
@@ -1639,7 +1651,7 @@ namespace C4iSytemsMobApp
         {
             foreach (var dev in device)
             {
-              await ProcessBLEData(dev);
+                await ProcessBLEData(dev);
             }
 
         }
@@ -1792,7 +1804,7 @@ namespace C4iSytemsMobApp
                     alertHead = BLE_ALERT_TITLE;
                 }
 
-                await ShowAlert(alertHead,$"{msg ?? "Failed to log activity"}");
+                await ShowAlert(alertHead, $"{msg ?? "Failed to log activity"}");
             }
         }
 
@@ -1804,7 +1816,7 @@ namespace C4iSytemsMobApp
             });
         }
 
-        private Task ShowAlert(string alertHead,string message)
+        private Task ShowAlert(string alertHead, string message)
         {
             return MainThread.InvokeOnMainThreadAsync(() =>
             {

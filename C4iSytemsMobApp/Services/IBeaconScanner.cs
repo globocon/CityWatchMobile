@@ -12,28 +12,71 @@ namespace C4iSytemsMobApp.Services
 {
     public class IBeaconScanner
     {
-        private readonly IBluetoothLE _ble;
-        private readonly IAdapter _adapter;
+        private readonly IBluetoothLE? _ble;
+        private readonly IAdapter? _adapter;
         private bool _runScanLoop = false;
         private bool _isRestarting = false;
-                
+
         // public int RssiThreshold { get; set; } = -80; // default: ignore weaker than -80
         private List<DeviceFound> _deviceFound;
-        public event Action<BluetoothState> OnStateChanged;
+        public event Action<BluetoothState>? OnStateChanged;
         public Func<List<DeviceFound>, Task>? OnDeviceFoundAsync;
         public event Action<bool>? OnScanningInProgress;
+        public bool IsBluetoothSupported { get; private set; }
+        //public bool IsBluetoothSupported => _ble != null;
+
 
         public IBeaconScanner()
         {
-            _ble = CrossBluetoothLE.Current;
-            _ble.StateChanged += BleStateChanged;
-            _adapter = _ble.Adapter;
-            //_adapter.ScanTimeout = 10000;
-            _adapter.ScanMode = ScanMode.LowPower;           
-            _adapter.DeviceDiscovered += OnDeviceDiscovered;
-            _adapter.DeviceAdvertised += OnDeviceAdvertised;
-            // _adapter.ScanTimeoutElapsed += (s, e) => RestartScanIfNeeded();
+            try
+            {
+                IsBluetoothSupported = false;
+
+#if WINDOWS
+    // Windows Server / VM → Bluetooth not supported
+    if (DeviceInfo.Platform == DevicePlatform.WinUI)
+        return;
+#endif
+
+                // This line can throw TypeInitializationException internally
+                _ble = CrossBluetoothLE.Current;
+
+                if (_ble == null)
+                {
+                    IsBluetoothSupported = false;
+                    return;
+                }
+
+                _adapter = _ble.Adapter;
+
+                if (_adapter == null)
+                {
+                    IsBluetoothSupported = false;
+                    return;
+                }
+
+                IsBluetoothSupported = true;
+
+                _ble.StateChanged += BleStateChanged;
+                _adapter.DeviceDiscovered += OnDeviceDiscovered;
+                _adapter.DeviceAdvertised += OnDeviceAdvertised;
+            }
+            catch (TypeInitializationException)
+            {
+                // 🔑 This is the real failure mode when no adapter exists
+                IsBluetoothSupported = false;
+                _ble = null;
+                _adapter = null;
+            }
+            catch (Exception)
+            {
+                // Defensive fallback
+                IsBluetoothSupported = false;
+                _ble = null;
+                _adapter = null;
+            }
         }
+
 
         public async Task StartScanningAsync()
         {
