@@ -22,38 +22,63 @@ namespace C4iSytemsMobApp.Services
         }
 
         public async Task SyncAsync()
-        {            
+        {
             if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
                 return;
 
+            int _retryCount = 3;
+            int _currentRetry = 0;
+
             try
-            {
+            {                
                 using var db = _dbFactory();
                 var unsynced = await db.ClientSiteSmartWandTagsHitLogCache.Where(o => !o.IsSynced).ToListAsync();
                 if (unsynced.Count == 0) return;
 
-
-                var ok = await _api.PushSmartWandTagsHitLogCacheAsync(unsynced);
-                if (ok == null) return;
-
-
-                foreach (var o in unsynced)
+                while (_currentRetry <= _retryCount)
                 {
-                    var r = ok.Where(x => x.Id == o.Id && x.IsSynced && x.UniqueRecordId == o.UniqueRecordId).FirstOrDefault();
-                    if (r != null)
+                    _currentRetry += 1;
+                    try
                     {
-                        db.ClientSiteSmartWandTagsHitLogCache.Remove(o);
+                        var ok = await _api.PushSmartWandTagsHitLogCacheAsync(unsynced);
+                        if (ok == null)
+                        {
+                            if (_currentRetry < _retryCount) 
+                            { 
+                                await Task.Delay(2000);
+                                continue;
+                            }
+                            else
+                            {
+                                return;
+                            }
+                        }
+
+
+                        foreach (var o in unsynced)
+                        {
+                            var r = ok.Where(x => x.Id == o.Id && x.IsSynced && x.UniqueRecordId == o.UniqueRecordId).FirstOrDefault();
+                            if (r != null)
+                            {
+                                db.ClientSiteSmartWandTagsHitLogCache.Remove(o);
+                            }
+                        }
+                        await db.SaveChangesAsync();
+                        _currentRetry = _retryCount + 1; // exit retry loop 
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.ToString());
                     }
                 }
-                await db.SaveChangesAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-               // throw;
+                // throw;
             }
 
-           
+
         }
 
         public async Task<int> GetCurrentCacheCountAsync()

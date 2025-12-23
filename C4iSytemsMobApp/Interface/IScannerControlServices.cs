@@ -15,5 +15,6 @@ namespace C4iSytemsMobApp.Interface
         Task<SmartWandDeviceRegister> CheckAndRegisterSmartWandAsync(int _selectedSmartWandId, string deviceid, string devicename, string deviceType);
         Task<List<ClientSiteSmartWandTagsLocal>> GetSmartWandTagsForSite(string siteId);
         Task<(bool isSuccess, string errorMessage, int cachecount)> SaveScanDataToLocalCache(string _TagUid, ScanningType _scannerType, int? LoggedInClientSiteId, int? LoggedInUserId, int? LoggedInGuardId);
+        Task<bool> CheckIfTagExistsForSiteInLocalDb(string _TagUid);
     }
 }

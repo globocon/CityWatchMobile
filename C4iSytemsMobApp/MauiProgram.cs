@@ -10,27 +10,28 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using System.IO;
+using System.Net;
 using ZXing.Net.Maui.Controls;
 
 namespace C4iSytemsMobApp;
 
 public static class MauiProgram
 {
-	public static MauiApp CreateMauiApp()
-	{
-		var builder = MauiApp.CreateBuilder();
-		builder
-			.UseMauiApp<App>()
+    public static MauiApp CreateMauiApp()
+    {
+        var builder = MauiApp.CreateBuilder();
+        builder
+            .UseMauiApp<App>()
             // Initialize the .NET MAUI Community Toolkit by adding the below line of code
             .UseMauiCommunityToolkit()   // 👈 Add this
             .UseMauiCommunityToolkitMediaElement()      // 👈 Required
                                                         // Initialize the .NET MAUI Community Toolkit MediaElement by adding the below line of code
-            //.UseMauiCommunityToolkitMediaElement()
+                                                        //.UseMauiCommunityToolkitMediaElement()
             .UseBarcodeReader() // Register ZXing Barcode Scanner
             .ConfigureFonts(fonts =>
-			{
-				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 fonts.AddFont("Arlrdbd.ttf", "ArielRoundBold");
                 fonts.AddFont("fa-solid-900.ttf", "FontAwesome");
                 fonts.AddFont("fa-regular-400.ttf", "FontAwesomeRegular");
@@ -48,17 +49,24 @@ public static class MauiProgram
         builder.Services.AddSingleton<INfcService, NfcService>();
         builder.Services.AddSingleton<IGuardApiServices, GuardApiServices>();
         builder.Services.AddSingleton<IAppUpdateService, AppUpdateService>();
-        builder.Services.AddSingleton<IScanDataDbServices, ScanDataDbServices>();
+        
+
         builder.Services.AddSingleton<ConnectivityListener>();
-        builder.Services.AddSingleton<ISyncApiService,SyncApiService>();
+        builder.Services.AddSingleton<ISyncApiService, SyncApiService>();
+        
         // Register DbContext factory so each consumer gets a new context
         builder.Services.AddTransient<AppDbContext>();
+        builder.Services.AddSingleton<IScanDataDbServices, ScanDataDbServices>(sp =>
+        {
+            // Provide factory to create new AppDbContext for each usage
+            return new ScanDataDbServices(() => sp.GetRequiredService<AppDbContext>());
+        });
         builder.Services.AddSingleton<SyncService>(sp =>
         {
             // Provide factory to create new AppDbContext for each usage
             return new SyncService(() => sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ISyncApiService>());
         });
-        
+
 
 #if ANDROID
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.Android.Services.VolumeButtonService>();
