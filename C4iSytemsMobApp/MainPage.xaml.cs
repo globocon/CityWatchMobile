@@ -138,7 +138,7 @@ namespace C4iSytemsMobApp
         private bool _isBleEnabledForSite = false;
         private bool _hasBlePermission = false;
         private bool BleScannerOnOff { get; set; }
-        public Color BleOnOffColor { get; set; }
+        public Color BleOnOffColor { get; set; } = Colors.Black;
         private bool _pulseActive = false;
         private CancellationTokenSource _pulseCts;
 
