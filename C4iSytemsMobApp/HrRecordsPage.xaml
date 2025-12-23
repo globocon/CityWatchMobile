@@ -160,6 +160,10 @@
                                     </DataTrigger>
                                 </Frame.Triggers>
 
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnHrRecordClicked" />
+                                </Frame.GestureRecognizers>
+
                                 <!-- MAIN LAYOUT -->
                                 <Grid VerticalOptions="Center">
                                     <Grid.ColumnDefinitions>
