@@ -79,7 +79,47 @@ namespace C4iSytemsMobApp.Services
                 var errorResult = await response.Content.ReadFromJsonAsync<ApiResponse<NewGuard>>();
                 return (errorResult.isSuccess, errorResult.message,null);
             }
-        }        
+        }
+
+
+        public async Task<List<GuardComplianceAndLicense>?> GetHrRecordsOfGuard()
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetGuardHrRecords?guardId={guardId}";
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            HttpResponseMessage response = await client.GetAsync(apiUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var settings = await response.Content.ReadFromJsonAsync<ApiResponse<List<GuardComplianceAndLicense>>>();
+                return settings.data;
+            }
+
+            return new List<GuardComplianceAndLicense>(); 
+        }
+
+        public async Task<(bool isSuccess, string errorMessage)> ValidateGuardDocumentAccessPin(string pin)
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ValidateGuardPinForHrRecordAccess?guardId={guardId}&key={pin}";
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            try
+            {
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var settings = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return (settings.data, settings.message);
+                }
+
+                return (false, "An error occurd while validating the PIN.");
+            }
+            catch (Exception ex)
+            {
+
+                return (false, $"Exception occurd while validating the PIN. {ex.Message}.");
+            }
+            
+        }
     }
 
 }

@@ -10,8 +10,7 @@ namespace C4iSytemsMobApp.Interface
         //Task<Dictionary<string, string>> GetCustomFieldConfigAsync();
         Task<List<SelectListItem>> GetStatesAsync();
         Task<(bool isSuccess, string errorMessage, NewGuard? _newGuard)> RegisterNewGuardAsync(NewGuard newGuard);
-        //Task<(bool isSuccess, string errorMessage)> SaveCustomFieldLogAsync(Dictionary<string, string> record);
-        //Task<List<PatrolCarLog>> GetPatrolCarLogsAsync();
-        //Task<(bool isSuccess, string errorMessage)> SavePatrolCarLogAsync(PatrolCarLog record);
+        Task<List<GuardComplianceAndLicense>?> GetHrRecordsOfGuard();
+        Task<(bool isSuccess, string errorMessage)> ValidateGuardDocumentAccessPin(string pin);
     }
 }
