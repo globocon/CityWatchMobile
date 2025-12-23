@@ -1,12 +1,14 @@
 ﻿using C4iSytemsMobApp.Controls;
+using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Services;
+using C4iSytemsMobApp.Views;
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
-//using Java.Util;
+using CommunityToolkit.Maui.Views;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Maui.Devices.Sensors;
 using Plugin.BLE.Abstractions;
@@ -247,13 +249,7 @@ namespace C4iSytemsMobApp
         protected override async void OnAppearing()
         {
             MainLayout.IsVisible = false;
-
-            string savedTheme = Preferences.Get("AppTheme", "Dark");
-            bool isDark = savedTheme == "Dark";
-
-            ThemeSwitch.IsToggled = isDark;
-            ThemeStateLabel.Text = isDark ? "On" : "Off";
-
+            
             base.OnAppearing();
 
             if (_shouldOpenDrawerOnReturn)
@@ -1289,11 +1285,29 @@ namespace C4iSytemsMobApp
 
         }
 
-        private void OnRosterClicked(object sender, EventArgs e)
+        private async void OnHrRecordsClicked(object sender, EventArgs e)
         {
+            var popup = new CheckGuardPinPopup();
+            var result = await this.ShowPopupAsync(popup);
 
-            DisplayAlert("Roster", "New feature coming soon...", "OK");
+            if (result is string action)
+            {
+                //if (!(Application.Current.MainPage is NavigationPage))
+                //    Application.Current.MainPage = new NavigationPage(Application.Current.MainPage);
 
+                switch (action)
+                {
+                    case "OK":
+                        Application.Current.MainPage = new HrRecordsPage();
+                        CloseDrawer();
+                        break;
+                    case "ForgotPassword":
+                        break;
+                    case "Cancel":
+                        // Just close silently
+                        break;
+                }
+            }
         }
 
         private async void OnDrawerMenuSettingsClicked(object sender, EventArgs e)
@@ -1346,19 +1360,6 @@ namespace C4iSytemsMobApp
         {
             DrawerMenu.TranslationX = 0;
             DrawerOverlay.IsVisible = true;
-        }
-        private void OnThemeSwitchToggled(object sender, ToggledEventArgs e)
-        {
-            bool isDark = e.Value;
-
-            // Set the app theme
-            Application.Current.UserAppTheme = isDark ? AppTheme.Dark : AppTheme.Light;
-
-            // Save preference
-            Preferences.Set("AppTheme", isDark ? "Dark" : "Light");
-
-            // Optional: update label
-            ThemeStateLabel.Text = isDark ? "On" : "Off";
         }
 
         private async Task LogScannedDataToCache(string _TagUid, ScanningType _scannerType)
@@ -2122,7 +2123,12 @@ namespace C4iSytemsMobApp
             }
         }
 
+        private void OnPcarClicked(object sender, EventArgs e)
+        {
 
+            Application.Current.MainPage = new NavigationPage(new PcarRute()); // Redirect to LogActivityTabbedPage
+
+        }
 
     }
 

@@ -47,6 +47,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IScannerControlServices, ScannerControlServices>();
         builder.Services.AddSingleton<ILogBookServices, LogBookServices>();
         builder.Services.AddSingleton<INfcService, NfcService>();
+        builder.Services.AddSingleton<IGuardApiServices, GuardApiServices>();
         builder.Services.AddSingleton<IAppUpdateService, AppUpdateService>();
         
 

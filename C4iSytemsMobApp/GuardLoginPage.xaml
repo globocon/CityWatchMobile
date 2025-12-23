@@ -28,9 +28,12 @@
 
             <!-- License Input -->
             <!-- License Input and Remember Me -->
-            <VerticalStackLayout Spacing="2" VerticalOptions="Center" Padding="0">
+            <VerticalStackLayout Spacing="2"
+                                 VerticalOptions="Center"
+                                 Padding="0">
 
-                <Grid RowSpacing="5" ColumnSpacing="5">
+                <Grid RowSpacing="5"
+                      ColumnSpacing="5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -44,69 +47,73 @@
 
                     <!-- License Entry -->
                     <Entry x:Name="txtLicenseNumber"
-           Placeholder="Enter License Number"
-           Grid.Row="0"
-           Grid.Column="0"
-           Margin="0,0,2,0"
-           TextChanged="OnLicenseTextChanged"
-           Focused="OnEntryFocused" />
+                           Placeholder="Enter License Number"
+                           Grid.Row="0"
+                           Grid.Column="0"
+                           Margin="0,0,2,0"
+                           TextChanged="OnLicenseTextChanged"
+                           Focused="OnEntryFocused" />
 
                     <!-- Login Button -->
                     <Button x:Name="btnLogin"
-            Text="Login"
-            Grid.Row="0"
-            Grid.Column="1"
-            Margin="2,0,0,0"
-            VerticalOptions="Center"
-            Clicked="OnReadClicked" />
+                            Text="Login"
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Margin="2,0,0,0"
+                            VerticalOptions="Center"
+                            Clicked="OnReadClicked" />
 
                     <!-- Suggestions -->
                     <Frame x:Name="SuggestionsFrame"
-           Grid.Row="1"
-           Grid.Column="0"
-           HasShadow="False"
-           BorderColor="#ccc"
-           CornerRadius="5"
-           Padding="0"
-           Margin="0"
-           IsVisible="False"
-           HorizontalOptions="FillAndExpand">
-                      
+                           Grid.Row="1"
+                           Grid.Column="0"
+                           HasShadow="False"
+                           BorderColor="#ccc"
+                           CornerRadius="5"
+                           Padding="0"
+                           Margin="0"
+                           IsVisible="False"
+                           HorizontalOptions="FillAndExpand">
+
 
                         <ScrollView VerticalScrollBarVisibility="Always"
-                    Orientation="Vertical">
+                                    Orientation="Vertical">
                             <CollectionView x:Name="SuggestionsView"
-                            SelectionMode="Single"
-                            HeightRequest="50"
-                            ItemsLayout="VerticalList"
-                            BackgroundColor="White"
-                            SelectionChanged="OnSuggestionSelected"
-                            Margin="0"
-                            VerticalOptions="Start"
-                            IsVisible="False">
+                                            SelectionMode="Single"
+                                            HeightRequest="50"
+                                            ItemsLayout="VerticalList"
+                                            BackgroundColor="White"
+                                            SelectionChanged="OnSuggestionSelected"
+                                            Margin="0"
+                                            VerticalOptions="Start"
+                                            IsVisible="False">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate>
                                         <Label Text="{Binding .}"
-                               FontSize="11"
-                               Padding="1"
-                               Margin="0"
-                               TextColor="Black"
-                               TextDecorations="Underline" />
+                                               FontSize="11"
+                                               Padding="1"
+                                               Margin="0"
+                                               TextColor="Black"
+                                               TextDecorations="Underline" />
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
                             </CollectionView>
                         </ScrollView>
                     </Frame>
+
+                    <!-- Register New Guard Button -->
+                    <Button x:Name="btnRegister"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Text="Register"
+                            BackgroundColor="#f5b402"
+                            Margin="2,0,0,0"
+                            VerticalOptions="Center"
+                            Clicked="OnRegisterNewGuardClicked" />
                 </Grid>
 
 
             </VerticalStackLayout>
-
-
-
-
-
-
 
 
             <!-- Guard Name Label (Initially Hidden) -->
@@ -115,6 +122,8 @@
                    TextColor="Red"
                    FontAttributes="Bold"
                    IsVisible="False" />
+
+            
 
             <!-- Instructional Text inside a bordered frame -->
             <Frame x:Name="instructionalFrame"
@@ -159,18 +168,17 @@
             </Frame>
 
             <!-- Privacy Notice -->
-            <StackLayout x:Name="ConsentSection" Spacing="0">
+            <StackLayout x:Name="ConsentSection"
+                         Spacing="0">
 
-                <Label
-        Text="Data, communication, IP address, location, and audio calls are recorded by this system. The data recorded and stored is handled in accordance with local privacy laws and is used for legitimate business purposes, including training, compliance, and quality control."
-        FontSize="10"
-        TextColor="{AppThemeBinding Light=Black, Dark=White}"
-        Margin="0,0,0,8" />
+                <Label Text="Data, communication, IP address, location, and audio calls are recorded by this system. The data recorded and stored is handled in accordance with local privacy laws and is used for legitimate business purposes, including training, compliance, and quality control."
+                       FontSize="10"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                       Margin="0,0,0,8" />
 
-                <Label
-        Text="By logging into this system, you explicitly consent to the recording and storing of data, communications, and audio calls in accordance with these purposes. End-users also agree to use the system honestly and refrain from any actions that could sabotage or compromise the integrity of the data."
-        FontSize="10"
-        TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                <Label Text="By logging into this system, you explicitly consent to the recording and storing of data, communications, and audio calls in accordance with these purposes. End-users also agree to use the system honestly and refrain from any actions that could sabotage or compromise the integrity of the data."
+                       FontSize="10"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
             </StackLayout>
 
@@ -215,66 +223,70 @@
 
             <!-- HR Status Indicators -->
             <HorizontalStackLayout x:Name="hrStatusLayout"
-                       Spacing="60"
-                       Margin="0,20,0,0"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                       IsVisible="False"
-                       BackgroundColor="Transparent">
+                                   Spacing="60"
+                                   Margin="0,20,0,0"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"
+                                   IsVisible="False"
+                                   BackgroundColor="Transparent">
 
                 <!-- HR1 -->
                 <VerticalStackLayout Spacing="6"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center">
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center">
                     <BoxView x:Name="ledHR1"
-                 WidthRequest="20"
-                 HeightRequest="20"
-                 CornerRadius="10"
-                 Color="Gray"
-                 HorizontalOptions="Center" BackgroundColor="Transparent" />
+                             WidthRequest="20"
+                             HeightRequest="20"
+                             CornerRadius="10"
+                             Color="Gray"
+                             HorizontalOptions="Center"
+                             BackgroundColor="Transparent" />
                     <Label Text="HR1 (C4i)"
-               FontAttributes="Bold"
-               FontSize="12"
-               TextColor="White"
-               HorizontalOptions="Center"
-               VerticalOptions="Center" />
+                           FontAttributes="Bold"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
                 </VerticalStackLayout>
 
                 <!-- HR2 -->
                 <VerticalStackLayout Spacing="6"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center"                              
-                             BackgroundColor="Transparent"        >
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     BackgroundColor="Transparent">
                     <BoxView x:Name="ledHR2"
-                 WidthRequest="20"
-                 HeightRequest="20"
-                 CornerRadius="10"
-                 Color="Gray"
-                 HorizontalOptions="Center" BackgroundColor="Transparent" />
+                             WidthRequest="20"
+                             HeightRequest="20"
+                             CornerRadius="10"
+                             Color="Gray"
+                             HorizontalOptions="Center"
+                             BackgroundColor="Transparent" />
                     <Label Text="HR2 (Client)"
-               FontAttributes="Bold"
-               FontSize="12"
-               TextColor="White"
-               HorizontalOptions="Center"
-               VerticalOptions="Center" />
+                           FontAttributes="Bold"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
                 </VerticalStackLayout>
 
                 <!-- HR3 -->
                 <VerticalStackLayout Spacing="6"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center" BackgroundColor="Transparent">
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     BackgroundColor="Transparent">
                     <BoxView x:Name="ledHR3"
-                 WidthRequest="20"
-                 HeightRequest="20"
-                 CornerRadius="10"
-                 Color="Gray" BackgroundColor="Transparent"
-                 HorizontalOptions="Center" />
+                             WidthRequest="20"
+                             HeightRequest="20"
+                             CornerRadius="10"
+                             Color="Gray"
+                             BackgroundColor="Transparent"
+                             HorizontalOptions="Center" />
                     <Label Text="HR3 (Special)"
-               FontAttributes="Bold"
-               FontSize="12"
-               TextColor="White"
-               HorizontalOptions="Center"
-               VerticalOptions="Center" />
+                           FontAttributes="Bold"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
                 </VerticalStackLayout>
 
             </HorizontalStackLayout>
