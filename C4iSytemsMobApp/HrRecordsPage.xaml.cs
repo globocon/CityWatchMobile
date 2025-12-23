@@ -113,6 +113,42 @@ public partial class HrRecordsPage : ContentPage
     {
 
     }
+
+    private async void OnHrRecordClicked(object sender, TappedEventArgs e)
+    {
+        string fileName = string.Empty;
+        if (sender is Frame frame && frame.BindingContext != null)
+        {
+            var item = frame.BindingContext as GuardComplianceAndLicense; // replace with your actual model
+
+            if (item != null)
+            {
+                fileName = item.FileName;
+
+                if (!string.IsNullOrWhiteSpace(fileName))
+                {
+                    //"/Uploads/Guards/License/4068435/01c_Licence - Private Agent-exp 20 MAY 26.png"
+
+                    var savedLicenseNumber = Preferences.Get("LicenseNumber", "");
+
+                    var encodedBlobName = Uri.EscapeDataString(fileName);
+                    var fileUrl = $"{AppConfig.MobileSignalRBaseUrl}/Uploads/Guards/License/{savedLicenseNumber}/{fileName}";
+
+                    if (!string.IsNullOrWhiteSpace(fileUrl))
+                    {
+                        try
+                        {
+                            await Browser.Default.OpenAsync(fileUrl, BrowserLaunchMode.SystemPreferred);
+                        }
+                        catch
+                        {
+                            await DisplayAlert("Error", "Unable to open document file.", "OK");
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 
