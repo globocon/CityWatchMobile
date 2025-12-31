@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="C4iSytemsMobApp.LogActivity"
-            
-          >
+             x:Class="C4iSytemsMobApp.LogActivity">
 
 
 
     <Grid>
 
         <!-- Main Grid to overlay toast message -->
-        <Grid x:Name="MainGrid" RowSpacing="0">
+        <Grid x:Name="MainGrid"
+              RowSpacing="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <!-- Header and Buttons -->
@@ -22,33 +21,32 @@
 
             <!-- Header and Buttons -->
             <StackLayout Grid.Row="0"
-                     Padding="5,10,5,10">
+                         Padding="5,10,5,10">
 
                 <ScrollView VerticalScrollBarVisibility="Always"
-            HeightRequest="235"
-            Padding="10,0,10,0">
+                            HeightRequest="235"
+                            Padding="10,0,10,0">
                     <!-- Adds space between scrollbar and content -->
                     <VerticalStackLayout>
                         <CollectionView x:Name="ActivitiesCollection"
-                        ItemsLayout="VerticalList"
-                        Margin="5,0"
-                        VerticalOptions="Start">
+                                        ItemsLayout="VerticalList"
+                                        Margin="5,0"
+                                        VerticalOptions="Start">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <Frame CornerRadius="3"
-                           BackgroundColor="Transparent"
-                           Padding="0"
-                           Margin="0,1">
+                                           BackgroundColor="Transparent"
+                                           Padding="0"
+                                           Margin="0,1">
                                         <Button Text="{Binding Name}"
-                                TextColor="White"
-                                FontSize="13"
-                                Margin="0,0,0,2"
-                                Padding="4,0"
-                                HorizontalOptions="FillAndExpand"
-                                VerticalOptions="Center"                             
-                                CornerRadius="5"
-                              
-                                Clicked="OnActivityClicked" />
+                                                TextColor="White"
+                                                FontSize="13"
+                                                Margin="0,0,0,2"
+                                                Padding="4,0"
+                                                HorizontalOptions="FillAndExpand"
+                                                VerticalOptions="Center"
+                                                CornerRadius="5"
+                                                Clicked="OnActivityClicked" />
                                     </Frame>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
@@ -71,20 +69,20 @@
                VerticalOptions="Center" TextChanged="CustomLogEntry_TextChanged" />-->
 
                 <Grid ColumnDefinitions="7*,3*"
-                  Margin="10,25,10,10" 
-                  HeightRequest="50">
+                      Margin="10,25,10,10"
+                      HeightRequest="50">
 
                     <!-- Existing Add Custom Log Entry button (unchanged) -->
                     <Button Text="Add Custom Log Entry"
-            Clicked="OnAddLogEntryNewClicked"
-            BackgroundColor="#28a745"
-            TextColor="White"
-            FontSize="18"
-            HeightRequest="50"
-            CornerRadius="10"
-            VerticalOptions="Center"
-            Grid.Column="0"
-            Margin="5,10,5,10"/>
+                            Clicked="OnAddLogEntryNewClicked"
+                            BackgroundColor="#28a745"
+                            TextColor="White"
+                            FontSize="18"
+                            HeightRequest="50"
+                            CornerRadius="10"
+                            VerticalOptions="Center"
+                            Grid.Column="0"
+                            Margin="5,10,5,10" />
 
                     <!--<Button 
 Text="+ Add Photo to Logbook"
@@ -94,15 +92,15 @@ TextColor="White"/>-->
 
                     <!-- New SVG Image Upload Button (30% width, same style) -->
                     <ImageButton Source="camera.png"
-                 Clicked="OnPickFileClicked"
-                 BackgroundColor="#28a745"
-                  HeightRequest="50"
-                 CornerRadius="10"
-                 Padding="10"
-                 Aspect="AspectFit"
-                 VerticalOptions="Center"
-                 Grid.Column="1"
-                 Margin="5,10,5,10"/>
+                                 Clicked="OnPickFileClicked"
+                                 BackgroundColor="#28a745"
+                                 HeightRequest="50"
+                                 CornerRadius="10"
+                                 Padding="10"
+                                 Aspect="AspectFit"
+                                 VerticalOptions="Center"
+                                 Grid.Column="1"
+                                 Margin="5,10,5,10" />
                 </Grid>
             </StackLayout>
 
@@ -116,9 +114,9 @@ TextColor="White"/>-->
 
             <!-- Scrollable Logs -->
             <ScrollView Grid.Row="2"
-                    Padding="5">
+                        Padding="5">
                 <VerticalStackLayout x:Name="LogDisplayArea"
-                                 Spacing="5">
+                                     Spacing="5">
                 </VerticalStackLayout>
             </ScrollView>
 
@@ -143,90 +141,93 @@ TextColor="White"/>-->
 
 
         <Grid x:Name="PopupOverlay"
-      BackgroundColor="#80000000"
-      IsVisible="False">
+              BackgroundColor="#80000000"
+              IsVisible="False">
 
             <Frame x:Name="MyPopupFrame"
-           BackgroundColor="White"
-           CornerRadius="12"
-           Padding="10"
-           Margin="8"
-           HasShadow="True"
-           VerticalOptions="Center"
-           HorizontalOptions="Center"
-           MaximumWidthRequest="480">
+                   BackgroundColor="White"
+                   CornerRadius="12"
+                   Padding="10"
+                   Margin="8"
+                   HasShadow="True"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   MaximumWidthRequest="480">
 
                 <Grid RowDefinitions="Auto,Auto,*,Auto">
 
                     <!-- Popup Header -->
                     <Label Grid.Row="0"
-                   Text="Add Image into LB"
-                   FontSize="14"
-                   FontAttributes="Bold"
-                   TextColor="Black"
-                   HorizontalOptions="Center"
-                   Margin="0,0,0,8" />
+                           Text="Add Image into LB"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="Black"
+                           HorizontalOptions="Center"
+                           Margin="0,0,0,8" />
 
                     <!-- Checkboxes -->
-                    <VerticalStackLayout Grid.Row="1" Spacing="2">
-                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                    <VerticalStackLayout Grid.Row="1"
+                                         Spacing="2">
+                        <HorizontalStackLayout Spacing="6"
+                                               VerticalOptions="Center">
                             <CheckBox x:Name="chkRearFullPage"
-                              Color="Green"
-                              IsChecked="False"
-                              CheckedChanged="OnCheckboxCheckedChanged" />
+                                      Color="Green"
+                                      IsChecked="False"
+                                      CheckedChanged="OnCheckboxCheckedChanged" />
                             <Label Text="Add as attachment to rear (Full Page)"
-                           VerticalOptions="Center"
-                           FontSize="12"
-                           TextColor="Black" />
+                                   VerticalOptions="Center"
+                                   FontSize="12"
+                                   TextColor="Black" />
                         </HorizontalStackLayout>
 
-                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                        <HorizontalStackLayout Spacing="6"
+                                               VerticalOptions="Center">
                             <CheckBox x:Name="chkWithinField"
-                              Color="Green"
-                              IsChecked="True"
-                              CheckedChanged="OnCheckboxCheckedChanged" />
+                                      Color="Green"
+                                      IsChecked="True"
+                                      CheckedChanged="OnCheckboxCheckedChanged" />
                             <Label Text="Add within field (25% of the Page)"
-                           VerticalOptions="Center"
-                           FontSize="12"
-                           TextColor="Black" />
+                                   VerticalOptions="Center"
+                                   FontSize="12"
+                                   TextColor="Black" />
                         </HorizontalStackLayout>
                     </VerticalStackLayout>
 
                     <!-- File List -->
                     <ScrollView Grid.Row="2"
-                        IsVisible="{Binding IsFilesVisible}"
-                        MaximumHeightRequest="150"
-                        VerticalOptions="Start">
+                                IsVisible="{Binding IsFilesVisible}"
+                                MaximumHeightRequest="150"
+                                VerticalOptions="Start">
                         <CollectionView x:Name="FilesCollection"
-                                ItemSizingStrategy="MeasureAllItems"
-                                VerticalOptions="Start"
-                                Margin="0,5,0,0">
+                                        ItemSizingStrategy="MeasureAllItems"
+                                        VerticalOptions="Start"
+                                        Margin="0,5,0,0">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Padding="0"
-                                  ColumnDefinitions="*,Auto"
-                                  HeightRequest="30"
-                                  VerticalOptions="Center">
+                                          ColumnDefinitions="*,Auto"
+                                          HeightRequest="30"
+                                          VerticalOptions="Center">
 
                                         <!-- File Name -->
                                         <Label Text="{Binding FileName}"
-  VerticalOptions="Center"
-  Grid.Column="0"
-  LineBreakMode="TailTruncation"
-  MaxLines="1"
-  TextColor="Black"
-  FontSize="9"
-  Margin="2,0" />
+                                               VerticalOptions="Center"
+                                               Grid.Column="0"
+                                               LineBreakMode="TailTruncation"
+                                               MaxLines="1"
+                                               TextColor="Black"
+                                               FontSize="9"
+                                               Margin="2,0" />
 
                                         <!-- Delete Button -->
                                         <Button Clicked="OnDeleteFileClicked"
-   WidthRequest="20"
-   HeightRequest="20"
-   BackgroundColor="Transparent"
-   Padding="0"
-   Margin="0"
-   Grid.Column="1"
-   VerticalOptions="Center">
+                                                WidthRequest="20"
+                                                HeightRequest="20"
+                                                BackgroundColor="Transparent"
+                                                Padding="0"
+                                                Margin="0"
+                                                Grid.Column="1"
+                                                VerticalOptions="Center">
                                             <Button.ImageSource>
                                                 <FileImageSource File="delete_icon_s.png" />
                                             </Button.ImageSource>
@@ -239,21 +240,21 @@ TextColor="White"/>-->
 
                     <!-- Footer Buttons -->
                     <HorizontalStackLayout Grid.Row="3"
-                                   Spacing="10"
-                                   HorizontalOptions="Center"
-                                   Margin="0,10,0,0">
+                                           Spacing="10"
+                                           HorizontalOptions="Center"
+                                           Margin="0,10,0,0">
                         <Button Text="Save and Close"
-                        Clicked="OnSaveAndCloseClicked"
-                        BackgroundColor="Green"
-                        TextColor="White"
-                        FontSize="12"
-                        CornerRadius="6" />
+                                Clicked="OnSaveAndCloseClicked"
+                                BackgroundColor="Green"
+                                TextColor="White"
+                                FontSize="12"
+                                CornerRadius="6" />
                         <Button Text="Cancel"
-                        Clicked="OnClosePopupClicked"
-                        BackgroundColor="Gray"
-                        TextColor="White"
-                        FontSize="12"
-                        CornerRadius="6" />
+                                Clicked="OnClosePopupClicked"
+                                BackgroundColor="Gray"
+                                TextColor="White"
+                                FontSize="12"
+                                CornerRadius="6" />
                     </HorizontalStackLayout>
 
                 </Grid>
@@ -262,19 +263,19 @@ TextColor="White"/>-->
 
 
         <Grid x:Name="PopupOverlayPushNotifications"
-       BackgroundColor="#80000000"
-       IsVisible="False"
-       SizeChanged="PopupOverlay_SizeChanged">
+              BackgroundColor="#80000000"
+              IsVisible="False"
+              SizeChanged="PopupOverlay_SizeChanged">
 
             <Frame x:Name="PushNotificationsFrame"
-            BackgroundColor="White"
-            CornerRadius="12"
-            Padding="10"
-            Margin="8"
-            HasShadow="True"
-            VerticalOptions="Center"
-            HorizontalOptions="Center"
-            MaximumWidthRequest="480">
+                   BackgroundColor="White"
+                   CornerRadius="12"
+                   Padding="10"
+                   Margin="8"
+                   HasShadow="True"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   MaximumWidthRequest="480">
 
                 <!-- Grid inside Frame -->
                 <Grid RowDefinitions="*,Auto">
@@ -285,69 +286,69 @@ TextColor="White"/>-->
 
                             <!-- Popup Header -->
                             <Label Text="Push Notifications"
-                            FontSize="16"
-                            FontAttributes="Bold"
-                            TextColor="Black"
-                            HorizontalOptions="Center" />
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="Black"
+                                   HorizontalOptions="Center" />
 
                             <!-- Checkboxes -->
                             <VerticalStackLayout Spacing="3">
                                 <HorizontalStackLayout Spacing="3"
-                                                VerticalOptions="Center">
+                                                       VerticalOptions="Center">
                                     <CheckBox x:Name="chkPushAcknowledge"
-                                       IsChecked="True"
-                                       CheckedChanged="chkPushAcknowledge_CheckedChanged"
-                                       Color="Green" />
+                                              IsChecked="True"
+                                              CheckedChanged="chkPushAcknowledge_CheckedChanged"
+                                              Color="Green" />
                                     <Label Text="Acknowledge Message"
-                                    VerticalOptions="Center"
-                                    FontSize="13"
-                                    TextColor="Black" />
+                                           VerticalOptions="Center"
+                                           FontSize="13"
+                                           TextColor="Black" />
                                 </HorizontalStackLayout>
 
                                 <HorizontalStackLayout Spacing="3"
-                                                VerticalOptions="Center">
+                                                       VerticalOptions="Center">
                                     <CheckBox x:Name="chkPushMessageBack"
-                                       IsChecked="False"
-                                       CheckedChanged="chkPushMessageBack_CheckedChanged"
-                                       Color="Green" />
+                                              IsChecked="False"
+                                              CheckedChanged="chkPushMessageBack_CheckedChanged"
+                                              Color="Green" />
                                     <Label Text="Message Back Instead"
-                                    VerticalOptions="Center"
-                                    FontSize="13"
-                                    TextColor="Black" />
+                                           VerticalOptions="Center"
+                                           FontSize="13"
+                                           TextColor="Black" />
                                 </HorizontalStackLayout>
                             </VerticalStackLayout>
 
                             <!-- Message Box -->
                             <Editor x:Name="txtPushMessage"
-                             Placeholder="Type your message here..."
-                             AutoSize="TextChanges"
-                             HeightRequest="100"
-                             FontSize="13"
-                             TextColor="Black"
-                             IsEnabled="False" />
+                                    Placeholder="Type your message here..."
+                                    AutoSize="TextChanges"
+                                    HeightRequest="100"
+                                    FontSize="13"
+                                    TextColor="Black"
+                                    IsEnabled="False" />
 
                         </VerticalStackLayout>
                     </ScrollView>
 
                     <!-- Footer Buttons -->
                     <HorizontalStackLayout Grid.Row="1"
-                                    Spacing="10"
-                                    HorizontalOptions="Center"
-                                    Margin="0,10,0,0">
+                                           Spacing="10"
+                                           HorizontalOptions="Center"
+                                           Margin="0,10,0,0">
                         <Button x:Name="btnPushSend"
-                         Text="Send >>"
-                         Clicked="OnPushSendClicked"
-                         BackgroundColor="#007BFF"
-                         TextColor="White"
-                         FontSize="13"
-                         CornerRadius="6" />
+                                Text="Send >>"
+                                Clicked="OnPushSendClicked"
+                                BackgroundColor="#007BFF"
+                                TextColor="White"
+                                FontSize="13"
+                                CornerRadius="6" />
                         <Button x:Name="btnPushCancel"
-                         Text="Cancel"
-                         Clicked="OnPushClosePopupClicked"
-                         BackgroundColor="Gray"
-                         TextColor="White"
-                         FontSize="13"
-                         CornerRadius="6" />
+                                Text="Cancel"
+                                Clicked="OnPushClosePopupClicked"
+                                BackgroundColor="Gray"
+                                TextColor="White"
+                                FontSize="13"
+                                CornerRadius="6" />
                     </HorizontalStackLayout>
 
                 </Grid>
@@ -355,56 +356,55 @@ TextColor="White"/>-->
         </Grid>
 
         <Grid x:Name="CustomLogPopupOverlay"
-BackgroundColor="#80000000"
-IsVisible="False"
-SizeChanged="PopupOverlay_SizeChanged"
-ZIndex="999"
-    VerticalOptions="FillAndExpand"
-      HorizontalOptions="FillAndExpand">
+              BackgroundColor="#80000000"
+              IsVisible="False"
+              SizeChanged="PopupOverlay_SizeChanged"
+              ZIndex="999"
+              VerticalOptions="FillAndExpand"
+              HorizontalOptions="FillAndExpand">
 
 
             <Frame BackgroundColor="White"
-     CornerRadius="12"
-     Padding="15"
-     Margin="12"
-     HasShadow="True"
-     VerticalOptions="Center"
-     HorizontalOptions="Center"
-     MaximumWidthRequest="480"
-      HeightRequest="400"         
-               >
+                   CornerRadius="12"
+                   Padding="15"
+                   Margin="12"
+                   HasShadow="True"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   MaximumWidthRequest="480"
+                   HeightRequest="400">
 
                 <VerticalStackLayout Spacing="10">
 
                     <Label Text="Add Custom Log Entry"
-             FontSize="18"
-             TextColor="Black"
-             FontAttributes="Bold"
-             HorizontalOptions="Center"/>
+                           FontSize="18"
+                           TextColor="Black"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
 
                     <Editor x:Name="CustomLogPopupEntry"
-              Placeholder="Enter custom log..."
-              AutoSize="TextChanges"
-              HeightRequest="275"
-             TextColor="Black"
-              FontSize="16"/>
+                            Placeholder="Enter custom log..."
+                            AutoSize="TextChanges"
+                            HeightRequest="275"
+                            TextColor="Black"
+                            FontSize="16" />
 
                     <HorizontalStackLayout Spacing="12"
-                             HorizontalOptions="Center">
+                                           HorizontalOptions="Center">
 
                         <Button Text="Save"
-                  Clicked="OnCustomLogSaveClicked"
-                  BackgroundColor="#28a745"
-                  TextColor="White"
-                  FontSize="14"
-                  CornerRadius="6"/>
+                                Clicked="OnCustomLogSaveClicked"
+                                BackgroundColor="#28a745"
+                                TextColor="White"
+                                FontSize="14"
+                                CornerRadius="6" />
 
                         <Button Text="Cancel"
-                  Clicked="OnCustomLogCancelClicked"
-                  BackgroundColor="Gray"
-                  TextColor="White"
-                  FontSize="14"
-                  CornerRadius="6"/>
+                                Clicked="OnCustomLogCancelClicked"
+                                BackgroundColor="Gray"
+                                TextColor="White"
+                                FontSize="14"
+                                CornerRadius="6" />
 
                     </HorizontalStackLayout>
 
@@ -415,53 +415,54 @@ ZIndex="999"
 
 
         <Grid x:Name="EditLogPopupOverlay"
-      BackgroundColor="#80000000"
-      IsVisible="False"
-      SizeChanged="PopupOverlay_SizeChanged"
-      ZIndex="999"
-      VerticalOptions="FillAndExpand"
-      HorizontalOptions="FillAndExpand">
+              BackgroundColor="#80000000"
+              IsVisible="False"
+              SizeChanged="PopupOverlay_SizeChanged"
+              ZIndex="999"
+              VerticalOptions="FillAndExpand"
+              HorizontalOptions="FillAndExpand">
 
             <Frame BackgroundColor="White"
-           CornerRadius="12"
-           Padding="15"
-           Margin="12"
-           HasShadow="True"
-           VerticalOptions="Center"
-           HorizontalOptions="Center"
-           MaximumWidthRequest="480"
-           HeightRequest="400">
+                   CornerRadius="12"
+                   Padding="15"
+                   Margin="12"
+                   HasShadow="True"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   MaximumWidthRequest="480"
+                   HeightRequest="400">
 
                 <VerticalStackLayout Spacing="10">
 
                     <Label Text="Edit Log Entry"
-                   FontSize="18"
-                   TextColor="Black"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center"/>
+                           FontSize="18"
+                           TextColor="Black"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
 
                     <Editor x:Name="EditLogPopupEntry"
-                    Placeholder="Update your log..."
-                    AutoSize="TextChanges"
-                    HeightRequest="275"
-                    FontSize="16" TextColor="Black" />
+                            Placeholder="Update your log..."
+                            AutoSize="TextChanges"
+                            HeightRequest="275"
+                            FontSize="16"
+                            TextColor="Black" />
 
                     <HorizontalStackLayout Spacing="12"
-                                   HorizontalOptions="Center">
+                                           HorizontalOptions="Center">
 
                         <Button Text="Update"
-                        Clicked="OnEditLogSaveClicked"
-                        BackgroundColor="#007bff"
-                        TextColor="White"
-                        FontSize="14"
-                        CornerRadius="6"/>
+                                Clicked="OnEditLogSaveClicked"
+                                BackgroundColor="#007bff"
+                                TextColor="White"
+                                FontSize="14"
+                                CornerRadius="6" />
 
                         <Button Text="Cancel"
-                        Clicked="OnEditLogCancelClicked"
-                        BackgroundColor="Gray"
-                        TextColor="White"
-                        FontSize="14"
-                        CornerRadius="6"/>
+                                Clicked="OnEditLogCancelClicked"
+                                BackgroundColor="Gray"
+                                TextColor="White"
+                                FontSize="14"
+                                CornerRadius="6" />
 
                     </HorizontalStackLayout>
 
@@ -478,101 +479,104 @@ ZIndex="999"
 
 
         <Grid x:Name="PopupOverlayEditImage"
-      BackgroundColor="#80000000"
-      IsVisible="False">
+              BackgroundColor="#80000000"
+              IsVisible="False">
 
             <Frame x:Name="EditImageFrame"
-           BackgroundColor="White"
-           CornerRadius="12"
-           Padding="10"
-           Margin="8"
-           HasShadow="True"
-           VerticalOptions="Center"
-           HorizontalOptions="Center"
-           MaximumWidthRequest="480">
+                   BackgroundColor="White"
+                   CornerRadius="12"
+                   Padding="10"
+                   Margin="8"
+                   HasShadow="True"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   MaximumWidthRequest="480">
 
                 <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
 
                     <!-- Popup Header -->
                     <Label Grid.Row="0"
-                   Text="Edit Images in Logbook"
-                   FontSize="14"
-                   FontAttributes="Bold"
-                   TextColor="Black"
-                   HorizontalOptions="Center"
-                   Margin="0,0,0,8" />
+                           Text="Edit Images in Logbook"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="Black"
+                           HorizontalOptions="Center"
+                           Margin="0,0,0,8" />
 
                     <!-- Checkboxes -->
-                    <VerticalStackLayout Grid.Row="1" Spacing="2">
-                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                    <VerticalStackLayout Grid.Row="1"
+                                         Spacing="2">
+                        <HorizontalStackLayout Spacing="6"
+                                               VerticalOptions="Center">
                             <CheckBox x:Name="chkEditRearFullPage"
-                              Color="Green"
-                              IsChecked="False"
-                              CheckedChanged="OnEditCheckboxCheckedChanged" />
+                                      Color="Green"
+                                      IsChecked="False"
+                                      CheckedChanged="OnEditCheckboxCheckedChanged" />
                             <Label Text="Attach to rear (Full Page)"
-                           VerticalOptions="Center"
-                           FontSize="12"
-                           TextColor="Black" />
+                                   VerticalOptions="Center"
+                                   FontSize="12"
+                                   TextColor="Black" />
                         </HorizontalStackLayout>
 
-                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                        <HorizontalStackLayout Spacing="6"
+                                               VerticalOptions="Center">
                             <CheckBox x:Name="chkEditWithinField"
-                              Color="Green"
-                              IsChecked="True"
-                              CheckedChanged="OnEditCheckboxCheckedChanged" />
+                                      Color="Green"
+                                      IsChecked="True"
+                                      CheckedChanged="OnEditCheckboxCheckedChanged" />
                             <Label Text="Add within field (25% of the Page)"
-                           VerticalOptions="Center"
-                           FontSize="12"
-                           TextColor="Black" />
+                                   VerticalOptions="Center"
+                                   FontSize="12"
+                                   TextColor="Black" />
                         </HorizontalStackLayout>
                     </VerticalStackLayout>
 
                     <!-- Add Image Button -->
                     <Button Grid.Row="2"
-                    Text="+ Add Image"
-                    Clicked="OnEditPickFileClicked"
-                    BackgroundColor="DodgerBlue"
-                    TextColor="White"
-                    HorizontalOptions="Center"
-                    FontSize="12"
-                    CornerRadius="6"
-                    Margin="0,6,0,0" />
+                            Text="+ Add Image"
+                            Clicked="OnEditPickFileClicked"
+                            BackgroundColor="DodgerBlue"
+                            TextColor="White"
+                            HorizontalOptions="Center"
+                            FontSize="12"
+                            CornerRadius="6"
+                            Margin="0,6,0,0" />
 
                     <!-- File List -->
                     <ScrollView Grid.Row="3"
-                        IsVisible="{Binding IsFilesVisible}"
-                        MaximumHeightRequest="150"
-                        VerticalOptions="Start">
+                                IsVisible="{Binding IsFilesVisible}"
+                                MaximumHeightRequest="150"
+                                VerticalOptions="Start">
                         <CollectionView x:Name="FilesCollectionEditImage"
-                                ItemSizingStrategy="MeasureAllItems"
-                                VerticalOptions="Start"
-                                Margin="0,5,0,0">
+                                        ItemSizingStrategy="MeasureAllItems"
+                                        VerticalOptions="Start"
+                                        Margin="0,5,0,0">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Padding="0"
-                                  ColumnDefinitions="*,Auto"
-                                  HeightRequest="30"
-                                  VerticalOptions="Center">
+                                          ColumnDefinitions="*,Auto"
+                                          HeightRequest="30"
+                                          VerticalOptions="Center">
 
                                         <!-- File Name -->
                                         <Label Text="{Binding FileName}"
-    VerticalOptions="Center"
-    Grid.Column="0"
-    LineBreakMode="TailTruncation"
-    MaxLines="1"
-    TextColor="Black"
-    FontSize="9"
-    Margin="2,0" />                     
+                                               VerticalOptions="Center"
+                                               Grid.Column="0"
+                                               LineBreakMode="TailTruncation"
+                                               MaxLines="1"
+                                               TextColor="Black"
+                                               FontSize="9"
+                                               Margin="2,0" />
 
                                         <!-- Delete Button -->
                                         <Button Clicked="OnEditDeleteFileClicked"
- WidthRequest="20"
- HeightRequest="20"
- BackgroundColor="Transparent"
- Padding="0"
- Margin="0"
- Grid.Column="1"
- VerticalOptions="Center">
+                                                WidthRequest="20"
+                                                HeightRequest="20"
+                                                BackgroundColor="Transparent"
+                                                Padding="0"
+                                                Margin="0"
+                                                Grid.Column="1"
+                                                VerticalOptions="Center">
                                             <Button.ImageSource>
                                                 <FileImageSource File="delete_icon_s.png" />
                                             </Button.ImageSource>
@@ -585,21 +589,21 @@ ZIndex="999"
 
                     <!-- Footer Buttons -->
                     <HorizontalStackLayout Grid.Row="4"
-                                   Spacing="10"
-                                   HorizontalOptions="Center"
-                                   Margin="0,10,0,0">
+                                           Spacing="10"
+                                           HorizontalOptions="Center"
+                                           Margin="0,10,0,0">
                         <Button Text="Save Changes"
-                        Clicked="OnEditSaveAndCloseClicked"
-                        BackgroundColor="Green"
-                        TextColor="White"
-                        FontSize="12"
-                        CornerRadius="6" />
+                                Clicked="OnEditSaveAndCloseClicked"
+                                BackgroundColor="Green"
+                                TextColor="White"
+                                FontSize="12"
+                                CornerRadius="6" />
                         <Button Text="Cancel"
-                        Clicked="OnEditClosePopupClicked"
-                        BackgroundColor="Gray"
-                        TextColor="White"
-                        FontSize="12"
-                        CornerRadius="6" />
+                                Clicked="OnEditClosePopupClicked"
+                                BackgroundColor="Gray"
+                                TextColor="White"
+                                FontSize="12"
+                                CornerRadius="6" />
                     </HorizontalStackLayout>
 
                 </Grid>
