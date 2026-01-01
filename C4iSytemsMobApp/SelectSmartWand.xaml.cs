@@ -156,4 +156,14 @@ public partial class SelectSmartWand : ContentPage
 
         return (guardId, clientSiteId, userId);
     }
+
+    private void OnCloseClicked(object sender, TappedEventArgs e)
+    {
+
+    }
+
+    private void OnSaveTagClicked(object sender, TappedEventArgs e)
+    {
+
+    }
 }

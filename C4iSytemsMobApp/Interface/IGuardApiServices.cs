@@ -12,5 +12,10 @@ namespace C4iSytemsMobApp.Interface
         Task<(bool isSuccess, string errorMessage, NewGuard? _newGuard)> RegisterNewGuardAsync(NewGuard newGuard);
         Task<List<GuardComplianceAndLicense>?> GetHrRecordsOfGuard();
         Task<(bool isSuccess, string errorMessage)> ValidateGuardDocumentAccessPin(string pin);
+        Task<List<HRGroups>> GetHrGroups();
+        Task<List<CombinedData>> GetHrGroupDescriptions(int hrGroupId);
+        Task<bool> CheckForHrBan(int DescriptionID);
+        Task<bool> SaveHrDocument(GuardComplianceAndLicense guardComplianceAndLicense, FileResult? file);
+        Task<(bool IsSuccess, string msg)> DeleteHrDocument(int id);
     }
 }
