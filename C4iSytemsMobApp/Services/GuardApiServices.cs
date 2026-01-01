@@ -181,7 +181,7 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
-        public async Task<bool> SaveHrDocument(GuardComplianceAndLicense guardComplianceAndLicense, FileResult file)
+        public async Task<bool> SaveHrDocument(GuardComplianceAndLicense guardComplianceAndLicense, FileResult? file)
         {
 
             var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SaveHrRecordOfGuard";

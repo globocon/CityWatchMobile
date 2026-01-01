@@ -1,4 +1,4 @@
-using C4iSytemsMobApp.Enums;
+﻿using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Views;
@@ -18,10 +18,10 @@ public partial class HrRecordsPage : ContentPage
     public ICommand DeleteCommand { get; }
     private readonly IGuardApiServices _guardApiServices;
     public ObservableCollection<GuardComplianceAndLicense> HrRecords { get; set; } = new();
-
+    public GuardComplianceAndLicense? EditingRecord { get; set; }
     private bool IsFilesVisible = false;
     private string FileName = string.Empty;
-    public ObservableCollection<MyFileModel> SelectedFiles { get; set; } = new();
+    public ObservableCollection<HrDocumentFileModel> SelectedFiles { get; set; } = new();
     public ObservableCollection<HRGroups> HrGroupsList { get; set; } = new();
     public ObservableCollection<CombinedData> HrDescriptionList { get; set; } = new();
     public IssueExpiryDateViewModel IssueExpiryVM { get; set; }
@@ -199,7 +199,7 @@ public partial class HrRecordsPage : ContentPage
     private async void OnEditSwiped(GuardComplianceAndLicense item)
     {
         IsNew = false;
-
+        EditingRecord = item;
         HrGroupPicker.SelectedItem = HrGroupsList.FirstOrDefault(x => x.Id == (int)item.HrGroup.Value);
         var selectedHrGroup = HrGroupPicker.SelectedItem as HRGroups;
         var selectedId = selectedHrGroup.Id;
@@ -208,15 +208,16 @@ public partial class HrRecordsPage : ContentPage
         IssueExpiryVM.IsExpiry = item.DateType ? !item.DateType : true;
         IssueExpiryVM.DisplayDate = item.ExpiryDate.HasValue ? item.ExpiryDate.Value : DateTime.Today;
 
-        //MyFileModel editfile = new MyFileModel
-        //{
-        //    File = null,
-        //    IsNew = false,
-        //    FileName = item.FileName
-        //};
-
-        //FilesCollectionEditImage.SelectedItem = null;
-        //FilesCollectionEditImage.ItemsSource =
+        HrDocumentFileModel editfile = new HrDocumentFileModel
+        {
+            File = null,
+            IsNew = false,
+            EditFileName = item.FileName
+        };
+        SelectedFiles.Add(editfile);
+        FilesCollectionEditImage.ItemsSource = SelectedFiles;
+        IsFilesVisible = SelectedFiles.Any();
+        FilesCollectionEditImage.IsVisible = IsFilesVisible;
 
         HrGroupPicker.IsEnabled = false;
         DescriptionGroupPicker.IsEnabled = false;
@@ -232,7 +233,8 @@ public partial class HrRecordsPage : ContentPage
     private async void OnAddComplianceClicked(object sender, TappedEventArgs e)
     {
         IsNew = true;
-
+        EditingRecord = null;
+        SelectedFiles.Clear();
         // Bind to CollectionView        
         IssueExpiryVM.DisplayDate = DateTime.Today;
         IssueExpiryVM.IsExpiry = true;
@@ -321,17 +323,13 @@ public partial class HrRecordsPage : ContentPage
             {
                 // Allowed image formats
                 string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".png", ".pdf" };
-
-
                 var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
                 if (!allowedExtensions.Contains(extension))
                 {
                     await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
                     return;
                 }
-
-                SelectedFiles.Add(new MyFileModel
+                SelectedFiles.Add(new HrDocumentFileModel
                 {
                     File = file,
                     IsNew = true,
@@ -358,7 +356,7 @@ public partial class HrRecordsPage : ContentPage
     {
         PopupOverlayAddCompliance.IsVisible = false;
         // Clear the edit file list
-        if (FilesCollectionEditImage.ItemsSource is ObservableCollection<MyFileModel> files)
+        if (FilesCollectionEditImage.ItemsSource is ObservableCollection<HrDocumentFileModel> files)
         {
             files.Clear();
         }
@@ -442,21 +440,35 @@ public partial class HrRecordsPage : ContentPage
         };
 
 
-        var fullFileName = SelectedFiles.First().File.FileName;
-        //var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fullFileName);
-        var fileExtension = Path.GetExtension(fullFileName);
-
-        if (guardComplianceAndLicense.DateType)
+        if (!IsNew)
         {
-            guardComplianceAndLicense.FileName = $"{descriptionSelected.ReferenceNo}_{descriptionSelected.Description}-doi {guardComplianceAndLicense.ExpiryDate.Value.ToString("dd MMM yy")}{fileExtension}";
+            guardComplianceAndLicense.Id = EditingRecord != null ? EditingRecord.Id : 0;
+        }
+
+        var NewOrEditFile = SelectedFiles?.FirstOrDefault();
+        int NewFileLength = NewOrEditFile != null && NewOrEditFile.File != null ? NewOrEditFile.File.FileName.Length : 0;
+
+        if (IsNew || (!IsNew && NewOrEditFile != null && EditingRecord != null && NewFileLength > 0 && EditingRecord.FileName != NewOrEditFile.FileName))
+        {
+            var fullFileName = SelectedFiles.First().File.FileName;
+            //var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fullFileName);
+            var fileExtension = Path.GetExtension(fullFileName);
+
+            if (guardComplianceAndLicense.DateType)
+            {
+                guardComplianceAndLicense.FileName = $"{descriptionSelected.ReferenceNo}_{descriptionSelected.Description}-doi {guardComplianceAndLicense.ExpiryDate.Value.ToString("dd MMM yy")}{fileExtension}";
+            }
+            else
+            {
+                guardComplianceAndLicense.FileName = $"{descriptionSelected.ReferenceNo}_{descriptionSelected.Description}-exp {guardComplianceAndLicense.ExpiryDate.Value.ToString("dd MMM yy")}{fileExtension}";
+            }
         }
         else
         {
-            guardComplianceAndLicense.FileName = $"{descriptionSelected.ReferenceNo}_{descriptionSelected.Description}-exp {guardComplianceAndLicense.ExpiryDate.Value.ToString("dd MMM yy")}{fileExtension}";
+            guardComplianceAndLicense.FileName = EditingRecord?.FileName ?? "";
         }
 
-
-        var r = await _guardApiServices.SaveHrDocument(guardComplianceAndLicense, SelectedFiles.First().File);
+        var r = await _guardApiServices.SaveHrDocument(guardComplianceAndLicense, SelectedFiles?.First()?.File);
         if (!r)
         {
             await Application.Current.MainPage.DisplayAlert("Error", "Failed to save HR Record document.", "OK");
@@ -469,7 +481,7 @@ public partial class HrRecordsPage : ContentPage
             // Close popup
             PopupOverlayAddCompliance.IsVisible = false;
             // Clear the edit file list
-            if (FilesCollectionEditImage.ItemsSource is ObservableCollection<MyFileModel> files)
+            if (FilesCollectionEditImage.ItemsSource is ObservableCollection<HrDocumentFileModel> files)
             {
                 files.Clear();
             }
@@ -477,6 +489,15 @@ public partial class HrRecordsPage : ContentPage
             // Hide the file list view
             FilesCollectionEditImage.IsVisible = false;
         }
+
+    }
+
+    public class HrDocumentFileModel
+    {
+        public FileResult File { get; set; }
+        public string FileName => File?.FileName ?? EditFileName; // <-- useful for UI binding
+        public string EditFileName { get; set; }
+        public bool IsNew { get; set; } = true;  // true → newly added via picker
 
     }
 

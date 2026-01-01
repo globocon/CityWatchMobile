@@ -15,7 +15,7 @@ namespace C4iSytemsMobApp.Interface
         Task<List<HRGroups>> GetHrGroups();
         Task<List<CombinedData>> GetHrGroupDescriptions(int hrGroupId);
         Task<bool> CheckForHrBan(int DescriptionID);
-        Task<bool> SaveHrDocument(GuardComplianceAndLicense guardComplianceAndLicense, FileResult file);
+        Task<bool> SaveHrDocument(GuardComplianceAndLicense guardComplianceAndLicense, FileResult? file);
         Task<(bool IsSuccess, string msg)> DeleteHrDocument(int id);
     }
 }
