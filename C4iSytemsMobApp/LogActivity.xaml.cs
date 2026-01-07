@@ -24,6 +24,7 @@ public partial class LogActivity : ContentPage
     private int? _clientSiteId;
     private int? _userId;
     private int? _guardId;
+    private int _badgeNo = 0;
     private bool _isLogsLoading;
     private readonly ILogBookServices _logBookServices;
     private GuardLogDto _selectedLogForEdit;
@@ -1643,6 +1644,9 @@ public partial class LogActivity : ContentPage
         _clientSiteId = clientSiteId;
         _guardId = guardId;
         _userId = userId;
+        string savedBadgeKeyName = $"{_clientSiteId}_{_guardId}_GuardSelectedBadgeNumber";
+        string savedBadgeNumber = Preferences.Get(savedBadgeKeyName, "0");
+        _badgeNo = int.TryParse(savedBadgeNumber, out int badgeNum) ? badgeNum : 0;
     }
     private async Task SetupHubConnection()
     {
@@ -1680,7 +1684,8 @@ public partial class LogActivity : ContentPage
                     {
                         ClientSiteId = (int)_clientSiteId,
                         GuardId = (int)_guardId,
-                        UserId = (int)_userId
+                        UserId = (int)_userId,
+                        BadgeNo = _badgeNo,
                     };
                     var z = Task.FromResult(_hubConnection.InvokeAsync<string>("JoinGroup", JoinGaurd)).Result;
                     Console.WriteLine(z);
@@ -1712,7 +1717,8 @@ public partial class LogActivity : ContentPage
                 {
                     ClientSiteId = (int)_clientSiteId,
                     GuardId = (int)_guardId,
-                    UserId = (int)_userId
+                    UserId = (int)_userId,
+                    BadgeNo = _badgeNo,
                 };
                 var z = await _hubConnection.InvokeAsync<string>("JoinGroup", JoinGaurd);
                 Console.WriteLine(z);
@@ -1767,7 +1773,8 @@ public partial class LogActivity : ContentPage
                     {
                         ClientSiteId = (int)_clientSiteId,
                         GuardId = (int)_guardId,
-                        UserId = (int)_userId
+                        UserId = (int)_userId,
+                        BadgeNo = _badgeNo,
                     };
                     var z = Task.FromResult(_hubConnectionRC.InvokeAsync<string>("JoinGroup", JoinGaurd)).Result;
                     Console.WriteLine(z);
@@ -1791,7 +1798,8 @@ public partial class LogActivity : ContentPage
                 {
                     ClientSiteId = (int)_clientSiteId,
                     GuardId = (int)_guardId,
-                    UserId = (int)_userId
+                    UserId = (int)_userId,
+                    BadgeNo = _badgeNo,
                 };
                 var z = await _hubConnectionRC.InvokeAsync<string>("JoinGroup", JoinGaurd);
                 Console.WriteLine(z);
