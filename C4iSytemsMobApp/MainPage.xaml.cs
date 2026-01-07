@@ -47,6 +47,7 @@ namespace C4iSytemsMobApp
         private int? _clientSiteId;
         private int? _userId;
         private int? _guardId;
+        private int _badgeNo = 0;
         private bool _guardCounterReset = false;
         private int selectedIncrement = 1;
         private int selectedDecrement = 1;
@@ -514,6 +515,10 @@ namespace C4iSytemsMobApp
             _clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
             _guardId = await TryGetSecureId("GuardId", "Guard ID not found. Please validate the License Number first.");
             _userId = await TryGetSecureId("UserId", "User ID is invalid. Please log in again.");
+
+            string savedBadgeKeyName = $"{_clientSiteId}_{_guardId}_GuardSelectedBadgeNumber";
+            string savedBadgeNumber = Preferences.Get(savedBadgeKeyName, "0");
+            _badgeNo = int.TryParse(savedBadgeNumber, out int badgeNum) ? badgeNum : 0;
         }
 
         private async void OnManualPositionClicked(object sender, EventArgs e)
@@ -799,6 +804,7 @@ namespace C4iSytemsMobApp
                         ClientSiteId = (int)_clientSiteId,
                                     GuardId = (int)_guardId,
                                     UserId = (int)_userId,
+                                    BadgeNo = _badgeNo,
                                     Pcount = selectedIncrement
                     }
                 }
@@ -820,6 +826,7 @@ namespace C4iSytemsMobApp
                         ClientSiteId = (int)_clientSiteId,
                                     GuardId = (int)_guardId,
                                     UserId = (int)_userId,
+                                    BadgeNo = _badgeNo,
                                     Pcount = selectedDecrement
                     }
                 }
@@ -906,6 +913,7 @@ namespace C4iSytemsMobApp
                             ClientSiteId = (int)_clientSiteId,
                             GuardId = (int)_guardId,
                             UserId = (int)_userId,
+                            BadgeNo = _badgeNo,
                             Location = locationName
                         };
 
@@ -976,7 +984,8 @@ namespace C4iSytemsMobApp
             {
                 ClientSiteId = (int)_clientSiteId,
                 GuardId = (int)_guardId,
-                UserId = (int)_userId
+                UserId = (int)_userId,
+                BadgeNo = _badgeNo,
             };
             _guardCounterReset = true;
             _hubConnection.InvokeAsync("ResetGuardCrowdControlCount", ResetData);
@@ -994,7 +1003,8 @@ namespace C4iSytemsMobApp
                 {
                     ClientSiteId = (int)_clientSiteId,
                     GuardId = (int)_guardId,
-                    UserId = (int)_userId
+                    UserId = (int)_userId,
+                    BadgeNo = _badgeNo,
                 };
                 _hubConnection.InvokeAsync("ResetSiteCrowdControlCount", ResetData);
                 CrowdControlSettingsPopup.IsVisible = false;
@@ -1019,6 +1029,7 @@ namespace C4iSytemsMobApp
                     ClientSiteId = (int)_clientSiteId,
                     GuardId = (int)_guardId,
                     UserId = (int)_userId,
+                    BadgeNo = _badgeNo,
                     Location = locationName
                 };
 
@@ -1960,7 +1971,8 @@ namespace C4iSytemsMobApp
                         {
                             ClientSiteId = (int)_clientSiteId,
                             GuardId = (int)_guardId,
-                            UserId = (int)_userId
+                            UserId = (int)_userId,
+                            BadgeNo = _badgeNo,
                         };
                         var z = Task.FromResult(_hubConnection.InvokeAsync<string>("JoinGroup", JoinGaurd)).Result;
                         Console.WriteLine(z);
@@ -2097,6 +2109,7 @@ namespace C4iSytemsMobApp
                     {
                         ClientSiteId = (int)_clientSiteId,
                         GuardId = (int)_guardId,
+                        BadgeNo = _badgeNo,
                         UserId = (int)_userId
                     };
                     var z = await _hubConnection.InvokeAsync<string>("JoinGroup", JoinGaurd);
