@@ -84,13 +84,64 @@ namespace C4iSytemsMobApp.Services
         }
 
 
+        public async Task<bool> CheckForUpdateInBackgroundAsync()
+        {
+#if ANDROID
+            try
+            {
+                var currentVersion = Version.Parse(AppInfo.Current.VersionString);
+                var apiUrl = $"{AppConfig.ApiBaseUrl}AppUpgrade/GetLatestAppVersion?platformType=Android";
+                var latestInfo = await _httpClient.GetFromJsonAsync<MobileAppUpgrade>(apiUrl);
+
+                if (latestInfo == null)
+                    return false;
+
+                var latestVersion = Version.Parse($"{latestInfo.AppVersionMajor}.{latestInfo.AppVersionMinor}.{latestInfo.AppVersionPatch}");
+
+                if (latestVersion != currentVersion)
+                {
+                    string message = $"An active version ({latestVersion}) is available.\n" +
+                                     $"You are using {currentVersion}.";
+
+                    if (!string.IsNullOrWhiteSpace(latestInfo.AppVersionNotes))
+                        message += $"\n\nWhat's new:\n{latestInfo.AppVersionNotes}";
+
+                    // Use MainThread to show alert
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        // Check if an alert is already showing or if we can overlay
+                        // Basic implementation: Just show it over whatever is current
+                        bool update = await Application.Current.MainPage.DisplayAlert(
+                        "Update Available", message, "Update Now", "Later");
+
+                         if (update)
+                         {
+                             await DownloadAndInstallApkAsync(latestInfo.AppDownloadUrl);
+                         }
+                    });
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Background update check failed: {ex}");
+            }
+#endif
+            return false;
+        }
 
 #if ANDROID
     private async Task DownloadAndInstallApkAsync(string apkUrl)
     {
         var context = Android.App.Application.Context;
         var popup = new DownloadProgressPopup();
-        await Application.Current.MainPage.Navigation.PushModalAsync(popup);
+        
+        // Push popup on MainThread
+        await MainThread.InvokeOnMainThreadAsync(async () => 
+        {
+             await Application.Current.MainPage.Navigation.PushModalAsync(popup);
+        });
 
         try
         {
@@ -109,6 +160,8 @@ namespace C4iSytemsMobApp.Services
             var buffer = new byte[256 * 1024];  // read 256 kb of data
             long totalRead = 0;
             int bytesRead;
+            
+            double lastReportedPercent = 0;
 
             while ((bytesRead = await input.ReadAsync(buffer)) > 0)
             {
@@ -118,11 +171,21 @@ namespace C4iSytemsMobApp.Services
                 if (canReportProgress)
                 {
                     double percent = (totalRead * 1.0 / total) * 100;
-                    popup.UpdateProgress(percent);
+                    
+                    // Throttle UI updates: only update if changed by at least 1%
+                    if (percent - lastReportedPercent >= 1 || percent >= 100)
+                    {
+                        lastReportedPercent = percent;
+                        // Fire and forget UI update to avoid blocking download loop
+                        MainThread.BeginInvokeOnMainThread(() => popup.UpdateProgress(percent));
+                    }
                 }
             }
 
-            await Application.Current.MainPage.Navigation.PopModalAsync();
+            await MainThread.InvokeOnMainThreadAsync(async () => 
+            {
+                await Application.Current.MainPage.Navigation.PopModalAsync();
+            });
 
             // Trigger APK installer
             var file = new Java.IO.File(filePath);
@@ -136,8 +199,11 @@ namespace C4iSytemsMobApp.Services
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Download/Install failed: {ex}");
-            await Application.Current.MainPage.DisplayAlert("Error", "Failed to download update.", "OK");
-            await Application.Current.MainPage.Navigation.PopModalAsync();
+            await MainThread.InvokeOnMainThreadAsync(async () => 
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "Failed to download update.", "OK");
+                await Application.Current.MainPage.Navigation.PopModalAsync();
+            });
         }
     }
 #endif

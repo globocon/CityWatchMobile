@@ -44,38 +44,55 @@ public partial class AppUpgradePage : ContentPage
     {
         try
         {
+            // Toggle for Background Update Feature
+            const bool UseBackgroundUpdate = true;
 
-#if !DEBUG
+#if !DEBUG  || true // Enable for Debug too if needed for testing
+            if (UseBackgroundUpdate)
+            {
+                 // IMMEDIATE LOGIN (No Waiting)
+                 Application.Current.MainPage = new LoginPage();
 
-                        // Show loading overlay
-                        LoadingOverlay.IsVisible = true;
-                        // Check for updates after UI is ready
-                        MainThread.BeginInvokeOnMainThread(async () =>
-                        {
-                            await Task.Delay(1500); // give a moment for UI to load
-                            bool updateAvailable = await _appUpdateService.CheckForUpdateAsync();
-                            if (!updateAvailable)
-                            {
-                                // Hide loading overlay
-                                LoadingOverlay.IsVisible = false;
-                                // Redirect to login page
-                                //MainPage = new NavigationPage(loginPage);
-                                Application.Current.MainPage = new LoginPage();
-                            }
-                        });
-
+                 // Fire-and-forget background check
+                 // The alert will pop up OVER the login page (or dashboard) if update found
+                 _ = Task.Run(async () => 
+                 {
+                     await Task.Delay(2000); // Small delay to let LogicPage settle
+                     await _appUpdateService.CheckForUpdateInBackgroundAsync();
+                 });
+            }
+            else
+            {
+                // ORIGINAL BLOCKING LOGIC
+                
+                // Show loading overlay
+                LoadingOverlay.IsVisible = true;
+                // Check for updates after UI is ready
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    await Task.Delay(1500); // give a moment for UI to load
+                    bool updateAvailable = await _appUpdateService.CheckForUpdateAsync();
+                    if (!updateAvailable)
+                    {
                         // Hide loading overlay
                         LoadingOverlay.IsVisible = false;
-
+                        // Redirect to login page
+                        //MainPage = new NavigationPage(loginPage);
+                        Application.Current.MainPage = new LoginPage();
+                    }
+                });
+                 // Hide loading overlay
+                LoadingOverlay.IsVisible = false;
+            }
 #else
             Application.Current.MainPage = new LoginPage();
 #endif
-
-
         }
         catch (Exception ex)
         {
             await DisplayAlert("Error", $"Failed to check for updates: {ex.Message}", "OK");
+            // Fallback to login in case of error
+             Application.Current.MainPage = new LoginPage();
         }
         finally
         {
