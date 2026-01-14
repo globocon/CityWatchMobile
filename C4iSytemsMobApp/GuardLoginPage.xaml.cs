@@ -104,9 +104,16 @@ public partial class GuardLoginPage : ContentPage
 
 
     private const string PrefKey = "SavedLicenseNumbers";
-    private List<string> _previousNumbers = new List<string>();
+    // Change to store objects with timestamp
+    private List<LicenseEntry> _previousNumbers = new List<LicenseEntry>();
     private ObservableCollection<string> _filteredSuggestions = new ObservableCollection<string>();
     private const string LastNumberKey = "LastEnteredNumber";
+
+    private void OnLicenseUnfocused(object sender, FocusEventArgs e)
+    {
+        SuggestionsView.IsVisible = false;
+        SuggestionsFrame.IsVisible = false;
+    }
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -174,11 +181,42 @@ public partial class GuardLoginPage : ContentPage
     private void LoadSavedNumbers()
     {
         const string PrefKey = "SavedLicenseNumbers";
+        const int ExpirationDays = 45;
 
         var json = Preferences.Get(PrefKey, string.Empty);
-        _previousNumbers = string.IsNullOrEmpty(json)
-            ? new List<string>()
-            : JsonSerializer.Deserialize<List<string>>(json);
+        
+        if (string.IsNullOrEmpty(json))
+        {
+             _previousNumbers = new List<LicenseEntry>();
+        }
+        else
+        {
+            try 
+            {
+                // Try to deserialize as new format
+                _previousNumbers = JsonSerializer.Deserialize<List<LicenseEntry>>(json);
+            }
+            catch
+            {
+                // Fallback: Migration from old List<string>
+                try
+                {
+                    var oldList = JsonSerializer.Deserialize<List<string>>(json);
+                    _previousNumbers = oldList.Select(n => new LicenseEntry { Number = n, LastUsed = DateTime.Now }).ToList();
+                }
+                catch
+                {
+                    _previousNumbers = new List<LicenseEntry>();
+                }
+            }
+        }
+
+        // Cleanup expired entries
+        var cutoffDate = DateTime.Now.AddDays(-ExpirationDays);
+        _previousNumbers.RemoveAll(x => x.LastUsed < cutoffDate);
+
+        // If changes made (cleanup or migration), save back
+        SaveNumbers();
 
         string lastNumber = Preferences.Get(LastNumberKey, string.Empty);
         if (!string.IsNullOrEmpty(lastNumber))
@@ -188,16 +226,13 @@ public partial class GuardLoginPage : ContentPage
 
         if (_previousNumbers != null && _previousNumbers.Any())
         {
-            // Sort alphabetically
-            _previousNumbers = _previousNumbers.OrderBy(x => x).ToList();
-
-            // Set last entered value to textbox
-            // txtLicenseNumber.Text = _previousNumbers.Last();
+            // Sort by most recently used
+            _previousNumbers = _previousNumbers.OrderByDescending(x => x.LastUsed).ToList();
 
             // Load full list into suggestion view
             _filteredSuggestions.Clear();
             foreach (var item in _previousNumbers)
-                _filteredSuggestions.Add(item);
+                _filteredSuggestions.Add(item.Number);
 
             // Show suggestion list on first load
             SuggestionsView.IsVisible = true;
@@ -215,6 +250,7 @@ public partial class GuardLoginPage : ContentPage
     private void SaveNumbers()
     {
         var json = JsonSerializer.Serialize(_previousNumbers);
+        const string PrefKey = "SavedLicenseNumbers";
         Preferences.Set(PrefKey, json);
     }
 
@@ -223,17 +259,14 @@ public partial class GuardLoginPage : ContentPage
         if (string.IsNullOrWhiteSpace(newNumber))
             return;
 
-        // Load existing numbers from Preferences
-        var json = Preferences.Get(PrefKey, string.Empty);
-        _previousNumbers = string.IsNullOrEmpty(json)
-            ? new List<string>()
-            : JsonSerializer.Deserialize<List<string>>(json);
+        // Ensure list is loaded
+        if (_previousNumbers == null) LoadSavedNumbers();
 
-        // Remove if already exists to avoid duplicates
-        _previousNumbers.RemoveAll(x => x.Equals(newNumber, StringComparison.OrdinalIgnoreCase));
+        // Remove if already exists to update position/timestamp
+        _previousNumbers.RemoveAll(x => x.Number.Equals(newNumber, StringComparison.OrdinalIgnoreCase));
 
-        // Insert at the beginning so it appears first
-        _previousNumbers.Insert(0, newNumber);
+        // Insert at the beginning (Most Recent)
+        _previousNumbers.Insert(0, new LicenseEntry { Number = newNumber, LastUsed = DateTime.Now });
 
         // Save updated list to Preferences
         SaveNumbers();
@@ -246,11 +279,11 @@ public partial class GuardLoginPage : ContentPage
 
         var matches = string.IsNullOrEmpty(query)
             ? _previousNumbers // show all when empty
-            : _previousNumbers.Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+            : _previousNumbers.Where(x => x.Number.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
 
         _filteredSuggestions.Clear();
         foreach (var item in matches)
-            _filteredSuggestions.Add(item);
+            _filteredSuggestions.Add(item.Number);
 
         SuggestionsView.IsVisible = _filteredSuggestions.Any();
         SuggestionsFrame.IsVisible = _filteredSuggestions.Any();
@@ -263,7 +296,7 @@ public partial class GuardLoginPage : ContentPage
         //{
         _filteredSuggestions.Clear();
         foreach (var item in _previousNumbers)
-            _filteredSuggestions.Add(item);
+            _filteredSuggestions.Add(item.Number);
 
         SuggestionsView.IsVisible = _filteredSuggestions.Any();
         SuggestionsFrame.IsVisible = _filteredSuggestions.Any();
@@ -279,7 +312,7 @@ public partial class GuardLoginPage : ContentPage
             //_suppressSuggestions = false;
             _filteredSuggestions.Clear();
             foreach (var item in _previousNumbers)
-                _filteredSuggestions.Add(item);
+                _filteredSuggestions.Add(item.Number);
 
             SuggestionsView.IsVisible = _filteredSuggestions.Any();
             SuggestionsFrame.IsVisible = _filteredSuggestions.Any();
@@ -974,4 +1007,10 @@ public class DropdownItem
 {
     public int Id { get; set; }
     public string Name { get; set; }
+}
+
+public class LicenseEntry
+{
+    public string Number { get; set; }
+    public DateTime LastUsed { get; set; }
 }
