@@ -172,7 +172,7 @@ namespace C4iSytemsMobApp
             // Start checking duress status on app load
             duressCheckTimer.Elapsed += async (s, e) => await CheckDuressStatus();
             duressCheckTimer.AutoReset = true;
-            duressCheckTimer.Start();
+            //duressCheckTimer.Start();
             _shouldOpenDrawerOnReturn = showDrawerOnStart ?? false; // Defaults to false if null
             _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
             _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
@@ -273,12 +273,15 @@ namespace C4iSytemsMobApp
             StartBLEScanner(); // Execution Order - 3
             await SetupHubConnection();  // Execution Order - 4
 
+            duressCheckTimer.Start();
+
             MainLayout.IsVisible = true;
         }
 
         protected override async void OnDisappearing()
         {
             base.OnDisappearing();
+            duressCheckTimer.Stop();
             App.IsVolumeControlEnabledForCounter = false; // Disable custom volume handling
 
             // Stop NFC listening
@@ -636,9 +639,12 @@ namespace C4iSytemsMobApp
 
         private void UpdateDuressUI()
         {
-            DuressButtonFrame.BackgroundColor = Colors.Red;
-            DuressStatusLabel.Text = "Status: Active";
-            DuressStatusLabel.TextColor = Colors.White;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                DuressButtonFrame.BackgroundColor = Colors.Red;
+                DuressStatusLabel.Text = "Status: Active";
+                DuressStatusLabel.TextColor = Colors.White;
+            });
         }
 
         private async Task<int?> TryGetSecureId(string key, string errorMessage)
