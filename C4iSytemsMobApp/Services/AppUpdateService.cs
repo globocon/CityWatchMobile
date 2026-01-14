@@ -109,15 +109,18 @@ namespace C4iSytemsMobApp.Services
                     // Use MainThread to show alert
                     MainThread.BeginInvokeOnMainThread(async () =>
                     {
-                        // Check if an alert is already showing or if we can overlay
-                        // Basic implementation: Just show it over whatever is current
-                        bool update = await Application.Current.MainPage.DisplayAlert(
-                        "Update Available", message, "Update Now", "Later");
+                        // Robustly get the current page on the UI thread
+                        var currentPage = Application.Current?.MainPage;
+                        if (currentPage != null)
+                        {
+                            bool update = await currentPage.DisplayAlert(
+                            "Update Available", message, "Update Now", "Later");
 
-                         if (update)
-                         {
-                             await DownloadAndInstallApkAsync(latestInfo.AppDownloadUrl);
-                         }
+                             if (update)
+                             {
+                                 await DownloadAndInstallApkAsync(latestInfo.AppDownloadUrl);
+                             }
+                        }
                     });
 
                     return true;
@@ -140,7 +143,8 @@ namespace C4iSytemsMobApp.Services
         // Push popup on MainThread
         await MainThread.InvokeOnMainThreadAsync(async () => 
         {
-             await Application.Current.MainPage.Navigation.PushModalAsync(popup);
+             if (Application.Current?.MainPage != null)
+                await Application.Current.MainPage.Navigation.PushModalAsync(popup);
         });
 
         try
@@ -148,6 +152,7 @@ namespace C4iSytemsMobApp.Services
             string fileName = Path.GetFileName(apkUrl);
             string filePath = Path.Combine(context.CacheDir!.AbsolutePath, fileName);
 
+            // Use larger buffer for download
             using var response = await _httpClient.GetAsync(apkUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
@@ -155,13 +160,16 @@ namespace C4iSytemsMobApp.Services
             var canReportProgress = total > 0;
 
             await using var input = await response.Content.ReadAsStreamAsync();
-            await using var output = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+            
+            // True Async File I/O with 8KB buffer
+            await using var output = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
 
-            var buffer = new byte[256 * 1024];  // read 256 kb of data
+            var buffer = new byte[8192];
             long totalRead = 0;
             int bytesRead;
             
-            double lastReportedPercent = 0;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            long lastReportedTime = 0;
 
             while ((bytesRead = await input.ReadAsync(buffer)) > 0)
             {
@@ -170,21 +178,21 @@ namespace C4iSytemsMobApp.Services
 
                 if (canReportProgress)
                 {
-                    double percent = (totalRead * 1.0 / total) * 100;
-                    
-                    // Throttle UI updates: only update if changed by at least 1%
-                    if (percent - lastReportedPercent >= 1 || percent >= 100)
+                    // Throttle UI updates: max once every 300ms
+                    if (stopwatch.ElapsedMilliseconds - lastReportedTime > 300 || totalRead == total)
                     {
-                        lastReportedPercent = percent;
-                        // Fire and forget UI update to avoid blocking download loop
+                        lastReportedTime = stopwatch.ElapsedMilliseconds;
+                        double percent = (totalRead * 1.0 / total) * 100;
                         MainThread.BeginInvokeOnMainThread(() => popup.UpdateProgress(percent));
                     }
                 }
             }
+            stopwatch.Stop();
 
             await MainThread.InvokeOnMainThreadAsync(async () => 
             {
-                await Application.Current.MainPage.Navigation.PopModalAsync();
+                if (Application.Current?.MainPage != null)
+                    await Application.Current.MainPage.Navigation.PopModalAsync();
             });
 
             // Trigger APK installer
@@ -201,8 +209,11 @@ namespace C4iSytemsMobApp.Services
             System.Diagnostics.Debug.WriteLine($"Download/Install failed: {ex}");
             await MainThread.InvokeOnMainThreadAsync(async () => 
             {
-                await Application.Current.MainPage.DisplayAlert("Error", "Failed to download update.", "OK");
-                await Application.Current.MainPage.Navigation.PopModalAsync();
+                if (Application.Current?.MainPage != null)
+                {
+                    await Application.Current.MainPage.DisplayAlert("Error", "Failed to download update.", "OK");
+                    await Application.Current.MainPage.Navigation.PopModalAsync();
+                }
             });
         }
     }
