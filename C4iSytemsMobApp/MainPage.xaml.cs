@@ -578,6 +578,10 @@ namespace C4iSytemsMobApp
                 CountdownLabel.Text = "Duress activation cancelled.";
                 await Task.Delay(1000); // Short delay to show cancellation message
             }
+            catch (Exception ex)
+            {
+                 System.Diagnostics.Debug.WriteLine($"Duress error: {ex.Message}");
+            }
             finally
             {
                 DuressPopup.IsVisible = false;
@@ -611,26 +615,41 @@ namespace C4iSytemsMobApp
 
             if (string.IsNullOrWhiteSpace(gpsCoordinates))
             {
+                 // Proceed even if GPS is missing? Or fail? The existing code failed.
+                 // "GPS coordinates not available. Please ensure location services are enabled."
                 await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
                 return;
             }
 
-
+            // CHECK OFFLINE STATUS
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            {
+                await DisplayAlert("Offline", "Duress disabled as you are offline", "OK");
+                return;
+            }
 
             string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SaveClientSiteDuress?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}&gps={Uri.EscapeDataString(gpsCoordinates)}";
 
-            using (HttpClient client = new HttpClient())
+            try
             {
-                var response = await client.GetAsync(apiUrl);
-                if (response.IsSuccessStatusCode)
+                using (HttpClient client = new HttpClient())
                 {
-                    UpdateDuressUI();
+                    var response = await client.GetAsync(apiUrl);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        UpdateDuressUI();
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        //await DisplayAlert("Error", $"Duress submission failed: {errorMessage}", "OK");
+                    }
                 }
-                else
-                {
-                    string errorMessage = await response.Content.ReadAsStringAsync();
-                    //await DisplayAlert("Error", $"Duress submission failed: {errorMessage}", "OK");
-                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Duress API failed: {ex.Message}");
+                // Optionally alert the user here too, but safety first
             }
         }
 
