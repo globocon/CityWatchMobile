@@ -137,7 +137,7 @@ namespace C4iSytemsMobApp
         public string SyncStatusText { get; set; }
 
         private IBeaconScanner scanner;
-        public const string BLE_ALERT_TITLE = "iBeacon";
+        public const string BLE_ALERT_TITLE = "BLE";
         private bool _isBleEnabledForSite = false;
         private bool _hasBlePermission = false;
         private bool BleScannerOnOff { get; set; }
@@ -1375,7 +1375,8 @@ namespace C4iSytemsMobApp
 
         private async Task LogScannedDataToCache(string _TagUid, ScanningType _scannerType)
         {
-            await ShowToastMessage($"Tag scanned. Logging activity to Cache...");
+            //await ShowToastMessage($"Tag scanned. Logging activity to Cache...");
+            await ShowToastMessage($"{ALERT_TITLE}\nNFC Tag scanned. Logging activity to Cache...");
             var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
             if (isSuccess)
             {
@@ -1383,7 +1384,8 @@ namespace C4iSytemsMobApp
                 {
                     SyncState.SyncedCount = _ChaceCount;
                 });
-                await ShowToastMessage(msg);
+                //await ShowToastMessage(msg);            
+                await ShowToastMessage($"{ALERT_TITLE}\n{msg}");
             }
             else
             {
@@ -1409,7 +1411,7 @@ namespace C4iSytemsMobApp
                     {
                         NfcIsEnabled = CrossNFC.Current.IsEnabled;
                         if (!NfcIsEnabled)
-                            await DisplayAlert(ALERT_TITLE, "NFC is disabled from Home Page", "OK");
+                            await DisplayAlert(ALERT_TITLE, "NFC is disabled.", "OK");
 
                         if (DeviceInfo.Platform == DevicePlatform.iOS)
                             _isDeviceiOS = true;
@@ -1460,7 +1462,7 @@ namespace C4iSytemsMobApp
         async void Current_OnNfcStatusChanged(bool isEnabled)
         {
             NfcIsEnabled = isEnabled;
-            await DisplayAlert(ALERT_TITLE, $"NFC has been {(isEnabled ? "enabled" : "disabled")} from Home Page", "OK");
+            await DisplayAlert(ALERT_TITLE, $"NFC has been {(isEnabled ? "enabled" : "disabled")}.", "OK");
         }
 
         async void Current_OnMessageReceived(ITagInfo tagInfo)
@@ -1488,7 +1490,7 @@ namespace C4iSytemsMobApp
                     return;
                 }
 
-                await ShowToastMessage($"Tag scanned. Logging activity...");
+                //await ShowSnackbarMessage(ALERT_TITLE, $"Tag scanned. Logging activity...");
                 var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
                 if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
 
@@ -1497,22 +1499,15 @@ namespace C4iSytemsMobApp
                 {
                     if (scannerSettings.IsSuccess)
                     {
+                        var SnackbarMessage = scannerSettings.tagInfoLabel.Length > 35 ? scannerSettings.tagInfoLabel.Substring(0, 35) + "..." : scannerSettings.tagInfoLabel;
+                        await ShowToastMessage($"{ALERT_TITLE}\nNFC Tag {SnackbarMessage} scanned.\nLogging activity...");
+
                         // Valid tag - log activity
-                        //LogActivityTask(scannerSettings.tagInfoLabel);
                         int _scannerType = (int)ScanningType.NFC;
                         var _taguid = serialNumber;
                         if (!scannerSettings.tagFound) { _taguid = "NA"; }
 
-                        await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid);
-                        //var (isSuccess, msg) = await _logBookServices.LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid);
-                        //if (isSuccess)
-                        //{
-                        //    await ShowToastMessage(msg);
-                        //}
-                        //else
-                        //{
-                        //    await DisplayAlert("Error", msg ?? "Failed to log activity", "OK");
-                        //}
+                        await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid);                        
                     }
                     else
                     {
@@ -1742,7 +1737,7 @@ namespace C4iSytemsMobApp
                     await LogBLEScannedDataToCache(serialNumber, deviceName, ScanningType.BLUETOOTH);
                     return;
                 }
-                await ShowToastMessage($"Device Found:{deviceName}. Logging activity...");
+                await ShowToastMessage($"{BLE_ALERT_TITLE}\nDevice Found:{deviceName}.\nLogging activity...");
                 var scannerSettings = await _scannerControlServices.FetchTagInfoDetailsAsync(_clientSiteId.ToString(), serialNumber, _guardId.ToString(), _userId.ToString(), ScanningType.BLUETOOTH);
                 if (scannerSettings != null)
                 {
@@ -1759,15 +1754,15 @@ namespace C4iSytemsMobApp
                     }
                     else
                     {
-                        var newmsg = $"Error: {scannerSettings?.message ?? "Unknown error"}";
-                        await ShowToastMessage($"Error: {newmsg}");
+                        var newmsg = $"{BLE_ALERT_TITLE}\nError: {scannerSettings?.message ?? "Unknown error"}";
+                        await ShowToastMessage(newmsg);
                         return;
                     }
                 }
                 else
                 {
-                    var newmsg = $"Error: {scannerSettings?.message ?? "Unknown error"}";
-                    await ShowToastMessage($"Error: {newmsg}");
+                    var newmsg = $"{BLE_ALERT_TITLE}\nError: {scannerSettings?.message ?? "Unknown error"}";
+                    await ShowToastMessage(newmsg);
                     return;
                 }
 
@@ -1777,8 +1772,8 @@ namespace C4iSytemsMobApp
 
 
         private async Task LogBLEScannedDataToCache(string _TagUid, string _deviceName, ScanningType _scannerType)
-        {
-            await ShowToastMessage($"Bluetooth Device Found:{_deviceName}. Logging activity to Cache.");
+        {            
+            await ShowToastMessage($"{BLE_ALERT_TITLE}\nBluetooth Device Found:{_deviceName}. Logging activity to Cache.");
             var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
             if (isSuccess)
             {
@@ -1786,12 +1781,13 @@ namespace C4iSytemsMobApp
                 {
                     SyncState.SyncedCount = _ChaceCount;
                 });
-                await ShowToastMessage($"{msg}");
+                //await ShowToastMessage($"{msg}");
+                await ShowToastMessage($"{BLE_ALERT_TITLE}\n{msg}");
             }
             else
             {
-                var newmsg = msg ?? "Failed to save tag scan";
-                await ShowToastMessage($"Error: {newmsg}");
+                var newmsg = msg ?? "Failed to save tag scan.";
+                await ShowToastMessage($"{BLE_ALERT_TITLE}\n{newmsg}");
             }
         }
 
@@ -1802,7 +1798,18 @@ namespace C4iSytemsMobApp
             var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid);
             if (isSuccess)
             {
-                await ShowToastMessage(msg);
+                if (scanningType == (int)ScanningType.NFC)
+                {
+                    var SnackbarMessage = activityDescription.Length > 35 ? activityDescription.Substring(0, 35) + "..." : activityDescription;
+                    await ShowToastMessage($"{ALERT_TITLE}\n{msg} for {SnackbarMessage}.");
+                }                    
+                else if (scanningType == (int)ScanningType.BLUETOOTH)
+                {
+                    var SnackbarMessage = activityDescription.Length > 35 ? activityDescription.Substring(0, 35) + "..." : activityDescription;
+                    await ShowToastMessage($"{BLE_ALERT_TITLE}\n{msg} for {SnackbarMessage}.");
+                }                    
+                else
+                    await ShowToastMessage(msg);
             }
             else
             {
@@ -1816,7 +1823,7 @@ namespace C4iSytemsMobApp
                     alertHead = BLE_ALERT_TITLE;
                 }
 
-                await ShowAlert(alertHead, $"{msg ?? "Failed to log activity"}");
+                await ShowAlert(alertHead, $"{(msg ?? "Failed to log activity")}");
             }
         }
 
@@ -1827,7 +1834,7 @@ namespace C4iSytemsMobApp
                 Toast.Make(message, ToastDuration.Long).Show();
             });
         }
-
+                
         private Task ShowAlert(string alertHead, string message)
         {
             return MainThread.InvokeOnMainThreadAsync(() =>

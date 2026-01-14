@@ -13,7 +13,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 
 
-
 namespace C4iSytemsMobApp;
 
 public partial class LogActivity : ContentPage
@@ -67,7 +66,7 @@ public partial class LogActivity : ContentPage
         LoadSecureData();
         LoadActivities();
         FilesCollection.ItemsSource = SelectedFiles;
-        
+
         _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
         _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
     }
@@ -148,7 +147,8 @@ public partial class LogActivity : ContentPage
         if (sender is Button button)
         {
             string activityName = button.Text;
-            await MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(activityName, 0, "NA"));
+            //await MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(activityName, 0, "NA"));
+            await LogActivityTask(activityName, 0, "NA");
         }
     }
 
@@ -165,11 +165,11 @@ public partial class LogActivity : ContentPage
     private async void LoadLogs()
     {
 
-        if(_isLogsLoading)
+        if (_isLogsLoading)
             return;
 
         _isLogsLoading = true;
-       
+
         try
         {
             if (_guardId <= 0 || _clientSiteId <= 0 || _userId <= 0)
@@ -186,7 +186,7 @@ public partial class LogActivity : ContentPage
 
             var json = await response.Content.ReadAsStringAsync();
             var logs = JsonSerializer.Deserialize<List<GuardLogDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
+
             LogDisplayArea.Children.Clear();
 
             if (logs == null || logs.Count == 0)
@@ -205,9 +205,9 @@ public partial class LogActivity : ContentPage
             var bgColorNormal = Color.FromArgb("#F2F2F2"); // default
 
             LogDisplayArea.Children.Clear(); // Refresh UI
-            
+
             foreach (var log in logs) // 
-            {                
+            {
                 bool isAlarm = false;
                 var contentLayout = new VerticalStackLayout
                 {
@@ -554,8 +554,8 @@ public partial class LogActivity : ContentPage
       && log.IsSystemEntry == false
       //&& (log.ImageUrls == null || log.ImageUrls.Count == 0)
       //&& !(log.Notes?.Contains("Mob app image upload", StringComparison.OrdinalIgnoreCase) ?? false)
-      
-      
+
+
       )
                 {
                     var editButton = new ImageButton
@@ -570,7 +570,7 @@ public partial class LogActivity : ContentPage
                         Padding = 2
                     };
 
-                  
+
 
 
                     editButton.Clicked += async (s, e) =>
@@ -608,7 +608,7 @@ public partial class LogActivity : ContentPage
         }
         finally
         {
-            _isLogsLoading = false;            
+            _isLogsLoading = false;
         }
     }
 
@@ -804,7 +804,7 @@ public partial class LogActivity : ContentPage
         // Bind to CollectionView
         FilesCollectionEditImage.ItemsSource = SelectedFiles;
         FilesCollectionEditImage.IsVisible = SelectedFiles.Any();
-        PopupOverlayEditImage.IsVisible = true; 
+        PopupOverlayEditImage.IsVisible = true;
 
     }
 
@@ -861,7 +861,7 @@ public partial class LogActivity : ContentPage
                 if (response.IsSuccessStatusCode)
                 {
                     await ShowToastMessage("Log updated successfully.");
-                   // LoadLogs();
+                    // LoadLogs();
 
                     EditLogPopupOverlay.IsVisible = false;
 
@@ -995,18 +995,30 @@ public partial class LogActivity : ContentPage
     private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = true)
     {
 
-        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid);
+        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid);        
         if (isSuccess)
         {
-            await ShowToastMessage(msg);
+            if (scanningType == (int)ScanningType.NFC)
+                await ShowToastMessage($"{ALERT_TITLE}\n{msg}");
+            else if (scanningType == (int)ScanningType.BLUETOOTH)
+                await ShowToastMessage($"BLE\n{msg}");
+            else
+                await ShowToastMessage(msg);
+
+
             HideCustomLogPopup();
-            
+
             var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
             Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
         }
         else
         {
-            await ShowToastMessage(msg);
+            if (scanningType == (int)ScanningType.NFC)
+                await ShowToastMessage($"{ALERT_TITLE}\n{msg}");
+            else if (scanningType == (int)ScanningType.BLUETOOTH)
+                await ShowToastMessage($"BLE\n{msg}");
+            else
+                await ShowToastMessage(msg);
         }
     }
 
@@ -1066,7 +1078,7 @@ public partial class LogActivity : ContentPage
         }
 
 
-        
+
 
 
         //if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
@@ -1176,9 +1188,12 @@ public partial class LogActivity : ContentPage
     // Method to display toast message
     private async Task ShowToastMessage(string message)
     {
-        await Toast.Make(message, ToastDuration.Long).Show();
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            await Toast.Make(message, ToastDuration.Long).Show();
+        });
     }
-
+       
     private void CustomLogEntry_TextChanged(object sender, TextChangedEventArgs e)
     {
         //if (!string.IsNullOrWhiteSpace(CustomLogEntry.Text))
@@ -1355,12 +1370,12 @@ public partial class LogActivity : ContentPage
     {
         if (sender is Button btn && btn.BindingContext is MyFileModel file)
         {
-           
+
 
             var files = (ObservableCollection<MyFileModel>)FilesCollectionEditImage.ItemsSource;
 
             // If it's an existing file (already in DB)
-            if (!file.IsNew )
+            if (!file.IsNew)
             {
                 try
                 {
@@ -1560,20 +1575,20 @@ public partial class LogActivity : ContentPage
             foreach (var fileModel in newFiles)
             {
 
-              
-                    var stream = await fileModel.File.OpenReadAsync();
-                    var fileContent = new StreamContent(stream);
-                    fileContent.Headers.ContentType =
-                        new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
 
-                    // Add file
-                    content.Add(fileContent, "files", fileModel.File.FileName);
+                var stream = await fileModel.File.OpenReadAsync();
+                var fileContent = new StreamContent(stream);
+                fileContent.Headers.ContentType =
+                    new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
 
-                    // Add matching type (rear / twentyfive / etc.)
-                    content.Add(new StringContent(fileModel.FileType), "types");
+                // Add file
+                content.Add(fileContent, "files", fileModel.File.FileName);
 
-               
-            
+                // Add matching type (rear / twentyfive / etc.)
+                content.Add(new StringContent(fileModel.FileType), "types");
+
+
+
             }
 
             // Add form data
@@ -1735,7 +1750,7 @@ public partial class LogActivity : ContentPage
         catch (Exception ex)
         {
             Console.WriteLine($"Error in SignalR connection: {ex.Message}");
-        }        
+        }
     }
     private async Task SetupRCHubConnection()
     {
@@ -1810,7 +1825,7 @@ public partial class LogActivity : ContentPage
 
             Console.WriteLine($"Error in RC signalR connection: {ex.Message}");
         }
-        
+
     }
 
     private void OnEditClosePopupClicked(object sender, EventArgs e)
@@ -1833,8 +1848,8 @@ public partial class LogActivity : ContentPage
     }
 
     private async Task LogScannedDataToCache(string _TagUid, ScanningType _scannerType)
-    {
-        await ShowToastMessage($"Tag scanned. Logging activity to Cache...");
+    {  
+        await ShowToastMessage($"{ALERT_TITLE}\nNFC Tag scanned. Logging activity to Cache...");
         var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
         if (isSuccess)
         {
@@ -1842,11 +1857,12 @@ public partial class LogActivity : ContentPage
             {
                 SyncState.SyncedCount = _ChaceCount;
             });
-            await ShowToastMessage(msg);
+            //await ShowToastMessage(msg);            
+            await ShowToastMessage($"{ALERT_TITLE}\n{msg}");
         }
         else
         {
-            await DisplayAlert("Error", msg ?? "Failed to save tag scan", "OK");
+            await DisplayAlert($"{ALERT_TITLE} Error", msg ?? "Failed to save tag scan", "OK");
         }
     }
 
@@ -1868,7 +1884,7 @@ public partial class LogActivity : ContentPage
                 {
                     NfcIsEnabled = CrossNFC.Current.IsEnabled;
                     if (!NfcIsEnabled)
-                        await DisplayAlert(ALERT_TITLE, "NFC is disabled from Log Activity Page", "OK");
+                        await DisplayAlert(ALERT_TITLE, "NFC is disabled.", "OK");
 
                     if (DeviceInfo.Platform == DevicePlatform.iOS)
                         _isDeviceiOS = true;
@@ -1919,7 +1935,7 @@ public partial class LogActivity : ContentPage
     async void Current_OnNfcStatusChanged(bool isEnabled)
     {
         NfcIsEnabled = isEnabled;
-        await DisplayAlert(ALERT_TITLE, $"NFC has been {(isEnabled ? "enabled" : "disabled")} from Log Activity Page", "OK");
+        await DisplayAlert(ALERT_TITLE, $"NFC has been {(isEnabled ? "enabled" : "disabled")}.", "OK");
     }
 
     async void Current_OnMessageReceived(ITagInfo tagInfo)
@@ -1949,12 +1965,15 @@ public partial class LogActivity : ContentPage
                 return;
             }
 
-            await ShowToastMessage($"Tag scanned. Logging activity...");
+            
             var scannerSettings = await _scannerControlServices.FetchTagInfoDetailsAsync(_clientSiteId.ToString(), serialNumber, _guardId.ToString(), _userId.ToString(), ScanningType.NFC);
             if (scannerSettings != null)
             {
                 if (scannerSettings.IsSuccess)
                 {
+                    var SnackbarMessage = scannerSettings.tagInfoLabel.Length > 35 ? scannerSettings.tagInfoLabel.Substring(0, 35) + "..." : scannerSettings.tagInfoLabel;
+                    await ShowToastMessage($"{ALERT_TITLE}\nNFC Tag {SnackbarMessage} scanned.\nLogging activity...");
+
                     // Valid tag - log activity
                     int _scannerType = (int)ScanningType.NFC;
                     var _taguid = serialNumber;

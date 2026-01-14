@@ -69,31 +69,57 @@ namespace C4iSytemsMobApp.Services
             };
 
             
+            //try
+            //{
+            //    using (HttpClient _httpClient = new HttpClient())
+            //    {
+            //        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity";
+
+            //        HttpResponseMessage response = await _httpClient.PostAsJsonAsync(apiUrl, request);
+
+            //        if (response.IsSuccessStatusCode)
+            //        {
+            //            return (true, "Log entry added successfully.");
+            //        }
+            //        else
+            //        {
+            //            string errorMessage = await response.Content.ReadAsStringAsync();
+            //            return (false, $"Failed: {errorMessage}");
+            //        }
+
+            //    }
+
+            //}
+            //catch (Exception ex)
+            //{
+            //    return (false, $"Failed: {ex.Message}");
+            //}
+
+            HttpClient _httpClient = new HttpClient();
             try
             {
-                using (HttpClient _httpClient = new HttpClient())
+                var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity";
+
+                HttpResponseMessage response = await _httpClient.PostAsJsonAsync(apiUrl, request);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity";
-
-                    HttpResponseMessage response = await _httpClient.PostAsJsonAsync(apiUrl, request);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return (true, "Log entry added successfully.");
-                    }
-                    else
-                    {
-                        string errorMessage = await response.Content.ReadAsStringAsync();
-                        return (false, $"Failed: {errorMessage}");
-                    }
-
+                    return (true, "Log entry added successfully.");
                 }
-
+                else
+                {
+                    string errorMessage = await response.Content.ReadAsStringAsync();
+                    return (false, $"Failed: {errorMessage}");
+                }
             }
             catch (Exception ex)
             {
                 return (false, $"Failed: {ex.Message}");
-            }            
+            }
+            finally
+            {
+                _httpClient.Dispose();
+            }
 
         }
 

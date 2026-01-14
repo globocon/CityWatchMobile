@@ -360,9 +360,9 @@ namespace C4iSytemsMobApp.Services
             _ChaceCount = _scanDataDbServices.GetCacheRecordsCount();
                        
             if (_scannerType == ScanningType.NFC)
-                message = "Tag scan record saved to cache.";
+                message = $"Tag {(TagInfoDetails.LabelDescription.Length > 35 ? TagInfoDetails.LabelDescription.Substring(0, 35) + "..." : TagInfoDetails.LabelDescription)} scan record saved to cache.";
             else if (_scannerType == ScanningType.BLUETOOTH)
-                message = "iBeacon scan record saved to cache.";
+                message = $"iBeacon {(TagInfoDetails.LabelDescription.Length > 35 ? TagInfoDetails.LabelDescription.Substring(0, 35) + "..." : TagInfoDetails.LabelDescription)} scan record saved to cache.";
 
             return (true, message, _ChaceCount);
         }
