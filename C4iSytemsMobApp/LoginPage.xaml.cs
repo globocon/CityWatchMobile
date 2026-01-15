@@ -163,7 +163,7 @@ public partial class LoginPage : ContentPage
         }
         catch (Exception ex)
         {
-            return new LoginResponse { IsSuccess = false, ErrorMessage = "Network error: " + ex.Message };
+            return new LoginResponse { IsSuccess = false, ErrorMessage = "Network error: " + ex.Message + ". Please ensure you are online and have an internet connection" };
         }
     }
 

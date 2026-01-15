@@ -158,7 +158,7 @@ public partial class GuardLoginQRCode : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Error", $"Network error: {ex.Message}", "OK");
+            await DisplayAlert("Error", $"Network error: {ex.Message}. Please ensure you are online and have an internet connection", "OK");
         }
         finally
         {
