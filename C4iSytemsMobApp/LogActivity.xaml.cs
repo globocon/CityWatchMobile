@@ -1077,39 +1077,9 @@ public partial class LogActivity : ContentPage
             return;
         }
 
-
-
-
-
-        //if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
-
-        //var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity" +
-        //$"?guardId={_guardId}" +
-        //$"&clientsiteId={_clientSiteId}" +
-        //$"&userId={_userId}" +
-        //$"&activityString={Uri.EscapeDataString(log.Trim())}" +
-        //$"&gps={Uri.EscapeDataString(gpsCoordinates)}" +
-        //$"&systemEntry=false";
-
         try
         {
-            await MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(log.Trim(), 0, "NA", false));
-
-            //HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
-            //if (response.IsSuccessStatusCode)
-            //{
-            //    await ShowToastMessage("Log entry added successfully.");
-
-            //    // Close Popup
-            //    HideCustomLogPopup();
-
-
-            //}
-            //else
-            //{
-            //    string errorMessage = await response.Content.ReadAsStringAsync();
-            //    await ShowToastMessage($"Failed: {errorMessage}");
-            //}
+            await LogActivityTask(log.Trim(), 0, "NA", false);            
         }
         catch (Exception ex)
         {

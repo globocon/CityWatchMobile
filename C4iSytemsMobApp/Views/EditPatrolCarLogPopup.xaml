@@ -1,12 +1,10 @@
 <toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-               x:Class="C4iSytemsMobApp.Views.EditPatrolCarLogPopup"
-               >
+               x:Class="C4iSytemsMobApp.Views.EditPatrolCarLogPopup">
 
     <VerticalStackLayout Padding="15"
                          Spacing="10"
-                         Margin="10"
                          BackgroundColor="{AppThemeBinding Light=White, Dark=#333}">
 
         <Label Text="Edit Patrol Car Log"
@@ -15,8 +13,7 @@
                HorizontalOptions="Center" />
 
         <!-- Scrollable content area -->
-        <ScrollView 
-                    VerticalOptions="FillAndExpand">
+        <ScrollView VerticalOptions="FillAndExpand">
             <VerticalStackLayout Spacing="12">
 
                 <Label Text="{Binding Log.PatrolCar}"
