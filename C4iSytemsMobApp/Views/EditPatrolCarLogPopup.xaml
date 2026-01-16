@@ -6,7 +6,6 @@
 
     <VerticalStackLayout Padding="15"
                          Spacing="10"
-                         Margin="10"
                          BackgroundColor="{AppThemeBinding Light=White, Dark=#333}">
 
         <Label Text="Edit Patrol Car Log"
