@@ -359,10 +359,10 @@ namespace C4iSytemsMobApp.Services
             await _scanDataDbServices.SaveScanData(newrecord);
             _ChaceCount = _scanDataDbServices.GetCacheRecordsCount();
                        
-            if (_scannerType == ScanningType.NFC)
-                message = $"Tag {(TagInfoDetails.LabelDescription.Length > 35 ? TagInfoDetails.LabelDescription.Substring(0, 35) + "..." : TagInfoDetails.LabelDescription)} scan record saved to cache.";
+            if (_scannerType == ScanningType.NFC) //
+                message = $"[NFC] {(TagInfoDetails.LabelDescription.Length > 35 ? $"{(TagInfoDetails.LabelDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : TagInfoDetails.LabelDescription.Replace("\"", "").Replace("'", ""))} scan record saved to cache.";
             else if (_scannerType == ScanningType.BLUETOOTH)
-                message = $"iBeacon {(TagInfoDetails.LabelDescription.Length > 35 ? TagInfoDetails.LabelDescription.Substring(0, 35) + "..." : TagInfoDetails.LabelDescription)} scan record saved to cache.";
+                message = $"[BLE] {(TagInfoDetails.LabelDescription.Length > 35 ? $"{(TagInfoDetails.LabelDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : TagInfoDetails.LabelDescription.Replace("\"", "").Replace("'", ""))} scan record saved to cache.";
 
             return (true, message, _ChaceCount);
         }

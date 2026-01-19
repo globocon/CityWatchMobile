@@ -999,9 +999,15 @@ public partial class LogActivity : ContentPage
         if (isSuccess)
         {
             if (scanningType == (int)ScanningType.NFC)
-                await ShowToastMessage($"{ALERT_TITLE}\n{msg}");
+            {
+                var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
+                await ShowToastMessage($"[{ALERT_TITLE}] {SnackbarMessage.Replace("[NFC]", "")} log entry added.");
+            }
             else if (scanningType == (int)ScanningType.BLUETOOTH)
-                await ShowToastMessage($"BLE\n{msg}");
+            {
+                var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
+                await ShowToastMessage($"[BLE] {SnackbarMessage.Replace("[BLE]", "")} log entry added.");
+            }
             else
                 await ShowToastMessage(msg);
 
@@ -1819,7 +1825,7 @@ public partial class LogActivity : ContentPage
 
     private async Task LogScannedDataToCache(string _TagUid, ScanningType _scannerType)
     {  
-        await ShowToastMessage($"{ALERT_TITLE}\nNFC Tag scanned. Logging activity to Cache...");
+        await ShowToastMessage($"[{ALERT_TITLE}] Tag scanned. Logging activity to Cache...");
         var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
         if (isSuccess)
         {
@@ -1827,8 +1833,8 @@ public partial class LogActivity : ContentPage
             {
                 SyncState.SyncedCount = _ChaceCount;
             });
-            //await ShowToastMessage(msg);            
-            await ShowToastMessage($"{ALERT_TITLE}\n{msg}");
+            //await ShowToastMessage(msg);
+            await ShowToastMessage($"[{ALERT_TITLE}] {msg}");
         }
         else
         {
@@ -1941,8 +1947,8 @@ public partial class LogActivity : ContentPage
             {
                 if (scannerSettings.IsSuccess)
                 {
-                    var SnackbarMessage = scannerSettings.tagInfoLabel.Length > 35 ? scannerSettings.tagInfoLabel.Substring(0, 35) + "..." : scannerSettings.tagInfoLabel;
-                    await ShowToastMessage($"{ALERT_TITLE}\nNFC Tag {SnackbarMessage} scanned.\nLogging activity...");
+                    var SnackbarMessage = scannerSettings.tagInfoLabel.Length > 35 ? $"{(scannerSettings.tagInfoLabel.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : scannerSettings.tagInfoLabel.Replace("\"", "").Replace("'", "");
+                    await ShowToastMessage($"[{ALERT_TITLE}] {SnackbarMessage} scanned. Logging activity...");
 
                     // Valid tag - log activity
                     int _scannerType = (int)ScanningType.NFC;
