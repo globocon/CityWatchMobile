@@ -26,7 +26,7 @@ namespace C4iSytemsMobApp
 
 
         //#### Added for ngrok testing by Binoy
-        public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.40:92";
+        public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.34:92";
         public static string MobileSignalRBaseUrl { get; set; } = "https://exciting-sunfish-vastly.ngrok-free.app";
         public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
 
