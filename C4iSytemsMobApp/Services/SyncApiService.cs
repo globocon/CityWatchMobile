@@ -1,6 +1,8 @@
 ﻿using C4iSytemsMobApp.Data.Entity;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 
 
 namespace C4iSytemsMobApp.Services
@@ -8,10 +10,12 @@ namespace C4iSytemsMobApp.Services
     public interface ISyncApiService
     {
         public Task<List<ClientSiteSmartWandTagsHitLogCache>> PushSmartWandTagsHitLogCacheAsync(List<ClientSiteSmartWandTagsHitLogCache> records);
-        
+        public Task<List<PostActivityRequestLocalCache>> PushActivityLogCacheAsync(List<PostActivityRequestLocalCache> records);
+        public Task<List<OfflineFilesRecords>> PushActivityLogDocumentsCacheAsync(List<OfflineFilesRecords> records);
+
     }
-    public class SyncApiService: ISyncApiService
-    {        
+    public class SyncApiService : ISyncApiService
+    {
         string gpsCoordinates;
         int guardId;
         int clientSiteId;
@@ -19,7 +23,7 @@ namespace C4iSytemsMobApp.Services
         bool isError;
         string msg;
         public SyncApiService()
-        { 
+        {
             GetSecureStorageValues();
             gpsCoordinates = Preferences.Get("GpsCoordinates", "");
         }
@@ -30,7 +34,7 @@ namespace C4iSytemsMobApp.Services
             if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
                 return null;
 
-           var apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SyncOfflineSmartWandTagHitData";
+            var apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SyncOfflineSmartWandTagHitData";
 
             try
             {
@@ -46,16 +50,107 @@ namespace C4iSytemsMobApp.Services
                     }
                     else
                     {
-                        throw new Exception("Error in syncing records");
+                        throw new Exception("Error in syncing smartwand tag hit records");
                     }
                 }
-                   
+
             }
             catch (Exception ex)
             {
                 throw;
             }
         }
+
+        public async Task<List<PostActivityRequestLocalCache>> PushActivityLogCacheAsync(List<PostActivityRequestLocalCache> records)
+        {
+
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                return null;
+
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SyncOfflinePostActivityLogData";
+
+            try
+            {
+                using (HttpClient _http = new HttpClient())
+                {
+                    await Task.Delay(3000);
+                    HttpResponseMessage response = await _http.PostAsJsonAsync(apiUrl, records);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var settings = await response.Content.ReadFromJsonAsync<List<PostActivityRequestLocalCache>>();
+                        return settings;
+                    }
+                    else
+                    {
+                        throw new Exception("Error in syncing activity log records");
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        public async Task<List<OfflineFilesRecords>> PushActivityLogDocumentsCacheAsync(List<OfflineFilesRecords> records)
+        {
+
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                return null;
+
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultipleOffLineSync";
+
+            try
+            {
+                using (HttpClient _http = new HttpClient())
+                {
+                    await Task.Delay(3000);
+                    var content = new MultipartFormDataContent();
+                    foreach (var fileModel in records)
+                    {
+
+                        if (File.Exists(fileModel.FileNameWithPathCache))
+                        {
+                            var stream = await OpenFileReadAsync(fileModel.FileNameWithPathCache);
+                            var fileContent = new StreamContent(stream);
+                            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+                            // Add file
+                            content.Add(fileContent, "files", fileModel.FileNameCache);
+                        }
+                    }
+
+                    // Add other form data
+                    // 1. Add metadata as JSON
+                    var json = JsonSerializer.Serialize(records);
+                    var jsonContent = new StringContent(json, Encoding.UTF8, "application/json");
+                    content.Add(jsonContent, "offlineFilesRecordJsonString");
+                    
+                    HttpResponseMessage response = await _http.PostAsync(apiUrl, content);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var settings = await response.Content.ReadFromJsonAsync<List<OfflineFilesRecords>>();
+                        return settings;
+                    }
+                    else
+                    {
+                        throw new Exception("Error in syncing activity documents log records");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        public async Task<Stream> OpenFileReadAsync(string fullPath)
+        {
+            // Ensures async-friendly stream opening
+            return await Task.Run(() => File.OpenRead(fullPath));
+        }
+
         private void GetSecureStorageValues()
         {
             string msg = string.Empty;
