@@ -1,4 +1,5 @@
 using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Data.Entity;
 using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
@@ -184,14 +185,14 @@ public partial class GuardLoginPage : ContentPage
         const int ExpirationDays = 45;
 
         var json = Preferences.Get(PrefKey, string.Empty);
-        
+
         if (string.IsNullOrEmpty(json))
         {
-             _previousNumbers = new List<LicenseEntry>();
+            _previousNumbers = new List<LicenseEntry>();
         }
         else
         {
-            try 
+            try
             {
                 // Try to deserialize as new format
                 _previousNumbers = JsonSerializer.Deserialize<List<LicenseEntry>>(json);
@@ -798,6 +799,28 @@ public partial class GuardLoginPage : ContentPage
                     int tourMode = responseJson.GetProperty("tourMode").GetInt32();
                     App.TourMode = (PatrolTouringMode)tourMode;
 
+                    try
+                    {
+
+                        //await _scanDataDbService.ClearPrePopulatedActivitesButtonList();
+                        // Deserialize activity list
+                        var activityElement = responseJson.GetProperty("activity");
+                        List<ActivityModel> activity = JsonSerializer.Deserialize<List<ActivityModel>>(
+                            activityElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (activity != null && activity.Count > 0)
+                        {
+                            // Save to local DB
+                            await _scanDataDbService.RefreshPrePopulatedActivitesButtonList(activity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+
                     if (pickerClientSite.SelectedItem is DropdownItem selectedClientSite)
                     {
                         Preferences.Set("ClientSite", selectedClientSite.Name.Trim());
@@ -983,7 +1006,7 @@ public partial class GuardLoginPage : ContentPage
                         OnReadClicked(null, null);
                         break;
                 }
-            }                
+            }
         }
 
         _isPopupOpen = false;

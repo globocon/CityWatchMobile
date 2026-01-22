@@ -38,7 +38,7 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
-        public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, int scanningType = 0, string tagUID = "NA", bool IsSystemEntry = true)
+        public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, int scanningType = 0, string tagUID = "NA", bool IsSystemEntry = false)
         {
             string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
@@ -57,7 +57,7 @@ namespace C4iSytemsMobApp.Services
                 userId = userId,
                 activityString = activityDescription,
                 gps = gpsCoordinates,
-                systemEntry = false,
+                systemEntry = IsSystemEntry,
                 scanningType = scanningType,
                 tagUID = tagUID,
                 EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
@@ -67,34 +67,7 @@ namespace C4iSytemsMobApp.Services
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
                 IsNewGuard = false
             };
-
-            
-            //try
-            //{
-            //    using (HttpClient _httpClient = new HttpClient())
-            //    {
-            //        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity";
-
-            //        HttpResponseMessage response = await _httpClient.PostAsJsonAsync(apiUrl, request);
-
-            //        if (response.IsSuccessStatusCode)
-            //        {
-            //            return (true, "Log entry added successfully.");
-            //        }
-            //        else
-            //        {
-            //            string errorMessage = await response.Content.ReadAsStringAsync();
-            //            return (false, $"Failed: {errorMessage}");
-            //        }
-
-            //    }
-
-            //}
-            //catch (Exception ex)
-            //{
-            //    return (false, $"Failed: {ex.Message}");
-            //}
-
+                        
             HttpClient _httpClient = new HttpClient();
             try
             {

@@ -1,4 +1,7 @@
-﻿using C4iSytemsMobApp.Enums;
+﻿using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Data.Entity;
+using C4iSytemsMobApp.Enums;
+using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using CommunityToolkit.Maui;
@@ -26,6 +29,7 @@ public partial class LogActivity : ContentPage
     private int _badgeNo = 0;
     private bool _isLogsLoading;
     private readonly ILogBookServices _logBookServices;
+    private readonly IScanDataDbServices _scanDataDbService;
     private GuardLogDto _selectedLogForEdit;
     public ObservableCollection<MyFileModel> SelectedFiles { get; set; }
      = new ObservableCollection<MyFileModel>();
@@ -64,11 +68,13 @@ public partial class LogActivity : ContentPage
         InitializeComponent();
         NavigationPage.SetHasNavigationBar(this, false);
         LoadSecureData();
-        LoadActivities();
-        FilesCollection.ItemsSource = SelectedFiles;
 
         _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
         _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
+        _scanDataDbService = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
+
+        LoadActivities();
+        FilesCollection.ItemsSource = SelectedFiles;
     }
     private void PopupOverlay_SizeChanged(object sender, EventArgs e)
     {
@@ -88,7 +94,7 @@ public partial class LogActivity : ContentPage
         await StartNFC();
         _isLogsLoading = false;
         await SetupHubConnection(); // LoadLogs(); is Called when the SignalRHub connection is established
-        await SetupRCHubConnection();
+        await SetupRCHubConnection();        
     }
 
 
@@ -117,28 +123,41 @@ public partial class LogActivity : ContentPage
     {
         try
         {
-            //ButtonContainer.Children.Clear(); // Clear previous items if reloading
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivities?type=2&siteid={_clientSiteId}";
-
-            HttpResponseMessage response = await _httpClient.GetAsync(url);
-            if (!response.IsSuccessStatusCode)
+            List<ActivityModel?> activities = new();
+            if (App.IsOnline)
             {
-                await DisplayAlert("Error", "Failed to load activities", "OK");
-                return;
+                //ButtonContainer.Children.Clear(); // Clear previous items if reloading
+                var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivities?type=2&siteid={_clientSiteId}";
+
+                HttpResponseMessage response = await _httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                {
+                    await DisplayAlert("Error", "Failed to load activities", "OK");
+                    return;
+                }
+
+                string json = await response.Content.ReadAsStringAsync();
+                activities = JsonSerializer.Deserialize<List<ActivityModel>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            else
+            {
+                activities = await _scanDataDbService.GetPrePopulatedActivitesButtonList();
             }
 
-            string json = await response.Content.ReadAsStringAsync();
-            var activities = JsonSerializer.Deserialize<List<ActivityModel>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (activities == null) return;
+            if (activities == null || activities.Count < 1) return;
 
             // Sort by numeric prefix in Label (e.g., "01", "02", etc.)
             var sortedActivities = activities.OrderBy(a => ExtractLabelPrefix(a.Label)).ToList();
             ActivitiesCollection.ItemsSource = sortedActivities;
+
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+            Console.WriteLine($"Error loading activities from local cache: {ex.Message}");
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await DisplayAlert("Error", $"An error occurred while loading activities: {ex.Message}", "OK");
+            });
         }
     }
 
@@ -147,8 +166,10 @@ public partial class LogActivity : ContentPage
         if (sender is Button button)
         {
             string activityName = button.Text;
-            //await MainThread.InvokeOnMainThreadAsync(() => LogActivityTask(activityName, 0, "NA"));
-            await LogActivityTask(activityName, 0, "NA");
+            if (App.IsOnline)
+                await LogActivityTask(activityName, 0, "NA");
+            else
+                await LogActivityToCache(activityName, 0, "NA");
         }
     }
 
@@ -648,44 +669,6 @@ public partial class LogActivity : ContentPage
 
             ShowPopup();
 
-
-
-
-
-            //var results = await FilePicker.PickMultipleAsync();
-            //if (results != null && results.Any())
-            //{
-            //    string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
-
-            //    foreach (var file in results)
-            //    {
-            //        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            //        if (!allowedExtensions.Contains(extension))
-            //        {
-            //            await DisplayAlert("Invalid File",
-            //                $"File '{file.FileName}' is not a supported image type.", "OK");
-            //            continue;
-            //        }
-
-            //        // Default type is twentyfive unless user ticks "rear full page"
-            //        string fileType = "twentyfive";
-
-            //        SelectedFiles.Add(new MyFileModel
-            //        {
-            //            File = file,
-            //            FileType = fileType
-            //        });
-            //    }
-
-            //    if (SelectedFiles.Any())
-            //    {
-            //        await UploadFileToApiAsync();
-            //    }
-            //    else
-            //    {
-            //        await DisplayAlert("Notice", "No valid files selected.", "OK");
-            //    }
-            //}
         }
         catch (Exception ex)
         {
@@ -995,7 +978,7 @@ public partial class LogActivity : ContentPage
     private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = true)
     {
 
-        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid);        
+        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid);
         if (isSuccess)
         {
             if (scanningType == (int)ScanningType.NFC)
@@ -1085,7 +1068,11 @@ public partial class LogActivity : ContentPage
 
         try
         {
-            await LogActivityTask(log.Trim(), 0, "NA", false);            
+            if (App.IsOnline)
+                await LogActivityTask(log.Trim(), 0, "NA", false);
+            else
+                await LogActivityToCache(log.Trim(), 0, "NA", false);
+
         }
         catch (Exception ex)
         {
@@ -1169,7 +1156,7 @@ public partial class LogActivity : ContentPage
             await Toast.Make(message, ToastDuration.Long).Show();
         });
     }
-       
+
     private void CustomLogEntry_TextChanged(object sender, TextChangedEventArgs e)
     {
         //if (!string.IsNullOrWhiteSpace(CustomLogEntry.Text))
@@ -1178,6 +1165,8 @@ public partial class LogActivity : ContentPage
         //    _delayCancellationTokenSource?.Cancel();
         //}
     }
+
+
 
     private void ShowPopup()
     {
@@ -1319,9 +1308,6 @@ public partial class LogActivity : ContentPage
     }
 
 
-
-
-
     private async void OnDownloadFileClicked(object sender, EventArgs e)
     {
         if (sender is Button btn && btn.BindingContext is FileResult file)
@@ -1456,65 +1442,115 @@ public partial class LogActivity : ContentPage
             if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
             string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
-            using var client = new HttpClient();
-            var content = new MultipartFormDataContent();
-
-            // Add files + types (same index order)
-            foreach (var fileModel in SelectedFiles)
+            if (!App.IsOnline)
             {
-                var stream = await fileModel.File.OpenReadAsync();
-                var fileContent = new StreamContent(stream);
-                fileContent.Headers.ContentType =
-                    new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                var _fileGroupId = Guid.NewGuid();
+                foreach (var fileModel in SelectedFiles)
+                {
+                    // Save file to local storage with unique name
+                    var extension = Path.GetExtension(fileModel.File.FileName);
+                    var cacheFileName = $"{Guid.NewGuid():N}{extension}";
+                    var stream = await fileModel.File.OpenReadAsync();
+                    var path = await SaveFileOffline(stream, "ActivityLogbook", cacheFileName);                    
+                    // Update details in local db
+                    OfflineFilesRecords offlineFilesRecords = new OfflineFilesRecords()
+                    {
+                        RecordLabel = "LBACTIVITYNEW",
+                        FileNameActual = fileModel.File.FileName,
+                        FileNameCache = cacheFileName,
+                        FileNameWithPathCache = path,
+                        EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+                        EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+                        EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+                        EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+                        EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                        IsSynced = false,
+                        UniqueRecordId = Guid.NewGuid(),
+                        FileType = fileModel.FileType,
+                        IsNew = true,
+                        LogBookId = null,
+                        guardId = _guardId.Value,
+                        clientsiteId = _clientSiteId.Value,
+                        userId = _userId.Value,
+                        gps = gpsCoordinates ?? "",
+                        FileGroupId = _fileGroupId
+                    };
 
-                // Add file
-                content.Add(fileContent, "files", fileModel.File.FileName);
+                    var r = await _scanDataDbService.SaveLogActivityDocumentsCacheData(offlineFilesRecords);
+                }
 
-                // Add matching type (rear / twentyfive / etc.)
-                content.Add(new StringContent(fileModel.FileType), "types");
-            }
+                var _ChaceCount = _scanDataDbService.GetCacheRecordsCount();
+                UpdateCacheRecordCount(_ChaceCount);
 
-            // Add other form data
-            content.Add(new StringContent(_guardId.ToString()), "guardId");
-            content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
-            content.Add(new StringContent(_userId.ToString()), "userId");
-            content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
-
-            // Send request
-            var uploadResponse = await client.PostAsync(
-                $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
-                content
-            );
-
-            if (!uploadResponse.IsSuccessStatusCode)
-            {
-                await DisplayAlert("Error", "One or more files failed to upload.", "OK");
+                await DisplayAlert("Success", "All files saved to cache and will be uploaded when online.", "OK");
             }
             else
             {
-                SelectedFiles.Clear();
-                await DisplayAlert("Success", "All files uploaded successfully.", "OK");
+                using var client = new HttpClient();
+                var content = new MultipartFormDataContent();
 
-                // Small delay for smoother UI transition
-                await Task.Delay(300);
-
-                // Hide popup
-                PopupOverlay.IsVisible = false;
-
-                // Reset checkboxes to default values
-                chkRearFullPage.IsChecked = false;
-                chkWithinField.IsChecked = true;
-
-                // Clear the file list
-                if (FilesCollection.ItemsSource is ObservableCollection<MyFileModel> files)
+                // Add files + types (same index order)
+                foreach (var fileModel in SelectedFiles)
                 {
-                    files.Clear();
+                    var stream = await fileModel.File.OpenReadAsync();
+                    var fileContent = new StreamContent(stream);
+                    fileContent.Headers.ContentType =
+                        new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+                    // Add file
+                    content.Add(fileContent, "files", fileModel.File.FileName);
+
+                    // Add matching type (rear / twentyfive / etc.)
+                    content.Add(new StringContent(fileModel.FileType), "types");
                 }
 
-                // Hide the file list control
-                FilesCollection.IsVisible = false;
+                // Add other form data
+                content.Add(new StringContent(_guardId.ToString()), "guardId");
+                content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
+                content.Add(new StringContent(_userId.ToString()), "userId");
+                content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
 
+                // Send request
+                var uploadResponse = await client.PostAsync(
+                    $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
+                    content
+                );
+
+                if (!uploadResponse.IsSuccessStatusCode)
+                {
+                    await DisplayAlert("Error", "One or more files failed to upload.", "OK");
+                    // since error don't close popup
+                    return;
+                }
+                else
+                {
+                    await DisplayAlert("Success", "All files uploaded successfully.", "OK");
+                }
             }
+
+
+
+            SelectedFiles.Clear();
+
+            // Small delay for smoother UI transition
+            await Task.Delay(300);
+
+            // Hide popup
+            PopupOverlay.IsVisible = false;
+
+            // Reset checkboxes to default values
+            chkRearFullPage.IsChecked = false;
+            chkWithinField.IsChecked = true;
+
+            // Clear the file list
+            if (FilesCollection.ItemsSource is ObservableCollection<MyFileModel> files)
+            {
+                files.Clear();
+            }
+
+            // Hide the file list control
+            FilesCollection.IsVisible = false;
+
         }
         catch (Exception ex)
         {
@@ -1522,6 +1558,13 @@ public partial class LogActivity : ContentPage
         }
     }
 
+    private void UpdateCacheRecordCount(int _ChaceCount)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SyncState.SyncedCount = _ChaceCount;
+        });
+    }
     private async void OnEditSaveAndCloseClicked(object sender, EventArgs e)
     {
         try
@@ -1823,16 +1866,69 @@ public partial class LogActivity : ContentPage
         FilesCollectionEditImage.IsVisible = false;
     }
 
+    private async Task LogActivityToCache(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false)
+    {
+        // await ShowToastMessage($"Logging activity to Cache...");
+
+        string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+
+        if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        {
+            await DisplayAlert($"Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+            return;
+        }
+
+        if (!_guardId.HasValue || !_clientSiteId.HasValue || !_userId.HasValue || _guardId.Value <= 0 || _clientSiteId.Value <= 0 || _userId.Value <= 0)
+        {
+            await DisplayAlert($"Error", "User Id or Client Site Id or Guard Id is invalid.", "OK");
+            return;
+        }
+
+        PostActivityRequestLocalCache request = new PostActivityRequestLocalCache()
+        {
+            guardId = _guardId.Value,
+            clientsiteId = _clientSiteId.Value,
+            userId = _userId.Value,
+            activityString = activityDescription,
+            gps = gpsCoordinates,
+            systemEntry = IsSystemEntry,
+            scanningType = scanningType,
+            tagUID = _taguid,
+            EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+            EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+            EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+            EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+            EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+            IsNewGuard = false,
+            IsSynced = false,
+            UniqueRecordId = Guid.NewGuid()
+        };
+
+        var isSuccess = await _scanDataDbService.SaveLogActivityCacheData(request);
+        if (isSuccess)
+        {
+            //MainThread.BeginInvokeOnMainThread(() =>
+            //{
+            //    SyncState.SyncedCount = _ChaceCount;
+            //});
+            await ShowToastMessage($"Log entry added successfully to cache.");
+            HideCustomLogPopup();
+            var _ChaceCount = _scanDataDbService.GetCacheRecordsCount();
+            UpdateCacheRecordCount(_ChaceCount);
+        }
+        else
+        {
+            await DisplayAlert($"Error", "Failed to save log activity to cache.", "OK");
+        }
+    }
+
     private async Task LogScannedDataToCache(string _TagUid, ScanningType _scannerType)
-    {  
+    {
         await ShowToastMessage($"[{ALERT_TITLE}] Tag scanned. Logging activity to Cache...");
         var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
         if (isSuccess)
-        {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                SyncState.SyncedCount = _ChaceCount;
-            });
+        {            
+            UpdateCacheRecordCount(_ChaceCount);
             //await ShowToastMessage(msg);
             await ShowToastMessage($"[{ALERT_TITLE}] {msg}");
         }
@@ -1840,6 +1936,22 @@ public partial class LogActivity : ContentPage
         {
             await DisplayAlert($"{ALERT_TITLE} Error", msg ?? "Failed to save tag scan", "OK");
         }
+    }
+
+    public async Task<string> SaveFileOffline(Stream stream, string foldername, string fileName)
+    {
+        // Get the app data directory path
+        var appDataDir = Path.Combine(FileSystem.AppDataDirectory, foldername);
+        if(!Directory.Exists(appDataDir))
+            Directory.CreateDirectory(appDataDir);
+        // Create a unique file path
+        var filePath = Path.Combine(appDataDir,fileName);
+
+        // Save the stream to the file path        
+        using var destinationStream = File.Create(filePath);
+        await stream.CopyToAsync(destinationStream);
+
+        return filePath;
     }
 
     #region "NFC Methods"
@@ -1941,7 +2053,7 @@ public partial class LogActivity : ContentPage
                 return;
             }
 
-            
+
             var scannerSettings = await _scannerControlServices.FetchTagInfoDetailsAsync(_clientSiteId.ToString(), serialNumber, _guardId.ToString(), _userId.ToString(), ScanningType.NFC);
             if (scannerSettings != null)
             {
@@ -2036,13 +2148,6 @@ public class MyFileModel
     public bool IsNew { get; set; } = true;  // true → newly added via picker
 
     public int? LogBookId { get; set; }  // null for new files, set for existing files from DB
-}
-public class ActivityModel
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-
-    public string Label { get; set; }
 }
 
 public class GuardLogDto
