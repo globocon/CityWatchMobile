@@ -14,7 +14,7 @@ namespace C4iSytemsMobApp.Data.Entity
         public int userId { get; set; }
         public string activityString { get; set; }
         public string gps { get; set; }
-        public bool systemEntry { get; set; } = true;
+        public bool systemEntry { get; set; } = false;
         public int scanningType { get; set; } = 0;
         public string tagUID { get; set; } = "NA";
         public DateTime? EventDateTimeLocal { get; set; }
@@ -25,6 +25,8 @@ namespace C4iSytemsMobApp.Data.Entity
         public bool IsNewGuard { get; set; } = false;
         public bool IsSynced { get; set; } = false;
         public Guid UniqueRecordId { get; set; }
+        public string DeviceId { get; set; }
+        public string DeviceName { get; set; }
 
     }
 }

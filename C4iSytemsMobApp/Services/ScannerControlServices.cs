@@ -354,6 +354,8 @@ namespace C4iSytemsMobApp.Services
                 EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
                 EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                DeviceId = deviceid,
+                DeviceName = devicename
             };
 
             await _scanDataDbServices.SaveScanData(newrecord);

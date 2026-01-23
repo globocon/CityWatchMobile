@@ -63,6 +63,11 @@ public partial class LogActivity : ContentPage
 
     public bool NfcIsDisabled => !NfcIsEnabled;
     private GuardLogDto SelectedLogForPush { get; set; }
+
+    private IDeviceInfoService infoService;
+    private string devicename;
+    private string deviceid;
+
     public LogActivity()
     {
         InitializeComponent();
@@ -72,6 +77,9 @@ public partial class LogActivity : ContentPage
         _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
         _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
         _scanDataDbService = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
+        infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
+        devicename = infoService?.GetDeviceName();
+        deviceid = infoService?.GetDeviceId();
 
         LoadActivities();
         FilesCollection.ItemsSource = SelectedFiles;
@@ -975,7 +983,7 @@ public partial class LogActivity : ContentPage
     }
 
 
-    private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = true)
+    private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false)
     {
 
         var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid);
@@ -1473,7 +1481,9 @@ public partial class LogActivity : ContentPage
                         clientsiteId = _clientSiteId.Value,
                         userId = _userId.Value,
                         gps = gpsCoordinates ?? "",
-                        FileGroupId = _fileGroupId
+                        FileGroupId = _fileGroupId,
+                        DeviceId = deviceid,
+                        DeviceName = devicename
                     };
 
                     var r = await _scanDataDbService.SaveLogActivityDocumentsCacheData(offlineFilesRecords);
@@ -1901,7 +1911,9 @@ public partial class LogActivity : ContentPage
             EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
             IsNewGuard = false,
             IsSynced = false,
-            UniqueRecordId = Guid.NewGuid()
+            UniqueRecordId = Guid.NewGuid(),
+            DeviceId = deviceid,
+            DeviceName = devicename
         };
 
         var isSuccess = await _scanDataDbService.SaveLogActivityCacheData(request);

@@ -26,7 +26,7 @@ namespace C4iSytemsMobApp.Data.DbServices
 
     public class ScanDataDbServices : IScanDataDbServices
     {
-        private readonly Func<AppDbContext> _dbFactory;
+        private readonly Func<AppDbContext> _dbFactory;        
         public ScanDataDbServices(Func<AppDbContext> dbFactory)
         {
             _dbFactory = dbFactory;

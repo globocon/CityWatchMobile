@@ -27,6 +27,8 @@ namespace C4iSytemsMobApp.Data.Entity
         public int userId { get; set; }
         public string gps { get; set; }
         public Guid FileGroupId { get; set; }
+        public string DeviceId { get; set; }
+        public string DeviceName { get; set; }
 
     }
 }

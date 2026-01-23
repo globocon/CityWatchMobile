@@ -10,7 +10,7 @@ namespace C4iSytemsMobApp.Models
         public int userId { get; set; }
         public string activityString { get; set; }
         public string gps { get; set; }
-        public bool systemEntry { get; set; } = true;
+        public bool systemEntry { get; set; } = false;
         public int scanningType { get; set; } = 0;
         public string tagUID { get; set; } = "NA";
         public DateTime? EventDateTimeLocal { get; set; }
