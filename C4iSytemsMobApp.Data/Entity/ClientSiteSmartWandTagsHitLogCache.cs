@@ -29,6 +29,8 @@ namespace C4iSytemsMobApp.Data.Entity
         public string EventDateTimeZone { get; set; }
         public string EventDateTimeZoneShort { get; set; }
         public int? EventDateTimeUtcOffsetMinute { get; set; }
+        public string DeviceId { get; set; }
+        public string DeviceName { get; set; }
     }
 }
 
