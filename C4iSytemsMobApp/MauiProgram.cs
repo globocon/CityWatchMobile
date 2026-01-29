@@ -2,6 +2,7 @@
 using C4iSytemsMobApp.Data;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Interface;
+using C4iSytemsMobApp.MapperProfile;
 using C4iSytemsMobApp.Services;
 using CommunityToolkit.Maui;
 using Microsoft.EntityFrameworkCore;
@@ -49,11 +50,13 @@ public static class MauiProgram
         builder.Services.AddSingleton<INfcService, NfcService>();
         builder.Services.AddSingleton<IGuardApiServices, GuardApiServices>();
         builder.Services.AddSingleton<IAppUpdateService, AppUpdateService>();
-        
+        builder.Services.AddSingleton<ICustomLogEntryServices, CustomLogEntryServices>();
 
         builder.Services.AddSingleton<ConnectivityListener>();
         builder.Services.AddSingleton<ISyncApiService, SyncApiService>();
-        
+        // Register AutoMapper
+        builder.Services.AddAutoMapper(typeof(MappingProfile));
+
         // Register DbContext factory so each consumer gets a new context
         builder.Services.AddTransient<AppDbContext>();
         builder.Services.AddSingleton<IScanDataDbServices, ScanDataDbServices>(sp =>

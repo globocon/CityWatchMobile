@@ -1,3 +1,4 @@
+using AutoMapper;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Data.Entity;
 using C4iSytemsMobApp.Enums;
@@ -14,7 +15,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace C4iSytemsMobApp;
 
@@ -25,6 +25,8 @@ public partial class GuardLoginPage : ContentPage
     private readonly ICrowdControlServices _crowdControlServices;
     private readonly INfcService _nfcService;
     private readonly IScanDataDbServices _scanDataDbService;
+    private readonly ICustomLogEntryServices _customLogEntryServices;
+    private readonly IMapper _mapper;
     private bool _isNewGuard = false;
     private bool _isPopupOpen = false;
 
@@ -161,6 +163,8 @@ public partial class GuardLoginPage : ContentPage
         _scannerControlServices = scannerControlServices;
         _nfcService = IPlatformApplication.Current.Services.GetService<INfcService>();
         _scanDataDbService = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
+        _mapper = IPlatformApplication.Current.Services.GetService<IMapper>();
+        _customLogEntryServices = IPlatformApplication.Current.Services.GetService<ICustomLogEntryServices>();
 
         BindingContext = this;
         LoadLoggedInUser();
@@ -802,7 +806,7 @@ public partial class GuardLoginPage : ContentPage
                     try
                     {
 
-                        //await _scanDataDbService.ClearPrePopulatedActivitesButtonList();
+                        await _scanDataDbService.ClearPrePopulatedActivitesButtonList();
                         // Deserialize activity list
                         var activityElement = responseJson.GetProperty("activity");
                         List<ActivityModel> activity = JsonSerializer.Deserialize<List<ActivityModel>>(
@@ -813,6 +817,47 @@ public partial class GuardLoginPage : ContentPage
                         {
                             // Save to local DB
                             await _scanDataDbService.RefreshPrePopulatedActivitesButtonList(activity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearPatrolCarCacheList();
+                        // Deserialize pcarlogs list
+                        var patrolCarLogElement = responseJson.GetProperty("patrolCarLog");
+                        List<PatrolCarLog> pcarlogs = JsonSerializer.Deserialize<List<PatrolCarLog>>(
+                            patrolCarLogElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (pcarlogs != null && pcarlogs.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<PatrolCarLogCache>>(pcarlogs);
+                            // Save to local DB
+                            await _scanDataDbService.RefreshPatrolCarCacheList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+
+                        await _scanDataDbService.ClearCustomFieldLogCacheList();
+                        // Deserialize CustomField list
+                        var customFieldLogElement = responseJson.GetProperty("customFieldLog");
+                        List<Dictionary<string, string?>> customFieldLogs = JsonSerializer.Deserialize<List<Dictionary<string, string?>>>(
+                            customFieldLogElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (customFieldLogs != null && customFieldLogs.Count > 0)
+                        {
+                            await _customLogEntryServices.ProcessCustomFieldLogsOnlineDataToCache(customFieldLogs);
                         }
                     }
                     catch (Exception)

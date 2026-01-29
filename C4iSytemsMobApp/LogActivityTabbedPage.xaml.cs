@@ -1,3 +1,4 @@
+using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Interface;
 
 namespace C4iSytemsMobApp;
@@ -5,6 +6,7 @@ namespace C4iSytemsMobApp;
 public partial class LogActivityTabbedPage
 {
     private readonly ILogBookServices _logBookServices;
+    private readonly IScanDataDbServices _scanDataDbService;
     bool showCustomLogs = false;
     bool showPatrolCarLogs = false;
     //bool showBLEiBeaconTab = false;
@@ -12,7 +14,7 @@ public partial class LogActivityTabbedPage
     {
         InitializeComponent();
         _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
-
+        _scanDataDbService = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
     }
 
     protected override async void OnAppearing()
@@ -47,8 +49,16 @@ public partial class LogActivityTabbedPage
 
         try
         {
-            var CustomLogRrows = await _logBookServices.GetCustomFieldLogsAsync();
-            showCustomLogs = (CustomLogRrows != null && CustomLogRrows.Count > 0);
+            if (App.IsOnline)
+            {
+                var CustomLogRows = await _logBookServices.GetCustomFieldLogsAsync();
+                showCustomLogs = (CustomLogRows != null && CustomLogRows.Count > 0);
+            }
+            else
+            {
+                var CustomLogRowsCache = await _scanDataDbService.GetCustomFieldLogCacheList();
+                showCustomLogs = (CustomLogRowsCache != null && CustomLogRowsCache.Count > 0);
+            }
         }
         catch (Exception)
         {
@@ -57,8 +67,17 @@ public partial class LogActivityTabbedPage
 
         try
         {
-            var PatrolCarRows = await _logBookServices.GetPatrolCarLogsAsync();
-            showPatrolCarLogs = (PatrolCarRows != null && PatrolCarRows.Count > 0);
+            if (App.IsOnline)
+            {
+                var PatrolCarRows = await _logBookServices.GetPatrolCarLogsAsync();
+                showPatrolCarLogs = (PatrolCarRows != null && PatrolCarRows.Count > 0);
+            }
+            else
+            {
+                var PatrolCarRowsCache = await _scanDataDbService.GetPatrolCarCacheList();
+                showPatrolCarLogs = (PatrolCarRowsCache != null && PatrolCarRowsCache.Count > 0);
+            }
+            
         }
         catch (Exception)
         {

@@ -1,4 +1,5 @@
 ﻿using C4iSytemsMobApp.Data.Entity;
+using C4iSytemsMobApp.Models;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -12,6 +13,8 @@ namespace C4iSytemsMobApp.Services
         public Task<List<ClientSiteSmartWandTagsHitLogCache>> PushSmartWandTagsHitLogCacheAsync(List<ClientSiteSmartWandTagsHitLogCache> records);
         public Task<List<PostActivityRequestLocalCache>> PushActivityLogCacheAsync(List<PostActivityRequestLocalCache> records);
         public Task<List<OfflineFilesRecords>> PushActivityLogDocumentsCacheAsync(List<OfflineFilesRecords> records);
+        public Task<List<PatrolCarLogRequestCache>> PushPatrolCarCacheAsync(List<PatrolCarLogRequestCache> records);
+        public Task<List<CustomFieldLogRequestHeadCache>> PushCustomFieldLogCacheAsync(List<CustomFieldLogRequestHeadDto> records);
 
     }
     public class SyncApiService : ISyncApiService
@@ -138,6 +141,70 @@ namespace C4iSytemsMobApp.Services
                         throw new Exception("Error in syncing activity documents log records");
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        public async Task<List<PatrolCarLogRequestCache>> PushPatrolCarCacheAsync(List<PatrolCarLogRequestCache> records)
+        {
+
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                return null;
+
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SyncOfflinePatrolCarLogData";
+
+            try
+            {
+                using (HttpClient _http = new HttpClient())
+                {
+                    await Task.Delay(3000);
+                    HttpResponseMessage response = await _http.PostAsJsonAsync(apiUrl, records);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var settings = await response.Content.ReadFromJsonAsync<List<PatrolCarLogRequestCache>>();
+                        return settings;
+                    }
+                    else
+                    {
+                        throw new Exception("Error in syncing Patrol Car log records");
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        public async Task<List<CustomFieldLogRequestHeadCache>> PushCustomFieldLogCacheAsync(List<CustomFieldLogRequestHeadDto> records)
+        {
+
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                return null;
+
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SyncOfflineCustomFieldLogData";
+
+            try
+            {
+                using (HttpClient _http = new HttpClient())
+                {
+                    await Task.Delay(3000);
+                    HttpResponseMessage response = await _http.PostAsJsonAsync(apiUrl, records);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var settings = await response.Content.ReadFromJsonAsync<List<CustomFieldLogRequestHeadCache>>();
+                        return settings;
+                    }
+                    else
+                    {
+                        throw new Exception("Error in syncing Custom Field log records");
+                    }
+                }
+
             }
             catch (Exception ex)
             {
