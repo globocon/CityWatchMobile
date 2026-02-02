@@ -47,6 +47,7 @@ namespace C4iSytemsMobApp.Services
                 return (false, "GPS coordinates not available. Please ensure location services are enabled");
             }
 
+            GetSecureStorageValues();
 
             if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return (false, msg);
 
