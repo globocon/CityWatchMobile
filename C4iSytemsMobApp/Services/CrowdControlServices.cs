@@ -1,10 +1,5 @@
 ﻿using C4iSytemsMobApp.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http.Json;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace C4iSytemsMobApp.Services
 {
@@ -28,13 +23,20 @@ namespace C4iSytemsMobApp.Services
             // Here you would typically make an HTTP request to the API endpoint
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
-            HttpResponseMessage response = await client.GetAsync(apiUrl);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var settings = await response.Content.ReadFromJsonAsync<ClientSiteMobileAppSettings>();
-                return settings;
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var settings = await response.Content.ReadFromJsonAsync<ClientSiteMobileAppSettings>();
+                    return settings;
+                }
             }
-
+            catch (Exception)
+            {
+                //throw;
+                return null; // Example return value
+            }
             return null; // Example return value
         }
     }

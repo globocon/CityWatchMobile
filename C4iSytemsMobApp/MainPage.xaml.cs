@@ -156,9 +156,9 @@ namespace C4iSytemsMobApp
             catch (Exception ex)
             {
 
-               Console.WriteLine($"Error initializing scanner: {ex.Message}");
+                Console.WriteLine($"Error initializing scanner: {ex.Message}");
             }
-            
+
             App.ConnectivityChangedEvent += OnConnectivityChanged;
             OnConnectivityChanged(App.IsOnline);
             _syncService = IPlatformApplication.Current.Services.GetService<SyncService>();
@@ -207,6 +207,17 @@ namespace C4iSytemsMobApp
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineText)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OnlineColor)));
             });
+
+            if (App.IsOnline)
+            {
+                if (_hubConnection != null && _hubConnection.State == HubConnectionState.Disconnected)
+                {
+                    Task.Run(async () =>
+                    {
+                        await StartHubConnectionAsync();
+                    });
+                }
+            }
         }
         private void UpdateCacheLabel(int ccheCount)
         {
@@ -250,7 +261,7 @@ namespace C4iSytemsMobApp
         protected override async void OnAppearing()
         {
             MainLayout.IsVisible = false;
-            
+
             base.OnAppearing();
 
             if (_shouldOpenDrawerOnReturn)
@@ -361,22 +372,28 @@ namespace C4iSytemsMobApp
                             Command = new Command(async () =>
                             {
                                 //await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");
-
-                                PopupOverlay.IsVisible = true;
-                                var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
-                                if (clientSiteId == null) return;
-                                // Call API to get tag fields
-                                // Call API to get tag fields for this client site
-                                var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
-                                if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
-
-                                // Clear the existing collection
-                                TagFields.Clear();
-
-                                // Add fetched fields to the ObservableCollection
-                                foreach (var field in fieldsFromApi)
+                                if (App.IsOnline)
                                 {
-                                    TagFields.Add(field);
+                                    PopupOverlay.IsVisible = true;
+                                    var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+                                    if (clientSiteId == null) return;
+                                    // Call API to get tag fields
+                                    // Call API to get tag fields for this client site
+                                    var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
+                                    if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
+
+                                    // Clear the existing collection
+                                    TagFields.Clear();
+
+                                    // Add fetched fields to the ObservableCollection
+                                    foreach (var field in fieldsFromApi)
+                                    {
+                                        TagFields.Add(field);
+                                    }
+                                }
+                                else
+                                {
+                                    await DisplayAlert("Offline", "Please check your internet connection.", "OK");
                                 }
                             })
                         });
@@ -526,29 +543,32 @@ namespace C4iSytemsMobApp
 
         private async void OnManualPositionClicked(object sender, EventArgs e)
         {
-            //_tagStatusCts?.Cancel();
-            //_tagStatusCts?.Dispose();
-            //_tagStatusCts = null;
             Application.Current.MainPage = new NavigationPage(new WebIncidentReport());
         }
 
 
         private async void OnAudioClicked(object sender, EventArgs e)
         {
-            //_tagStatusCts?.Cancel();
-            //_tagStatusCts?.Dispose();
-            //_tagStatusCts = null;
-            Application.Current.MainPage = new NavigationPage(new Audio());
-
+            if (App.IsOnline)
+            {
+                Application.Current.MainPage = new NavigationPage(new Audio());
+            }
+            else
+            {
+                await DisplayAlert("Offline", "Please check your internet connection.", "OK");
+            }
         }
 
         private async void OnMultimediaClicked(object sender, EventArgs e)
         {
-            //_tagStatusCts?.Cancel();
-            //_tagStatusCts?.Dispose();
-            //_tagStatusCts = null;
-            Application.Current.MainPage = new NavigationPage(new MultiMedia());
-
+            if (App.IsOnline)
+            {
+                Application.Current.MainPage = new NavigationPage(new MultiMedia());
+            }
+            else
+            {
+                await DisplayAlert("Offline", "Please check your internet connection.", "OK");
+            }
         }
 
         private CancellationTokenSource _countdownCts;
@@ -583,7 +603,7 @@ namespace C4iSytemsMobApp
             }
             catch (Exception ex)
             {
-                 System.Diagnostics.Debug.WriteLine($"Duress error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Duress error: {ex.Message}");
             }
             finally
             {
@@ -618,8 +638,8 @@ namespace C4iSytemsMobApp
 
             if (string.IsNullOrWhiteSpace(gpsCoordinates))
             {
-                 // Proceed even if GPS is missing? Or fail? The existing code failed.
-                 // "GPS coordinates not available. Please ensure location services are enabled."
+                // Proceed even if GPS is missing? Or fail? The existing code failed.
+                // "GPS coordinates not available. Please ensure location services are enabled."
                 await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
                 return;
             }
@@ -817,12 +837,14 @@ namespace C4iSytemsMobApp
 
         private void OnIncrementClicked(object sender, EventArgs e)
         {
-            ClientSiteMobileCrowdControlData CountData = new ClientSiteMobileCrowdControlData()
+            if (App.IsOnline)
             {
-                ClientSiteId = (int)_clientSiteId,
-                AddCount = true,
-                Count = selectedIncrement,
-                ClientSiteCrowdControlGuards = new List<ClientSiteMobileCrowdControlGuards>()
+                ClientSiteMobileCrowdControlData CountData = new ClientSiteMobileCrowdControlData()
+                {
+                    ClientSiteId = (int)_clientSiteId,
+                    AddCount = true,
+                    Count = selectedIncrement,
+                    ClientSiteCrowdControlGuards = new List<ClientSiteMobileCrowdControlGuards>()
                 {
                     new ClientSiteMobileCrowdControlGuards()
                     {
@@ -833,18 +855,25 @@ namespace C4iSytemsMobApp
                                     Pcount = selectedIncrement
                     }
                 }
-            };
-            _hubConnection.InvokeAsync("UpdateCCCToMobileSiteGroup", CountData);
+                };
+                _hubConnection.InvokeAsync("UpdateCCCToMobileSiteGroup", CountData);
+            }
+            else
+            {
+                DisplayAlert("Offline", "Please check your internet connection.", "OK");
+            }
         }
 
         private void OnDecrementClicked(object sender, EventArgs e)
         {
-            ClientSiteMobileCrowdControlData CountData = new ClientSiteMobileCrowdControlData()
+            if (App.IsOnline)
             {
-                ClientSiteId = (int)_clientSiteId,
-                AddCount = false,
-                Count = selectedDecrement,
-                ClientSiteCrowdControlGuards = new List<ClientSiteMobileCrowdControlGuards>()
+                ClientSiteMobileCrowdControlData CountData = new ClientSiteMobileCrowdControlData()
+                {
+                    ClientSiteId = (int)_clientSiteId,
+                    AddCount = false,
+                    Count = selectedDecrement,
+                    ClientSiteCrowdControlGuards = new List<ClientSiteMobileCrowdControlGuards>()
                 {
                     new ClientSiteMobileCrowdControlGuards()
                     {
@@ -855,8 +884,13 @@ namespace C4iSytemsMobApp
                                     Pcount = selectedDecrement
                     }
                 }
-            };
-            _hubConnection.InvokeAsync("UpdateCCCToMobileSiteGroup", CountData);
+                };
+                _hubConnection.InvokeAsync("UpdateCCCToMobileSiteGroup", CountData);
+            }
+            else
+            {
+                DisplayAlert("Offline", "Please check your internet connection.", "OK");
+            }
         }
 
         private async Task InitializePatronsCounterDisplay()
@@ -970,33 +1004,45 @@ namespace C4iSytemsMobApp
         }
         private void RefreshCounterDisplay()
         {
-            if (_CcounterShown && _IsCrowdControlCounterEnabled)
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
-            }
-            else if (_TcounterShown && _IsCrowdControlCounterEnabled)
-            {
-                total_current_patronsLabel.Text = $"T{_totalpatrons.ToString("000000")}";
-            }
-            CounterLabel.Text = _pcounter.ToString("0000");
+                if (_CcounterShown && _IsCrowdControlCounterEnabled)
+                {
+                    total_current_patronsLabel.Text = $"C{_CurrentCounter.ToString("000000")}";
+                }
+                else if (_TcounterShown && _IsCrowdControlCounterEnabled)
+                {
+                    total_current_patronsLabel.Text = $"T{_totalpatrons.ToString("000000")}";
+                }
+
+                CounterLabel.Text = _pcounter.ToString("0000");
+            });
+
         }
         private async void OnCounterSettingsClicked(object sender, EventArgs e)
         {
-            CrowdControlLocationPicker.IsEnabled = _crowdControllocationList.Count > 1;
-            string _CrowdControlSelectedLocation = Preferences.Get("CrowdControlSelectedLocation", "");
-            int selectedIndex = 0;
-            // Find the index in the list where the Name matches
-            if (!string.IsNullOrEmpty(_CrowdControlSelectedLocation))
+            if (App.IsOnline)
             {
-                selectedIndex = _crowdControllocationList.FindIndex(loc => loc.Name == _CrowdControlSelectedLocation);
+                CrowdControlLocationPicker.IsEnabled = _crowdControllocationList.Count > 1;
+                string _CrowdControlSelectedLocation = Preferences.Get("CrowdControlSelectedLocation", "");
+                int selectedIndex = 0;
+                // Find the index in the list where the Name matches
+                if (!string.IsNullOrEmpty(_CrowdControlSelectedLocation))
+                {
+                    selectedIndex = _crowdControllocationList.FindIndex(loc => loc.Name == _CrowdControlSelectedLocation);
+                }
+                // Set picker index (fallback to 0 if not found)
+                CrowdControlLocationPicker.SelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
+
+                IncrementValuePicker.SelectedItem = selectedIncrement;
+                DecrementValuePicker.SelectedItem = selectedDecrement;
+
+                CrowdControlSettingsPopup.IsVisible = true;
             }
-            // Set picker index (fallback to 0 if not found)
-            CrowdControlLocationPicker.SelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
-
-            IncrementValuePicker.SelectedItem = selectedIncrement;
-            DecrementValuePicker.SelectedItem = selectedDecrement;
-
-            CrowdControlSettingsPopup.IsVisible = true;
+            else
+            {
+                await DisplayAlert("Offline", "Please check your internet connection.", "OK");
+            }
         }
         private async void OnCounterSettingsCloseClicked(object sender, EventArgs e)
         {
@@ -1095,7 +1141,11 @@ namespace C4iSytemsMobApp
         {
             App.IsVolumeControlEnabledForCounter = !_IsVolumeControlButtonEnabled;
             _IsVolumeControlButtonEnabled = !_IsVolumeControlButtonEnabled;
-            VolumeButtonControl.Text = $"Volume Button Control = {(_IsVolumeControlButtonEnabled ? "ON" : "OFF")}";
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                VolumeButtonControl.Text = $"Volume Button Control = {(_IsVolumeControlButtonEnabled ? "ON" : "OFF")}";
+            });
+
         }
 
         private async void OnShowAllSiteCountersButtonControl(object sender, EventArgs e)
@@ -1407,7 +1457,7 @@ namespace C4iSytemsMobApp
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     SyncState.SyncedCount = _ChaceCount;
-                });                
+                });
                 await ShowToastMessage($"{msg}");
             }
             else
@@ -1795,7 +1845,7 @@ namespace C4iSytemsMobApp
 
 
         private async Task LogBLEScannedDataToCache(string _TagUid, string _deviceName, ScanningType _scannerType)
-        {            
+        {
             await ShowToastMessage($"[{BLE_ALERT_TITLE}] Device Found:{_deviceName}. Logging activity to Cache.");
             var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
             if (isSuccess)
@@ -1823,14 +1873,14 @@ namespace C4iSytemsMobApp
             {
                 if (scanningType == (int)ScanningType.NFC)
                 {
-                    var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'",""))} ..." : activityDescription.Replace("\"", "").Replace("'","");
+                    var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
                     await ShowToastMessage($"[{ALERT_TITLE}] {SnackbarMessage.Replace("[NFC]", "")} log entry added.");
-                }                    
+                }
                 else if (scanningType == (int)ScanningType.BLUETOOTH)
                 {
-                    var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'",""))} ..." : activityDescription.Replace("\"", "").Replace("'","");
+                    var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
                     await ShowToastMessage($"[{BLE_ALERT_TITLE}] {SnackbarMessage.Replace("[BLE]", "")} log entry added.");
-                }                    
+                }
                 else
                     await ShowToastMessage(msg);
             }
@@ -1857,7 +1907,7 @@ namespace C4iSytemsMobApp
                 Toast.Make(message, ToastDuration.Long).Show();
             });
         }
-                
+
         private Task ShowAlert(string alertHead, string message)
         {
             return MainThread.InvokeOnMainThreadAsync(() =>
@@ -2044,10 +2094,11 @@ namespace C4iSytemsMobApp
                     _CurrentCounter = csmcc.Ccount;
                     _totalpatrons = csmcc.Tcount;
                     _pcounter = csmcc.ClientSiteCrowdControlGuards?.FirstOrDefault(x => x.GuardId == (int)_guardId && x.UserId == (int)_userId)?.Pcount ?? 0;
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        RefreshCounterDisplay();
-                    });
+                    //MainThread.BeginInvokeOnMainThread(() =>
+                    //{
+                    //    RefreshCounterDisplay();
+                    //});
+                    RefreshCounterDisplay();
                 });
 
                 _hubConnection.On<ClientSiteMobileCrowdControl>("ResetSiteCrowdControlCount", (csmcc) =>
@@ -2055,9 +2106,10 @@ namespace C4iSytemsMobApp
                     _CurrentCounter = csmcc.Ccount;
                     _totalpatrons = csmcc.Tcount;
                     _pcounter = csmcc.ClientSiteCrowdControlGuards?.FirstOrDefault(x => x.GuardId == (int)_guardId && x.UserId == (int)_userId)?.Pcount ?? 0;
+                    RefreshCounterDisplay();
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
-                        RefreshCounterDisplay();
+                        //RefreshCounterDisplay();
                         DisplayAlert("Success", "Site counter has been reset.", "Ok");
                     });
                 });
@@ -2067,9 +2119,10 @@ namespace C4iSytemsMobApp
                     _CurrentCounter = csmcc.Ccount;
                     _totalpatrons = csmcc.Tcount;
                     _pcounter = csmcc.ClientSiteCrowdControlGuards?.FirstOrDefault(x => x.GuardId == (int)_guardId && x.UserId == (int)_userId)?.Pcount ?? 0;
+                    RefreshCounterDisplay();
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
-                        RefreshCounterDisplay();
+                        //RefreshCounterDisplay();
                         if (_guardCounterReset)
                         {
                             _guardCounterReset = false;
@@ -2121,48 +2174,59 @@ namespace C4iSytemsMobApp
             {
                 _hubConnection.On("RefreshTagScanStatus", () =>
                 {
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        LoadTagStatusAsync(_clientSiteId);
-                    });
+                    LoadTagStatusAsync(_clientSiteId);
+                    //MainThread.BeginInvokeOnMainThread(() =>
+                    //{
+                    //    LoadTagStatusAsync(_clientSiteId);
+                    //});
                 });
 
             }
 
             if (ishubConnectionRequired)
             {
-                await _hubConnection.StartAsync();
-
-                if (_hubConnection.State == HubConnectionState.Connected)
+                if (App.IsOnline)
                 {
-                    MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
-                    {
-                        ClientSiteId = (int)_clientSiteId,
-                        GuardId = (int)_guardId,
-                        BadgeNo = _badgeNo,
-                        UserId = (int)_userId
-                    };
-                    var z = await _hubConnection.InvokeAsync<string>("JoinGroup", JoinGaurd);
-                    Console.WriteLine(z);
+                    await StartHubConnectionAsync();
+                }
+            }
+        }
 
-                    if (!string.IsNullOrEmpty(z))
-                    {
-                        if (_IsCrowdControlCounterEnabled)
-                        {
-                            var r = await _hubConnection.InvokeAsync<ClientSiteMobileCrowdControl>("GetCurrentCrowdControlData", JoinGaurd);
-                            _CurrentCounter = r.Ccount;
-                            _totalpatrons = r.Tcount;
-                            _pcounter = r.ClientSiteCrowdControlGuards?.FirstOrDefault()?.Pcount ?? 0;
-                            RefreshCounterDisplay();
-                        }
+        private async Task StartHubConnectionAsync()
+        {
+            await _hubConnection.StartAsync();
 
-                        if (_isNfcEnabledForSite)
+            if (_hubConnection.State == HubConnectionState.Connected)
+            {
+                MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
+                {
+                    ClientSiteId = (int)_clientSiteId,
+                    GuardId = (int)_guardId,
+                    BadgeNo = _badgeNo,
+                    UserId = (int)_userId
+                };
+                var z = await _hubConnection.InvokeAsync<string>("JoinGroup", JoinGaurd);
+                //Console.WriteLine(z);
+
+                if (!string.IsNullOrEmpty(z))
+                {
+                    if (_IsCrowdControlCounterEnabled)
+                    {
+                        var r = await _hubConnection.InvokeAsync<ClientSiteMobileCrowdControl>("GetCurrentCrowdControlData", JoinGaurd);
+                        _CurrentCounter = r.Ccount;
+                        _totalpatrons = r.Tcount;
+                        _pcounter = r.ClientSiteCrowdControlGuards?.FirstOrDefault()?.Pcount ?? 0;
+                        RefreshCounterDisplay();
+                    }
+
+                    if (_isNfcEnabledForSite)
+                    {
+                        Task.Run(async () =>
                         {
-                            LoadTagStatusAsync(_clientSiteId);
-                        }
+                            await LoadTagStatusAsync(_clientSiteId);
+                        });
                     }
                 }
-
             }
         }
 
