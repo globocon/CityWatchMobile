@@ -543,7 +543,14 @@ namespace C4iSytemsMobApp
 
         private async void OnManualPositionClicked(object sender, EventArgs e)
         {
-            Application.Current.MainPage = new NavigationPage(new WebIncidentReport());
+            if (App.IsOnline)
+            {
+                Application.Current.MainPage = new NavigationPage(new WebIncidentReport());
+            }
+            else
+            {
+                await DisplayAlert("Offline", "Please check your internet connection.", "OK");
+            }            
         }
 
 
