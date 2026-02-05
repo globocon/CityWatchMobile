@@ -17,6 +17,7 @@ namespace C4iSytemsMobApp.Data
         public DbSet<CustomFieldLogRequestDetailCache> CustomFieldLogRequestDetailCache { get; set; }
         public DbSet<CustomFieldLogHeadCache> CustomFieldLogHeadCache { get; set; }
         public DbSet<CustomFieldLogDetailCache> CustomFieldLogDetailCache { get; set; }
+        public DbSet<RCLinkedDuressClientSitesCache> RCLinkedDuressClientSitesCache { get; set; }
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {

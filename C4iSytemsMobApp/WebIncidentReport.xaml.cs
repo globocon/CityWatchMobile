@@ -871,16 +871,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(descriptionEditor?.Text))
-            {
-                await DisplayAlert("Validation Error", "You cannot submit an IR without any Text or Information on the notes section.", "OK");
-                return;
-            }
-
-
-
-
-
+            
 
             var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ProcessIrSubmit?gps={gpsCoordinates}&UserId={userId}&IRguardId={guardId}&IRclientSiteId={clientSiteId}";
 

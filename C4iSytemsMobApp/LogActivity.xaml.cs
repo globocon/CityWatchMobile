@@ -983,10 +983,10 @@ public partial class LogActivity : ContentPage
     }
 
 
-    private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false)
+    private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1)
     {
 
-        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry);
+        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId);
         if (isSuccess)
         {
             if (scanningType == (int)ScanningType.NFC)
@@ -2078,7 +2078,8 @@ public partial class LogActivity : ContentPage
                     int _scannerType = (int)ScanningType.NFC;
                     var _taguid = serialNumber;
                     if (!scannerSettings.tagFound) { _taguid = "NA"; }
-                    LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true);
+                    int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
+                    LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId);
                 }
                 else
                 {

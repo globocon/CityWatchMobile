@@ -7,5 +7,6 @@ namespace C4iSytemsMobApp.Models
         public bool tagFound { get; set; }
         public string message { get; set; }
         public string tagInfoLabel { get; set; }
+        public int ScannedFromLinkedSite { get; set; }
     }
 }
