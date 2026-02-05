@@ -1579,8 +1579,8 @@ namespace C4iSytemsMobApp
                         int _scannerType = (int)ScanningType.NFC;
                         var _taguid = serialNumber;
                         if (!scannerSettings.tagFound) { _taguid = "NA"; }
-
-                        await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true);
+                        int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;                    
+                        await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId);
                     }
                     else
                     {
@@ -1821,7 +1821,8 @@ namespace C4iSytemsMobApp
                         var _taguid = serialNumber;
                         if (scannerSettings.tagFound)
                         {
-                            LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true);
+                            int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
+                            LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId);
                         }
 
                     }
@@ -1866,9 +1867,9 @@ namespace C4iSytemsMobApp
 
         #endregion "BLE Methods"
 
-        private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false)
+        private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1)
         {
-            var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry);
+            var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId);
             if (isSuccess)
             {
                 if (scanningType == (int)ScanningType.NFC)

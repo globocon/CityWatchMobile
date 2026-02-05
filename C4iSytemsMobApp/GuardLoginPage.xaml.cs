@@ -865,6 +865,27 @@ public partial class GuardLoginPage : ContentPage
 
                     }
 
+                    try
+                    {
+                        await _scanDataDbService.ClearRCLinkedDuressClientSitesList();
+                        // Deserialize RC Linked Duress ClientSites list
+                        var rcLinkedDuressClientSitesElement = responseJson.GetProperty("rcLinkedClientSites");
+                        List<RCLinkedDuressClientSitesCache> rcLinkedDuressClientSites = JsonSerializer.Deserialize<List<RCLinkedDuressClientSitesCache>>(
+                            rcLinkedDuressClientSitesElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (rcLinkedDuressClientSites != null && rcLinkedDuressClientSites.Count > 0)
+                        {
+                            //var cacheEntity = _mapper.Map<List<RCLinkedDuressClientSitesCache>>(rcLinkedDuressClientSitesElement);
+                            // Save to local DB
+                            await _scanDataDbService.RefreshRCLinkedDuressClientSitesList(rcLinkedDuressClientSites);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
 
                     if (pickerClientSite.SelectedItem is DropdownItem selectedClientSite)
                     {

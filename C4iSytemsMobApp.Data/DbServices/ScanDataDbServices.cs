@@ -36,6 +36,10 @@ namespace C4iSytemsMobApp.Data.DbServices
         public Task<CustomFieldLogHeadCache> GetCustomFieldLogCacheListByKeyValue(string key, string keyvalue);
         public Task<bool> UpdateCustomFieldLogCacheList(CustomFieldLogHeadCache editedrecord);
         public Task<bool> SaveCustomFieldLogRequestCacheData(CustomFieldLogRequestHeadCache record);
+
+        public Task ClearRCLinkedDuressClientSitesList();
+        public Task RefreshRCLinkedDuressClientSitesList(List<RCLinkedDuressClientSitesCache> rcLinkedDuressClientSites);
+        public Task<List<RCLinkedDuressClientSitesCache>> GetRCLinkedDuressClientSitesListBySiteId(int siteId);
     }
 
     public class ScanDataDbServices : IScanDataDbServices
@@ -327,6 +331,40 @@ namespace C4iSytemsMobApp.Data.DbServices
 
             return r;
         }
+
+        public async Task ClearRCLinkedDuressClientSitesList() {
+            using var _db = _dbFactory();
+            var r = await _db.RCLinkedDuressClientSitesCache.ToListAsync();
+            if (r != null && r.Any())
+                _db.RCLinkedDuressClientSitesCache.RemoveRange(r);
+            await _db.SaveChangesAsync();
+        }
+        public async Task RefreshRCLinkedDuressClientSitesList(List<RCLinkedDuressClientSitesCache> rcLinkedDuressClientSites)
+        {
+            using var _db = _dbFactory();
+            var r = await _db.RCLinkedDuressClientSitesCache.ToListAsync();
+            if (r != null && r.Any())
+                _db.RCLinkedDuressClientSitesCache.RemoveRange(r);
+            await _db.AddRangeAsync(rcLinkedDuressClientSites);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<List<RCLinkedDuressClientSitesCache>> GetRCLinkedDuressClientSitesListBySiteId(int siteId)
+        {
+            using var _db = _dbFactory();
+
+            var result = await _db.RCLinkedDuressClientSitesCache
+                .AsNoTracking()
+                .Where(x =>
+                    _db.RCLinkedDuressClientSitesCache
+                        .Where(s => s.ClientSiteId == siteId)
+                        .Select(s => s.RCLinkedId)
+                        .Contains(x.RCLinkedId))
+                .ToListAsync();
+
+            return result;
+        }
+
 
     }
 }

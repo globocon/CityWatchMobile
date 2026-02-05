@@ -38,7 +38,8 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
-        public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, int scanningType = 0, string tagUID = "NA", bool IsSystemEntry = false)
+        public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, 
+            int scanningType = 0, string tagUID = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1)
         {
             string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
@@ -51,10 +52,16 @@ namespace C4iSytemsMobApp.Services
 
             if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return (false, msg);
 
+            var postClientSiteId = clientSiteId;
+            if(NFCScannedFromSiteId > 0)
+            {
+                postClientSiteId = NFCScannedFromSiteId;
+            }
+
             PostActivityRequest request = new PostActivityRequest()
             {
                 guardId = guardId,
-                clientsiteId = clientSiteId,
+                clientsiteId = postClientSiteId,
                 userId = userId,
                 activityString = activityDescription,
                 gps = gpsCoordinates,
