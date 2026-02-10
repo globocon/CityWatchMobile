@@ -343,27 +343,30 @@ namespace C4iSytemsMobApp
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
                         var formatted = new FormattedString();
+                        var isPcar = string.Equals(first.Tour, "PCAR", StringComparison.OrdinalIgnoreCase);
+                        var counterLabelColor = isPcar ? Colors.Transparent : Colors.Gray;
+                        var counterValueColor = isPcar ? Colors.Transparent : Colors.Black;
 
                         // Tags
-                        formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = Colors.Gray });
-                        formatted.Spans.Add(new Span { Text = first.TotalTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                        formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.TotalTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
                         // Hit
-                        formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = Colors.Gray });
-                        formatted.Spans.Add(new Span { Text = first.ScannedTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                        formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.ScannedTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
                         // Fq
-                        formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = Colors.Gray });
-                        formatted.Spans.Add(new Span { Text = first.CompletedRounds.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                        formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.CompletedRounds.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
                         // Missed (clickable)
-                        formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = Colors.Gray });
+                        formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = counterLabelColor });
                         var missedSpan = new Span
                         {
                             Text = first.RemainingTags.ToString(),
                             FontAttributes = FontAttributes.Bold,
                             FontSize = 12,
-                            TextColor = Colors.Black
+                            TextColor = counterValueColor
                         };
 
                         // Add tap gesture directly to the Span
@@ -371,6 +374,9 @@ namespace C4iSytemsMobApp
                         {
                             Command = new Command(async () =>
                             {
+                                // If PCAR, counters are hidden, so we should probably prevent the popup
+                                if (isPcar) return;
+
                                 //await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");
                                 if (App.IsOnline)
                                 {
