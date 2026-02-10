@@ -545,7 +545,12 @@ namespace C4iSytemsMobApp
 
                     // Tour is PCAR, so counters should be transparent
                     var isPcar = string.Equals(tourMode, "PCAR", StringComparison.OrdinalIgnoreCase);
-                    var counterColor = isPcar ? Colors.Transparent : Colors.Black;
+                    
+                    // In LoadTourModeAsync (NFC disabled), counters are always transparent
+                    var counterColor = Colors.Transparent;
+                    // Tour label is only visible if it's PCAR
+                    var tourColor = isPcar ? Colors.Black : Colors.Transparent;
+                    var tourLabelColor = isPcar ? Colors.Gray : Colors.Transparent;
 
                     // Tags
                     formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = counterColor });
@@ -564,8 +569,8 @@ namespace C4iSytemsMobApp
                     formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterColor });
 
                     // Tour
-                    formatted.Spans.Add(new Span { Text = "   Tour: ", FontSize = 12, TextColor = Colors.Gray });
-                    formatted.Spans.Add(new Span { Text = tourMode, FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                    formatted.Spans.Add(new Span { Text = "   Tour: ", FontSize = 12, TextColor = tourLabelColor });
+                    formatted.Spans.Add(new Span { Text = tourMode, FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = tourColor });
 
                     // Assign to Label
                     TagStatusLabel.FormattedText = formatted;
