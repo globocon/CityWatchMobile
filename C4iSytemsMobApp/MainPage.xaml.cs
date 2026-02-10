@@ -414,6 +414,7 @@ namespace C4iSytemsMobApp
 
                         // Assign to Label
                         TagStatusLabel.FormattedText = formatted;
+                        TagStatusLabel.IsVisible = _isNfcEnabledForSite || isPcar;
                     });
 
                 }
@@ -513,6 +514,7 @@ namespace C4iSytemsMobApp
 
                         // Assign to Label
                         TagStatusLabel.FormattedText = formatted;
+                        TagStatusLabel.IsVisible = _isNfcEnabledForSite || isPcar;
                     });
 
                 }
@@ -2100,10 +2102,7 @@ namespace C4iSytemsMobApp
                                 }
                             }
 
-                            if (_isNfcEnabledForSite)
-                            {
-                                LoadTagStatusAsync(_clientSiteId);
-                            }
+                            LoadTagStatusAsync(_clientSiteId);
                         }
                     }
                     return Task.CompletedTask;
@@ -2194,8 +2193,6 @@ namespace C4iSytemsMobApp
 
             }
 
-            if (_isNfcEnabledForSite)
-            {
                 _hubConnection.On("RefreshTagScanStatus", () =>
                 {
                     LoadTagStatusAsync(_clientSiteId);
@@ -2204,8 +2201,6 @@ namespace C4iSytemsMobApp
                     //    LoadTagStatusAsync(_clientSiteId);
                     //});
                 });
-
-            }
 
             if (ishubConnectionRequired)
             {
@@ -2243,13 +2238,10 @@ namespace C4iSytemsMobApp
                         RefreshCounterDisplay();
                     }
 
-                    if (_isNfcEnabledForSite)
+                    Task.Run(async () =>
                     {
-                        Task.Run(async () =>
-                        {
-                            await LoadTagStatusAsync(_clientSiteId);
-                        });
-                    }
+                        await LoadTagStatusAsync(_clientSiteId);
+                    });
                 }
             }
         }
