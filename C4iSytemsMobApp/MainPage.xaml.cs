@@ -2104,6 +2104,10 @@ namespace C4iSytemsMobApp
                             {
                                 LoadTagStatusAsync(_clientSiteId);
                             }
+                            else
+                            {
+                                LoadTagStatusAsync(_clientSiteId);
+                            }
                         }
                     }
                     return Task.CompletedTask;
@@ -2196,7 +2200,7 @@ namespace C4iSytemsMobApp
 
             if (_isNfcEnabledForSite)
             {
-                _hubConnection.On("RefreshTagScanStatus", () =>
+                _hubConnection?.On("RefreshTagScanStatus", () =>
                 {
                     LoadTagStatusAsync(_clientSiteId);
                     //MainThread.BeginInvokeOnMainThread(() =>
@@ -2206,6 +2210,17 @@ namespace C4iSytemsMobApp
                 });
 
             }
+            else
+            {
+                _hubConnection?.On("RefreshTagScanStatus2", () =>
+                {
+                    LoadTagStatusAsync(_clientSiteId);
+                    //MainThread.BeginInvokeOnMainThread(() =>
+                    //{
+                    //    LoadTagStatusAsync(_clientSiteId);
+                    //});
+                });
+            }
 
             if (ishubConnectionRequired)
             {
@@ -2214,6 +2229,9 @@ namespace C4iSytemsMobApp
                     await StartHubConnectionAsync();
                 }
             }
+
+            // Ensure tag status is loaded at least once, even if SignalR/NFC is not used
+            await LoadTagStatusAsync(_clientSiteId);
         }
 
         private async Task StartHubConnectionAsync()
