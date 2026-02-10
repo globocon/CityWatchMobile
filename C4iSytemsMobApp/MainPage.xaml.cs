@@ -2125,11 +2125,6 @@ namespace C4iSytemsMobApp
 
                         if (!string.IsNullOrEmpty(z.Result))
                         {
-                            //_CurrentCounter = r.Result.Ccount;
-                            //_totalpatrons = r.Result.Tcount;
-                            //_pcounter = r.Result.ClientSiteCrowdControlGuards?.FirstOrDefault()?.Pcount ?? 0;
-                            //RefreshCounterDisplay();
-
                             if (_IsCrowdControlCounterEnabled)
                             {
                                 if (!string.IsNullOrEmpty(z.Result))
@@ -2299,21 +2294,6 @@ namespace C4iSytemsMobApp
                         _totalpatrons = r.Tcount;
                         _pcounter = r.ClientSiteCrowdControlGuards?.FirstOrDefault()?.Pcount ?? 0;
                         RefreshCounterDisplay();
-                    }
-
-                    if (_isNfcEnabledForSite)
-                    {
-                        Task.Run(async () =>
-                        {
-                            await LoadTagStatusAsync(_clientSiteId);
-                        });
-                    }
-                    else
-                    {
-                        Task.Run(async () =>
-                        {
-                            await LoadTourModeAsync(_clientSiteId);
-                        });
                     }
                 }
             }
