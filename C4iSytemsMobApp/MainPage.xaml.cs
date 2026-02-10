@@ -2242,13 +2242,11 @@ namespace C4iSytemsMobApp
                 {
                     LoadTagStatusAsync(_clientSiteId);
                 });
+                LoadTagStatusAsync(_clientSiteId);
             }
             else
             {
-                _hubConnection?.On("RefreshTagScanStatus2", () =>
-                {
-                    LoadTourModeAsync(_clientSiteId);
-                });
+                LoadTourModeAsync(_clientSiteId);
             }
 
             if (ishubConnectionRequired)
@@ -2257,16 +2255,6 @@ namespace C4iSytemsMobApp
                 {
                     await StartHubConnectionAsync();
                 }
-            }
-
-            // Ensure tag status or tour mode is loaded at least once
-            if (_isNfcEnabledForSite)
-            {
-                await LoadTagStatusAsync(_clientSiteId);
-            }
-            else
-            {
-                await LoadTourModeAsync(_clientSiteId);
             }
         }
 
@@ -2295,21 +2283,6 @@ namespace C4iSytemsMobApp
                         _totalpatrons = r.Tcount;
                         _pcounter = r.ClientSiteCrowdControlGuards?.FirstOrDefault()?.Pcount ?? 0;
                         RefreshCounterDisplay();
-                    }
-
-                    if (_isNfcEnabledForSite)
-                    {
-                        Task.Run(async () =>
-                        {
-                            await LoadTagStatusAsync(_clientSiteId);
-                        });
-                    }
-                    else
-                    {
-                        Task.Run(async () =>
-                        {
-                            await LoadTourModeAsync(_clientSiteId);
-                        });
                     }
                 }
             }
