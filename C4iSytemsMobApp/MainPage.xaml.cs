@@ -2102,7 +2102,14 @@ namespace C4iSytemsMobApp
                                 }
                             }
 
-                            LoadTagStatusAsync(_clientSiteId);
+                            if (_isNfcEnabledForSite)
+                            {
+                                LoadTagStatusAsync(_clientSiteId);
+                            }
+                            else
+                            {
+                                LoadTagStatusAsync(_clientSiteId);
+                            }
                         }
                     }
                     return Task.CompletedTask;
@@ -2193,6 +2200,8 @@ namespace C4iSytemsMobApp
 
             }
 
+            if (_isNfcEnabledForSite)
+            {
                 _hubConnection.On("RefreshTagScanStatus", () =>
                 {
                     LoadTagStatusAsync(_clientSiteId);
@@ -2201,6 +2210,21 @@ namespace C4iSytemsMobApp
                     //    LoadTagStatusAsync(_clientSiteId);
                     //});
                 });
+
+            }
+            else
+            {
+
+                _hubConnection.On("RefreshTagScanStatus", () =>
+                {
+                    LoadTagStatusAsync(_clientSiteId);
+                    //MainThread.BeginInvokeOnMainThread(() =>
+                    //{
+                    //    LoadTagStatusAsync(_clientSiteId);
+                    //});
+                });
+
+            }
 
             if (ishubConnectionRequired)
             {
@@ -2238,10 +2262,20 @@ namespace C4iSytemsMobApp
                         RefreshCounterDisplay();
                     }
 
-                    Task.Run(async () =>
+                    if (_isNfcEnabledForSite)
                     {
-                        await LoadTagStatusAsync(_clientSiteId);
-                    });
+                        Task.Run(async () =>
+                        {
+                            await LoadTagStatusAsync(_clientSiteId);
+                        });
+                    }
+                    else
+                    {
+                        Task.Run(async () =>
+                        {
+                            await LoadTagStatusAsync(_clientSiteId);
+                        });
+                    }
                 }
             }
         }
