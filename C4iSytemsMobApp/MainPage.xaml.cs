@@ -344,59 +344,67 @@ namespace C4iSytemsMobApp
                     {
                         var formatted = new FormattedString();
 
+                        // Tour
+                        var isPcar = string.Equals(first.Tour, "PCAR", StringComparison.OrdinalIgnoreCase);
+                        var counterLabelColor = isPcar ? Colors.Transparent : Colors.Gray;
+                        var counterValueColor = isPcar ? Colors.Transparent : Colors.Black;
+
                         // Tags
-                        formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = Colors.Gray });
-                        formatted.Spans.Add(new Span { Text = first.TotalTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                        formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.TotalTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
                         // Hit
-                        formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = Colors.Gray });
-                        formatted.Spans.Add(new Span { Text = first.ScannedTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                        formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.ScannedTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
                         // Fq
-                        formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = Colors.Gray });
-                        formatted.Spans.Add(new Span { Text = first.CompletedRounds.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                        formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.CompletedRounds.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
                         // Missed (clickable)
-                        formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = Colors.Gray });
+                        formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = counterLabelColor });
                         var missedSpan = new Span
                         {
                             Text = first.RemainingTags.ToString(),
                             FontAttributes = FontAttributes.Bold,
                             FontSize = 12,
-                            TextColor = Colors.Black
+                            TextColor = counterValueColor
                         };
 
                         // Add tap gesture directly to the Span
-                        missedSpan.GestureRecognizers.Add(new TapGestureRecognizer
+                        if (!isPcar)
                         {
-                            Command = new Command(async () =>
+                            missedSpan.GestureRecognizers.Add(new TapGestureRecognizer
                             {
-                                //await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");
-                                if (App.IsOnline)
+                                Command = new Command(async () =>
                                 {
-                                    PopupOverlay.IsVisible = true;
-                                    var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
-                                    if (clientSiteId == null) return;
-                                    // Call API to get tag fields
-                                    // Call API to get tag fields for this client site
-                                    var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
-                                    if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
-
-                                    // Clear the existing collection
-                                    TagFields.Clear();
-
-                                    // Add fetched fields to the ObservableCollection
-                                    foreach (var field in fieldsFromApi)
+                                    //await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");
+                                    if (App.IsOnline)
                                     {
-                                        TagFields.Add(field);
+                                        PopupOverlay.IsVisible = true;
+                                        var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+                                        if (clientSiteId == null) return;
+                                        // Call API to get tag fields
+                                        // Call API to get tag fields for this client site
+                                        var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
+                                        if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
+
+                                        // Clear the existing collection
+                                        TagFields.Clear();
+
+                                        // Add fetched fields to the ObservableCollection
+                                        foreach (var field in fieldsFromApi)
+                                        {
+                                            TagFields.Add(field);
+                                        }
                                     }
-                                }
-                                else
-                                {
-                                    await DisplayAlert("Offline", "Please check your internet connection.", "OK");
-                                }
-                            })
-                        });
+                                    else
+                                    {
+                                        await DisplayAlert("Offline", "Please check your internet connection.", "OK");
+                                    }
+                                })
+                            });
+                        }
 
                         formatted.Spans.Add(missedSpan);
 
@@ -441,53 +449,61 @@ namespace C4iSytemsMobApp
                     {
                         var formatted = new FormattedString();
 
+                        // Tour
+                        var isPcar = string.Equals(first.Tour, "PCAR", StringComparison.OrdinalIgnoreCase);
+                        var counterLabelColor = isPcar ? Colors.Transparent : Colors.Gray;
+                        var counterValueColor = isPcar ? Colors.Transparent : Colors.Black;
+
                         // Tags
-                        formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = Colors.Gray });
-                        formatted.Spans.Add(new Span { Text = first.TotalTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                        formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.TotalTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
                         // Hit
-                        formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = Colors.Gray });
-                        formatted.Spans.Add(new Span { Text = first.ScannedTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                        formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.ScannedTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
                         // Fq
-                        formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = Colors.Gray });
-                        formatted.Spans.Add(new Span { Text = first.CompletedRounds.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                        formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.CompletedRounds.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
                         // Missed (clickable)
-                        formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = Colors.Gray });
+                        formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = counterLabelColor });
                         var missedSpan = new Span
                         {
                             Text = first.RemainingTags.ToString(),
                             FontAttributes = FontAttributes.Bold,
                             FontSize = 12,
-                            TextColor = Colors.Black
+                            TextColor = counterValueColor
                         };
 
                         // Add tap gesture directly to the Span
-                        missedSpan.GestureRecognizers.Add(new TapGestureRecognizer
+                        if (!isPcar)
                         {
-                            Command = new Command(async () =>
+                            missedSpan.GestureRecognizers.Add(new TapGestureRecognizer
                             {
-
-                                PopupOverlay.IsVisible = true;
-                                var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
-                                if (clientSiteId == null) return;
-                                // Call API to get tag fields
-                                // Call API to get tag fields for this client site
-                                var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
-                                if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
-
-                                // Clear the existing collection
-                                TagFields.Clear();
-
-                                // Add fetched fields to the ObservableCollection
-                                foreach (var field in fieldsFromApi)
+                                Command = new Command(async () =>
                                 {
-                                    TagFields.Add(field);
-                                }
-                                //await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");
-                            })
-                        });
+
+                                    PopupOverlay.IsVisible = true;
+                                    var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+                                    if (clientSiteId == null) return;
+                                    // Call API to get tag fields
+                                    // Call API to get tag fields for this client site
+                                    var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
+                                    if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
+
+                                    // Clear the existing collection
+                                    TagFields.Clear();
+
+                                    // Add fetched fields to the ObservableCollection
+                                    foreach (var field in fieldsFromApi)
+                                    {
+                                        TagFields.Add(field);
+                                    }
+                                    //await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");
+                                })
+                            });
+                        }
 
                         formatted.Spans.Add(missedSpan);
 
