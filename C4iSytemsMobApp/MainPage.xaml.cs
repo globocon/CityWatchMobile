@@ -2147,6 +2147,10 @@ namespace C4iSytemsMobApp
                             {
                                 LoadTagStatusAsync(_clientSiteId);
                             }
+                            else
+                            {
+                                LoadTourModeAsync(_clientSiteId);
+                            }
                         }
                     }
                     return Task.CompletedTask;
@@ -2290,6 +2294,13 @@ namespace C4iSytemsMobApp
                         Task.Run(async () =>
                         {
                             await LoadTagStatusAsync(_clientSiteId);
+                        });
+                    }
+                    else
+                    {
+                        Task.Run(async () =>
+                        {
+                            await LoadTourModeAsync(_clientSiteId);
                         });
                     }
                 }
