@@ -524,6 +524,58 @@ namespace C4iSytemsMobApp
             }
         }
 
+        public async Task LoadTourModeAsync(int? clientId)
+        {
+            if (clientId == null) return;
+
+            try
+            {
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSiteTourMode?clientSiteId={clientId}";
+                using var client = new HttpClient();
+                var response = await client.GetAsync(apiUrl);
+                if (!response.IsSuccessStatusCode) return;
+
+                string tourMode = await response.Content.ReadAsStringAsync();
+                // Remove quotes if present in the response
+                tourMode = tourMode.Trim('\"');
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    var formatted = new FormattedString();
+
+                    // Tour is PCAR, so counters should be transparent
+                    var isPcar = string.Equals(tourMode, "PCAR", StringComparison.OrdinalIgnoreCase);
+                    var counterColor = isPcar ? Colors.Transparent : Colors.Black;
+
+                    // Tags
+                    formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = counterColor });
+                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterColor });
+
+                    // Hit
+                    formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = counterColor });
+                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterColor });
+
+                    // Fq
+                    formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = counterColor });
+                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterColor });
+
+                    // Missed
+                    formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = counterColor });
+                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterColor });
+
+                    // Tour
+                    formatted.Spans.Add(new Span { Text = "   Tour: ", FontSize = 12, TextColor = Colors.Gray });
+                    formatted.Spans.Add(new Span { Text = tourMode, FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+
+                    // Assign to Label
+                    TagStatusLabel.FormattedText = formatted;
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading tour mode: {ex.Message}");
+            }
+        }
 
         private async void LoadLoggedInUser()
         {
@@ -2106,7 +2158,7 @@ namespace C4iSytemsMobApp
                             }
                             else
                             {
-                                LoadTagStatusAsync(_clientSiteId);
+                                LoadTourModeAsync(_clientSiteId);
                             }
                         }
                     }
@@ -2214,7 +2266,7 @@ namespace C4iSytemsMobApp
             {
                 _hubConnection?.On("RefreshTagScanStatus2", () =>
                 {
-                    LoadTagStatusAsync(_clientSiteId);
+                    LoadTourModeAsync(_clientSiteId);
                     //MainThread.BeginInvokeOnMainThread(() =>
                     //{
                     //    LoadTagStatusAsync(_clientSiteId);
@@ -2230,8 +2282,15 @@ namespace C4iSytemsMobApp
                 }
             }
 
-            // Ensure tag status is loaded at least once, even if SignalR/NFC is not used
-            await LoadTagStatusAsync(_clientSiteId);
+            // Ensure tag status or tour mode is loaded at least once
+            if (_isNfcEnabledForSite)
+            {
+                await LoadTagStatusAsync(_clientSiteId);
+            }
+            else
+            {
+                await LoadTourModeAsync(_clientSiteId);
+            }
         }
 
         private async Task StartHubConnectionAsync()
@@ -2266,6 +2325,13 @@ namespace C4iSytemsMobApp
                         Task.Run(async () =>
                         {
                             await LoadTagStatusAsync(_clientSiteId);
+                        });
+                    }
+                    else
+                    {
+                        Task.Run(async () =>
+                        {
+                            await LoadTourModeAsync(_clientSiteId);
                         });
                     }
                 }
