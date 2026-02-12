@@ -1,9 +1,14 @@
 
+using AutoMapper;
+using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Data.Entity;
+using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO.Pipelines;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -32,6 +37,13 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     public ObservableCollection<string> TemplateTypesList { get; set; } = new();
     public ObservableCollection<FeedbackTemplateViewModel> FilteredTemplatesList { get; set; } = new();
     public ObservableCollection<string> NotifiedByList { get; set; } = new();
+    private string offlinelocalFilePath = string.Empty;
+    private readonly IScanDataDbServices _scanDataDbService;
+    private readonly IMapper _mapper;
+    private IDeviceInfoService infoService;
+    private string devicename;
+    private string deviceid;
+
 
     private ClientSite _currentClientSite;
 
@@ -204,11 +216,33 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            // Call the new endpoint with Address support
-            var response = await _httpClient.GetFromJsonAsync<List<DropdownItemWithAddress>>(
-                $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSitesByClientTypeWithAdress?userId={Uri.EscapeDataString(userId)}&clientTypeId={clientTypeId}");
+            //// Call the new endpoint with Address support
+            //var response = await _httpClient.GetFromJsonAsync<List<DropdownItemWithAddress>>(
+            //    $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSitesByClientTypeWithAdress?userId={Uri.EscapeDataString(userId)}&clientTypeId={clientTypeId}");
+
+            //ClientSites.Clear();
+
+            //foreach (var site in response ?? new List<DropdownItemWithAddress>())
+            //{
+            //    if (site.Name != "Select")
+            //    {
+            //        // Option 1: Add only the name
+            //        // ClientSites.Add(site);
+
+            //        // Option 2: Combine name + address for display
+            //        ClientSites.Add(new DropdownItemWithAddress
+            //        {
+            //            Id = site.Id,
+            //            Name = $"{site.Name}",
+            //            Address = site.Address
+            //        });
+            //    }
+            //}
+
 
             ClientSites.Clear();
+            var _clientSites = _scanDataDbService.GetIrClientSitesLocalListByTypeId(clientTypeId);
+            var response = _mapper.Map<List<DropdownItemWithAddress>>(_clientSites);
 
             foreach (var site in response ?? new List<DropdownItemWithAddress>())
             {
@@ -226,6 +260,8 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     });
                 }
             }
+
+
         }
         catch (Exception ex)
         {
@@ -248,8 +284,13 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 return;
             }
 
-            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(
-                $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetUserClientTypes?userId={Uri.EscapeDataString(userId)}");
+            //var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(
+            //    $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetUserClientTypes?userId={Uri.EscapeDataString(userId)}");
+
+
+            var clientTypesList = await _scanDataDbService.GetIrClientSitesTypesLocalList();
+            var response = _mapper.Map<List<DropdownItem>>(clientTypesList);
+
 
             ClientTypes.Clear();
 
@@ -260,7 +301,6 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             {
                 ClientTypes.Add(type);
             }
-
 
         }
         catch (Exception ex)
@@ -292,7 +332,13 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     }
     public static class IrSession
     {
-        public static string ReportReference { get; set; } = Guid.NewGuid().ToString();
+        //public static string ReportReference { get; set; } = Guid.NewGuid().ToString();
+        public static string ReportReference { get; private set; } = Guid.NewGuid().ToString();
+
+        public static void StartNewSession()
+        {
+            ReportReference = Guid.NewGuid().ToString();
+        }
     }
 
 
@@ -341,6 +387,12 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         _httpClient = new HttpClient(); // Initialize it
         NavigationPage.SetHasNavigationBar(this, false);
         BindingContext = this; // or to your ViewModel
+        offlinelocalFilePath = Path.Combine(FileSystem.AppDataDirectory, "IrFolder", "Uploads", "OfflineFiles");
+        _scanDataDbService = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
+        _mapper = IPlatformApplication.Current.Services.GetService<IMapper>();
+        infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
+        devicename = infoService?.GetDeviceName();
+        deviceid = infoService?.GetDeviceId();
         //var viewModel = new LocationViewModel();
         //BindingContext = viewModel;
 
@@ -445,7 +497,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             reportDatePickerOffsite.Date = reusedReport.DateLocation?.ReportDate ?? DateTime.Today;
 
             // --- Client and Description Info ---
-         
+
             descriptionEditor.Text = reusedReport.Feedback ?? "";
 
             PatrolExternalCheckBox.IsChecked = reusedReport.DateLocation?.PatrolExternal ?? false;
@@ -463,12 +515,12 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     //JobTimePicker.Time = DateTime.Now.TimeOfDay;
                 }
             }
-            reimbursementNoCheckBox.IsChecked = reusedReport.DateLocation?.ReimbursementNo ?? false;
-            reimbursementYesCheckBox.IsChecked = reusedReport.DateLocation?.ReimbursementYes ?? false;
-            supervisorEntry.Text = reusedReport.ReportedBy ?? string.Empty;
-            incidentLocationCheckBox.IsChecked = reusedReport.DateLocation?.ShowIncidentLocationAddress ?? false;
+            reimbursementNoCheckBox.IsChecked = reusedReport?.DateLocation?.ReimbursementNo ?? false;
+            reimbursementYesCheckBox.IsChecked = reusedReport?.DateLocation?.ReimbursementYes ?? false;
+            supervisorEntry.Text = reusedReport?.ReportedBy ?? string.Empty;
+            incidentLocationCheckBox.IsChecked = reusedReport?.DateLocation?.ShowIncidentLocationAddress ?? false;
             //ApplyIncidentLocationState(incidentLocationCheckBox.IsChecked);
-            clientAddressEntry.Text = reusedReport.DateLocation?.ClientAddress ?? "";
+            clientAddressEntry.Text = reusedReport?.DateLocation?.ClientAddress ?? "";
 
 
         }
@@ -499,21 +551,28 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
     public async Task LoadNotifiedByListAsync()
     {
-        using var httpClient = new HttpClient();
-        var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetNotifiedByList";
+        //using var httpClient = new HttpClient();
+        //var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetNotifiedByList";
 
-        var response = await httpClient.GetAsync(url);
-        if (response.IsSuccessStatusCode)
+        //var response = await httpClient.GetAsync(url);
+        //if (response.IsSuccessStatusCode)
+        //{
+        //    var result = await response.Content.ReadFromJsonAsync<List<string>>();
+        //    if (result != null)
+        //    {
+        //        NotifiedByList.Clear();
+        //        foreach (var item in result)
+        //        {
+        //            NotifiedByList.Add(item);
+        //        }
+        //    }
+        //}
+
+        var _notifyby = await _scanDataDbService.GetIrNotifiedByLocalList();
+        NotifiedByList.Clear();
+        foreach (var item in _notifyby)
         {
-            var result = await response.Content.ReadFromJsonAsync<List<string>>();
-            if (result != null)
-            {
-                NotifiedByList.Clear();
-                foreach (var item in result)
-                {
-                    NotifiedByList.Add(item);
-                }
-            }
+            NotifiedByList.Add(item.NotifiedBy);
         }
     }
 
@@ -537,17 +596,23 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
     public async Task<ClientSite> GetClientSiteByName(string name)
     {
-        using var httpClient = new HttpClient();
+        //using var httpClient = new HttpClient();
 
-        var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSiteByName?name={Uri.EscapeDataString(name)}";
+        //var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSiteByName?name={Uri.EscapeDataString(name)}";
 
-        var response = await httpClient.GetAsync(url);
-        if (response.IsSuccessStatusCode)
-        {
-            return await response.Content.ReadFromJsonAsync<ClientSite>();
-        }
+        //var response = await httpClient.GetAsync(url);
+        //if (response.IsSuccessStatusCode)
+        //{
+        //    return await response.Content.ReadFromJsonAsync<ClientSite>();
+        //}
 
-        return null;
+        //return null;
+
+
+        var clientSitesList = await _scanDataDbService.GetIrClientSitesLocalListByName(name);
+        var clientSite = _mapper.Map<ClientSite>(clientSitesList);
+        return clientSite;
+
     }
 
 
@@ -601,10 +666,13 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     {
         try
         {
-            var httpClient = new HttpClient();
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetFeedbackTemplates";
+            //var httpClient = new HttpClient();
+            //var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetFeedbackTemplates";
 
-            var templates = await httpClient.GetFromJsonAsync<List<FeedbackTemplateViewModel>>(url);
+            //var templates = await httpClient.GetFromJsonAsync<List<FeedbackTemplateViewModel>>(url);
+
+            var templatesList = await _scanDataDbService.GetIrFeedbackTemplateLocalList();
+            var templates = _mapper.Map<List<FeedbackTemplateViewModel>>(templatesList);
 
             if (templates != null)
             {
@@ -871,9 +939,12 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 return;
             }
 
-            
+            string DeviceType = "android";
+#if IOS
+    DeviceType = "ios";
+#endif
 
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ProcessIrSubmit?gps={gpsCoordinates}&UserId={userId}&IRguardId={guardId}&IRclientSiteId={clientSiteId}";
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ProcessIrSubmit?gps={gpsCoordinates}&UserId={userId}&IRguardId={guardId}&IRclientSiteId={clientSiteId}&RequestDeviceType={DeviceType}";
 
             var selectedColourCode = ColourCodeDropdown.SelectedItem as FeedbackTemplateViewModel;
 
@@ -1028,8 +1099,16 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 FeedbackType = _selectedTemplate?.Type ?? 0,
                 FeedbackTemplates = _selectedTemplate?.TemplateId ?? 0,
                 PSPFName = "[SEC=UNOFFICIAL]",
-                
+                ReportCreatedLocalTimeZone = new ReportCreatedLocalTimeZone()
+                {
+                    CreatedOnDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+                    CreatedOnDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+                    CreatedOnDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+                    CreatedOnDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+                    CreatedOnDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute()
+                }
             };
+
 
 
             Report.Attachments = uploadedServerFileNames;
@@ -1089,10 +1168,60 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 var fullDownloadUrl = $"{staticBaseUrl}{Uri.EscapeDataString(result.FileName)}";
 
                 // Step 4: Simulate page navigation
-                Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, result.Domin));
+                Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, result.Domin, false));
 
                 // Step 5: Notify user
                 await DisplayAlert("Test Mode", "Form data saved locally — no API call made.", "OK");
+            }
+            else if (!App.IsOnline)
+            {
+                IRPreferenceHelper.Save(Report);
+                try
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        WriteIndented = false,
+                        IncludeFields = true
+                    };
+
+                    // Optional: clear attachments to save space
+                    Report.Attachments = null;
+
+                    string json = JsonSerializer.Serialize(Report, options);
+                    irOfflineCache _irOfflineCache = new irOfflineCache()
+                    {
+                        IrId = Report.ReportReference, // reportReference,
+                        IncidentRequest = json,
+                        EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+                        EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+                        EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+                        EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+                        EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                        IsSynced = false,
+                        guardId = Convert.ToInt32(guardId),
+                        clientsiteId = Convert.ToInt32(clientSiteId),
+                        userId = Convert.ToInt32(userId),
+                        gps = gpsCoordinates ?? "",
+                        DeviceId = deviceid,
+                        DeviceName = devicename,
+                    };
+
+                    await _scanDataDbService.SaveIrReportToLocalCache(_irOfflineCache);
+
+
+                    //await DisplayAlert(title: "Offline Mode", message: "Form data saved locally and will be uploaded when online.","Ok");
+                    //var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+                    //Application.Current.MainPage = new MainPage(volumeButtonService);
+
+                    Application.Current.MainPage = new NavigationPage(new DownloadIr("", "", true));
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                    await DisplayAlert("Error", $"Failed to save report locally in offline mode:\n{ex.Message}", "OK");
+                }
+                
             }
             else
             {
@@ -1108,7 +1237,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     var staticBaseUrl = "https://cws-ir.com/Pdf/ToDropbox/";
                     var fullDownloadUrl = $"{staticBaseUrl}{Uri.EscapeDataString(result.FileName)}";
 
-                    Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, (result?.Domin)));
+                    Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, (result?.Domin),false));
                 }
                 else
                 {
@@ -1128,6 +1257,12 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             LoadingOverlay.IsVisible = false;
         }
     }
+
+    public void Reload(IncidentRequest request = null)
+    {           
+        BindingContext = new WebIncidentReport(request);
+    }
+
 
     private void OnTemplateTypeChanged(object sender, EventArgs e)
     {
@@ -1281,6 +1416,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     public class ClientSite
     {
         public int Id { get; set; }
+        public int TypeId { get; set; }
         public string Name { get; set; }
         public string Address { get; set; }
         public string State { get; set; }
@@ -1387,25 +1523,77 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
             foreach (var file in filesToSave)
             {
-                var stream = await file.OpenReadAsync();
-                var localFilePath = Path.Combine(FileSystem.CacheDirectory, file.FileName);
+                //var stream = await file.OpenReadAsync();
+                //var localFilePath = Path.Combine(FileSystem.CacheDirectory, file.FileName);
 
-                using (var fileStream = File.Create(localFilePath))
-                {
-                    await stream.CopyToAsync(fileStream);
-                }
+                //using (var fileStream = File.Create(localFilePath))
+                //{
+                //    await stream.CopyToAsync(fileStream);
+                //}
+
+                var safeFileName = Path.GetFileName(file.FileName);
+                var localFilePath = Path.Combine(FileSystem.CacheDirectory, safeFileName);
+                await using var sourceStream = await file.OpenReadAsync();
+                await using var destinationStream = File.Create(localFilePath);
+                await sourceStream.CopyToAsync(destinationStream);
+                sourceStream.Dispose();
+                destinationStream.Dispose();
 
                 string reportReference = IrSession.ReportReference;
-                var uploadedFileName = await UploadFileToServer(localFilePath, reportReference);
-
-                if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
+                if (App.IsOnline)
                 {
-                    UploadedFiles.Add(uploadedFileName);
-                    uploadedServerFileNames.Add(uploadedFileName);
-                }
+                    var uploadedFileName = await UploadFileToServer(localFilePath, reportReference);
 
-                uploadedCount++;
-                uploadProgressBar.Progress = (double)uploadedCount / totalFiles;
+                    if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
+                    {
+                        UploadedFiles.Add(uploadedFileName);
+                        uploadedServerFileNames.Add(uploadedFileName);
+                    }
+
+                    uploadedCount++;
+                    uploadProgressBar.Progress = (double)uploadedCount / totalFiles;
+                }
+                else
+                {
+                    Directory.CreateDirectory(offlinelocalFilePath); // Safe even if exists
+                    var offlinelocalFile = Path.Combine(offlinelocalFilePath, file.FileName);
+                    await using var offlinestream = await file.OpenReadAsync();
+                    await using var offlineFilestream = File.Create(offlinelocalFile);
+                    await offlinestream.CopyToAsync(offlineFilestream);
+
+                    var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+                    string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+                    // Store in local list to upload later
+                    var _fileName = Path.GetFileName(file.FileName);
+                    irOfflineFilesAttachmentsCache _irOfflineFilesAttachmentsCache = new irOfflineFilesAttachmentsCache()
+                    {
+                        IrId = reportReference,
+                        FileNameActual = _fileName,
+                        FileNameCache = _fileName,
+                        FileNameWithPathCache = offlinelocalFile,
+                        EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+                        EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+                        EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+                        EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+                        EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                        IsSynced = false,
+                        guardId = guardId,
+                        clientsiteId = clientSiteId,
+                        userId = userId,
+                        gps = gpsCoordinates ?? "",
+                        DeviceId = deviceid,
+                        DeviceName = devicename,
+                    };
+
+                    await _scanDataDbService.SaveIrReportAttachmentsToLocalCache(_irOfflineFilesAttachmentsCache);
+
+                    if (!string.IsNullOrWhiteSpace(_fileName) && !UploadedFiles.Contains(_fileName))
+                    {
+                        UploadedFiles.Add(_fileName);
+                        uploadedServerFileNames.Add(_fileName);
+                    }
+
+                }
             }
 
             uploadProgressBar.IsVisible = false;
@@ -1420,7 +1608,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         }
     }
 
-    private void OnRemoveFileClicked(object sender, EventArgs e)
+    private async void OnRemoveFileClicked(object sender, EventArgs e)
     {
         var button = sender as ImageButton;
         var fileName = button?.CommandParameter as string;
@@ -1429,6 +1617,16 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         {
             UploadedFiles.Remove(fileName);
             uploadedServerFileNames.Remove(fileName);
+
+            // Remove from offline if any
+            string reportReference = IrSession.ReportReference;
+            var filelocalcachepath = await _scanDataDbService.DeleteIrOfflineFile(reportReference, fileName);
+            if (filelocalcachepath != null && filelocalcachepath != "")
+            {
+                if (File.Exists(filelocalcachepath))
+                    File.Delete(filelocalcachepath);
+            }
+
         }
         uploadDisplaySection.IsVisible = UploadedFiles.Any();
     }
@@ -1479,54 +1677,107 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     {
         try
         {
-            using var httpClient = new HttpClient();
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/areas?clientSiteId={clientSiteId}";
-            var response = await httpClient.GetAsync(url);
+            //using var httpClient = new HttpClient();
+            //var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/areas?clientSiteId={clientSiteId}";
+            //var response = await httpClient.GetAsync(url);
 
-            if (response.IsSuccessStatusCode)
+            //if (response.IsSuccessStatusCode)
+            //{
+            //    var json = await response.Content.ReadAsStringAsync();
+
+            //    var options = new JsonSerializerOptions
+            //    {
+            //        PropertyNameCaseInsensitive = true
+            //    };
+
+            //    var areaItems = JsonSerializer.Deserialize<List<AreaItem>>(json, options);
+
+            //    if (areaItems != null)
+            //    {
+            //        // Remove empty-value items
+            //        var actualItems = areaItems
+            //            .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+            //            .ToList();
+
+            //        if (actualItems.Any())
+            //        {
+            //            // Add "Select" as first item manually
+            //            actualItems.Insert(0, new AreaItem
+            //            {
+            //                Text = "Select",
+            //                Value = "",
+            //                Selected = true
+            //            });
+
+            //            areaPicker.ItemsSource = actualItems;
+            //            areaPicker.ItemDisplayBinding = new Binding("Text");
+            //            areaPicker.SelectedIndex = 0;
+            //        }
+            //        // else: do NOT bind the picker at all
+            //    }
+            //}
+            //else
+            //{
+            //    await DisplayAlert("Error", "Unable to load area list from server.", "OK");
+            //}
+
+            var clientAreas = await _scanDataDbService.GetIrAreasLocalList(clientSiteId);
+
+            var areaItems = _mapper.Map<List<AreaItem>>(clientAreas);
+
+            if (areaItems != null)
             {
-                var json = await response.Content.ReadAsStringAsync();
+                // Remove empty-value items
+                var actualItems = areaItems
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                    .ToList();
 
-                var options = new JsonSerializerOptions
+                if (actualItems.Any())
                 {
-                    PropertyNameCaseInsensitive = true
-                };
-
-                var areaItems = JsonSerializer.Deserialize<List<AreaItem>>(json, options);
-
-                if (areaItems != null)
-                {
-                    // Remove empty-value items
-                    var actualItems = areaItems
-                        .Where(x => !string.IsNullOrWhiteSpace(x.Value))
-                        .ToList();
-
-                    if (actualItems.Any())
+                    // Add "Select" as first item manually
+                    actualItems.Insert(0, new AreaItem
                     {
-                        // Add "Select" as first item manually
-                        actualItems.Insert(0, new AreaItem
-                        {
-                            Text = "Select",
-                            Value = "",
-                            Selected = true
-                        });
+                        Text = "Select",
+                        Value = "",
+                        Selected = true
+                    });
 
-                        areaPicker.ItemsSource = actualItems;
-                        areaPicker.ItemDisplayBinding = new Binding("Text");
-                        areaPicker.SelectedIndex = 0;
-                    }
-                    // else: do NOT bind the picker at all
+                    areaPicker.ItemsSource = actualItems;
+                    areaPicker.ItemDisplayBinding = new Binding("Text");
+                    areaPicker.SelectedIndex = 0;
                 }
-            }
-            else
-            {
-                await DisplayAlert("Error", "Unable to load area list from server.", "OK");
+                // else: do NOT bind the picker at all
             }
         }
         catch (Exception ex)
         {
             await DisplayAlert("Error", $"Exception loading area list: {ex.Message}", "OK");
         }
+    }
+
+    private async Task<(int guardId, int clientSiteId, int userId)> GetSecureStorageValues()
+    {
+        int.TryParse(Preferences.Get("GuardId", "0"), out int guardId);
+        int.TryParse(Preferences.Get("SelectedClientSiteId", "0"), out int clientSiteId);
+        int.TryParse(Preferences.Get("UserId", "0"), out int userId);
+
+        if (guardId <= 0)
+        {
+            await DisplayAlert("Error", "Guard ID not found. Please validate the License Number first.", "OK");
+            return (-1, -1, -1);
+        }
+        if (clientSiteId <= 0)
+        {
+            await DisplayAlert("Validation Error", "Please select a valid Client Site.", "OK");
+            return (-1, -1, -1);
+        }
+        if (userId <= 0)
+        {
+            await DisplayAlert("Validation Error", "User ID is invalid. Please log in again.", "OK");
+            return (-1, -1, -1);
+        }
+
+        return (guardId, clientSiteId, userId);
     }
 
     public class AreaDto

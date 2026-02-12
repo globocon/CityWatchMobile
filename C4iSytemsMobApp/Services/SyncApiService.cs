@@ -15,6 +15,7 @@ namespace C4iSytemsMobApp.Services
         public Task<List<OfflineFilesRecords>> PushActivityLogDocumentsCacheAsync(List<OfflineFilesRecords> records);
         public Task<List<PatrolCarLogRequestCache>> PushPatrolCarCacheAsync(List<PatrolCarLogRequestCache> records);
         public Task<List<CustomFieldLogRequestHeadCache>> PushCustomFieldLogCacheAsync(List<CustomFieldLogRequestHeadDto> records);
+        public Task<(List<irOfflineCacheDto>, List<irOfflineFilesAttachmentsCache>)> PushIrRequestsLogCacheAsync(List<irOfflineFilesAttachmentsCache> attchRecords, List<irOfflineCacheDto> records);
 
     }
     public class SyncApiService : ISyncApiService
@@ -208,6 +209,112 @@ namespace C4iSytemsMobApp.Services
             }
             catch (Exception ex)
             {
+                throw;
+            }
+        }
+
+        public async Task<(List<irOfflineCacheDto>, List<irOfflineFilesAttachmentsCache>)> PushIrRequestsLogCacheAsync(List<irOfflineFilesAttachmentsCache> attchRecords, 
+            List<irOfflineCacheDto> records)
+        {
+
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                return (null,null);
+
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SyncOfflineIrRecords";
+
+            try
+            {
+                using (HttpClient _http = new HttpClient())
+                {
+                    await Task.Delay(1000);
+                    _http.Timeout = TimeSpan.FromMinutes(8); // increase wait time
+                    using var content = new MultipartFormDataContent();
+                    var streams = new List<Stream>();
+                    foreach (var fileModel in attchRecords)
+                    {
+                        if (File.Exists(fileModel.FileNameWithPathCache))
+                        {
+                            var stream = File.OpenRead(fileModel.FileNameWithPathCache);
+                            streams.Add(stream);
+
+                            var fileContent = new StreamContent(stream);
+                            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                            content.Add(fileContent, "files", fileModel.FileNameCache);
+                        }
+                    }
+
+                    
+
+
+
+                    //foreach (var fileModel in attchRecords)
+                    //{
+
+                    //    if (File.Exists(fileModel.FileNameWithPathCache))
+                    //    {
+                    //        var stream = await OpenFileReadAsync(fileModel.FileNameWithPathCache);
+                    //        var fileContent = new StreamContent(stream);
+                    //        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+                    //        // Add file
+                    //        content.Add(fileContent, "files", fileModel.FileNameCache);
+                    //    }
+                    //}
+
+                    string DeviceType = "android";
+#if IOS
+    DeviceType = "ios";
+#endif
+
+                    // Add other form data
+                    // 1. Add metadata as JSON
+                    content.Add(new StringContent(DeviceType), "irDeviceType");
+
+                    var jsonAttchRecords = JsonSerializer.Serialize(attchRecords);
+                    var jsonAttchRecordsContent = new StringContent(jsonAttchRecords, Encoding.UTF8, "application/json");
+                    content.Add(jsonAttchRecordsContent, "irOfflineFilesAttachmentsCacheJsonString");
+
+                    var json = JsonSerializer.Serialize(records);
+                    var jsonContent = new StringContent(json, Encoding.UTF8, "application/json");
+                    content.Add(jsonContent, "irOfflineCacheJsonString");
+
+                    using var response = await _http.PostAsync(apiUrl, content);
+
+                    // Optional explicit cleanup (usually not needed if content disposed)
+                    foreach (var s in streams)
+                    {
+                        s.Dispose();
+                    }
+
+                    // HttpResponseMessage response = await _http.PostAsync(apiUrl, content);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string contentData = await response.Content.ReadAsStringAsync();
+                        var responseJson = JsonSerializer.Deserialize<JsonElement>(contentData);
+
+                        // Deserialize irOfflineCache list
+                        var irOfflineCacheElement = responseJson.GetProperty("irOfflineCache");
+                        List<irOfflineCacheDto> irOfflineCache = JsonSerializer.Deserialize<List<irOfflineCacheDto>>(
+                            irOfflineCacheElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        // Deserialize irOfflineCache list
+                        var irOfflineAttachmentsElement = responseJson.GetProperty("irOfflineAttachments");
+                        List<irOfflineFilesAttachmentsCache> irOfflineAttachments = JsonSerializer.Deserialize<List<irOfflineFilesAttachmentsCache>>(
+                            irOfflineAttachmentsElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+                       
+                        return (irOfflineCache, irOfflineAttachments);
+                    }
+                    else
+                    {
+                        throw new Exception("Error in syncing ir request records");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
                 throw;
             }
         }
