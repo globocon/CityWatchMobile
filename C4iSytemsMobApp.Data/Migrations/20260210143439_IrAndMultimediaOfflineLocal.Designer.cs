@@ -3,6 +3,7 @@ using System;
 using C4iSytemsMobApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace C4iSytemsMobApp.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260210143439_IrAndMultimediaOfflineLocal")]
+    partial class IrAndMultimediaOfflineLocal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.22");
@@ -374,10 +377,6 @@ namespace C4iSytemsMobApp.Data.Migrations
 
             modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.IrFeedbackTemplateViewModelLocal", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("BackgroundColour")
                         .HasColumnType("TEXT");
 
@@ -405,21 +404,13 @@ namespace C4iSytemsMobApp.Data.Migrations
                     b.Property<int?>("Type")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("Id");
-
                     b.ToTable("IrFeedbackTemplateViewModelLocal");
                 });
 
             modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.IrNotifiedByLocal", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("NotifiedBy")
                         .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
 
                     b.ToTable("IrNotifiedByLocal");
                 });
@@ -673,117 +664,6 @@ namespace C4iSytemsMobApp.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("RCLinkedDuressClientSitesCache");
-                });
-
-            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.irOfflineCache", b =>
-                {
-                    b.Property<string>("IrId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("DeviceId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("DeviceName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("EventDateTimeLocal")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset?>("EventDateTimeLocalWithOffset")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("EventDateTimeUtcOffsetMinute")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("EventDateTimeZone")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EventDateTimeZoneShort")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("IncidentRequest")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsSynced")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<Guid>("UniqueRecordId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("clientsiteId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("gps")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("guardId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("userId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("IrId");
-
-                    b.ToTable("irOfflineCache");
-                });
-
-            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.irOfflineFilesAttachmentsCache", b =>
-                {
-                    b.Property<Guid>("UniqueRecordId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("DeviceId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("DeviceName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("EventDateTimeLocal")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset?>("EventDateTimeLocalWithOffset")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("EventDateTimeUtcOffsetMinute")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("EventDateTimeZone")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EventDateTimeZoneShort")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("FileNameActual")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("FileNameCache")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("FileNameWithPathCache")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("IrId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsSynced")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("clientsiteId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("gps")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("guardId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("userId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("UniqueRecordId");
-
-                    b.ToTable("irOfflineFilesAttachmentsCache");
                 });
 
             modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.ClientSitesLocal", b =>

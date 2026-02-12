@@ -18,6 +18,15 @@ namespace C4iSytemsMobApp.Data
         public DbSet<CustomFieldLogHeadCache> CustomFieldLogHeadCache { get; set; }
         public DbSet<CustomFieldLogDetailCache> CustomFieldLogDetailCache { get; set; }
         public DbSet<RCLinkedDuressClientSitesCache> RCLinkedDuressClientSitesCache { get; set; }
+        public DbSet<ClientSitesLocal> ClientSitesLocal { get; set; }
+        public DbSet<ClientSiteTypeLocal> ClientSiteTypeLocal { get; set; }
+        public DbSet<IrNotifiedByLocal> IrNotifiedByLocal { get; set; }
+        public DbSet<IrFeedbackTemplateViewModelLocal> IrFeedbackTemplateViewModelLocal { get; set; }
+        public DbSet<ClientSiteAreaLocal> ClientSiteAreaLocal { get; set; }
+        public DbSet<AudioAndMultimediaLocal> AudioAndMultimediaLocal { get; set; }
+        public DbSet<irOfflineFilesAttachmentsCache> irOfflineFilesAttachmentsCache { get; set; }
+        public DbSet<irOfflineCache> irOfflineCache { get; set; }
+
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -46,6 +55,12 @@ namespace C4iSytemsMobApp.Data
                 .HasForeignKey(d => d.HeadId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<ClientSiteTypeLocal>()
+                .HasMany(h => h.ClientSites)
+                .WithOne(d => d.ClientSiteType)
+                .HasForeignKey(d => d.TypeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
         }
     }
 }

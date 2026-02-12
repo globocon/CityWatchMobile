@@ -7,16 +7,26 @@ public partial class DownloadIr : ContentPage
 {
     private readonly string _downloadUrl;    
     private string _thirdPartyDomain;
-    public DownloadIr(string downloadUrl,string thirdPartyDomin)
+    private bool _isOffLineIr;
+    public DownloadIr(string downloadUrl,string thirdPartyDomin, bool isOffLineIr)
 	{
         NavigationPage.SetHasNavigationBar(this, false);
         InitializeComponent();
         _downloadUrl = downloadUrl;
         _thirdPartyDomain = thirdPartyDomin;
+        _isOffLineIr = isOffLineIr;
 
         string hqName = !string.IsNullOrWhiteSpace(_thirdPartyDomain) ? _thirdPartyDomain : "CityWatch HQ";
 
         ThankYouLabel.Text = $"Thank you! Your report has been emailed to {hqName} and, if needed, to the client as well.";
+
+        if(_isOffLineIr)
+        {
+            DownloadButton.IsVisible = false;
+            DownloadButton.IsEnabled = false;
+            ThankYouLabel.Text = "Thank you! Your report has been saved locally and will be uploaded when connectivity is restored.";
+            ResultInfoLabel.Text = "Incident Report Saved In Cache";
+        }
 
     }
     private async void OnDownloadClicked(object sender, EventArgs e)

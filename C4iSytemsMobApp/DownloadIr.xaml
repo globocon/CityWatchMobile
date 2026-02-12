@@ -30,7 +30,7 @@
         </Grid>
 
         <!-- Title -->
-        <Label 
+        <Label x:Name="ResultInfoLabel"
     Text="Incident Report Submitted Successfully"
     FontSize="20"
     FontAttributes="Bold"
@@ -39,7 +39,7 @@
     Padding="10,5,10,5" />
 
             <!-- Download Button -->
-            <Button 
+            <Button x:Name="DownloadButton"
     Text="Download Report"
     Clicked="OnDownloadClicked"
     FontSize="14"

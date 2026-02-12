@@ -1,3 +1,6 @@
+using AutoMapper;
+using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Data.Entity;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Services;
 using Plugin.Maui.Audio;
@@ -5,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+//using static Android.Provider.MediaStore;
 using static C4iSytemsMobApp.Services.AudioPlaybackService;
 namespace C4iSytemsMobApp;
 
@@ -19,7 +23,8 @@ public partial class Audio : ContentPage
     private Mp3File _currentlyPlayingFile;
     private bool isPlaying = false;
     private int _selectedSilenceMinutes = 0;
-
+    private readonly IScanDataDbServices _scanDataDbService;
+    private readonly IMapper _mapper;
 
 
     public static class AudioState
@@ -45,9 +50,10 @@ public partial class Audio : ContentPage
         // Set the BindingContext to the page itself if Mp3Files is a property here
         this.BindingContext = this;
 
+        _scanDataDbService = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
+        _mapper = IPlatformApplication.Current.Services.GetService<IMapper>();
         Mp3ListView.ItemsSource = Mp3Files;
         LoadMp3List();
-
 
         AudioPlaybackService.Instance.PlaybackStateChanged += OnPlaybackStateChanged;
     }
@@ -283,9 +289,12 @@ public partial class Audio : ContentPage
     }
     private async void LoadMp3List()
     {
-        var httpClient = new HttpClient();
-        var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivitiesAudio?type=1";
-        var mp3List = await httpClient.GetFromJsonAsync<List<Mp3File>>(url);
+        //var httpClient = new HttpClient();
+        //var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivitiesAudio?type=1";
+        //var mp3List = await httpClient.GetFromJsonAsync<List<Mp3File>>(url);
+
+        var _existingAudioFiles = await _scanDataDbService.GetMultimediaLocalList(1);
+        var mp3List = _mapper.Map<List<Mp3File>>(_existingAudioFiles);
 
         foreach (var item in mp3List)
         {

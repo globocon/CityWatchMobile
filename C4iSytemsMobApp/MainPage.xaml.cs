@@ -608,39 +608,42 @@ namespace C4iSytemsMobApp
 
         private async void OnManualPositionClicked(object sender, EventArgs e)
         {
-            if (App.IsOnline)
-            {
-                Application.Current.MainPage = new NavigationPage(new WebIncidentReport());
-            }
-            else
-            {
-                await DisplayAlert("Offline", "Please check your internet connection.", "OK");
-            }            
+            Application.Current.MainPage = new NavigationPage(new WebIncidentReport());
+            //if (App.IsOnline)
+            //{
+            //    Application.Current.MainPage = new NavigationPage(new WebIncidentReport());
+            //}
+            //else
+            //{
+            //    await DisplayAlert("Offline", "Please check your internet connection.", "OK");
+            //}            
         }
 
 
         private async void OnAudioClicked(object sender, EventArgs e)
         {
-            if (App.IsOnline)
-            {
-                Application.Current.MainPage = new NavigationPage(new Audio());
-            }
-            else
-            {
-                await DisplayAlert("Offline", "Please check your internet connection.", "OK");
-            }
+            Application.Current.MainPage = new NavigationPage(new Audio());
+            //if (App.IsOnline)
+            //{
+            //    Application.Current.MainPage = new NavigationPage(new Audio());
+            //}
+            //else
+            //{
+            //    await DisplayAlert("Offline", "Please check your internet connection.", "OK");
+            //}
         }
 
         private async void OnMultimediaClicked(object sender, EventArgs e)
         {
-            if (App.IsOnline)
-            {
-                Application.Current.MainPage = new NavigationPage(new MultiMedia());
-            }
-            else
-            {
-                await DisplayAlert("Offline", "Please check your internet connection.", "OK");
-            }
+            Application.Current.MainPage = new NavigationPage(new MultiMedia());
+            //if (App.IsOnline)
+            //{
+            //    Application.Current.MainPage = new NavigationPage(new MultiMedia());
+            //}
+            //else
+            //{
+            //    await DisplayAlert("Offline", "Please check your internet connection.", "OK");
+            //}
         }
 
         private CancellationTokenSource _countdownCts;

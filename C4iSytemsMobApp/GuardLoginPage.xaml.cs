@@ -886,6 +886,148 @@ public partial class GuardLoginPage : ContentPage
 
                     }
 
+                    try
+                    {
+                        await _scanDataDbService.ClearIrClientSitesTypesLocalList();
+                        // Deserialize irClientTypes list
+                        var irClientTypesElement = responseJson.GetProperty("irClientTypes");
+                        List<DropdownItem> irClientTypes = JsonSerializer.Deserialize<List<DropdownItem>>(
+                            irClientTypesElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (irClientTypes != null && irClientTypes.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<ClientSiteTypeLocal>>(irClientTypes);
+                            // Save to local DB
+                            await _scanDataDbService.RefreshIrClientSitesTypesLocalList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearIrClientSitesLocalList();
+                        // Deserialize irClientSites list
+                        var irClientSitesElement = responseJson.GetProperty("irClientSites");
+                        List<WebIncidentReport.ClientSite> irClientSites = JsonSerializer.Deserialize<List<WebIncidentReport.ClientSite>>(
+                            irClientSitesElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (irClientSites != null && irClientSites.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<ClientSitesLocal>>(irClientSites);
+                            // Save to local DB
+                            await _scanDataDbService.RefreshIrClientSitesLocalList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearIrFeedbackTemplateLocalList();
+                        // Deserialize irFeedbackTemplates list
+                        var irFeedbackTemplatesElement = responseJson.GetProperty("irFeedbackTemplates");
+                        List<WebIncidentReport.FeedbackTemplateViewModel> irFeedbackTemplates = JsonSerializer.Deserialize<List<WebIncidentReport.FeedbackTemplateViewModel>>(
+                            irFeedbackTemplatesElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (irFeedbackTemplates != null && irFeedbackTemplates.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<IrFeedbackTemplateViewModelLocal>>(irFeedbackTemplates);
+                            // Save to local DB
+                            await _scanDataDbService.RefreshIrFeedbackTemplateLocalList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearIrNotifiedByLocalList();
+                        // Deserialize irNotifiedBy list
+                        var irNotifiedByElement = responseJson.GetProperty("irNotifiedByList");
+                        List<string> irNotifiedBy = JsonSerializer.Deserialize<List<string>>(
+                            irNotifiedByElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (irNotifiedBy != null && irNotifiedBy.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<IrNotifiedByLocal>>(irNotifiedBy);
+                            // Save to local DB
+                            await _scanDataDbService.RefreshIrNotifiedByLocalList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearIrAreasLocalList();
+                        // Deserialize irAreas list
+                        var irAreasElement = responseJson.GetProperty("irAreas");
+                        List<WebIncidentReport.AreaItem> irAreas = JsonSerializer.Deserialize<List<WebIncidentReport.AreaItem>>(
+                            irAreasElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (irAreas != null && irAreas.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<ClientSiteAreaLocal>>(irAreas);
+                            // Save to local DB
+                            await _scanDataDbService.RefreshIrAreasLocalList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        // Deserialize Audio list
+                        var Mp3FileElement = responseJson.GetProperty("audioList");
+                        List<Audio.Mp3File> mp3files = JsonSerializer.Deserialize<List<Audio.Mp3File>>(
+                            Mp3FileElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (mp3files != null && mp3files.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<AudioAndMultimediaLocal>>(mp3files);
+                            await CheckAndSyncMultimediaFiles(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        // Deserialize multimediaList list
+                        var videoElement = responseJson.GetProperty("multimediaList");
+                        List<VideoFile> videos = JsonSerializer.Deserialize<List<VideoFile>>(
+                            videoElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (videos != null && videos.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<AudioAndMultimediaLocal>>(videos);
+                            await CheckAndSyncMultimediaFiles(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
 
                     if (pickerClientSite.SelectedItem is DropdownItem selectedClientSite)
                     {
@@ -1077,6 +1219,111 @@ public partial class GuardLoginPage : ContentPage
 
         _isPopupOpen = false;
     }
+
+
+    private async Task CheckAndSyncMultimediaFiles(List<AudioAndMultimediaLocal> _videos)
+    {
+        if (_videos == null || _videos.Count == 0) return;
+
+        string _multimediaLocalFolder = "";
+        int audioType = _videos.FirstOrDefault()?.AudioType ?? 0;
+        //List<AudioAndMultimediaLocal> _FilesToDelete = new List<AudioAndMultimediaLocal>();
+
+        if (audioType == 1)
+        {
+            _multimediaLocalFolder = Path.Combine(FileSystem.AppDataDirectory, "IrFolder", "Downloads", "AudioFiles");
+        }
+        else if (audioType == 3)
+        {
+            _multimediaLocalFolder = Path.Combine(FileSystem.AppDataDirectory, "IrFolder", "Downloads", "VideoFiles");
+        }
+
+        if (!Directory.Exists(_multimediaLocalFolder))
+            Directory.CreateDirectory(_multimediaLocalFolder);
+
+        var _existingFiles = await _scanDataDbService.GetMultimediaLocalList(audioType);
+
+        foreach (var item in _videos)
+        {
+            var _isfileExisting = _existingFiles.Where(x => x.ServerUrl == item.ServerUrl).FirstOrDefault();
+            if (_isfileExisting != null)
+            {
+                // File already exists, set local path and skip download
+                item.LocalFilePath = _isfileExisting.LocalFilePath;
+                item.Id = _isfileExisting.Id;
+
+                if (_isfileExisting.LocalFilePath != "" && File.Exists(_isfileExisting.LocalFilePath))
+                    continue;
+                else
+                {
+                    // Local file is missing, need to re-download
+                    var _newFileName = await DownloadMultimediaFileFromServer(item.ServerUrl, _multimediaLocalFolder);
+                    if (_newFileName != "")
+                        item.LocalFilePath = _newFileName;
+                    else
+                        item.LocalFilePath = "";
+                }
+            }
+            else
+            {
+                item.Id = 0;
+                // File does not exist, need to download
+                var _newFileName = await DownloadMultimediaFileFromServer(item.ServerUrl, _multimediaLocalFolder);
+                if (_newFileName != "")
+                    item.LocalFilePath = _newFileName;
+            }
+        }
+
+        foreach (var _fl in _existingFiles)
+        {
+            // Remove any deleted file in server
+            var _found = _videos.Any(x => x.ServerUrl == _fl.ServerUrl);
+            if (!_found)
+            {
+                if (File.Exists(_fl.LocalFilePath))
+                {
+                    try
+                    {
+                        File.Delete(_fl.LocalFilePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error deleting multimedia file {_fl.LocalFilePath}. Error:{ex.ToString()}");
+                    }
+                }
+            }
+        }
+
+        await _scanDataDbService.RefreshAudioAndMultimediaLocalList(_videos);
+
+    }
+
+    private async Task<string> DownloadMultimediaFileFromServer(string _serverUrl, string _localPath)
+    {
+        string fileName = Path.GetFileName(_serverUrl);
+        string localfileNameWithPath = Path.Combine(_localPath, fileName);
+        try
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                var response = await client.GetAsync(_serverUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsByteArrayAsync();
+                    File.WriteAllBytes(localfileNameWithPath, content);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error downloading file {_serverUrl}: {ex.Message}");
+            return "";
+        }
+
+        return localfileNameWithPath;
+    }
+
+
 }
 
 // Model class for API response
