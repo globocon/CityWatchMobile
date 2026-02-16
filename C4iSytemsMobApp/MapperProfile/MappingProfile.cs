@@ -154,12 +154,9 @@ namespace C4iSytemsMobApp.MapperProfile
                 .ForMember(dest => dest.DeleteStatus, opt => opt.MapFrom(src => src.DeleteStatus))
                 .ForMember(dest => dest.SendtoRC, opt => opt.MapFrom(src => src.SendtoRC));
 
-            CreateMap<string, IrNotifiedByLocal>()
-                .ForMember(dest => dest.NotifiedBy, opt => opt.MapFrom(src => src));
-
             CreateMap<AreaItem, ClientSiteAreaLocal>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.ClientSiteId, opt => opt.MapFrom(src => src.Value))
+                .ForMember(dest => dest.ClientSiteId, opt => opt.MapFrom(src => Convert.ToInt32(src.Value)))
                 .ForMember(dest => dest.AreaDetails, opt => opt.MapFrom(src => src.Text));
 
             CreateMap<ClientSiteAreaLocal, AreaItem>()

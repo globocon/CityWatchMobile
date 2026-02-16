@@ -960,7 +960,13 @@ public partial class GuardLoginPage : ContentPage
 
                         if (irNotifiedBy != null && irNotifiedBy.Count > 0)
                         {
-                            var cacheEntity = _mapper.Map<List<IrNotifiedByLocal>>(irNotifiedBy);
+
+                            List<IrNotifiedByLocal> cacheEntity = irNotifiedBy
+                                .Select(x => new IrNotifiedByLocal
+                                {
+                                    NotifiedBy = x
+                                }).ToList();
+                            
                             // Save to local DB
                             await _scanDataDbService.RefreshIrNotifiedByLocalList(cacheEntity);
                         }
