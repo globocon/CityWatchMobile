@@ -10,6 +10,8 @@ namespace C4iSytemsMobApp
     {
         public static bool IsVolumeControlEnabledForCounter { get; set; } = false;        
         public static PatrolTouringMode TourMode { get; set; } = PatrolTouringMode.STND;
+        public static int? PcarInspLastScannedSiteId { get; set; } = null;
+        public static DateTime? PcarInspLastScannedTime { get; set; } = null;
         public static bool IsOnline { get; private set; }
         // Global event that any page/VM can subscribe to
         public static event Action<bool>? ConnectivityChangedEvent;
