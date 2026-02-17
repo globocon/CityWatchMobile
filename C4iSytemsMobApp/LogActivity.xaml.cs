@@ -2058,6 +2058,17 @@ public partial class LogActivity : ContentPage
         {
             if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
 
+            if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+            {
+                // Get site ID from scanned tag and store it in a global variable to be used across the app, especially for PCAR/INSP modules
+                var _taginfoLocal = await _scannerControlServices.GetTagDetailsFromLocalDbAsync(serialNumber);
+                if (_taginfoLocal != null && _taginfoLocal.ClientSiteId > 0)
+                    App.PcarInspLastScannedSiteId = _taginfoLocal.ClientSiteId;
+                else
+                    App.PcarInspLastScannedSiteId = null; // Reset if tag not found or invalid
+                App.PcarInspLastScannedTime = DateTime.Now;
+            }
+
             if (!App.IsOnline)
             {
                 // Log To Cache                    

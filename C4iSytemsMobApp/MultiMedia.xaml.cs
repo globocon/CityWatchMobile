@@ -42,7 +42,7 @@ public partial class MultiMedia : ContentPage
             if (videos != null)
             {
                 foreach (var video in videos)
-                {
+                {                    
                     VideoFiles.Add(video);
                 }
             }
@@ -110,11 +110,21 @@ public partial class MultiMedia : ContentPage
     {
         if (sender is Button button && button.CommandParameter is VideoFile videoFile)
         {
+            if (string.IsNullOrWhiteSpace(videoFile.Url) || !File.Exists(videoFile.Url))
+            {
+                Console.WriteLine($"Local video file {button.Text} not found.");
+                DisplayAlert("Error", "File not found.", "OK");
+                return;
+            }
+
             FullscreenPlayer.IsVisible = true;
             VideoPlayer.Stop();
 
             // Use FromUri for online videos
-            VideoPlayer.Source = MediaSource.FromUri(new Uri(videoFile.Url));
+            //VideoPlayer.Source = MediaSource.FromUri(new Uri(videoFile.Url));
+
+            // Use FromFile for offline videos
+            VideoPlayer.Source = MediaSource.FromFile(videoFile.Url);
 
             VideoPlayer.Play();
         }

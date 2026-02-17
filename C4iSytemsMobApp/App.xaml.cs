@@ -13,8 +13,33 @@ namespace C4iSytemsMobApp
         public static bool IsOnline { get; private set; }
         // Global event that any page/VM can subscribe to
         public static event Action<bool>? ConnectivityChangedEvent;
-               
         public static string CurrentAppVersion { get; private set; }
+        public static int? PcarInspLastScannedSiteId { get; set; } = null;
+
+        private static DateTime? _pcarInspLastScannedTime;
+        public static DateTime? PcarInspLastScannedTime
+        {
+            get => _pcarInspLastScannedTime;
+            set
+            {
+                var previous = _pcarInspLastScannedTime;
+                _pcarInspLastScannedTime = value;
+
+                // If changed from null → value OR value changed → reset timer
+                if (value != null)
+                {
+                    StartOrResetPcarExpiryTimer();
+                }
+                else
+                {
+                    StopPcarExpiryTimer();
+                }
+            }
+        }
+        private static System.Threading.Timer? _pcarExpiryTimer;
+
+        public static event Action? PcarInspTagResetEvent;
+
 
         public App(AppUpgradePage upgradePage, ConnectivityListener connectivityListener)
         {
@@ -56,6 +81,65 @@ namespace C4iSytemsMobApp
                 }
             });
         }
+
+        private static void StartOrResetPcarExpiryTimer()
+        {
+            StopPcarExpiryTimer();
+
+            if (_pcarInspLastScannedTime == null)
+                return;
+
+            if (TourMode == PatrolTouringMode.STND)
+                return;
+
+            var elapsed = DateTime.UtcNow - _pcarInspLastScannedTime.Value.ToUniversalTime();
+            var remaining = TimeSpan.FromMinutes(30) - elapsed;
+
+            if (remaining <= TimeSpan.Zero)
+            {
+                TriggerPcarExpiry();
+                return;
+            }
+
+            _pcarExpiryTimer = new System.Threading.Timer(_ =>
+            {
+                TriggerPcarExpiry();
+            },
+            null,
+            remaining,
+            Timeout.InfiniteTimeSpan);
+        }
+
+        private static void StopPcarExpiryTimer()
+        {
+            _pcarExpiryTimer?.Dispose();
+            _pcarExpiryTimer = null;
+        }
+        private static void TriggerPcarExpiry()
+        {
+            if (TourMode == PatrolTouringMode.STND)
+                return;
+
+            if (_pcarInspLastScannedTime == null)
+                return;
+
+            PcarInspLastScannedSiteId = null;
+            _pcarInspLastScannedTime = null;
+
+            StopPcarExpiryTimer();
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                PcarInspTagResetEvent?.Invoke();
+            });
+        }
+
+        protected override void OnSleep()
+        {
+            StopPcarExpiryTimer();
+            base.OnSleep();
+        }
+
 
         private string GetAppVersion()
         {
