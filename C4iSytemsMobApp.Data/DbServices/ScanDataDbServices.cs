@@ -18,6 +18,7 @@ namespace C4iSytemsMobApp.Data.DbServices
         public Task RefreshSmartWandTagsList(List<ClientSiteSmartWandTagsLocal> swtags);
         public ClientSiteSmartWandTagsHitLogCache GetLastScannedTagDateTime(int siteId, string tagUid);
         public ClientSiteSmartWandTagsLocal GetSmartWandTagDetailOfTag(string tagUid);
+        public Task<ClientSiteSmartWandTagsLocal> GetSmartWandTagDetailOfTagAsync(string tagUid);
         public Task RefreshPrePopulatedActivitesButtonList(List<ActivityModel> activites);
         public Task ClearPrePopulatedActivitesButtonList();
         public Task<List<ActivityModel>> GetPrePopulatedActivitesButtonList();
@@ -132,6 +133,12 @@ namespace C4iSytemsMobApp.Data.DbServices
         {
             using var _db = _dbFactory();
             return _db.ClientSiteSmartWandTagsLocal.Where(x => x.UId == tagUid).FirstOrDefault();
+        }
+
+        public async Task<ClientSiteSmartWandTagsLocal> GetSmartWandTagDetailOfTagAsync(string tagUid)
+        {
+            using var _db = _dbFactory();
+            return await _db.ClientSiteSmartWandTagsLocal.Where(x => x.UId == tagUid).FirstOrDefaultAsync();
         }
 
         public async Task RefreshPrePopulatedActivitesButtonList(List<ActivityModel> activites)
@@ -551,40 +558,78 @@ namespace C4iSytemsMobApp.Data.DbServices
         public async Task<List<AudioAndMultimediaLocal>> GetMultimediaLocalList(int audioType)
         {
             using var _db = _dbFactory();
-            return await _db.AudioAndMultimediaLocal.AsNoTracking().Where(x => x.AudioType == audioType).ToListAsync();
+            return await _db.AudioAndMultimediaLocal.AsNoTracking().Where(x => x.AudioType == audioType && x.LocalFilePath.Trim() != "").ToListAsync();
         }
 
-        public async Task RefreshAudioAndMultimediaLocalList(List<AudioAndMultimediaLocal> _audioVideoFiles)
+        //public async Task RefreshAudioAndMultimediaLocalList(List<AudioAndMultimediaLocal> _audioVideoFiles)
+        //{
+        //    using var _db = _dbFactory();
+        //    var _fileType = _audioVideoFiles.FirstOrDefault().AudioType;
+        //    var existingFiles = await _db.AudioAndMultimediaLocal.Where(x => x.AudioType == _fileType).AsNoTracking().ToListAsync();
+
+        //    // Remove files that are no longer present
+        //    foreach (var existingFile in existingFiles)
+        //    {
+        //        if (!_audioVideoFiles.Any(x => x.Id == existingFile.Id))
+        //        {
+        //            _db.AudioAndMultimediaLocal.Remove(existingFile);
+        //        }
+        //    }
+
+        //    // Add or update files
+        //    foreach (var newFile in _audioVideoFiles)
+        //    {
+        //        var existingFile = existingFiles.FirstOrDefault(x => x.Id == newFile.Id);
+        //        if (existingFile != null)
+        //        {
+        //            _db.Entry(existingFile).CurrentValues.SetValues(newFile);
+        //        }
+        //        else
+        //        {
+        //            await _db.AudioAndMultimediaLocal.AddAsync(newFile);
+        //        }
+        //    }
+
+        //    await _db.SaveChangesAsync();
+        //}
+
+        public async Task RefreshAudioAndMultimediaLocalList(List<AudioAndMultimediaLocal> audioVideoFiles)
         {
-            using var _db = _dbFactory();
-            var _fileType = _audioVideoFiles.FirstOrDefault().AudioType;
-            var existingFiles = await _db.AudioAndMultimediaLocal.Where(x => x.AudioType == _fileType).AsNoTracking().ToListAsync();
+            using var db = _dbFactory();
 
-            // Remove files that are no longer present
-            foreach (var existingFile in existingFiles)
-            {
-                if (!_audioVideoFiles.Any(x => x.Id == existingFile.Id))
-                {
-                    _db.AudioAndMultimediaLocal.Remove(existingFile);
-                }
-            }
+            var fileType = audioVideoFiles.FirstOrDefault()?.AudioType;
+            if (fileType == null)
+                return;
 
-            // Add or update files
-            foreach (var newFile in _audioVideoFiles)
+            var existingFiles = await db.AudioAndMultimediaLocal
+                .Where(x => x.AudioType == fileType)
+                .ToListAsync();
+
+            // Remove deleted files
+            var toRemove = existingFiles
+                .Where(e => !audioVideoFiles.Any(n => n.Id == e.Id))
+                .ToList();
+
+            db.AudioAndMultimediaLocal.RemoveRange(toRemove);
+
+            // Add or update
+            foreach (var newFile in audioVideoFiles)
             {
-                var existingFile = existingFiles.FirstOrDefault(x => x.Id == newFile.Id);
-                if (existingFile != null)
+                var existing = existingFiles.FirstOrDefault(x => x.Id == newFile.Id);
+
+                if (existing != null)
                 {
-                    _db.Entry(existingFile).CurrentValues.SetValues(newFile);
+                    db.Entry(existing).CurrentValues.SetValues(newFile);
                 }
                 else
                 {
-                    await _db.AudioAndMultimediaLocal.AddAsync(newFile);
+                    await db.AudioAndMultimediaLocal.AddAsync(newFile);
                 }
             }
 
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
+
 
         public async Task SaveIrReportAttachmentsToLocalCache(irOfflineFilesAttachmentsCache _irOfflineFilesAttachmentsCache)
         {

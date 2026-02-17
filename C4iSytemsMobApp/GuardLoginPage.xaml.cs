@@ -695,8 +695,16 @@ public partial class GuardLoginPage : ContentPage
 
     private async void OnEnterLogbookClicked(object sender, EventArgs e)
     {
+        btnEnterLogbook.BackgroundColor = Colors.Gray;
+        btnEnterLogbook.IsEnabled = false;
+        loadingIndicator.IsVisible = true;
+        loadingIndicator.IsRunning = true;
+        UpdateInfoLabel("");
+        lblloadinginfo.IsVisible = true;
         try
         {
+
+
             // Retrieve GuardId securely
             string guardIdString = Preferences.Get("GuardId", "");
             if (string.IsNullOrWhiteSpace(guardIdString) || !int.TryParse(guardIdString, out int guardId) || guardId <= 0)
@@ -790,7 +798,7 @@ public partial class GuardLoginPage : ContentPage
                 IsNewGuard = _isNewGuard
             };
 
-
+            lblloadinginfo.Text = "Authenticating...Please wait...";
             var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin";
             using (HttpClient client = new HttpClient())
             {
@@ -798,6 +806,7 @@ public partial class GuardLoginPage : ContentPage
                 HttpResponseMessage response = await client.PostAsJsonAsync(apiUrl, request);
                 if (response.IsSuccessStatusCode)
                 {
+                    UpdateInfoLabel("Processing Offline Data...Please wait...");
                     string contentData = await response.Content.ReadAsStringAsync();
                     var responseJson = JsonSerializer.Deserialize<JsonElement>(contentData);
                     int tourMode = responseJson.GetProperty("tourMode").GetInt32();
@@ -815,6 +824,7 @@ public partial class GuardLoginPage : ContentPage
 
                         if (activity != null && activity.Count > 0)
                         {
+                            UpdateInfoLabel($"Processing activity Offline Data. {activity.Count} records...Please wait...");
                             // Save to local DB
                             await _scanDataDbService.RefreshPrePopulatedActivitesButtonList(activity);
                         }
@@ -837,6 +847,7 @@ public partial class GuardLoginPage : ContentPage
                         {
                             var cacheEntity = _mapper.Map<List<PatrolCarLogCache>>(pcarlogs);
                             // Save to local DB
+                            UpdateInfoLabel($"Processing PatrolCar Offline Data. {pcarlogs.Count} records...Please wait...");
                             await _scanDataDbService.RefreshPatrolCarCacheList(cacheEntity);
                         }
                     }
@@ -857,6 +868,7 @@ public partial class GuardLoginPage : ContentPage
 
                         if (customFieldLogs != null && customFieldLogs.Count > 0)
                         {
+                            UpdateInfoLabel($"Processing CustomField Offline Data. {customFieldLogs.Count} records...Please wait...");
                             await _customLogEntryServices.ProcessCustomFieldLogsOnlineDataToCache(customFieldLogs);
                         }
                     }
@@ -878,6 +890,7 @@ public partial class GuardLoginPage : ContentPage
                         {
                             //var cacheEntity = _mapper.Map<List<RCLinkedDuressClientSitesCache>>(rcLinkedDuressClientSitesElement);
                             // Save to local DB
+                            UpdateInfoLabel($"Processing Linked Client Sites Offline Data. {rcLinkedDuressClientSites.Count} records...Please wait...");
                             await _scanDataDbService.RefreshRCLinkedDuressClientSitesList(rcLinkedDuressClientSites);
                         }
                     }
@@ -899,6 +912,7 @@ public partial class GuardLoginPage : ContentPage
                         {
                             var cacheEntity = _mapper.Map<List<ClientSiteTypeLocal>>(irClientTypes);
                             // Save to local DB
+                            UpdateInfoLabel($"Processing IR Client Types Offline Data. {irClientTypes.Count} records...Please wait...");
                             await _scanDataDbService.RefreshIrClientSitesTypesLocalList(cacheEntity);
                         }
                     }
@@ -920,6 +934,7 @@ public partial class GuardLoginPage : ContentPage
                         {
                             var cacheEntity = _mapper.Map<List<ClientSitesLocal>>(irClientSites);
                             // Save to local DB
+                            UpdateInfoLabel($"Processing IR Client Sites Offline Data. {irClientSites.Count} records...Please wait...");
                             await _scanDataDbService.RefreshIrClientSitesLocalList(cacheEntity);
                         }
                     }
@@ -941,6 +956,7 @@ public partial class GuardLoginPage : ContentPage
                         {
                             var cacheEntity = _mapper.Map<List<IrFeedbackTemplateViewModelLocal>>(irFeedbackTemplates);
                             // Save to local DB
+                            UpdateInfoLabel($"Processing IR Feedback Templates Offline Data. {irFeedbackTemplates.Count} records...Please wait...");
                             await _scanDataDbService.RefreshIrFeedbackTemplateLocalList(cacheEntity);
                         }
                     }
@@ -966,8 +982,9 @@ public partial class GuardLoginPage : ContentPage
                                 {
                                     NotifiedBy = x
                                 }).ToList();
-                            
+
                             // Save to local DB
+                            UpdateInfoLabel($"Processing IR Notified By Offline Data. {irNotifiedBy.Count} records...Please wait...");
                             await _scanDataDbService.RefreshIrNotifiedByLocalList(cacheEntity);
                         }
                     }
@@ -989,6 +1006,7 @@ public partial class GuardLoginPage : ContentPage
                         {
                             var cacheEntity = _mapper.Map<List<ClientSiteAreaLocal>>(irAreas);
                             // Save to local DB
+                            UpdateInfoLabel($"Processing IR Areas Offline Data. {irAreas.Count} records...Please wait...");
                             await _scanDataDbService.RefreshIrAreasLocalList(cacheEntity);
                         }
                     }
@@ -1008,6 +1026,7 @@ public partial class GuardLoginPage : ContentPage
                         if (mp3files != null && mp3files.Count > 0)
                         {
                             var cacheEntity = _mapper.Map<List<AudioAndMultimediaLocal>>(mp3files);
+                            UpdateInfoLabel($"Processing Multimedia Audio Offline Data. {mp3files.Count} records...Please wait...");
                             await CheckAndSyncMultimediaFiles(cacheEntity);
                         }
                     }
@@ -1027,6 +1046,7 @@ public partial class GuardLoginPage : ContentPage
                         if (videos != null && videos.Count > 0)
                         {
                             var cacheEntity = _mapper.Map<List<AudioAndMultimediaLocal>>(videos);
+                            UpdateInfoLabel($"Processing Multimedia Video Offline Data. {videos.Count} records...Please wait...");
                             await CheckAndSyncMultimediaFiles(cacheEntity);
                         }
                     }
@@ -1059,6 +1079,7 @@ public partial class GuardLoginPage : ContentPage
                     // Check if NFC is onboarded for site
                     Preferences.Set("NfcOnboarded", "false");
                     Preferences.Set("iBeaconOnboarded", "false");
+                    UpdateInfoLabel("Checking Smart Wand Tags Settings.");
                     var scannerSettings = await _scannerControlServices.CheckScannerOnboardedAsync(clientSiteIdString);
                     if (scannerSettings != null && scannerSettings.Count > 0)
                     {
@@ -1089,9 +1110,11 @@ public partial class GuardLoginPage : ContentPage
 
 
                         //Get all the smartwand tags asscosiated with the site
+                        UpdateInfoLabel("Reading Smart Wand Tags for site.");
                         var swtags = await _scannerControlServices.GetSmartWandTagsForSite(clientSiteIdString);
                         if (swtags != null && swtags.Count > 0)
                         {
+                            UpdateInfoLabel($"Processing Smart Wand Tags Offline Data. {swtags.Count} records...Please wait...");
                             await _scanDataDbService.RefreshSmartWandTagsList(swtags);
                         }
 
@@ -1099,6 +1122,7 @@ public partial class GuardLoginPage : ContentPage
 
 
                     Preferences.Set("CrowdCountEnabledForSite", "false");
+                    UpdateInfoLabel("Checking Crowd Count Control Settings.");
                     var _crowdControlsettings = await _crowdControlServices.GetCrowdControlSettingsAsync(clientSiteIdString);
                     if (_crowdControlsettings != null && (_crowdControlsettings?.IsCrowdCountEnabled ?? false))
                     {
@@ -1136,7 +1160,14 @@ public partial class GuardLoginPage : ContentPage
         {
             await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
         }
-
+        finally
+        {
+            btnEnterLogbook.BackgroundColor = Colors.Green;
+            btnEnterLogbook.IsEnabled = true;
+            loadingIndicator.IsVisible = false;
+            loadingIndicator.IsRunning = false;
+            lblloadinginfo.IsVisible = false;
+        }
     }
 
 
@@ -1251,6 +1282,7 @@ public partial class GuardLoginPage : ContentPage
 
         foreach (var item in _videos)
         {
+            UpdateInfoLabel($"Checking Offline file {item.Label}...Please wait...");
             var _isfileExisting = _existingFiles.Where(x => x.ServerUrl == item.ServerUrl).FirstOrDefault();
             if (_isfileExisting != null)
             {
@@ -1263,6 +1295,7 @@ public partial class GuardLoginPage : ContentPage
                 else
                 {
                     // Local file is missing, need to re-download
+                    UpdateInfoLabel($"Downloading Multimedia Offline file {item.Label}...Please wait...");
                     var _newFileName = await DownloadMultimediaFileFromServer(item.ServerUrl, _multimediaLocalFolder);
                     if (_newFileName != "")
                         item.LocalFilePath = _newFileName;
@@ -1274,6 +1307,7 @@ public partial class GuardLoginPage : ContentPage
             {
                 item.Id = 0;
                 // File does not exist, need to download
+                UpdateInfoLabel($"Downloading Multimedia Offline file {item.Label}...Please wait...");
                 var _newFileName = await DownloadMultimediaFileFromServer(item.ServerUrl, _multimediaLocalFolder);
                 if (_newFileName != "")
                     item.LocalFilePath = _newFileName;
@@ -1300,36 +1334,84 @@ public partial class GuardLoginPage : ContentPage
             }
         }
 
+        UpdateInfoLabel($"Refreshing Multimedia Offline files list...Please wait...");
         await _scanDataDbService.RefreshAudioAndMultimediaLocalList(_videos);
+
+
 
     }
 
-    private async Task<string> DownloadMultimediaFileFromServer(string _serverUrl, string _localPath)
+    //private async Task<string> DownloadMultimediaFileFromServer(string _serverUrl, string _localPath)
+    //{
+    //    string fileName = CommonHelper.GetSanitizedFileNameFromUrl(_serverUrl);
+    //    string localfileNameWithPath = Path.Combine(_localPath, fileName);
+    //    try
+    //    {
+    //        using (HttpClient client = new HttpClient())
+    //        {
+    //            client.Timeout = TimeSpan.FromMinutes(10);
+    //            var response = await client.GetAsync(_serverUrl);
+    //            if (response.IsSuccessStatusCode)
+    //            {
+    //                var content = await response.Content.ReadAsByteArrayAsync();
+    //                File.WriteAllBytes(localfileNameWithPath, content);
+    //            }
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Debug.WriteLine($"Error downloading file {_serverUrl}: {ex.Message}");
+    //        return "";
+    //    }
+
+    //    return localfileNameWithPath;
+    //}
+
+    private async Task<string> DownloadMultimediaFileFromServer(string serverUrl, string localPath)
     {
-        string fileName = Path.GetFileName(_serverUrl);
-        string localfileNameWithPath = Path.Combine(_localPath, fileName);
+        string fileName = CommonHelper.GetSanitizedFileNameFromUrl(serverUrl);
+        string localFileNameWithPath = Path.Combine(localPath, fileName);
+
         try
         {
-            using (HttpClient client = new HttpClient())
+            using var client = new HttpClient
             {
-                var response = await client.GetAsync(_serverUrl);
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsByteArrayAsync();
-                    File.WriteAllBytes(localfileNameWithPath, content);
-                }
-            }
+                Timeout = TimeSpan.FromMinutes(20)
+            };
+
+            using var response = await client.GetAsync(serverUrl, HttpCompletionOption.ResponseHeadersRead);
+
+            response.EnsureSuccessStatusCode();
+
+            await using var stream = await response.Content.ReadAsStreamAsync();
+            await using var fileStream = new FileStream(
+                localFileNameWithPath,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 81920,
+                useAsync: true);
+
+            await stream.CopyToAsync(fileStream);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error downloading file {_serverUrl}: {ex.Message}");
+            Debug.WriteLine($"Error downloading file {serverUrl}: {ex}");
             return "";
         }
 
-        return localfileNameWithPath;
+        return localFileNameWithPath;
     }
 
 
+    private void UpdateInfoLabel(string msg)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        { 
+            lblloadinginfo.Text = msg; 
+        });
+            
+    }
 }
 
 // Model class for API response

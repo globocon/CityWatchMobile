@@ -254,6 +254,17 @@ namespace C4iSytemsMobApp
                 UpdateSyncStatusLabel(newStatus);
             });
         }
+        private void PcarInsp_TagResetEvent()
+        {
+            //if (!_isNfcEnabledForSite) return;
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                ResetPcarInspTag();
+            });
+
+            ResetPcarInspTag();
+        }
         private async Task OnDuressClicked2(object sender, EventArgs e)
         {
             // Your existing duress popup logic here
@@ -273,6 +284,7 @@ namespace C4iSytemsMobApp
 
             SyncState.SyncedCountChanged += SyncState_SyncedCountChanged;
             SyncState.SyncingStatusChanged += SyncState_SyncingStatusChanged;
+            App.PcarInspTagResetEvent += PcarInsp_TagResetEvent;
             var cc = await _syncService.GetCurrentCacheCountAsync();
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -327,7 +339,14 @@ namespace C4iSytemsMobApp
 
             try
             {
-                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetTagStatus?clientId={clientId}";
+                int _tagclientId = clientId.Value;
+
+                if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+                {
+                    _tagclientId = App.PcarInspLastScannedSiteId.HasValue ? App.PcarInspLastScannedSiteId.Value : clientId.Value;
+                }
+
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetTagStatus?clientId={_tagclientId}";
                 using var client = new HttpClient();
                 var response = await client.GetAsync(apiUrl);
                 if (!response.IsSuccessStatusCode) return;
@@ -343,9 +362,10 @@ namespace C4iSytemsMobApp
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
                         var formatted = new FormattedString();
-                        var isPcar = string.Equals(first.Tour, "PCAR", StringComparison.OrdinalIgnoreCase);
-                        var counterLabelColor = isPcar ? Colors.Transparent : Colors.Gray;
-                        var counterValueColor = isPcar ? Colors.Transparent : Colors.Black;
+                        //var isPcar = string.Equals(first.Tour, "PCAR", StringComparison.OrdinalIgnoreCase);
+                        var isPcar = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP;
+                        var counterLabelColor = isPcar ? Colors.DarkGray : Colors.Gray;
+                        var counterValueColor = isPcar ? Colors.Black : Colors.Black;
 
                         // Tags
                         formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = counterLabelColor });
@@ -375,17 +395,19 @@ namespace C4iSytemsMobApp
                             Command = new Command(async () =>
                             {
                                 // If PCAR, counters are hidden, so we should probably prevent the popup
-                                if (isPcar) return;
+                                //if (isPcar) return;
 
                                 //await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");
                                 if (App.IsOnline)
                                 {
                                     PopupOverlay.IsVisible = true;
-                                    var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
-                                    if (clientSiteId == null) return;
+                                    //var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+                                    //if (clientSiteId == null) return;
+                                    //_tagclientId
                                     // Call API to get tag fields
                                     // Call API to get tag fields for this client site
-                                    var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
+                                    //var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
+                                    var fieldsFromApi = await GetTagFieldsFromApi(_tagclientId);
                                     if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
 
                                     // Clear the existing collection
@@ -408,7 +430,8 @@ namespace C4iSytemsMobApp
 
                         // Tour
                         formatted.Spans.Add(new Span { Text = "   Tour: ", FontSize = 12, TextColor = Colors.Gray });
-                        formatted.Spans.Add(new Span { Text = first.Tour, FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                        //formatted.Spans.Add(new Span { Text = first.Tour, FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
+                        formatted.Spans.Add(new Span { Text = App.TourMode.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = Colors.Black });
 
                         // Assign to Label
                         TagStatusLabel.FormattedText = formatted;
@@ -430,58 +453,81 @@ namespace C4iSytemsMobApp
 
             try
             {
-                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSiteTourMode?clientSiteId={clientId}";
+                //string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSiteTourMode?clientSiteId={clientId}";
+                //using var client = new HttpClient();
+                //var response = await client.GetAsync(apiUrl);
+                //if (!response.IsSuccessStatusCode) return;
+
+                //string tourMode = await response.Content.ReadAsStringAsync();
+                //// Remove quotes if present in the response
+                //tourMode = tourMode.Trim('\"');
+                int _tagclientId = clientId.Value;
+
+                if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+                {
+                    _tagclientId = App.PcarInspLastScannedSiteId.HasValue ? App.PcarInspLastScannedSiteId.Value : clientId.Value;
+                }
+
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetTagStatus?clientId={_tagclientId}";
                 using var client = new HttpClient();
                 var response = await client.GetAsync(apiUrl);
                 if (!response.IsSuccessStatusCode) return;
 
-                string tourMode = await response.Content.ReadAsStringAsync();
-                // Remove quotes if present in the response
-                tourMode = tourMode.Trim('\"');
+                string json = await response.Content.ReadAsStringAsync();
+                var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var result = System.Text.Json.JsonSerializer.Deserialize<List<SiteTagStatus>>(json, options);
 
-                MainThread.BeginInvokeOnMainThread(() =>
+                if (result != null && result.Any())
                 {
-                    var formatted = new FormattedString();
+                    var first = result.First();
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        var formatted = new FormattedString();
 
-                    // Tour is PCAR, so counters should be transparent
-                    var isPcar = string.Equals(tourMode, "PCAR", StringComparison.OrdinalIgnoreCase);
+                        // Tour is PCAR, so counters should be transparent
+                        //var isPcar =  string.Equals(tourMode, "PCAR", StringComparison.OrdinalIgnoreCase);
+                        var isPcar = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP;
 
-                    // In LoadTourModeAsync (NFC disabled), counters are always transparent
-                    var counterColor = Colors.Transparent;
-                    // Tour label is only visible if it's PCAR
-                    var tourColor = isPcar ? Colors.Black : Colors.Transparent;
-                    var tourLabelColor = isPcar ? Colors.Gray : Colors.Transparent;
+                        // In LoadTourModeAsync (NFC disabled), counters are always transparent
+                        var counterColor = Colors.Transparent;
+                        // Tour label is only visible if it's PCAR
+                        var tourColor = isPcar ? Colors.Black : Colors.Transparent;
+                        var tourLabelColor = isPcar ? Colors.Gray : Colors.Transparent;
 
-                    // Tags
-                    formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = counterColor });
-                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterColor });
+                        var counterLabelColor = isPcar ? Colors.DarkGray : Colors.Gray;
+                        var counterValueColor = isPcar ? Colors.Black : Colors.Black;
 
-                    // Hit
-                    formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = counterColor });
-                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterColor });
+                        // Tags
+                        formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.TotalTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
-                    // Fq
-                    formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = counterColor });
-                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterColor });
+                        // Hit
+                        formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.ScannedTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
-                    // Missed
-                    formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = counterColor });
-                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterColor });
+                        // Fq
+                        formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.CompletedRounds.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
-                    // Tour
-                    formatted.Spans.Add(new Span { Text = "   Tour: ", FontSize = 12, TextColor = tourLabelColor });
-                    formatted.Spans.Add(new Span { Text = tourMode, FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = tourColor });
+                        // Missed
+                        formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = counterLabelColor });
+                        formatted.Spans.Add(new Span { Text = first.RemainingTags.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
 
-                    // Assign to Label
-                    TagStatusLabel.FormattedText = formatted;
-                });
+                        // Tour
+                        formatted.Spans.Add(new Span { Text = "   Tour: ", FontSize = 12, TextColor = tourLabelColor });
+                        formatted.Spans.Add(new Span { Text = App.TourMode.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = tourColor });
+
+                        // Assign to Label
+                        TagStatusLabel.FormattedText = formatted;
+                    });
+
+                }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error loading tour mode: {ex.Message}");
             }
         }
-
 
         public async Task LoadTagStatusPendingAsync(int? clientId)
         {
@@ -570,6 +616,50 @@ namespace C4iSytemsMobApp
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error loading tag status: {ex.Message}");
+            }
+        }
+
+        public void ResetPcarInspTag()
+        {
+            try
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    var formatted = new FormattedString();               
+                    //var isPcar = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP;
+
+                    var counterLabelColor = Colors.Gray;
+                    var counterValueColor = Colors.Black;
+
+                    // Tags
+                    formatted.Spans.Add(new Span { Text = "Tags: ", FontSize = 12, TextColor = counterLabelColor });
+                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
+
+                    // Hit
+                    formatted.Spans.Add(new Span { Text = "   Hit: ", FontSize = 12, TextColor = counterLabelColor });
+                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
+
+                    // Fq
+                    formatted.Spans.Add(new Span { Text = "   Fq: ", FontSize = 12, TextColor = counterLabelColor });
+                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
+
+                    // Missed
+                    formatted.Spans.Add(new Span { Text = "   Missed: ", FontSize = 12, TextColor = counterLabelColor });
+                    formatted.Spans.Add(new Span { Text = "0", FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
+
+                    // Tour
+                    formatted.Spans.Add(new Span { Text = "   Tour: ", FontSize = 12, TextColor = counterLabelColor });
+                    formatted.Spans.Add(new Span { Text = App.TourMode.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 12, TextColor = counterValueColor });
+
+                    // Assign to Label
+                    TagStatusLabel.FormattedText = formatted;
+                });
+
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading tour mode: {ex.Message}");
             }
         }
 
@@ -1631,6 +1721,17 @@ namespace C4iSytemsMobApp
             }
             else if (!string.IsNullOrEmpty(serialNumber))
             {
+                if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+                {
+                    // Get site ID from scanned tag and store it in a global variable to be used across the app, especially for PCAR/INSP modules
+                    var _taginfoLocal = await _scannerControlServices.GetTagDetailsFromLocalDbAsync(serialNumber);
+                    if (_taginfoLocal != null && _taginfoLocal.ClientSiteId > 0)
+                        App.PcarInspLastScannedSiteId = _taginfoLocal.ClientSiteId;
+                    else
+                        App.PcarInspLastScannedSiteId = null; // Reset if tag not found or invalid
+                    App.PcarInspLastScannedTime = DateTime.Now;
+                }
+
                 if (!App.IsOnline)
                 {
                     // Log To Cache                    
@@ -1654,7 +1755,7 @@ namespace C4iSytemsMobApp
                         int _scannerType = (int)ScanningType.NFC;
                         var _taguid = serialNumber;
                         if (!scannerSettings.tagFound) { _taguid = "NA"; }
-                        int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;                    
+                        int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
                         await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId);
                     }
                     else
@@ -1875,9 +1976,25 @@ namespace C4iSytemsMobApp
             {
                 if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
 
+                //// Check if mac address is in the local db
+                //var tagExists = await _scannerControlServices.CheckIfTagExistsForSiteInLocalDb(serialNumber);
+                //if (!tagExists) { return; }
+
+                // Get site ID from scanned tag and store it in a global variable to be used across the app, especially for PCAR/INSP modules
+                var _taginfoLocal = await _scannerControlServices.GetTagDetailsFromLocalDbAsync(serialNumber);
                 // Check if mac address is in the local db
-                var tagExists = await _scannerControlServices.CheckIfTagExistsForSiteInLocalDb(serialNumber);
-                if (!tagExists) { return; }
+                if (_taginfoLocal == null || _taginfoLocal?.ClientSiteId <= 0)
+                {
+                    App.PcarInspLastScannedSiteId = null;// Reset if tag not found or invalid
+                    return;
+                }
+
+                if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+                {
+                    App.PcarInspLastScannedSiteId = _taginfoLocal?.ClientSiteId;
+                    App.PcarInspLastScannedTime = DateTime.Now;
+                }
+
 
                 if (!App.IsOnline)
                 {
