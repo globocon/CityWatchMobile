@@ -1080,34 +1080,20 @@ public partial class GuardLoginPage : ContentPage
                     Preferences.Set("NfcOnboarded", "false");
                     Preferences.Set("iBeaconOnboarded", "false");
                     UpdateInfoLabel("Checking Smart Wand Tags Settings.");
-                    var scannerSettings = await _scannerControlServices.CheckScannerOnboardedAsync(clientSiteIdString);
-                    if (scannerSettings != null && scannerSettings.Count > 0)
+                    if (App.TourMode != PatrolTouringMode.STND)
                     {
-                        if (scannerSettings.Exists(x => x.ToLower().Equals("bluetooth")))
+                        Preferences.Set("iBeaconOnboarded", "true");
+
+                        Preferences.Set("NfcOnboarded", "true");
+                        //check if nfc is available in the device
+                        //check if nfc is enabled
+                        if (_nfcService.IsSupported && _nfcService.IsAvailable && !NfcIsEnabled)
                         {
-                            Preferences.Set("iBeaconOnboarded", "true");
+                            await DisplayAlert(ALERT_TITLE, "NFC is disabled. Please enable NFC to proceed.", "OK");
+                            return;
                         }
 
-                        // If scanner is onboarded, navigate to NFC page
-                        if (scannerSettings.Exists(x => x.ToLower().Equals("nfc")))
-                        {
-                            Preferences.Set("NfcOnboarded", "true");
-                            //check if nfc is available in the device
-                            //check if nfc is enabled
-                            if (_nfcService.IsSupported && _nfcService.IsAvailable && !NfcIsEnabled)
-                            {
-                                await DisplayAlert(ALERT_TITLE, "NFC is disabled. Please enable NFC to proceed.", "OK");
-                                return;
-                            }
-
-                            if (_nfcService.IsSupported && _nfcService.IsAvailable && NfcIsEnabled) { UnsubscribeFromNFCEvents(); }
-                        }
-                        else
-                        {
-                            Preferences.Set("NfcOnboarded", "false");
-                        }
-
-
+                        if (_nfcService.IsSupported && _nfcService.IsAvailable && NfcIsEnabled) { UnsubscribeFromNFCEvents(); }
 
                         //Get all the smartwand tags asscosiated with the site
                         UpdateInfoLabel("Reading Smart Wand Tags for site.");
@@ -1117,8 +1103,50 @@ public partial class GuardLoginPage : ContentPage
                             UpdateInfoLabel($"Processing Smart Wand Tags Offline Data. {swtags.Count} records...Please wait...");
                             await _scanDataDbService.RefreshSmartWandTagsList(swtags);
                         }
-
                     }
+                    else
+                    {
+                        var scannerSettings = await _scannerControlServices.CheckScannerOnboardedAsync(clientSiteIdString);
+                        if (scannerSettings != null && scannerSettings.Count > 0)
+                        {
+                            if (scannerSettings.Exists(x => x.ToLower().Equals("bluetooth")))
+                            {
+                                Preferences.Set("iBeaconOnboarded", "true");
+                            }
+
+                            // If scanner is onboarded, navigate to NFC page
+                            if (scannerSettings.Exists(x => x.ToLower().Equals("nfc")))
+                            {
+                                Preferences.Set("NfcOnboarded", "true");
+                                //check if nfc is available in the device
+                                //check if nfc is enabled
+                                if (_nfcService.IsSupported && _nfcService.IsAvailable && !NfcIsEnabled)
+                                {
+                                    await DisplayAlert(ALERT_TITLE, "NFC is disabled. Please enable NFC to proceed.", "OK");
+                                    return;
+                                }
+
+                                if (_nfcService.IsSupported && _nfcService.IsAvailable && NfcIsEnabled) { UnsubscribeFromNFCEvents(); }
+                            }
+                            else
+                            {
+                                Preferences.Set("NfcOnboarded", "false");
+                            }
+
+
+
+                            //Get all the smartwand tags asscosiated with the site
+                            UpdateInfoLabel("Reading Smart Wand Tags for site.");
+                            var swtags = await _scannerControlServices.GetSmartWandTagsForSite(clientSiteIdString);
+                            if (swtags != null && swtags.Count > 0)
+                            {
+                                UpdateInfoLabel($"Processing Smart Wand Tags Offline Data. {swtags.Count} records...Please wait...");
+                                await _scanDataDbService.RefreshSmartWandTagsList(swtags);
+                            }
+
+                        }
+                    }
+
 
 
                     Preferences.Set("CrowdCountEnabledForSite", "false");
@@ -1407,10 +1435,10 @@ public partial class GuardLoginPage : ContentPage
     private void UpdateInfoLabel(string msg)
     {
         MainThread.BeginInvokeOnMainThread(() =>
-        { 
-            lblloadinginfo.Text = msg; 
+        {
+            lblloadinginfo.Text = msg;
         });
-            
+
     }
 }
 
