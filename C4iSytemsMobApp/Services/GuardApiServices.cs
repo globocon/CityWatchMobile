@@ -181,8 +181,9 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
-        public async Task<bool> SaveHrDocument(GuardComplianceAndLicense guardComplianceAndLicense, FileResult? file)
+        public async Task<(bool,string)> SaveHrDocument(GuardComplianceAndLicense guardComplianceAndLicense, FileResult? file)
         {
+            string msg = "";
 
             var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SaveHrRecordOfGuard";
 
@@ -228,19 +229,32 @@ namespace C4iSytemsMobApp.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var rows = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
-                    return rows.data;
+                    if(rows != null)
+                    {
+                        if(rows.isSuccess)
+                            msg = "HR Record document has been saved.";
+                        else
+                            msg = rows.message;
+                        return (rows.isSuccess, msg);
+                    }
+                    else
+                    {
+                        msg = "Error saving HR Document";
+                        return (false, msg);
+                    }
                 }
                 else
                 {
                     var errorResult = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
                     Console.WriteLine($"Error saving HR Document: {errorResult.message}");
-                    return errorResult.isSuccess;
+                    return (false, errorResult.message);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error saving HR Document: {ex.Message}");
-                return false;
+                msg = "Unable to save record.An error occured while saving the record.";
+                return (false, msg);
             }
             // ----- Send request -----
 
