@@ -468,16 +468,16 @@ public partial class HrRecordsPage : ContentPage
             guardComplianceAndLicense.FileName = EditingRecord?.FileName ?? "";
         }
 
-        var r = await _guardApiServices.SaveHrDocument(guardComplianceAndLicense, SelectedFiles?.First()?.File);
+        var (r,m) = await _guardApiServices.SaveHrDocument(guardComplianceAndLicense, SelectedFiles?.First()?.File);
         if (!r)
         {
-            await Application.Current.MainPage.DisplayAlert("Error", "Failed to save HR Record document.", "OK");
+            await Application.Current.MainPage.DisplayAlert("Error", m, "OK");
             return;
         }
         else
         {
             await LoadHrRecordsAsync();
-            await Application.Current.MainPage.DisplayAlert("Success", "HR Record document has been saved.", "OK");
+            await Application.Current.MainPage.DisplayAlert("Success", m, "OK");
             // Close popup
             PopupOverlayAddCompliance.IsVisible = false;
             // Clear the edit file list
