@@ -1,4 +1,6 @@
+using AutoMapper;
 using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Data.Entity;
 using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
@@ -13,7 +15,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace C4iSytemsMobApp;
 
@@ -24,6 +25,8 @@ public partial class GuardLoginPage : ContentPage
     private readonly ICrowdControlServices _crowdControlServices;
     private readonly INfcService _nfcService;
     private readonly IScanDataDbServices _scanDataDbService;
+    private readonly ICustomLogEntryServices _customLogEntryServices;
+    private readonly IMapper _mapper;
     private bool _isNewGuard = false;
     private bool _isPopupOpen = false;
 
@@ -104,9 +107,16 @@ public partial class GuardLoginPage : ContentPage
 
 
     private const string PrefKey = "SavedLicenseNumbers";
-    private List<string> _previousNumbers = new List<string>();
+    // Change to store objects with timestamp
+    private List<LicenseEntry> _previousNumbers = new List<LicenseEntry>();
     private ObservableCollection<string> _filteredSuggestions = new ObservableCollection<string>();
     private const string LastNumberKey = "LastEnteredNumber";
+
+    private void OnLicenseUnfocused(object sender, FocusEventArgs e)
+    {
+        SuggestionsView.IsVisible = false;
+        SuggestionsFrame.IsVisible = false;
+    }
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -153,6 +163,8 @@ public partial class GuardLoginPage : ContentPage
         _scannerControlServices = scannerControlServices;
         _nfcService = IPlatformApplication.Current.Services.GetService<INfcService>();
         _scanDataDbService = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
+        _mapper = IPlatformApplication.Current.Services.GetService<IMapper>();
+        _customLogEntryServices = IPlatformApplication.Current.Services.GetService<ICustomLogEntryServices>();
 
         BindingContext = this;
         LoadLoggedInUser();
@@ -174,11 +186,42 @@ public partial class GuardLoginPage : ContentPage
     private void LoadSavedNumbers()
     {
         const string PrefKey = "SavedLicenseNumbers";
+        const int ExpirationDays = 45;
 
         var json = Preferences.Get(PrefKey, string.Empty);
-        _previousNumbers = string.IsNullOrEmpty(json)
-            ? new List<string>()
-            : JsonSerializer.Deserialize<List<string>>(json);
+
+        if (string.IsNullOrEmpty(json))
+        {
+            _previousNumbers = new List<LicenseEntry>();
+        }
+        else
+        {
+            try
+            {
+                // Try to deserialize as new format
+                _previousNumbers = JsonSerializer.Deserialize<List<LicenseEntry>>(json);
+            }
+            catch
+            {
+                // Fallback: Migration from old List<string>
+                try
+                {
+                    var oldList = JsonSerializer.Deserialize<List<string>>(json);
+                    _previousNumbers = oldList.Select(n => new LicenseEntry { Number = n, LastUsed = DateTime.Now }).ToList();
+                }
+                catch
+                {
+                    _previousNumbers = new List<LicenseEntry>();
+                }
+            }
+        }
+
+        // Cleanup expired entries
+        var cutoffDate = DateTime.Now.AddDays(-ExpirationDays);
+        _previousNumbers.RemoveAll(x => x.LastUsed < cutoffDate);
+
+        // If changes made (cleanup or migration), save back
+        SaveNumbers();
 
         string lastNumber = Preferences.Get(LastNumberKey, string.Empty);
         if (!string.IsNullOrEmpty(lastNumber))
@@ -188,16 +231,13 @@ public partial class GuardLoginPage : ContentPage
 
         if (_previousNumbers != null && _previousNumbers.Any())
         {
-            // Sort alphabetically
-            _previousNumbers = _previousNumbers.OrderBy(x => x).ToList();
-
-            // Set last entered value to textbox
-            // txtLicenseNumber.Text = _previousNumbers.Last();
+            // Sort by most recently used
+            _previousNumbers = _previousNumbers.OrderByDescending(x => x.LastUsed).ToList();
 
             // Load full list into suggestion view
             _filteredSuggestions.Clear();
             foreach (var item in _previousNumbers)
-                _filteredSuggestions.Add(item);
+                _filteredSuggestions.Add(item.Number);
 
             // Show suggestion list on first load
             SuggestionsView.IsVisible = true;
@@ -215,6 +255,7 @@ public partial class GuardLoginPage : ContentPage
     private void SaveNumbers()
     {
         var json = JsonSerializer.Serialize(_previousNumbers);
+        const string PrefKey = "SavedLicenseNumbers";
         Preferences.Set(PrefKey, json);
     }
 
@@ -223,17 +264,14 @@ public partial class GuardLoginPage : ContentPage
         if (string.IsNullOrWhiteSpace(newNumber))
             return;
 
-        // Load existing numbers from Preferences
-        var json = Preferences.Get(PrefKey, string.Empty);
-        _previousNumbers = string.IsNullOrEmpty(json)
-            ? new List<string>()
-            : JsonSerializer.Deserialize<List<string>>(json);
+        // Ensure list is loaded
+        if (_previousNumbers == null) LoadSavedNumbers();
 
-        // Remove if already exists to avoid duplicates
-        _previousNumbers.RemoveAll(x => x.Equals(newNumber, StringComparison.OrdinalIgnoreCase));
+        // Remove if already exists to update position/timestamp
+        _previousNumbers.RemoveAll(x => x.Number.Equals(newNumber, StringComparison.OrdinalIgnoreCase));
 
-        // Insert at the beginning so it appears first
-        _previousNumbers.Insert(0, newNumber);
+        // Insert at the beginning (Most Recent)
+        _previousNumbers.Insert(0, new LicenseEntry { Number = newNumber, LastUsed = DateTime.Now });
 
         // Save updated list to Preferences
         SaveNumbers();
@@ -246,11 +284,11 @@ public partial class GuardLoginPage : ContentPage
 
         var matches = string.IsNullOrEmpty(query)
             ? _previousNumbers // show all when empty
-            : _previousNumbers.Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+            : _previousNumbers.Where(x => x.Number.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
 
         _filteredSuggestions.Clear();
         foreach (var item in matches)
-            _filteredSuggestions.Add(item);
+            _filteredSuggestions.Add(item.Number);
 
         SuggestionsView.IsVisible = _filteredSuggestions.Any();
         SuggestionsFrame.IsVisible = _filteredSuggestions.Any();
@@ -263,7 +301,7 @@ public partial class GuardLoginPage : ContentPage
         //{
         _filteredSuggestions.Clear();
         foreach (var item in _previousNumbers)
-            _filteredSuggestions.Add(item);
+            _filteredSuggestions.Add(item.Number);
 
         SuggestionsView.IsVisible = _filteredSuggestions.Any();
         SuggestionsFrame.IsVisible = _filteredSuggestions.Any();
@@ -279,7 +317,7 @@ public partial class GuardLoginPage : ContentPage
             //_suppressSuggestions = false;
             _filteredSuggestions.Clear();
             foreach (var item in _previousNumbers)
-                _filteredSuggestions.Add(item);
+                _filteredSuggestions.Add(item.Number);
 
             SuggestionsView.IsVisible = _filteredSuggestions.Any();
             SuggestionsFrame.IsVisible = _filteredSuggestions.Any();
@@ -614,7 +652,7 @@ public partial class GuardLoginPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Error", "Network error: " + ex.Message, "OK");
+            await DisplayAlert("Error", "Network error: " + ex.Message + ". Please ensure you are online and have an internet connection", "OK");
         }
     }
 
@@ -657,8 +695,16 @@ public partial class GuardLoginPage : ContentPage
 
     private async void OnEnterLogbookClicked(object sender, EventArgs e)
     {
+        btnEnterLogbook.BackgroundColor = Colors.Gray;
+        btnEnterLogbook.IsEnabled = false;
+        loadingIndicator.IsVisible = true;
+        loadingIndicator.IsRunning = true;
+        UpdateInfoLabel("");
+        lblloadinginfo.IsVisible = true;
         try
         {
+
+
             // Retrieve GuardId securely
             string guardIdString = Preferences.Get("GuardId", "");
             if (string.IsNullOrWhiteSpace(guardIdString) || !int.TryParse(guardIdString, out int guardId) || guardId <= 0)
@@ -752,7 +798,7 @@ public partial class GuardLoginPage : ContentPage
                 IsNewGuard = _isNewGuard
             };
 
-
+            lblloadinginfo.Text = "Authenticating...Please wait...";
             var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin";
             using (HttpClient client = new HttpClient())
             {
@@ -760,10 +806,254 @@ public partial class GuardLoginPage : ContentPage
                 HttpResponseMessage response = await client.PostAsJsonAsync(apiUrl, request);
                 if (response.IsSuccessStatusCode)
                 {
+                    UpdateInfoLabel("Processing Offline Data...Please wait...");
                     string contentData = await response.Content.ReadAsStringAsync();
                     var responseJson = JsonSerializer.Deserialize<JsonElement>(contentData);
                     int tourMode = responseJson.GetProperty("tourMode").GetInt32();
                     App.TourMode = (PatrolTouringMode)tourMode;
+
+                    try
+                    {
+
+                        await _scanDataDbService.ClearPrePopulatedActivitesButtonList();
+                        // Deserialize activity list
+                        var activityElement = responseJson.GetProperty("activity");
+                        List<ActivityModel> activity = JsonSerializer.Deserialize<List<ActivityModel>>(
+                            activityElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (activity != null && activity.Count > 0)
+                        {
+                            UpdateInfoLabel($"Processing activity Offline Data. {activity.Count} records...Please wait...");
+                            // Save to local DB
+                            await _scanDataDbService.RefreshPrePopulatedActivitesButtonList(activity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearPatrolCarCacheList();
+                        // Deserialize pcarlogs list
+                        var patrolCarLogElement = responseJson.GetProperty("patrolCarLog");
+                        List<PatrolCarLog> pcarlogs = JsonSerializer.Deserialize<List<PatrolCarLog>>(
+                            patrolCarLogElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (pcarlogs != null && pcarlogs.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<PatrolCarLogCache>>(pcarlogs);
+                            // Save to local DB
+                            UpdateInfoLabel($"Processing PatrolCar Offline Data. {pcarlogs.Count} records...Please wait...");
+                            await _scanDataDbService.RefreshPatrolCarCacheList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+
+                        await _scanDataDbService.ClearCustomFieldLogCacheList();
+                        // Deserialize CustomField list
+                        var customFieldLogElement = responseJson.GetProperty("customFieldLog");
+                        List<Dictionary<string, string?>> customFieldLogs = JsonSerializer.Deserialize<List<Dictionary<string, string?>>>(
+                            customFieldLogElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (customFieldLogs != null && customFieldLogs.Count > 0)
+                        {
+                            UpdateInfoLabel($"Processing CustomField Offline Data. {customFieldLogs.Count} records...Please wait...");
+                            await _customLogEntryServices.ProcessCustomFieldLogsOnlineDataToCache(customFieldLogs);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearRCLinkedDuressClientSitesList();
+                        // Deserialize RC Linked Duress ClientSites list
+                        var rcLinkedDuressClientSitesElement = responseJson.GetProperty("rcLinkedClientSites");
+                        List<RCLinkedDuressClientSitesCache> rcLinkedDuressClientSites = JsonSerializer.Deserialize<List<RCLinkedDuressClientSitesCache>>(
+                            rcLinkedDuressClientSitesElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (rcLinkedDuressClientSites != null && rcLinkedDuressClientSites.Count > 0)
+                        {
+                            //var cacheEntity = _mapper.Map<List<RCLinkedDuressClientSitesCache>>(rcLinkedDuressClientSitesElement);
+                            // Save to local DB
+                            UpdateInfoLabel($"Processing Linked Client Sites Offline Data. {rcLinkedDuressClientSites.Count} records...Please wait...");
+                            await _scanDataDbService.RefreshRCLinkedDuressClientSitesList(rcLinkedDuressClientSites);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearIrClientSitesTypesLocalList();
+                        // Deserialize irClientTypes list
+                        var irClientTypesElement = responseJson.GetProperty("irClientTypes");
+                        List<DropdownItem> irClientTypes = JsonSerializer.Deserialize<List<DropdownItem>>(
+                            irClientTypesElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (irClientTypes != null && irClientTypes.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<ClientSiteTypeLocal>>(irClientTypes);
+                            // Save to local DB
+                            UpdateInfoLabel($"Processing IR Client Types Offline Data. {irClientTypes.Count} records...Please wait...");
+                            await _scanDataDbService.RefreshIrClientSitesTypesLocalList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearIrClientSitesLocalList();
+                        // Deserialize irClientSites list
+                        var irClientSitesElement = responseJson.GetProperty("irClientSites");
+                        List<WebIncidentReport.ClientSite> irClientSites = JsonSerializer.Deserialize<List<WebIncidentReport.ClientSite>>(
+                            irClientSitesElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (irClientSites != null && irClientSites.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<ClientSitesLocal>>(irClientSites);
+                            // Save to local DB
+                            UpdateInfoLabel($"Processing IR Client Sites Offline Data. {irClientSites.Count} records...Please wait...");
+                            await _scanDataDbService.RefreshIrClientSitesLocalList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearIrFeedbackTemplateLocalList();
+                        // Deserialize irFeedbackTemplates list
+                        var irFeedbackTemplatesElement = responseJson.GetProperty("irFeedbackTemplates");
+                        List<WebIncidentReport.FeedbackTemplateViewModel> irFeedbackTemplates = JsonSerializer.Deserialize<List<WebIncidentReport.FeedbackTemplateViewModel>>(
+                            irFeedbackTemplatesElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (irFeedbackTemplates != null && irFeedbackTemplates.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<IrFeedbackTemplateViewModelLocal>>(irFeedbackTemplates);
+                            // Save to local DB
+                            UpdateInfoLabel($"Processing IR Feedback Templates Offline Data. {irFeedbackTemplates.Count} records...Please wait...");
+                            await _scanDataDbService.RefreshIrFeedbackTemplateLocalList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearIrNotifiedByLocalList();
+                        // Deserialize irNotifiedBy list
+                        var irNotifiedByElement = responseJson.GetProperty("irNotifiedByList");
+                        List<string> irNotifiedBy = JsonSerializer.Deserialize<List<string>>(
+                            irNotifiedByElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (irNotifiedBy != null && irNotifiedBy.Count > 0)
+                        {
+
+                            List<IrNotifiedByLocal> cacheEntity = irNotifiedBy
+                                .Select(x => new IrNotifiedByLocal
+                                {
+                                    NotifiedBy = x
+                                }).ToList();
+
+                            // Save to local DB
+                            UpdateInfoLabel($"Processing IR Notified By Offline Data. {irNotifiedBy.Count} records...Please wait...");
+                            await _scanDataDbService.RefreshIrNotifiedByLocalList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        await _scanDataDbService.ClearIrAreasLocalList();
+                        // Deserialize irAreas list
+                        var irAreasElement = responseJson.GetProperty("irAreas");
+                        List<WebIncidentReport.AreaItem> irAreas = JsonSerializer.Deserialize<List<WebIncidentReport.AreaItem>>(
+                            irAreasElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (irAreas != null && irAreas.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<ClientSiteAreaLocal>>(irAreas);
+                            // Save to local DB
+                            UpdateInfoLabel($"Processing IR Areas Offline Data. {irAreas.Count} records...Please wait...");
+                            await _scanDataDbService.RefreshIrAreasLocalList(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        // Deserialize Audio list
+                        var Mp3FileElement = responseJson.GetProperty("audioList");
+                        List<Audio.Mp3File> mp3files = JsonSerializer.Deserialize<List<Audio.Mp3File>>(
+                            Mp3FileElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (mp3files != null && mp3files.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<AudioAndMultimediaLocal>>(mp3files);
+                            UpdateInfoLabel($"Processing Multimedia Audio Offline Data. {mp3files.Count} records...Please wait...");
+                            await CheckAndSyncMultimediaFiles(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    try
+                    {
+                        // Deserialize multimediaList list
+                        var videoElement = responseJson.GetProperty("multimediaList");
+                        List<VideoFile> videos = JsonSerializer.Deserialize<List<VideoFile>>(
+                            videoElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (videos != null && videos.Count > 0)
+                        {
+                            var cacheEntity = _mapper.Map<List<AudioAndMultimediaLocal>>(videos);
+                            UpdateInfoLabel($"Processing Multimedia Video Offline Data. {videos.Count} records...Please wait...");
+                            await CheckAndSyncMultimediaFiles(cacheEntity);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
 
                     if (pickerClientSite.SelectedItem is DropdownItem selectedClientSite)
                     {
@@ -789,46 +1079,78 @@ public partial class GuardLoginPage : ContentPage
                     // Check if NFC is onboarded for site
                     Preferences.Set("NfcOnboarded", "false");
                     Preferences.Set("iBeaconOnboarded", "false");
-                    var scannerSettings = await _scannerControlServices.CheckScannerOnboardedAsync(clientSiteIdString);
-                    if (scannerSettings != null && scannerSettings.Count > 0)
+                    UpdateInfoLabel("Checking Smart Wand Tags Settings.");
+                    if (App.TourMode != PatrolTouringMode.STND)
                     {
-                        if (scannerSettings.Exists(x => x.ToLower().Equals("bluetooth")))
+                        Preferences.Set("iBeaconOnboarded", "true");
+
+                        Preferences.Set("NfcOnboarded", "true");
+                        //check if nfc is available in the device
+                        //check if nfc is enabled
+                        if (_nfcService.IsSupported && _nfcService.IsAvailable && !NfcIsEnabled)
                         {
-                            Preferences.Set("iBeaconOnboarded", "true");
+                            await DisplayAlert(ALERT_TITLE, "NFC is disabled. Please enable NFC to proceed.", "OK");
+                            return;
                         }
 
-                        // If scanner is onboarded, navigate to NFC page
-                        if (scannerSettings.Exists(x => x.ToLower().Equals("nfc")))
-                        {
-                            Preferences.Set("NfcOnboarded", "true");
-                            //check if nfc is available in the device
-                            //check if nfc is enabled
-                            if (_nfcService.IsSupported && _nfcService.IsAvailable && !NfcIsEnabled)
-                            {
-                                await DisplayAlert(ALERT_TITLE, "NFC is disabled. Please enable NFC to proceed.", "OK");
-                                return;
-                            }
-
-                            if (_nfcService.IsSupported && _nfcService.IsAvailable && NfcIsEnabled) { UnsubscribeFromNFCEvents(); }
-                        }
-                        else
-                        {
-                            Preferences.Set("NfcOnboarded", "false");
-                        }
-
-
+                        if (_nfcService.IsSupported && _nfcService.IsAvailable && NfcIsEnabled) { UnsubscribeFromNFCEvents(); }
 
                         //Get all the smartwand tags asscosiated with the site
+                        UpdateInfoLabel("Reading Smart Wand Tags for site.");
                         var swtags = await _scannerControlServices.GetSmartWandTagsForSite(clientSiteIdString);
                         if (swtags != null && swtags.Count > 0)
                         {
+                            UpdateInfoLabel($"Processing Smart Wand Tags Offline Data. {swtags.Count} records...Please wait...");
                             await _scanDataDbService.RefreshSmartWandTagsList(swtags);
                         }
+                    }
+                    else
+                    {
+                        var scannerSettings = await _scannerControlServices.CheckScannerOnboardedAsync(clientSiteIdString);
+                        if (scannerSettings != null && scannerSettings.Count > 0)
+                        {
+                            if (scannerSettings.Exists(x => x.ToLower().Equals("bluetooth")))
+                            {
+                                Preferences.Set("iBeaconOnboarded", "true");
+                            }
 
+                            // If scanner is onboarded, navigate to NFC page
+                            if (scannerSettings.Exists(x => x.ToLower().Equals("nfc")))
+                            {
+                                Preferences.Set("NfcOnboarded", "true");
+                                //check if nfc is available in the device
+                                //check if nfc is enabled
+                                if (_nfcService.IsSupported && _nfcService.IsAvailable && !NfcIsEnabled)
+                                {
+                                    await DisplayAlert(ALERT_TITLE, "NFC is disabled. Please enable NFC to proceed.", "OK");
+                                    return;
+                                }
+
+                                if (_nfcService.IsSupported && _nfcService.IsAvailable && NfcIsEnabled) { UnsubscribeFromNFCEvents(); }
+                            }
+                            else
+                            {
+                                Preferences.Set("NfcOnboarded", "false");
+                            }
+
+
+
+                            //Get all the smartwand tags asscosiated with the site
+                            UpdateInfoLabel("Reading Smart Wand Tags for site.");
+                            var swtags = await _scannerControlServices.GetSmartWandTagsForSite(clientSiteIdString);
+                            if (swtags != null && swtags.Count > 0)
+                            {
+                                UpdateInfoLabel($"Processing Smart Wand Tags Offline Data. {swtags.Count} records...Please wait...");
+                                await _scanDataDbService.RefreshSmartWandTagsList(swtags);
+                            }
+
+                        }
                     }
 
 
+
                     Preferences.Set("CrowdCountEnabledForSite", "false");
+                    UpdateInfoLabel("Checking Crowd Count Control Settings.");
                     var _crowdControlsettings = await _crowdControlServices.GetCrowdControlSettingsAsync(clientSiteIdString);
                     if (_crowdControlsettings != null && (_crowdControlsettings?.IsCrowdCountEnabled ?? false))
                     {
@@ -866,7 +1188,14 @@ public partial class GuardLoginPage : ContentPage
         {
             await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
         }
-
+        finally
+        {
+            btnEnterLogbook.BackgroundColor = Colors.Green;
+            btnEnterLogbook.IsEnabled = true;
+            loadingIndicator.IsVisible = false;
+            loadingIndicator.IsRunning = false;
+            lblloadinginfo.IsVisible = false;
+        }
     }
 
 
@@ -950,10 +1279,166 @@ public partial class GuardLoginPage : ContentPage
                         OnReadClicked(null, null);
                         break;
                 }
-            }                
+            }
         }
 
         _isPopupOpen = false;
+    }
+
+
+    private async Task CheckAndSyncMultimediaFiles(List<AudioAndMultimediaLocal> _videos)
+    {
+        if (_videos == null || _videos.Count == 0) return;
+
+        string _multimediaLocalFolder = "";
+        int audioType = _videos.FirstOrDefault()?.AudioType ?? 0;
+        //List<AudioAndMultimediaLocal> _FilesToDelete = new List<AudioAndMultimediaLocal>();
+
+        if (audioType == 1)
+        {
+            _multimediaLocalFolder = Path.Combine(FileSystem.AppDataDirectory, "IrFolder", "Downloads", "AudioFiles");
+        }
+        else if (audioType == 3)
+        {
+            _multimediaLocalFolder = Path.Combine(FileSystem.AppDataDirectory, "IrFolder", "Downloads", "VideoFiles");
+        }
+
+        if (!Directory.Exists(_multimediaLocalFolder))
+            Directory.CreateDirectory(_multimediaLocalFolder);
+
+        var _existingFiles = await _scanDataDbService.GetMultimediaLocalList(audioType);
+
+        foreach (var item in _videos)
+        {
+            UpdateInfoLabel($"Checking Offline file {item.Label}...Please wait...");
+            var _isfileExisting = _existingFiles.Where(x => x.ServerUrl == item.ServerUrl).FirstOrDefault();
+            if (_isfileExisting != null)
+            {
+                // File already exists, set local path and skip download
+                item.LocalFilePath = _isfileExisting.LocalFilePath;
+                item.Id = _isfileExisting.Id;
+
+                if (_isfileExisting.LocalFilePath != "" && File.Exists(_isfileExisting.LocalFilePath))
+                    continue;
+                else
+                {
+                    // Local file is missing, need to re-download
+                    UpdateInfoLabel($"Downloading Multimedia Offline file {item.Label}...Please wait...");
+                    var _newFileName = await DownloadMultimediaFileFromServer(item.ServerUrl, _multimediaLocalFolder);
+                    if (_newFileName != "")
+                        item.LocalFilePath = _newFileName;
+                    else
+                        item.LocalFilePath = "";
+                }
+            }
+            else
+            {
+                item.Id = 0;
+                // File does not exist, need to download
+                UpdateInfoLabel($"Downloading Multimedia Offline file {item.Label}...Please wait...");
+                var _newFileName = await DownloadMultimediaFileFromServer(item.ServerUrl, _multimediaLocalFolder);
+                if (_newFileName != "")
+                    item.LocalFilePath = _newFileName;
+            }
+        }
+
+        foreach (var _fl in _existingFiles)
+        {
+            // Remove any deleted file in server
+            var _found = _videos.Any(x => x.ServerUrl == _fl.ServerUrl);
+            if (!_found)
+            {
+                if (File.Exists(_fl.LocalFilePath))
+                {
+                    try
+                    {
+                        File.Delete(_fl.LocalFilePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error deleting multimedia file {_fl.LocalFilePath}. Error:{ex.ToString()}");
+                    }
+                }
+            }
+        }
+
+        UpdateInfoLabel($"Refreshing Multimedia Offline files list...Please wait...");
+        await _scanDataDbService.RefreshAudioAndMultimediaLocalList(_videos);
+
+
+
+    }
+
+    //private async Task<string> DownloadMultimediaFileFromServer(string _serverUrl, string _localPath)
+    //{
+    //    string fileName = CommonHelper.GetSanitizedFileNameFromUrl(_serverUrl);
+    //    string localfileNameWithPath = Path.Combine(_localPath, fileName);
+    //    try
+    //    {
+    //        using (HttpClient client = new HttpClient())
+    //        {
+    //            client.Timeout = TimeSpan.FromMinutes(10);
+    //            var response = await client.GetAsync(_serverUrl);
+    //            if (response.IsSuccessStatusCode)
+    //            {
+    //                var content = await response.Content.ReadAsByteArrayAsync();
+    //                File.WriteAllBytes(localfileNameWithPath, content);
+    //            }
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Debug.WriteLine($"Error downloading file {_serverUrl}: {ex.Message}");
+    //        return "";
+    //    }
+
+    //    return localfileNameWithPath;
+    //}
+
+    private async Task<string> DownloadMultimediaFileFromServer(string serverUrl, string localPath)
+    {
+        string fileName = CommonHelper.GetSanitizedFileNameFromUrl(serverUrl);
+        string localFileNameWithPath = Path.Combine(localPath, fileName);
+
+        try
+        {
+            using var client = new HttpClient
+            {
+                Timeout = TimeSpan.FromMinutes(20)
+            };
+
+            using var response = await client.GetAsync(serverUrl, HttpCompletionOption.ResponseHeadersRead);
+
+            response.EnsureSuccessStatusCode();
+
+            await using var stream = await response.Content.ReadAsStreamAsync();
+            await using var fileStream = new FileStream(
+                localFileNameWithPath,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 81920,
+                useAsync: true);
+
+            await stream.CopyToAsync(fileStream);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error downloading file {serverUrl}: {ex}");
+            return "";
+        }
+
+        return localFileNameWithPath;
+    }
+
+
+    private void UpdateInfoLabel(string msg)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            lblloadinginfo.Text = msg;
+        });
+
     }
 }
 
@@ -974,4 +1459,10 @@ public class DropdownItem
 {
     public int Id { get; set; }
     public string Name { get; set; }
+}
+
+public class LicenseEntry
+{
+    public string Number { get; set; }
+    public DateTime LastUsed { get; set; }
 }

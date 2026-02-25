@@ -1,3 +1,5 @@
+using AutoMapper;
+using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Interface;
 using CommunityToolkit.Maui.Views;
 using Plugin.Maui.Audio;
@@ -10,10 +12,15 @@ public partial class MultiMedia : ContentPage
 {
     public ObservableCollection<VideoFile> VideoFiles { get; set; } = new();
     private ObservableCollection<MyFileModel> SelectedFiles = new();
+    private readonly IScanDataDbServices _scanDataDbService;
+    private readonly IMapper _mapper;
+
     public MultiMedia()
     {
         InitializeComponent();
         BindingContext = this;
+        _scanDataDbService = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
+        _mapper = IPlatformApplication.Current.Services.GetService<IMapper>();
         LoadVideos();
     }
 
@@ -25,14 +32,17 @@ public partial class MultiMedia : ContentPage
             // LoadingIndicator.IsVisible = true;
             // LoadingIndicator.IsRunning = true;
 
-            using var client = new HttpClient();
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivitiesAudio?type=3";
-            var videos = await client.GetFromJsonAsync<List<VideoFile>>(url);
+            //using var client = new HttpClient();
+            //var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivitiesAudio?type=3";
+            //var videos = await client.GetFromJsonAsync<List<VideoFile>>(url);
+
+            var _existingVideosFiles = await _scanDataDbService.GetMultimediaLocalList(3);
+            var videos = _mapper.Map<List<VideoFile>>(_existingVideosFiles);
 
             if (videos != null)
             {
                 foreach (var video in videos)
-                {
+                {                    
                     VideoFiles.Add(video);
                 }
             }
@@ -100,11 +110,21 @@ public partial class MultiMedia : ContentPage
     {
         if (sender is Button button && button.CommandParameter is VideoFile videoFile)
         {
+            if (string.IsNullOrWhiteSpace(videoFile.Url) || !File.Exists(videoFile.Url))
+            {
+                Console.WriteLine($"Local video file {button.Text} not found.");
+                DisplayAlert("Error", "File not found.", "OK");
+                return;
+            }
+
             FullscreenPlayer.IsVisible = true;
             VideoPlayer.Stop();
 
             // Use FromUri for online videos
-            VideoPlayer.Source = MediaSource.FromUri(new Uri(videoFile.Url));
+            //VideoPlayer.Source = MediaSource.FromUri(new Uri(videoFile.Url));
+
+            // Use FromFile for offline videos
+            VideoPlayer.Source = MediaSource.FromFile(videoFile.Url);
 
             VideoPlayer.Play();
         }

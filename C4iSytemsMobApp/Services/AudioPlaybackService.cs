@@ -80,7 +80,8 @@ namespace C4iSytemsMobApp.Services
 
                     var fileUrl = _queue[_currentIndex];
 
-                    await PlayFile(fileUrl, token);
+                    //await PlayFile(fileUrl, token);
+                    await PlayFileFromlocal(fileUrl, token);
 
                     // Wait optional silence
                     if (silenceMinutes > 0 && !token.IsCancellationRequested)
@@ -127,6 +128,36 @@ namespace C4iSytemsMobApp.Services
 
             await tcs.Task; // Wait for playback to finish
         }
+
+        private async Task PlayFileFromlocal(string filePath, CancellationToken token)
+        {
+            _player?.Stop();
+            _player?.Dispose();
+            _player = null;
+
+            
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException("Audio file not found", filePath);
+
+            // Open file stream (do NOT wrap in using – player needs it alive)
+            var fileStream = File.OpenRead(filePath);
+
+            _player = _audioManager.CreatePlayer(fileStream);
+
+            var tcs = new TaskCompletionSource<bool>();
+
+            _player.PlaybackEnded += (s, e) =>
+            {
+                fileStream.Dispose(); // Clean up after playback
+                tcs.TrySetResult(true);
+            };
+
+            _player.Play();
+            RaisePlaybackStateChanged(PlaybackState.Playing);
+
+            await tcs.Task; // Wait until playback completes
+        }
+
 
         /// <summary>
         /// Stops playback immediately.

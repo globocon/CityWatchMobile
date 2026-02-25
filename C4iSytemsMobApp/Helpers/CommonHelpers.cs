@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Drawing;
+using System.Net;
 using System.Reflection;
 
 
@@ -23,6 +24,28 @@ namespace C4iSytemsMobApp.Helpers
             {
                 return false;
             }
+        }
+
+        public static string GetSanitizedFileNameFromUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new ArgumentException("URL cannot be null or empty.", nameof(url));
+
+            var uri = new Uri(url);
+
+            // Extract file name from URL path
+            var rawFileName = Path.GetFileName(uri.LocalPath);
+
+            // Decode URL encoding (%20 -> space)
+            var decodedFileName = WebUtility.UrlDecode(rawFileName);
+
+            // Remove invalid file name characters
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var sanitized = new string(decodedFileName
+                .Where(c => !invalidChars.Contains(c))
+                .ToArray());
+
+            return sanitized;
         }
     }
 
@@ -152,4 +175,6 @@ namespace C4iSytemsMobApp.Helpers
             return rgbColor;
         }
     }
+
+
 }

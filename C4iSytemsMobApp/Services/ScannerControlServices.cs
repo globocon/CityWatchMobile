@@ -268,7 +268,7 @@ namespace C4iSytemsMobApp.Services
             string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetClientSiteAllSmartWandTags?siteId={siteId}";
             // Here you would typically make an HTTP request to the API endpoint
             using (HttpClient client = new HttpClient())
-            {                
+            {
                 client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
                 HttpResponseMessage response = await client.GetAsync(apiUrl);
                 if (response.IsSuccessStatusCode)
@@ -277,7 +277,7 @@ namespace C4iSytemsMobApp.Services
                     return settings;
                 }
             }
-                
+
 
             return new List<ClientSiteSmartWandTagsLocal>(); // Example return value
         }
@@ -305,7 +305,7 @@ namespace C4iSytemsMobApp.Services
             var _lastTagScannedRecord = _scanDataDbServices.GetLastScannedTagDateTime(LoggedInClientSiteId.Value, _TagUid);
             //Check if scanned tag recently with in a minute from the same site          
             if (_lastTagScannedRecord != null && _lastTagScannedRecord.LoggedInClientSiteId == LoggedInClientSiteId && (DateTime.UtcNow - _lastTagScannedRecord.HitUtcDateTime).TotalSeconds < 60)
-            {                 
+            {
                 if (_scannerType == ScanningType.NFC)
                     message = "Tag already scanned !!!";
                 else if (_scannerType == ScanningType.BLUETOOTH)
@@ -316,23 +316,46 @@ namespace C4iSytemsMobApp.Services
 
 
             var TagInfoDetails = _scanDataDbServices.GetSmartWandTagDetailOfTag(_TagUid);
+            var _rcLinkedSites = await _scanDataDbServices.GetRCLinkedDuressClientSitesListBySiteId(LoggedInClientSiteId.Value);
+            bool isTagSiteLinked = false;
+            bool _scannedfromlinkedSite = false;
             if (App.TourMode == PatrolTouringMode.STND)
             {
                 if (TagInfoDetails != null && TagInfoDetails.ClientSiteId != LoggedInClientSiteId)
-                {                    
-                    if (_scannerType == ScanningType.NFC)
-                        message = "Tag does not belong to logged in site. Please check.";
-                    else if (_scannerType == ScanningType.BLUETOOTH)
-                        message = "iBeacon does not belong to logged in site. Please check.";
-
-                    return (false, message, _ChaceCount);
+                {
+                    // Check if tag's site is linked with logged in site
+                    if (_rcLinkedSites != null && _rcLinkedSites.Count > 0)
+                    {
+                        isTagSiteLinked = _rcLinkedSites.Any(x => x.ClientSiteId == TagInfoDetails.ClientSiteId);
+                        if (!isTagSiteLinked)
+                        {
+                            if (_scannerType == ScanningType.NFC)
+                                message = "Tag does not belong to logged in site. Please check.";
+                            else if (_scannerType == ScanningType.BLUETOOTH)
+                                message = "iBeacon does not belong to logged in site. Please check.";
+                            return (false, message, _ChaceCount);
+                        }
+                        else
+                        {
+                            _scannedfromlinkedSite = true;
+                        }
+                    }
+                    else
+                    {
+                        if (_scannerType == ScanningType.NFC)
+                            message = "Tag does not belong to logged in site. Please check.";
+                        else if (_scannerType == ScanningType.BLUETOOTH)
+                            message = "iBeacon does not belong to logged in site. Please check.";
+                        return (false, message, _ChaceCount);
+                    }
                 }
             }
 
-            if(TagInfoDetails == null && _scannerType == ScanningType.BLUETOOTH)
+            if (TagInfoDetails == null && _scannerType == ScanningType.BLUETOOTH)
             {
                 return (false, "iBeacon not found.", _ChaceCount);
             }
+
 
             ClientSiteSmartWandTagsHitLogCache newrecord = new ClientSiteSmartWandTagsHitLogCache()
             {
@@ -354,15 +377,37 @@ namespace C4iSytemsMobApp.Services
                 EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
                 EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                DeviceId = deviceid,
+                DeviceName = devicename,
+                IsScanFromLinkedSite = _scannedfromlinkedSite
             };
 
             await _scanDataDbServices.SaveScanData(newrecord);
             _ChaceCount = _scanDataDbServices.GetCacheRecordsCount();
-                       
+
+
             if (_scannerType == ScanningType.NFC)
-                message = $"Tag {(TagInfoDetails.LabelDescription.Length > 35 ? TagInfoDetails.LabelDescription.Substring(0, 35) + "..." : TagInfoDetails.LabelDescription)} scan record saved to cache.";
+            {
+                if (TagInfoDetails == null)
+                {
+                    message = $"[NFC] Unknown tag [{_TagUid}] scan record saved to cache.";
+                }
+                else
+                {
+                    message = $"[NFC] {(TagInfoDetails.LabelDescription.Length > 35 ? $"{(TagInfoDetails.LabelDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : TagInfoDetails.LabelDescription.Replace("\"", "").Replace("'", ""))} scan record saved to cache.";
+                }
+            }
             else if (_scannerType == ScanningType.BLUETOOTH)
-                message = $"iBeacon {(TagInfoDetails.LabelDescription.Length > 35 ? TagInfoDetails.LabelDescription.Substring(0, 35) + "..." : TagInfoDetails.LabelDescription)} scan record saved to cache.";
+            {
+                if (TagInfoDetails == null)
+                {
+                    message = $"[BLE] Unknown iBeacon [{_TagUid}] scan record saved to cache.";
+                }
+                else
+                {
+                    message = $"[BLE] {(TagInfoDetails.LabelDescription.Length > 35 ? $"{(TagInfoDetails.LabelDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : TagInfoDetails.LabelDescription.Replace("\"", "").Replace("'", ""))} scan record saved to cache.";
+                }
+            }
 
             return (true, message, _ChaceCount);
         }
@@ -371,12 +416,17 @@ namespace C4iSytemsMobApp.Services
         public async Task<bool> CheckIfTagExistsForSiteInLocalDb(string _TagUid)
         {
             var rtn = false;
-            var _TagFound = _scanDataDbServices.GetSmartWandTagDetailOfTag(_TagUid);            
+            var _TagFound = _scanDataDbServices.GetSmartWandTagDetailOfTag(_TagUid);
             if (_TagFound != null)
             {
                 rtn = true;
             }
             return rtn;
+        }
+
+        public async Task<ClientSiteSmartWandTagsLocal> GetTagDetailsFromLocalDbAsync(string _TagUid)
+        {
+            return await  _scanDataDbServices.GetSmartWandTagDetailOfTagAsync(_TagUid);
         }
 
     }

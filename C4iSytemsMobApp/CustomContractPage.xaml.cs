@@ -1,3 +1,5 @@
+using AutoMapper;
+using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Views;
 using CommunityToolkit.Maui.Views;
@@ -10,6 +12,10 @@ public partial class CustomContractPage : ContentPage
 {
     public ICommand EditCommand { get; }
     private readonly ILogBookServices _logBookServices;
+    private readonly IMapper _mapper;
+    private readonly IScanDataDbServices _scanDataDbService;
+    private readonly ICustomLogEntryServices _customLogEntryServices;
+    
     public ObservableCollection<DictionaryWrapper> Logs { get; set; } = new();
 
     public CustomContractPage()
@@ -18,6 +24,10 @@ public partial class CustomContractPage : ContentPage
         NavigationPage.SetHasNavigationBar(this, false);
         BindingContext = this;
         _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
+        _mapper = IPlatformApplication.Current.Services.GetService<IMapper>();
+        _scanDataDbService = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
+        _customLogEntryServices = IPlatformApplication.Current.Services.GetService<ICustomLogEntryServices>();
+        
         EditCommand = new Command<DictionaryWrapper>(OnEditClicked);
     }
 
@@ -33,20 +43,29 @@ public partial class CustomContractPage : ContentPage
         {
             // Show loading overlay
             LoadingOverlay.IsVisible = true;
+            List<Dictionary<string, string?>> rows = new List<Dictionary<string, string?>>();
 
             Logs.Clear();
+            if (App.IsOnline)
+            {
+                rows = await _logBookServices.GetCustomFieldLogsAsync();
+                if (rows != null && rows.Count > 0)
+                {
+                    await _customLogEntryServices.ProcessCustomFieldLogsOnlineDataToCache(rows);
+                    rows.Clear();
+                }
+            }
 
-            var rows = await _logBookServices.GetCustomFieldLogsAsync();
-
+            rows = await _customLogEntryServices.GetCustomFieldLogsFromCache();
 
             foreach (var dict in rows)
             {
-                if (dict.ContainsKey("timeSlot"))
-                {
-                    var value = dict["timeSlot"];
-                    dict.Remove("timeSlot");
-                    dict["Time Slot"] = value;
-                }
+                //if (dict.ContainsKey("timeSlot"))
+                //{
+                //    var value = dict["timeSlot"];
+                //    dict.Remove("timeSlot");
+                //    dict["Time Slot"] = value;
+                //}
                 Logs.Add(new DictionaryWrapper(dict));
             }
         }
@@ -76,24 +95,33 @@ public partial class CustomContractPage : ContentPage
 
             var toupdate = updated.ToDictionary();
 
-            if (toupdate.ContainsKey("Time Slot"))
+            if (App.IsOnline)
             {
-                var value = toupdate["Time Slot"];
-                toupdate.Remove("Time Slot");
-                toupdate["timeSlot"] = value;
-            }
+                if (toupdate.ContainsKey("Time Slot"))
+                {
+                    var value = toupdate["Time Slot"];
+                    toupdate.Remove("Time Slot");
+                    toupdate["timeSlot"] = value;
+                }
 
-            var saveResult = await _logBookServices.SaveCustomFieldLogAsync(toupdate);
-            if (!saveResult.isSuccess)
-            {
-                await DisplayAlert("Error", $"Failed to save log: {saveResult.errorMessage}", "OK");
-                return;
+                var saveResult = await _logBookServices.SaveCustomFieldLogAsync(toupdate);
+                if (!saveResult.isSuccess)
+                {
+                    await DisplayAlert("Error", $"Failed to save log: {saveResult.errorMessage}", "OK");
+                    return;
+                }
+                else
+                {
+                    await LoadLogsAsync();
+                    await DisplayAlert("Updated", "Custom log entry has been updated.", "OK");
+                }
             }
             else
             {
+                await _customLogEntryServices.SaveCustomFieldLogRequestHeadDataToCache(toupdate);
                 await LoadLogsAsync();
-                await DisplayAlert("Updated", "Custom log entry has been updated.", "OK");
-            }         
+                await DisplayAlert("Updated", "Custom log entry has been saved offline. The entry will be synced when online.", "OK");
+            }
         }
     }
 

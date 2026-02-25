@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace C4iSytemsMobApp.Data.Entity
 {
@@ -29,6 +24,9 @@ namespace C4iSytemsMobApp.Data.Entity
         public string EventDateTimeZone { get; set; }
         public string EventDateTimeZoneShort { get; set; }
         public int? EventDateTimeUtcOffsetMinute { get; set; }
+        public string DeviceId { get; set; }
+        public string DeviceName { get; set; }
+        public bool IsScanFromLinkedSite { get; set; } = false;
     }
 }
 

@@ -17,11 +17,92 @@ namespace C4iSytemsMobApp.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.22");
 
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.ActivityModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Label")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ActivityModel");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.AudioAndMultimediaLocal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AudioType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Label")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LocalFilePath")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ServerUrl")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AudioAndMultimediaLocal");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.ClientSiteAreaLocal", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AreaDetails")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ClientSiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClientSiteAreaLocal");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.ClientSitePatrolCarCache", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ClientSiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Model")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Rego")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClientSitePatrolCarCache");
+                });
+
             modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.ClientSiteSmartWandTagsHitLogCache", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("DeviceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceName")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("EventDateTimeLocal")
                         .HasColumnType("TEXT");
@@ -46,6 +127,9 @@ namespace C4iSytemsMobApp.Data.Migrations
 
                     b.Property<DateTime>("HitUtcDateTime")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsScanFromLinkedSite")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsSynced")
                         .HasColumnType("INTEGER");
@@ -105,6 +189,665 @@ namespace C4iSytemsMobApp.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ClientSiteSmartWandTagsLocal");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.ClientSiteTypeLocal", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TypeName")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClientSiteTypeLocal");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.ClientSitesLocal", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Billing")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("DataCollectionEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DuressEmail")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DuressSms")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Gps")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GuardLogEmailTo")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDosDontList")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LandLine")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("MobAppShowClientTypeandSite")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SiteEmail")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("State")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("StatusDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TypeId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("UploadFusionLog")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("UploadGuardLog")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TypeId");
+
+                    b.ToTable("ClientSitesLocal");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.CustomFieldLogDetailCache", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DictKey")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DictValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("HeadId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HeadId");
+
+                    b.ToTable("CustomFieldLogDetailCache");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.CustomFieldLogHeadCache", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CustomFieldLogHeadCache");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.CustomFieldLogRequestDetailCache", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DictKey")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DictValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("HeadId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HeadId");
+
+                    b.ToTable("CustomFieldLogRequestDetailCache");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.CustomFieldLogRequestHeadCache", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DeviceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("EventDateTimeLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("EventDateTimeLocalWithOffset")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EventDateTimeUtcOffsetMinute")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EventDateTimeZone")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EventDateTimeZoneShort")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsSynced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("UniqueRecordId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CustomFieldLogRequestHeadCache");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.IrFeedbackTemplateViewModelLocal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("BackgroundColour")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DeleteStatus")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FeedbackTypeName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("SendtoRC")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TemplateId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TemplateName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TextColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("Type")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("IrFeedbackTemplateViewModelLocal");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.IrNotifiedByLocal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("NotifiedBy")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("IrNotifiedByLocal");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.OfflineFilesRecords", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DeviceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("EventDateTimeLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("EventDateTimeLocalWithOffset")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EventDateTimeUtcOffsetMinute")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EventDateTimeZone")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EventDateTimeZoneShort")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("FileGroupId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileNameActual")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileNameCache")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileNameWithPathCache")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsNew")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsSynced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("LogBookId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RecordLabel")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UniqueRecordId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("clientsiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("gps")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("guardId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("userId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OfflineFilesRecords");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.PatrolCarLogCache", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ClientSiteLogBookId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Mileage")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MileageText")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PatrolCar")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PatrolCarId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatrolCarId")
+                        .IsUnique();
+
+                    b.ToTable("PatrolCarLogCache");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.PatrolCarLogRequestCache", b =>
+                {
+                    b.Property<int>("CacheId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ClientSiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ClientSiteLogBookId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DeviceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("EventDateTimeLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("EventDateTimeLocalWithOffset")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EventDateTimeUtcOffsetMinute")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EventDateTimeZone")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EventDateTimeZoneShort")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsSynced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Mileage")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MileageText")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Model")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PatrolCar")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PatrolCarId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Rego")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("UniqueRecordId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("CacheId");
+
+                    b.ToTable("PatrolCarLogRequestCache");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.PostActivityRequestLocalCache", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DeviceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("EventDateTimeLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("EventDateTimeLocalWithOffset")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EventDateTimeUtcOffsetMinute")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EventDateTimeZone")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EventDateTimeZoneShort")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsNewGuard")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsSynced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("UniqueRecordId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("activityString")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("clientsiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("gps")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("guardId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("scanningType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("systemEntry")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("tagUID")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("userId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PostActivityRequestLocalCache");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.RCLinkedDuressClientSitesCache", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ClientSiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RCLinkedId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RCLinkedDuressClientSitesCache");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.irOfflineCache", b =>
+                {
+                    b.Property<string>("IrId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("EventDateTimeLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("EventDateTimeLocalWithOffset")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EventDateTimeUtcOffsetMinute")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EventDateTimeZone")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EventDateTimeZoneShort")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IncidentRequest")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsSynced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("UniqueRecordId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("clientsiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("gps")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("guardId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("userId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("IrId");
+
+                    b.ToTable("irOfflineCache");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.irOfflineFilesAttachmentsCache", b =>
+                {
+                    b.Property<Guid>("UniqueRecordId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("EventDateTimeLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("EventDateTimeLocalWithOffset")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EventDateTimeUtcOffsetMinute")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EventDateTimeZone")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EventDateTimeZoneShort")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileNameActual")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileNameCache")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileNameWithPathCache")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IrId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsSynced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("clientsiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("gps")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("guardId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("userId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("UniqueRecordId");
+
+                    b.ToTable("irOfflineFilesAttachmentsCache");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.ClientSitesLocal", b =>
+                {
+                    b.HasOne("C4iSytemsMobApp.Data.Entity.ClientSiteTypeLocal", "ClientSiteType")
+                        .WithMany("ClientSites")
+                        .HasForeignKey("TypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ClientSiteType");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.CustomFieldLogDetailCache", b =>
+                {
+                    b.HasOne("C4iSytemsMobApp.Data.Entity.CustomFieldLogHeadCache", "Head")
+                        .WithMany("KeyValuePairs")
+                        .HasForeignKey("HeadId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Head");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.CustomFieldLogRequestDetailCache", b =>
+                {
+                    b.HasOne("C4iSytemsMobApp.Data.Entity.CustomFieldLogRequestHeadCache", "Head")
+                        .WithMany("Details")
+                        .HasForeignKey("HeadId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Head");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.PatrolCarLogCache", b =>
+                {
+                    b.HasOne("C4iSytemsMobApp.Data.Entity.ClientSitePatrolCarCache", "ClientSitePatrolCar")
+                        .WithOne("PatrolCarLog")
+                        .HasForeignKey("C4iSytemsMobApp.Data.Entity.PatrolCarLogCache", "PatrolCarId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ClientSitePatrolCar");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.ClientSitePatrolCarCache", b =>
+                {
+                    b.Navigation("PatrolCarLog");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.ClientSiteTypeLocal", b =>
+                {
+                    b.Navigation("ClientSites");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.CustomFieldLogHeadCache", b =>
+                {
+                    b.Navigation("KeyValuePairs");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.CustomFieldLogRequestHeadCache", b =>
+                {
+                    b.Navigation("Details");
                 });
 #pragma warning restore 612, 618
         }

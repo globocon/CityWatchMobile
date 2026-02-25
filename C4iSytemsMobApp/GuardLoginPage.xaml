@@ -291,10 +291,22 @@
 
             </HorizontalStackLayout>
 
+        </VerticalStackLayout>
 
-
-
-
+        <VerticalStackLayout 
+            Spacing="10"
+            Grid.Row="1">
+            <Label x:Name="lblloadinginfo"
+                Text=""
+                   FontAttributes="Bold"
+                   FontSize="8"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+            <!-- Loading Indicator -->
+            <ActivityIndicator x:Name="loadingIndicator"
+                               IsRunning="False"
+                               IsVisible="False" />
         </VerticalStackLayout>
 
         <!-- Footer Logo -->
