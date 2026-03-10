@@ -42,6 +42,7 @@ namespace C4iSytemsMobApp.Models
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(DateLabelText));
                 OnPropertyChanged(nameof(MaximumDate));
+                OnPropertyChanged(nameof(MinimumDate));
                 OnPropertyChanged(nameof(IsIssueToggle));
             }
         }
@@ -119,6 +120,9 @@ namespace C4iSytemsMobApp.Models
 
         public DateTime MaximumDate =>
             IsExpiry ? DateTime.MaxValue : DateTime.Today;
+
+        public DateTime MinimumDate =>
+            IsExpiry ? DateTime.Today : new DateTime(1900, 1, 1);
 
         public string DateLabelText =>
             IsExpiry ? "Expiry Date (DOE)" : "Issue Date (DOI)";

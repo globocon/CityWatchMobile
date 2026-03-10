@@ -654,6 +654,7 @@
 
                             <!-- DatePicker -->
                             <DatePicker Date="{Binding DisplayDate}"
+                                        MinimumDate="{Binding MinimumDate}"
                                         MaximumDate="{Binding MaximumDate}"
                                         Format="dd/MM/yyyy" />
                         </VerticalStackLayout>
