@@ -206,6 +206,7 @@ public partial class HrRecordsPage : ContentPage
         await LoadHrGroupsDescriptionsListAsync(selectedId);
         DescriptionGroupPicker.SelectedItem = HrDescriptionList.FirstOrDefault(x => x.ReferenceNoAndDescription == item.Description);
         IssueExpiryVM.IsExpiry = item.DateType ? !item.DateType : true;
+        IssueExpiryVM.IsToggleEnabled = true; // Allow manual override during edit if needed, or it will be set by picker change if picker selection is triggered
         IssueExpiryVM.DisplayDate = item.ExpiryDate.HasValue ? item.ExpiryDate.Value : DateTime.Today;
 
         HrDocumentFileModel editfile = new HrDocumentFileModel
@@ -238,6 +239,7 @@ public partial class HrRecordsPage : ContentPage
         // Bind to CollectionView        
         IssueExpiryVM.DisplayDate = DateTime.Today;
         IssueExpiryVM.IsExpiry = true;
+        IssueExpiryVM.IsToggleEnabled = true;
         FilesCollectionEditImage.ItemsSource = SelectedFiles;
         IsFilesVisible = SelectedFiles.Any();
         FilesCollectionEditImage.IsVisible = IsFilesVisible;
@@ -305,7 +307,32 @@ public partial class HrRecordsPage : ContentPage
 
     private void OnDescriptionGroupSelectionChanged(object sender, EventArgs e)
     {
+        if (sender is not Picker picker)
+            return;
 
+        if (picker.SelectedItem is not CombinedData selectedDescription)
+            return;
+
+        // DateType logic based on user reference:
+        // 0 = Both (DOI / DOE)
+        // 1 = DOI
+        // 2 = DOE
+
+        switch (selectedDescription.DateType)
+        {
+            case 1: // DOI
+                IssueExpiryVM.IsIssueToggle = true;
+                IssueExpiryVM.IsToggleEnabled = false;
+                break;
+            case 2: // DOE
+                IssueExpiryVM.IsIssueToggle = false;
+                IssueExpiryVM.IsToggleEnabled = false;
+                break;
+            case 0: // Both
+            default:
+                IssueExpiryVM.IsToggleEnabled = true;
+                break;
+        }
     }
 
     private async void OnPickComplianceDocumentClicked(object sender, EventArgs e)

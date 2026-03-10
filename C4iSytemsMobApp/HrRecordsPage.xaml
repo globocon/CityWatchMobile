@@ -628,6 +628,7 @@
                                     </Border.Triggers>
 
                                     <Switch IsToggled="{Binding IsIssueToggle}"
+                                            IsEnabled="{Binding IsToggleEnabled}"
                                             MaximumHeightRequest="18" />
                                 </Border>
 

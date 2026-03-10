@@ -43,5 +43,8 @@ namespace C4iSytemsMobApp.Models
                 return $"{ReferenceNo} {Description}";
             }
         }
+
+        public int DateType { get; set; }
+        public string DateTypeName { get; set; }
     }
 }
