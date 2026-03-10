@@ -27,6 +27,7 @@ namespace C4iSytemsMobApp.Models
         public bool DateType { get; set; }
         public bool IsDateFilterEnabledHidden { get; set; }
         public bool HRBanEdit { get; set; }
+        public int MasterDateType { get; set; }
         public string IsLogin { get; set; }
         public string StatusColor { get; set; }
 

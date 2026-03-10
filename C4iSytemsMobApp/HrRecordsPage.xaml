@@ -608,25 +608,31 @@
                                        FontAttributes="Bold"
                                        FontSize="14"
                                        VerticalOptions="Center" />
-                                <Border Padding="1"
-                                        StrokeShape="RoundRectangle 15"
-                                        IsVisible="{Binding IsDateTypeBoth}">
-
+                                 <Border Padding="1"
+                                         StrokeShape="RoundRectangle 15">
                                     <Border.Triggers>
-                                        <DataTrigger TargetType="Border"
-                                                     Binding="{Binding IsIssueToggle}"
-                                                     Value="True">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="#007AFF" />
-                                        </DataTrigger>
-
-                                        <DataTrigger TargetType="Border"
-                                                     Binding="{Binding IsIssueToggle}"
-                                                     Value="False">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="#D0D0D0" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
+                                         <DataTrigger TargetType="Border" Binding="{Binding IsDateTypeBoth}" Value="False">
+                                             <Setter Property="Opacity" Value="0" />
+                                             <Setter Property="InputTransparent" Value="True" />
+                                         </DataTrigger>
+                                         <DataTrigger TargetType="Border" Binding="{Binding IsDateTypeBoth}" Value="True">
+                                             <Setter Property="Opacity" Value="1" />
+                                             <Setter Property="InputTransparent" Value="False" />
+                                         </DataTrigger>
+                                         <DataTrigger TargetType="Border"
+                                                      Binding="{Binding IsIssueToggle}"
+                                                      Value="True">
+                                             <Setter Property="BackgroundColor"
+                                                     Value="#007AFF" />
+                                         </DataTrigger>
+ 
+                                         <DataTrigger TargetType="Border"
+                                                      Binding="{Binding IsIssueToggle}"
+                                                      Value="False">
+                                             <Setter Property="BackgroundColor"
+                                                     Value="#D0D0D0" />
+                                         </DataTrigger>
+                                     </Border.Triggers>
 
                                     <Switch IsToggled="{Binding IsIssueToggle}"
                                             IsEnabled="{Binding IsToggleEnabled}"
@@ -635,10 +641,18 @@
 
                             </HorizontalStackLayout>
 
-                            <Label x:Name="LabelExpiryOrIssueDateNote"
-                                   FontSize="10"
-                                   IsVisible="{Binding IsDateTypeBoth}">
-
+                             <Label x:Name="LabelExpiryOrIssueDateNote"
+                                    FontSize="10">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsDateTypeBoth}" Value="False">
+                                        <Setter Property="Opacity" Value="0" />
+                                        <Setter Property="InputTransparent" Value="True" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsDateTypeBoth}" Value="True">
+                                        <Setter Property="Opacity" Value="1" />
+                                        <Setter Property="InputTransparent" Value="False" />
+                                    </DataTrigger>
+                                </Label.Triggers>
                                 <Label.FormattedText>
                                     <FormattedString>
                                         <Span Text="Note: "

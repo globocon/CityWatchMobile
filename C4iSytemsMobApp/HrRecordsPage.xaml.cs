@@ -205,9 +205,27 @@ public partial class HrRecordsPage : ContentPage
         var selectedId = selectedHrGroup.Id;
         await LoadHrGroupsDescriptionsListAsync(selectedId);
         DescriptionGroupPicker.SelectedItem = HrDescriptionList.FirstOrDefault(x => x.ReferenceNoAndDescription == item.Description);
-        IssueExpiryVM.IsExpiry = item.DateType ? !item.DateType : true;
-        IssueExpiryVM.IsToggleEnabled = true; 
-        IssueExpiryVM.IsDateTypeBoth = true;
+        
+        // Apply DOI/DOE logic for edited record
+        if (item.MasterDateType == 1) // DOI
+        {
+            IssueExpiryVM.IsExpiry = false;
+            IssueExpiryVM.IsToggleEnabled = false;
+            IssueExpiryVM.IsDateTypeBoth = false;
+        }
+        else if (item.MasterDateType == 2) // DOE
+        {
+            IssueExpiryVM.IsExpiry = true;
+            IssueExpiryVM.IsToggleEnabled = false;
+            IssueExpiryVM.IsDateTypeBoth = false;
+        }
+        else // Both or 0
+        {
+            IssueExpiryVM.IsExpiry = item.DateType ? !item.DateType : true;
+            IssueExpiryVM.IsToggleEnabled = true;
+            IssueExpiryVM.IsDateTypeBoth = true;
+        }
+
         IssueExpiryVM.DisplayDate = item.ExpiryDate.HasValue ? item.ExpiryDate.Value : DateTime.Today;
 
         HrDocumentFileModel editfile = new HrDocumentFileModel
