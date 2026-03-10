@@ -13,6 +13,7 @@ namespace C4iSytemsMobApp.Models
         private DateTime? _issueDate;
         private DateTime _displayDate = DateTime.Today;
         private bool _isToggleEnabled = true;
+        private bool _isDateTypeBoth = true;
 
         public IssueExpiryDateViewModel()
         {
@@ -101,6 +102,17 @@ namespace C4iSytemsMobApp.Models
             {
                 if (_isToggleEnabled == value) return;
                 _isToggleEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsDateTypeBoth
+        {
+            get => _isDateTypeBoth;
+            set
+            {
+                if (_isDateTypeBoth == value) return;
+                _isDateTypeBoth = value;
                 OnPropertyChanged();
             }
         }

@@ -609,7 +609,8 @@
                                        FontSize="14"
                                        VerticalOptions="Center" />
                                 <Border Padding="1"
-                                        StrokeShape="RoundRectangle 15">
+                                        StrokeShape="RoundRectangle 15"
+                                        IsVisible="{Binding IsDateTypeBoth}">
 
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border"
@@ -635,7 +636,8 @@
                             </HorizontalStackLayout>
 
                             <Label x:Name="LabelExpiryOrIssueDateNote"
-                                   FontSize="10">
+                                   FontSize="10"
+                                   IsVisible="{Binding IsDateTypeBoth}">
 
                                 <Label.FormattedText>
                                     <FormattedString>
