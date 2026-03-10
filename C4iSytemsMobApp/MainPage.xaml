@@ -15,6 +15,7 @@
                     BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
         <StackLayout Padding="5,0,5,0"
                      HeightRequest="60"
+                     ZIndex="5"
                      AbsoluteLayout.LayoutBounds="0,0,1,AutoSize"
                      AbsoluteLayout.LayoutFlags="WidthProportional">
             <Frame Padding="5"
