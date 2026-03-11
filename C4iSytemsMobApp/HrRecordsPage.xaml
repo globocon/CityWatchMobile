@@ -460,7 +460,7 @@
         <Grid x:Name="LoadingOverlay"
               BackgroundColor="#80000000"
               IsVisible="False"
-              Grid.RowSpan="3"
+              Grid.RowSpan="4"
               VerticalOptions="FillAndExpand"
               HorizontalOptions="FillAndExpand">
             <StackLayout VerticalOptions="Center"
@@ -481,7 +481,8 @@
         <!-- Add Compliance -->
         <Grid x:Name="PopupOverlayAddCompliance"
               BackgroundColor="#80000000"
-              IsVisible="False">
+              IsVisible="False"
+              Grid.RowSpan="4">
 
             <Frame x:Name="AddComplianceFrame"
                    BackgroundColor="{AppThemeBinding Light=White, Dark=Black}"
