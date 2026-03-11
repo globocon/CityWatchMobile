@@ -27,6 +27,7 @@ namespace C4iSytemsMobApp.Data.Entity
         public Guid UniqueRecordId { get; set; }
         public string DeviceId { get; set; }
         public string DeviceName { get; set; }
+        public DateTime EventMobileUtcDateTime { get; set; } = DateTime.UtcNow;
 
     }
 }

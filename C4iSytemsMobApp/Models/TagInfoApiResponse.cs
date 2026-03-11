@@ -8,5 +8,6 @@ namespace C4iSytemsMobApp.Models
         public string message { get; set; }
         public string tagInfoLabel { get; set; }
         public int ScannedFromLinkedSite { get; set; }
+        public int RowIdInServer { get; set; }
     }
 }

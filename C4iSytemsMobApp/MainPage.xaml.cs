@@ -1756,7 +1756,7 @@ namespace C4iSytemsMobApp
                         var _taguid = serialNumber;
                         if (!scannerSettings.tagFound) { _taguid = "NA"; }
                         int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
-                        await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId);
+                        await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer);
                     }
                     else
                     {
@@ -2014,7 +2014,7 @@ namespace C4iSytemsMobApp
                         if (scannerSettings.tagFound)
                         {
                             int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
-                            LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId);
+                            LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer);
                         }
 
                     }
@@ -2035,7 +2035,6 @@ namespace C4iSytemsMobApp
             }
 
         }
-
 
         private async Task LogBLEScannedDataToCache(string _TagUid, string _deviceName, ScanningType _scannerType)
         {
@@ -2059,9 +2058,9 @@ namespace C4iSytemsMobApp
 
         #endregion "BLE Methods"
 
-        private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1)
+        private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
         {
-            var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId);
+            var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
             if (isSuccess)
             {
                 if (scanningType == (int)ScanningType.NFC)
