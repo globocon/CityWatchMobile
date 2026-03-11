@@ -1913,7 +1913,8 @@ public partial class LogActivity : ContentPage
             IsSynced = false,
             UniqueRecordId = Guid.NewGuid(),
             DeviceId = deviceid,
-            DeviceName = devicename
+            DeviceName = devicename,
+            EventMobileUtcDateTime = TimeZoneHelper.GetCurrentUtcDateTime(),
         };
 
         var isSuccess = await _scanDataDbService.SaveLogActivityCacheData(request);

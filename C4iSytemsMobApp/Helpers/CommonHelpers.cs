@@ -157,7 +157,7 @@ namespace C4iSytemsMobApp.Helpers
 
         public static DateTime GetCurrentTimeZoneCurrentTime()
         {
-            return DateTime.Now;
+            return DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
         }
 
         public static DateTimeOffset GetCurrentTimeZoneCurrentTimeWithOffset()
