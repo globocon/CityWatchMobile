@@ -122,41 +122,76 @@ namespace C4iSytemsMobApp.Helpers
 
         public static string GetCurrentTimeZone()
         {
-            TimeZoneInfo localZone = TimeZoneInfo.Local;
-            var mint = (int)localZone.BaseUtcOffset.TotalMinutes;
-            string[] arr = Convert.ToString(localZone.BaseUtcOffset).Split(":");
-            var CurrLocalTime = localZone.StandardName + " " + string.Format("GMT{0}:{1}", mint > 0 ? '+' + arr[0] : arr[0], arr[1]);
-            return CurrLocalTime;
+            //TimeZoneInfo localZone = TimeZoneInfo.Local;
+            //var mint = (int)localZone.BaseUtcOffset.TotalMinutes;
+            //string[] arr = Convert.ToString(localZone.BaseUtcOffset).Split(":");
+            //var CurrLocalTime = localZone.StandardName + " " + string.Format("GMT{0}:{1}", mint > 0 ? '+' + arr[0] : arr[0], arr[1]);
+            //return CurrLocalTime;
+
+            TimeZoneInfo zone = TimeZoneInfo.Local;
+            TimeSpan offset = zone.GetUtcOffset(DateTime.UtcNow);
+
+            return $"{zone.StandardName} GMT{FormatOffset(offset)}";
         }
         public static string GetCurrentTimeZoneShortName()
         {
-            TimeZoneInfo localZone = TimeZoneInfo.Local;
-            var mint = (int)localZone.BaseUtcOffset.TotalMinutes;
-            string[] arr = Convert.ToString(localZone.BaseUtcOffset).Split(":");
-            var CurrLocalTime = string.Format("GMT{0}:{1}", mint > 0 ? '+' + arr[0] : arr[0], arr[1]);
-            return CurrLocalTime;
+            //TimeZoneInfo localZone = TimeZoneInfo.Local;
+            //var mint = (int)localZone.BaseUtcOffset.TotalMinutes;
+            //string[] arr = Convert.ToString(localZone.BaseUtcOffset).Split(":");
+            //var CurrLocalTime = string.Format("GMT{0}:{1}", mint > 0 ? '+' + arr[0] : arr[0], arr[1]);
+            //return CurrLocalTime;
+
+            TimeSpan offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow);
+            return $"GMT{FormatOffset(offset)}";
         }
 
         public static int GetCurrentTimeZoneOffsetMinute()
         {
-            TimeZoneInfo localZone = TimeZoneInfo.Local;
-            var CurrLocalTime = localZone.BaseUtcOffset;
-            return (int)CurrLocalTime.TotalMinutes;
+            //TimeZoneInfo localZone = TimeZoneInfo.Local;
+            //var CurrLocalTime = localZone.BaseUtcOffset;
+            //return (int)CurrLocalTime.TotalMinutes;
+
+            TimeSpan offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow);
+            return (int)offset.TotalMinutes;
         }
 
         public static DateTime GetCurrentTimeZoneCurrentTime()
         {
-            var CurrLocalTime = DateTime.Now;
-            return CurrLocalTime;
+            return DateTime.Now;
         }
 
         public static DateTimeOffset GetCurrentTimeZoneCurrentTimeWithOffset()
         {
-            var CurrLocalTime = DateTimeOffset.Now;
-            return CurrLocalTime;
+            return DateTimeOffset.Now;
         }
 
+        public static DateTime GetCurrentUtcDateTime()
+        {
+            return DateTime.UtcNow;
+        }
 
+        // Optional UTC with offset object
+        public static DateTimeOffset GetCurrentUtcDateTimeWithOffset()
+        {
+            return DateTimeOffset.UtcNow;
+        }
+
+        // Convert UTC → Local using offset minutes
+        public static DateTime ConvertUtcToLocal(DateTime utcDateTime, int offsetMinutes)
+        {
+            return utcDateTime.AddMinutes(offsetMinutes);
+        }
+
+        // Convert Local → UTC using offset minutes
+        public static DateTime ConvertLocalToUtc(DateTime localDateTime, int offsetMinutes)
+        {
+            return localDateTime.AddMinutes(-offsetMinutes);
+        }
+
+        private static string FormatOffset(TimeSpan offset)
+        {
+            return $"{(offset >= TimeSpan.Zero ? "+" : "-")}{Math.Abs(offset.Hours):00}:{Math.Abs(offset.Minutes):00}";
+        }
 
     }
 

@@ -39,7 +39,7 @@ namespace C4iSytemsMobApp.Services
         }
 
         public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, 
-            int scanningType = 0, string tagUID = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1)
+            int scanningType = 0, string tagUID = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
         {
             string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
@@ -73,7 +73,9 @@ namespace C4iSytemsMobApp.Services
                 EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
                 EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
-                IsNewGuard = false
+                EventMobileUtcDateTime = TimeZoneHelper.GetCurrentUtcDateTime(),
+                IsNewGuard = false,
+                TagScanHitLogRefId = RowIdInServer
             };
                         
             HttpClient _httpClient = new HttpClient();
