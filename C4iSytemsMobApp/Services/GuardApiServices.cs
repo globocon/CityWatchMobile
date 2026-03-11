@@ -171,8 +171,7 @@ namespace C4iSytemsMobApp.Services
 
                 HttpClient _httpClient = new HttpClient();
                 HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
-                response.EnsureSuccessStatusCode();
-                var rows = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(_jsonOptions);
+                var rows = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
                 return rows.data;
             }
             catch (Exception ex)
