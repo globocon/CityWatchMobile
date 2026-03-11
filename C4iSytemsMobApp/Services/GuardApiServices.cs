@@ -17,6 +17,11 @@ namespace C4iSytemsMobApp.Services
         string guardLicenceNo;
         bool isError;
         string msg;
+
+        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
         public GuardApiServices()
         {
             // Constructor logic if needed
@@ -93,7 +98,7 @@ namespace C4iSytemsMobApp.Services
             HttpResponseMessage response = await client.GetAsync(apiUrl);
             if (response.IsSuccessStatusCode)
             {
-                var settings = await response.Content.ReadFromJsonAsync<ApiResponse<List<GuardComplianceAndLicense>>>();
+                var settings = await response.Content.ReadFromJsonAsync<ApiResponse<List<GuardComplianceAndLicense>>>(_jsonOptions);
                 return settings.data;
             }
 
@@ -133,7 +138,7 @@ namespace C4iSytemsMobApp.Services
                 HttpClient _httpClient = new HttpClient();
                 HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
                 response.EnsureSuccessStatusCode();
-                var rows = await response.Content.ReadFromJsonAsync<ApiResponse<List<HRGroups>>>();
+                var rows = await response.Content.ReadFromJsonAsync<ApiResponse<List<HRGroups>>>(_jsonOptions);
                 return rows?.data ?? new List<HRGroups>();
             }
             catch (Exception ex)
@@ -152,7 +157,7 @@ namespace C4iSytemsMobApp.Services
                 HttpClient _httpClient = new HttpClient();
                 HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
                 response.EnsureSuccessStatusCode();
-                var rows = await response.Content.ReadFromJsonAsync<ApiResponse<List<CombinedData>>>();
+                var rows = await response.Content.ReadFromJsonAsync<ApiResponse<List<CombinedData>>>(_jsonOptions);
                 return rows?.data ?? new List<CombinedData>();
             }
             catch (Exception ex)
@@ -171,7 +176,7 @@ namespace C4iSytemsMobApp.Services
                 HttpClient _httpClient = new HttpClient();
                 HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
                 response.EnsureSuccessStatusCode();
-                var rows = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                var rows = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(_jsonOptions);
                 return rows.data;
             }
             catch (Exception ex)
@@ -228,7 +233,7 @@ namespace C4iSytemsMobApp.Services
                 var response = await _httpClient.PostAsync(apiUrl, form);
                 if (response.IsSuccessStatusCode)
                 {
-                    var rows = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    var rows = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(_jsonOptions);
                     if(rows != null)
                     {
                         if(rows.isSuccess)
