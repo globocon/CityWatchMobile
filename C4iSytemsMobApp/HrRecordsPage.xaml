@@ -35,6 +35,14 @@
 
         <VerticalStackLayout Grid.Row="1"
                              Spacing="5">
+            <VerticalStackLayout.Triggers>
+                <DataTrigger TargetType="VerticalStackLayout"
+                             Binding="{Binding Source={x:Reference PopupOverlayAddCompliance}, Path=IsVisible}"
+                             Value="True">
+                    <Setter Property="IsVisible"
+                            Value="False" />
+                </DataTrigger>
+            </VerticalStackLayout.Triggers>
             <!-- Settings Button -->
             <Frame CornerRadius="9"
                    HasShadow="False"
