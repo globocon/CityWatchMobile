@@ -45,6 +45,7 @@ namespace C4iSytemsMobApp.Models
         }
 
         public int DateType { get; set; }
+        public int dateType { get => DateType; set => DateType = value; }
         public string DateTypeName { get; set; }
     }
 }
