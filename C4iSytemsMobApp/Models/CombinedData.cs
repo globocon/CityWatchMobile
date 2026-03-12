@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using System.Text.Json.Serialization;
+
 namespace C4iSytemsMobApp.Models
 {
     public class CombinedData
@@ -43,5 +45,10 @@ namespace C4iSytemsMobApp.Models
                 return $"{ReferenceNo} {Description}";
             }
         }
+
+        [JsonIgnore]
+        public int DateType { get; set; }
+        public int dateType { get => DateType; set => DateType = value; }
+        public string DateTypeName { get; set; }
     }
 }

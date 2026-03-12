@@ -35,6 +35,14 @@
 
         <VerticalStackLayout Grid.Row="1"
                              Spacing="5">
+            <VerticalStackLayout.Triggers>
+                <DataTrigger TargetType="VerticalStackLayout"
+                             Binding="{Binding Source={x:Reference PopupOverlayAddCompliance}, Path=IsVisible}"
+                             Value="True">
+                    <Setter Property="IsVisible"
+                            Value="False" />
+                </DataTrigger>
+            </VerticalStackLayout.Triggers>
             <!-- Settings Button -->
             <Frame CornerRadius="9"
                    HasShadow="False"
@@ -452,7 +460,7 @@
         <Grid x:Name="LoadingOverlay"
               BackgroundColor="#80000000"
               IsVisible="False"
-              Grid.RowSpan="3"
+              Grid.RowSpan="4"
               VerticalOptions="FillAndExpand"
               HorizontalOptions="FillAndExpand">
             <StackLayout VerticalOptions="Center"
@@ -473,7 +481,8 @@
         <!-- Add Compliance -->
         <Grid x:Name="PopupOverlayAddCompliance"
               BackgroundColor="#80000000"
-              IsVisible="False">
+              IsVisible="False"
+              Grid.RowSpan="4">
 
             <Frame x:Name="AddComplianceFrame"
                    BackgroundColor="{AppThemeBinding Light=White, Dark=Black}"
@@ -608,34 +617,51 @@
                                        FontAttributes="Bold"
                                        FontSize="14"
                                        VerticalOptions="Center" />
-                                <Border Padding="1"
-                                        StrokeShape="RoundRectangle 15">
-
+                                 <Border Padding="1"
+                                         StrokeShape="RoundRectangle 15">
                                     <Border.Triggers>
-                                        <DataTrigger TargetType="Border"
-                                                     Binding="{Binding IsIssueToggle}"
-                                                     Value="True">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="#007AFF" />
-                                        </DataTrigger>
-
-                                        <DataTrigger TargetType="Border"
-                                                     Binding="{Binding IsIssueToggle}"
-                                                     Value="False">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="#D0D0D0" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
+                                         <DataTrigger TargetType="Border" Binding="{Binding IsDateTypeBoth}" Value="False">
+                                             <Setter Property="Opacity" Value="0" />
+                                             <Setter Property="InputTransparent" Value="True" />
+                                         </DataTrigger>
+                                         <DataTrigger TargetType="Border" Binding="{Binding IsDateTypeBoth}" Value="True">
+                                             <Setter Property="Opacity" Value="1" />
+                                             <Setter Property="InputTransparent" Value="False" />
+                                         </DataTrigger>
+                                         <DataTrigger TargetType="Border"
+                                                      Binding="{Binding IsIssueToggle}"
+                                                      Value="True">
+                                             <Setter Property="BackgroundColor"
+                                                     Value="#007AFF" />
+                                         </DataTrigger>
+ 
+                                         <DataTrigger TargetType="Border"
+                                                      Binding="{Binding IsIssueToggle}"
+                                                      Value="False">
+                                             <Setter Property="BackgroundColor"
+                                                     Value="#D0D0D0" />
+                                         </DataTrigger>
+                                     </Border.Triggers>
 
                                     <Switch IsToggled="{Binding IsIssueToggle}"
+                                            IsEnabled="{Binding IsToggleEnabled}"
                                             MaximumHeightRequest="18" />
                                 </Border>
 
                             </HorizontalStackLayout>
 
-                            <Label x:Name="LabelExpiryOrIssueDateNote"
-                                   FontSize="10">
-
+                             <Label x:Name="LabelExpiryOrIssueDateNote"
+                                    FontSize="10">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsDateTypeBoth}" Value="False">
+                                        <Setter Property="Opacity" Value="0" />
+                                        <Setter Property="InputTransparent" Value="True" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsDateTypeBoth}" Value="True">
+                                        <Setter Property="Opacity" Value="1" />
+                                        <Setter Property="InputTransparent" Value="False" />
+                                    </DataTrigger>
+                                </Label.Triggers>
                                 <Label.FormattedText>
                                     <FormattedString>
                                         <Span Text="Note: "
@@ -651,6 +677,7 @@
 
                             <!-- DatePicker -->
                             <DatePicker Date="{Binding DisplayDate}"
+                                        MinimumDate="{Binding MinimumDate}"
                                         MaximumDate="{Binding MaximumDate}"
                                         Format="dd/MM/yyyy" />
                         </VerticalStackLayout>
