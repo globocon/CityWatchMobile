@@ -10,10 +10,10 @@
            HasShadow="False"
            VerticalOptions="Center"
            HorizontalOptions="Center"
-           WidthRequest="400"
+           WidthRequest="340"
            BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
 
-        <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="20">
+        <Grid RowDefinitions="Auto, Auto" RowSpacing="20">
             <!-- Header Row -->
             <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
                 <Label Text="Set your PIN for the first time"
@@ -34,39 +34,38 @@
             <!-- Line Separator -->
             <BoxView Grid.Row="0" VerticalOptions="End" HeightRequest="1" Color="LightGray" Margin="-20,0,-20,-20"/>
 
-            <!-- Input Row -->
-            <Grid Grid.Row="1" ColumnDefinitions="Auto, *">
-                <Label Grid.Column="0" 
+            <!-- Content Area -->
+            <Grid Grid.Row="1" ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto, Auto" RowSpacing="10" ColumnSpacing="15">
+                <Label Grid.Row="0" Grid.Column="0" 
                        Text="Enter New PIN" 
                        VerticalOptions="Center" 
-                       Margin="0,0,10,0"
                        TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
-                <Entry Grid.Column="1" 
+                
+                <Entry Grid.Row="0" Grid.Column="1" 
                        x:Name="txtNewPinEntry"
                        Placeholder=""
                        HeightRequest="35"
+                       WidthRequest="130"
+                       HorizontalOptions="Start"
                        IsPassword="True"
                        Keyboard="Numeric"
                        MaxLength="6"
                        IsEnabled="True" />
-            </Grid>
-
-            <!-- Text & Button Row -->
-            <Grid Grid.Row="2" ColumnDefinitions="*, Auto" ColumnSpacing="15">
-                <Label Grid.Column="0" 
+                
+                <Label Grid.Row="1" Grid.Column="1" 
                        Text="First-time users are required to enter a custom 4 to 6-digit PIN code to protect their personal information. Please do not share your PIN."
                        FontSize="11"
                        LineBreakMode="WordWrap"
-                       VerticalOptions="Center"
                        TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                <Button Grid.Column="1" 
+                
+                <Button Grid.Row="2" Grid.Column="1" 
                         Text="💾 Save PIN" 
                         BackgroundColor="#005B9F"
                         TextColor="White"
                         CornerRadius="4"
                         HeightRequest="35"
                         Padding="10,0"
-                        VerticalOptions="Center"
+                        HorizontalOptions="End"
                         Clicked="OnSaveClicked" />
             </Grid>
         </Grid>
