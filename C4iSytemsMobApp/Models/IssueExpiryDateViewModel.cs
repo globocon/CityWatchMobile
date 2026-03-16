@@ -12,6 +12,8 @@ namespace C4iSytemsMobApp.Models
         private DateTime? _expiryDate;
         private DateTime? _issueDate;
         private DateTime _displayDate = DateTime.Today;
+        private bool _isToggleEnabled = true;
+        private bool _isDateTypeBoth = true;
 
         public IssueExpiryDateViewModel()
         {
@@ -40,6 +42,7 @@ namespace C4iSytemsMobApp.Models
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(DateLabelText));
                 OnPropertyChanged(nameof(MaximumDate));
+                OnPropertyChanged(nameof(MinimumDate));
                 OnPropertyChanged(nameof(IsIssueToggle));
             }
         }
@@ -93,8 +96,33 @@ namespace C4iSytemsMobApp.Models
             }
         }
 
+        public bool IsToggleEnabled
+        {
+            get => _isToggleEnabled;
+            set
+            {
+                if (_isToggleEnabled == value) return;
+                _isToggleEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsDateTypeBoth
+        {
+            get => _isDateTypeBoth;
+            set
+            {
+                if (_isDateTypeBoth == value) return;
+                _isDateTypeBoth = value;
+                OnPropertyChanged();
+            }
+        }
+
         public DateTime MaximumDate =>
             IsExpiry ? DateTime.MaxValue : DateTime.Today;
+
+        public DateTime MinimumDate =>
+            IsExpiry ? DateTime.Today : new DateTime(1900, 1, 1);
 
         public string DateLabelText =>
             IsExpiry ? "Expiry Date (DOE)" : "Issue Date (DOI)";

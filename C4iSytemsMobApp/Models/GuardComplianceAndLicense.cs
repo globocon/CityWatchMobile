@@ -1,8 +1,8 @@
-﻿
-using C4iSytemsMobApp.Enums;
+﻿using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Helpers;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace C4iSytemsMobApp.Models
 {
@@ -24,9 +24,17 @@ namespace C4iSytemsMobApp.Models
         public int Reminder1 { get; set; }
         public int Reminder2 { get; set; }
         public string LicenseNo { get; set; }
+
+        [JsonIgnore]
         public bool DateType { get; set; }
+        public bool dateType { get => DateType; set => DateType = value; }
+
         public bool IsDateFilterEnabledHidden { get; set; }
         public bool HRBanEdit { get; set; }
+        
+        [JsonIgnore]
+        public int MasterDateType { get; set; }
+        public int masterDateType { get => MasterDateType; set => MasterDateType = value; }
         public string IsLogin { get; set; }
         public string StatusColor { get; set; }
 

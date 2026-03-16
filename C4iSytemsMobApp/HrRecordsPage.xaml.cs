@@ -205,7 +205,27 @@ public partial class HrRecordsPage : ContentPage
         var selectedId = selectedHrGroup.Id;
         await LoadHrGroupsDescriptionsListAsync(selectedId);
         DescriptionGroupPicker.SelectedItem = HrDescriptionList.FirstOrDefault(x => x.ReferenceNoAndDescription == item.Description);
-        IssueExpiryVM.IsExpiry = item.DateType ? !item.DateType : true;
+        
+        // Apply DOI/DOE logic for edited record
+        if (item.MasterDateType == 1) // DOI
+        {
+            IssueExpiryVM.IsExpiry = false;
+            IssueExpiryVM.IsToggleEnabled = false;
+            IssueExpiryVM.IsDateTypeBoth = false;
+        }
+        else if (item.MasterDateType == 2) // DOE
+        {
+            IssueExpiryVM.IsExpiry = true;
+            IssueExpiryVM.IsToggleEnabled = false;
+            IssueExpiryVM.IsDateTypeBoth = false;
+        }
+        else // Both or 0
+        {
+            IssueExpiryVM.IsExpiry = item.DateType ? !item.DateType : true;
+            IssueExpiryVM.IsToggleEnabled = true;
+            IssueExpiryVM.IsDateTypeBoth = true;
+        }
+
         IssueExpiryVM.DisplayDate = item.ExpiryDate.HasValue ? item.ExpiryDate.Value : DateTime.Today;
 
         HrDocumentFileModel editfile = new HrDocumentFileModel
@@ -238,6 +258,8 @@ public partial class HrRecordsPage : ContentPage
         // Bind to CollectionView        
         IssueExpiryVM.DisplayDate = DateTime.Today;
         IssueExpiryVM.IsExpiry = true;
+        IssueExpiryVM.IsToggleEnabled = true;
+        IssueExpiryVM.IsDateTypeBoth = true;
         FilesCollectionEditImage.ItemsSource = SelectedFiles;
         IsFilesVisible = SelectedFiles.Any();
         FilesCollectionEditImage.IsVisible = IsFilesVisible;
@@ -305,7 +327,34 @@ public partial class HrRecordsPage : ContentPage
 
     private void OnDescriptionGroupSelectionChanged(object sender, EventArgs e)
     {
+        if (sender is not Picker picker)
+            return;
 
+        if (picker.SelectedItem is not CombinedData selectedDescription)
+            return;
+
+        // DateType logic based on user reference:
+        // 0 = Both (DOI / DOE)
+        // 1 = DOI
+        // 2 = DOE
+
+        if (selectedDescription.DateType == 1) // DOI
+        {
+            IssueExpiryVM.IsExpiry = false;
+            IssueExpiryVM.IsToggleEnabled = false;
+            IssueExpiryVM.IsDateTypeBoth = false;
+        }
+        else if (selectedDescription.DateType == 2) // DOE
+        {
+            IssueExpiryVM.IsExpiry = true;
+            IssueExpiryVM.IsToggleEnabled = false;
+            IssueExpiryVM.IsDateTypeBoth = false;
+        }
+        else // Both or 0
+        {
+            IssueExpiryVM.IsToggleEnabled = true;
+            IssueExpiryVM.IsDateTypeBoth = true;
+        }
     }
 
     private async void OnPickComplianceDocumentClicked(object sender, EventArgs e)

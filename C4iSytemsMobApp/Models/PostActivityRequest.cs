@@ -18,7 +18,9 @@ namespace C4iSytemsMobApp.Models
         public string EventDateTimeZone { get; set; }
         public string EventDateTimeZoneShort { get; set; }
         public int? EventDateTimeUtcOffsetMinute { get; set; }
+        public DateTime EventMobileUtcDateTime { get; set; }
         public bool IsNewGuard { get; set; } = false;
+        public int TagScanHitLogRefId { get; set; } = 0;
 
     }
 }

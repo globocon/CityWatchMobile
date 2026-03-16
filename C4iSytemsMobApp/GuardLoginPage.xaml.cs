@@ -795,7 +795,8 @@ public partial class GuardLoginPage : ContentPage
                 EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
                 EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
-                IsNewGuard = _isNewGuard
+                IsNewGuard = _isNewGuard,
+                EventMobileUtcDateTime = TimeZoneHelper.GetCurrentUtcDateTime()
             };
 
             lblloadinginfo.Text = "Authenticating...Please wait...";

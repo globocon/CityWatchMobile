@@ -17,6 +17,7 @@ namespace C4iSytemsMobApp.Services
         string guardLicenceNo;
         bool isError;
         string msg;
+
         public GuardApiServices()
         {
             // Constructor logic if needed
@@ -170,7 +171,6 @@ namespace C4iSytemsMobApp.Services
 
                 HttpClient _httpClient = new HttpClient();
                 HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
-                response.EnsureSuccessStatusCode();
                 var rows = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
                 return rows.data;
             }
