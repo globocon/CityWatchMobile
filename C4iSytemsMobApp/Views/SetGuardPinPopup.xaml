@@ -2,7 +2,7 @@
 <toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-               x:Class="C4iSytemsMobApp.Views.CheckGuardPinPopup"
+               x:Class="C4iSytemsMobApp.Views.SetGuardPinPopup"
                CanBeDismissedByTappingOutsideOfPopup="False">
 
     <Frame Padding="20"
@@ -15,30 +15,42 @@
 
         <VerticalStackLayout Spacing="15">
 
-            <Label Text="HR Document PIN"
+            <Label Text="Set HR Document PIN"
                    FontSize="20"
                    HorizontalOptions="Center"
                    FontAttributes="Bold"
                    TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
-            <Entry x:Name="txtPinEntry"
+            <Label Text="Please set a new 4 to 6 digit PIN."
+                   FontSize="12"
+                   HorizontalOptions="Center"
+                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+
+            <Entry x:Name="txtNewPinEntry"
                    Margin="0,5,0,0"
-                   Placeholder="Enter your PIN ..."
+                   Placeholder="New PIN (4-6 digits)"
                    HorizontalOptions="CenterAndExpand"
-                   HeightRequest="100"
-                   MaxLength="50"
+                   IsPassword="True"
+                   Keyboard="Numeric"
+                   MaxLength="6"
                    IsEnabled="True" />
 
+            <Entry x:Name="txtConfirmPinEntry"
+                   Margin="0,5,0,0"
+                   Placeholder="Confirm PIN"
+                   HorizontalOptions="CenterAndExpand"
+                   IsPassword="True"
+                   Keyboard="Numeric"
+                   MaxLength="6"
+                   IsEnabled="True" />
 
-            <Button Text="Ok"
-                    Clicked="OnOkClicked" />
+            <Button Text="Save"
+                    Clicked="OnSaveClicked" />
 
             <Button Text="Cancel"
                     TextColor="Red"
                     Clicked="OnCancelClicked" />
 
-            <Button Text="Forgot PIN ?"
-                    Clicked="OnForgotPasswordClicked" />
         </VerticalStackLayout>
     </Frame>
 </toolkit:Popup>
