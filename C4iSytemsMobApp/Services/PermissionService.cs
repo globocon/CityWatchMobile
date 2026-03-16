@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.Maui.ApplicationModel;
 
 namespace C4iSytemsMobApp.Services
 {
@@ -34,6 +35,15 @@ namespace C4iSytemsMobApp.Services
                     status = await Permissions.RequestAsync<BluetoothScanPermission>();
 
                 return status == PermissionStatus.Granted;
+            }
+#endif
+#if IOS
+            var statusLocation = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            if (statusLocation != PermissionStatus.Granted)
+            {
+                statusLocation = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                if (statusLocation != PermissionStatus.Granted)
+                    return false;
             }
 #endif
             return true;

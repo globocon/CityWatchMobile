@@ -173,7 +173,7 @@ namespace C4iSytemsMobApp.Services
                     {
                         _deviceFound = new List<DeviceFound>();
                         OnScanningInProgress?.Invoke(true);
-                        await _adapter.StartScanningForDevicesAsync();
+                        await _adapter.StartScanningForDevicesAsync(allowDuplicatesKey: true);
                         OnScanningInProgress?.Invoke(false);
                         if (OnDeviceFoundAsync != null)
                         {
