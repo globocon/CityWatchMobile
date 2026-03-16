@@ -6,51 +6,69 @@
                CanBeDismissedByTappingOutsideOfPopup="False">
 
     <Frame Padding="20"
-           CornerRadius="0"
+           CornerRadius="5"
            HasShadow="False"
            VerticalOptions="Center"
            HorizontalOptions="Center"
-           WidthRequest="280"
+           WidthRequest="400"
            BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
 
-        <VerticalStackLayout Spacing="15">
+        <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="20">
+            <!-- Header Row -->
+            <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+                <Label Text="Set your PIN for the first time"
+                       FontSize="16"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                <Label Grid.Column="1" 
+                       Text="✖" 
+                       FontSize="16" 
+                       FontAttributes="Bold" 
+                       VerticalOptions="Center" 
+                       TextColor="Gray">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCancelClicked" />
+                    </Label.GestureRecognizers>
+                </Label>
+            </Grid>
+            <!-- Line Separator -->
+            <BoxView Grid.Row="0" VerticalOptions="End" HeightRequest="1" Color="LightGray" Margin="-20,0,-20,-20"/>
 
-            <Label Text="Set HR Document PIN"
-                   FontSize="20"
-                   HorizontalOptions="Center"
-                   FontAttributes="Bold"
-                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+            <!-- Input Row -->
+            <Grid Grid.Row="1" ColumnDefinitions="Auto, *">
+                <Label Grid.Column="0" 
+                       Text="Enter New PIN" 
+                       VerticalOptions="Center" 
+                       Margin="0,0,10,0"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
+                <Entry Grid.Column="1" 
+                       x:Name="txtNewPinEntry"
+                       Placeholder=""
+                       HeightRequest="35"
+                       IsPassword="True"
+                       Keyboard="Numeric"
+                       MaxLength="6"
+                       IsEnabled="True" />
+            </Grid>
 
-            <Label Text="Please set a new 4 to 6 digit PIN."
-                   FontSize="12"
-                   HorizontalOptions="Center"
-                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-
-            <Entry x:Name="txtNewPinEntry"
-                   Margin="0,5,0,0"
-                   Placeholder="New PIN (4-6 digits)"
-                   HorizontalOptions="CenterAndExpand"
-                   IsPassword="True"
-                   Keyboard="Numeric"
-                   MaxLength="6"
-                   IsEnabled="True" />
-
-            <Entry x:Name="txtConfirmPinEntry"
-                   Margin="0,5,0,0"
-                   Placeholder="Confirm PIN"
-                   HorizontalOptions="CenterAndExpand"
-                   IsPassword="True"
-                   Keyboard="Numeric"
-                   MaxLength="6"
-                   IsEnabled="True" />
-
-            <Button Text="Save"
-                    Clicked="OnSaveClicked" />
-
-            <Button Text="Cancel"
-                    TextColor="Red"
-                    Clicked="OnCancelClicked" />
-
-        </VerticalStackLayout>
+            <!-- Text & Button Row -->
+            <Grid Grid.Row="2" ColumnDefinitions="*, Auto" ColumnSpacing="15">
+                <Label Grid.Column="0" 
+                       Text="First-time users are required to enter a custom 4 to 6-digit PIN code to protect their personal information. Please do not share your PIN."
+                       FontSize="11"
+                       LineBreakMode="WordWrap"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                <Button Grid.Column="1" 
+                        Text="💾 Save PIN" 
+                        BackgroundColor="#005B9F"
+                        TextColor="White"
+                        CornerRadius="4"
+                        HeightRequest="35"
+                        Padding="10,0"
+                        VerticalOptions="Center"
+                        Clicked="OnSaveClicked" />
+            </Grid>
+        </Grid>
     </Frame>
 </toolkit:Popup>
