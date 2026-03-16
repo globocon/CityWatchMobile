@@ -30,6 +30,12 @@ public partial class SetGuardPinPopup : Popup
             return;
         }
 
+        if (!newPin.All(char.IsDigit))
+        {
+            await Application.Current.MainPage.DisplayAlert("Error", "PIN must contain only numbers.", "OK");
+            return;
+        }
+
         Close(newPin);
     }
 }
