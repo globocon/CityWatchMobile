@@ -1,4 +1,4 @@
-﻿using C4iSytemsMobApp.Controls;
+using C4iSytemsMobApp.Controls;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
@@ -1538,25 +1538,60 @@ namespace C4iSytemsMobApp
 
         private async void OnHrRecordsClicked(object sender, EventArgs e)
         {
-            var popup = new CheckGuardPinPopup();
-            var result = await this.ShowPopupAsync(popup);
+            var _guardApiServices = IPlatformApplication.Current.Services.GetService<IGuardApiServices>();
+            
+            // 1. Check if PIN is set
+            (bool AccessPermission, string message) = await _guardApiServices.CheckIfPINSetForTheGuard();
 
-            if (result is string action)
+            if (AccessPermission == true)
             {
-                //if (!(Application.Current.MainPage is NavigationPage))
-                //    Application.Current.MainPage = new NavigationPage(Application.Current.MainPage);
+                // This means the PIN is NOT set (AccessPermission = true indicates setup mode)
+                var setPopup = new SetGuardPinPopup();
+                var setPopupResult = await this.ShowPopupAsync(setPopup);
 
-                switch (action)
+                if (setPopupResult is string newPin && newPin != "Cancel")
                 {
-                    case "OK":
+                    var (isSuccess, saveMessage) = await _guardApiServices.SaveNewPINSetForTheGuard(newPin);
+                    if (isSuccess)
+                    {
                         Application.Current.MainPage = new HrRecordsPage();
                         CloseDrawer();
-                        break;
-                    case "ForgotPassword":
-                        break;
-                    case "Cancel":
-                        // Just close silently
-                        break;
+                    }
+                    else
+                    {
+                        await Application.Current.MainPage.DisplayAlert("Error", saveMessage, "OK");
+                    }
+                }
+            }
+            else
+            {
+                // PIN is already set, validate it using CheckGuardPinPopup
+                var checkPopup = new CheckGuardPinPopup();
+                var checkPopupResult = await this.ShowPopupAsync(checkPopup);
+
+                if (checkPopupResult is string action)
+                {
+                    switch (action)
+                    {
+                        case "OK":
+                            Application.Current.MainPage = new HrRecordsPage();
+                            CloseDrawer();
+                            break;
+                        case "ForgotPassword":
+                            bool confirm = await Application.Current.MainPage.DisplayAlert(
+                                "Reset PIN", 
+                                "Are you sure you want to reset your PIN? An email will be sent to your registered email address.", 
+                                "Yes", "No");
+                            if (confirm)
+                            {
+                                string siteName = Preferences.Get("ClientSite", "N/A");
+                                var (isResetSuccess, resetMessage) = await _guardApiServices.ResetGaurdHrPin(siteName);
+                                await Application.Current.MainPage.DisplayAlert(isResetSuccess ? "Success" : "Error", resetMessage, "OK");
+                            }
+                            break;
+                        case "Cancel":
+                            break;
+                    }
                 }
             }
         }

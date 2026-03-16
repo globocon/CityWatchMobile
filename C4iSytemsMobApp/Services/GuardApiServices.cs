@@ -1,4 +1,4 @@
-﻿using C4iSytemsMobApp.Helpers;
+using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using System;
@@ -277,6 +277,77 @@ namespace C4iSytemsMobApp.Services
             {
                 var errorResult = await response.Content.ReadFromJsonAsync<ApiResponse>();
                 return (errorResult.IsSuccess, errorResult.message);
+            }
+        }
+        public async Task<(bool AccessPermission, string message)> CheckIfPINSetForTheGuard()
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/CheckIfPINSetForTheGuard?guardId={guardId}";
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            try
+            {
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var settings = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return (settings.data, settings.message);
+                }
+
+                return (false, "An error occurd while checking the PIN status.");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Exception occurd while checking the PIN status. {ex.Message}.");
+            }
+        }
+
+        public async Task<(bool isSuccess, string message)> SaveNewPINSetForTheGuard(string newPin)
+        {
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SaveNewPINSetForTheGuard";
+            using var _httpClient = new HttpClient();
+            var payload = new { guardId = guardId, newPin = newPin };
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync(apiUrl, payload);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return (result.data, result.message);
+                }
+                else
+                {
+                    var errorResult = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return (errorResult?.data ?? false, errorResult?.message ?? "Error saving PIN");
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Exception occurd while saving the PIN. {ex.Message}.");
+            }
+        }
+
+        public async Task<(bool isSuccess, string message)> ResetGaurdHrPin(string siteName)
+        {
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ResetGaurdHrPin";
+            using var _httpClient = new HttpClient();
+            var payload = new { guardId = guardId, siteName = siteName };
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync(apiUrl, payload);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return (result.data, result.message);
+                }
+                else
+                {
+                    var errorResult = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return (errorResult?.data ?? false, errorResult?.message ?? "Error resetting PIN");
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Exception occurd while resetting the PIN. {ex.Message}.");
             }
         }
     }
