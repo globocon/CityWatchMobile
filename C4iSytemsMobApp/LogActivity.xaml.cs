@@ -1,4 +1,9 @@
-﻿using C4iSytemsMobApp.Data.DbServices;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
+using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Data.Entity;
 using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Helpers;
@@ -9,11 +14,6 @@ using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using Microsoft.AspNetCore.SignalR.Client;
 using Plugin.NFC;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
 
 
 namespace C4iSytemsMobApp;
@@ -102,7 +102,7 @@ public partial class LogActivity : ContentPage
         await StartNFC();
         _isLogsLoading = false;
         await SetupHubConnection(); // LoadLogs(); is Called when the SignalRHub connection is established
-        await SetupRCHubConnection();        
+        await SetupRCHubConnection();
     }
 
 
@@ -1459,7 +1459,7 @@ public partial class LogActivity : ContentPage
                     var extension = Path.GetExtension(fileModel.File.FileName);
                     var cacheFileName = $"{Guid.NewGuid():N}{extension}";
                     var stream = await fileModel.File.OpenReadAsync();
-                    var path = await SaveFileOffline(stream, "ActivityLogbook", cacheFileName);                    
+                    var path = await SaveFileOffline(stream, "ActivityLogbook", cacheFileName);
                     // Update details in local db
                     OfflineFilesRecords offlineFilesRecords = new OfflineFilesRecords()
                     {
@@ -1857,6 +1857,14 @@ public partial class LogActivity : ContentPage
 
     }
 
+    private async void OnNfcScanClicked(object sender, EventArgs e)
+    {
+        if (_isDeviceiOS)
+        {
+            await BeginListening();
+        }
+    }
+
     private void OnEditClosePopupClicked(object sender, EventArgs e)
     {
         // Hide the edit popup
@@ -1940,7 +1948,7 @@ public partial class LogActivity : ContentPage
         await ShowToastMessage($"[{ALERT_TITLE}] Tag scanned. Logging activity to Cache...");
         var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
         if (isSuccess)
-        {            
+        {
             UpdateCacheRecordCount(_ChaceCount);
             //await ShowToastMessage(msg);
             await ShowToastMessage($"[{ALERT_TITLE}] {msg}");
@@ -1955,10 +1963,10 @@ public partial class LogActivity : ContentPage
     {
         // Get the app data directory path
         var appDataDir = Path.Combine(FileSystem.AppDataDirectory, foldername);
-        if(!Directory.Exists(appDataDir))
+        if (!Directory.Exists(appDataDir))
             Directory.CreateDirectory(appDataDir);
         // Create a unique file path
-        var filePath = Path.Combine(appDataDir,fileName);
+        var filePath = Path.Combine(appDataDir, fileName);
 
         // Save the stream to the file path        
         using var destinationStream = File.Create(filePath);

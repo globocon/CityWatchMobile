@@ -1,4 +1,13 @@
-﻿using C4iSytemsMobApp.Controls;
+using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Windows.Input;
+using C4iSytemsMobApp.Controls;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
@@ -14,15 +23,6 @@ using Microsoft.Maui.Devices.Sensors;
 using Plugin.BLE.Abstractions;
 using Plugin.BLE.Abstractions.Contracts;
 using Plugin.NFC;
-using System;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Windows.Input;
 using static Microsoft.Maui.ApplicationModel.Permissions;
 
 
@@ -41,7 +41,7 @@ namespace C4iSytemsMobApp
         private bool _CcounterShown = false;
         private bool _TcounterShown = true;
         private bool _IsCrowdControlCounterEnabled = false;
-        private HubConnection _hubConnection;
+        private HubConnection? _hubConnection;
         public bool isDrawerOpen = false;
         public event PropertyChangedEventHandler PropertyChanged;
         private int? _clientSiteId;
@@ -52,7 +52,7 @@ namespace C4iSytemsMobApp
         private int selectedIncrement = 1;
         private int selectedDecrement = 1;
         private bool _IsVolumeControlButtonEnabled = false;
-        private List<DropdownItemsControl> _crowdControllocationList;
+        private List<DropdownItemsControl> _crowdControllocationList = new();
 
         public const string ALERT_TITLE = "NFC";
         bool _eventsAlreadySubscribed = false;
@@ -117,11 +117,11 @@ namespace C4iSytemsMobApp
             }
         }
         public bool _shouldOpenDrawerOnReturn = false;
-        private int _tags;
-        private int _hit;
-        private int _frequency;
-        private int _missed;
-        private string _tour;
+        private int _tags = 0;
+        private int _hit = 0;
+        private int _frequency = 0;
+        private int _missed = 0;
+        private string _tour = string.Empty;
 
         public int Tags { get => _tags; set { _tags = value; OnPropertyChanged(); } }
         public int Hit { get => _hit; set { _hit = value; OnPropertyChanged(); } }
@@ -136,7 +136,7 @@ namespace C4iSytemsMobApp
         public Color OnlineColor { get; set; }
         public string SyncStatusText { get; set; }
 
-        private IBeaconScanner scanner;
+        private IBeaconScanner? scanner;
         public const string BLE_ALERT_TITLE = "BLE";
         private bool _isBleEnabledForSite = false;
         private bool _hasBlePermission = false;
@@ -183,19 +183,24 @@ namespace C4iSytemsMobApp
                 ShowCounters = _IsCrowdControlCounterEnabled;
             OnPropertyChanged(nameof(ShowCounters));
 
+            if (DeviceInfo.Platform == DevicePlatform.iOS)
+                _isDeviceiOS = true;
 
             // Temporary command for testing
             LongPressCommand = new Command(() => OnDuressClicked(sender: null, e: null));
 
             PopupCollectionView.BindingContext = this;
             BleOnOffColor = Colors.Black;
-            if (scanner.IsBluetoothSupported)
+            if (scanner != null && scanner.IsBluetoothSupported && !_isDeviceiOS)
             {
                 CheckBleEnabledForSite();
                 scanner.OnStateChanged += BluetoothStateChanged;
                 scanner.OnScanningInProgress += OnScanningInProgress;
                 scanner.OnDeviceFoundAsync += OnDeviceFoundAsync;
+                scanner.OnDeviceDiscoveredAsync += OnDeviceDiscoveredAsync;
             }
+
+
         }
 
         public void OnConnectivityChanged(bool isOnline)
@@ -291,9 +296,16 @@ namespace C4iSytemsMobApp
                 SyncState.SyncedCount = cc;
             });
             await InitializePatronsCounterDisplay();  // Execution Order - 1
-            await StartNFC(); // Execution Order - 2
-            if (_isBleEnabledForSite) { StartPulse(); }
-            StartBLEScanner(); // Execution Order - 3
+            if (!_isDeviceiOS)
+            {
+                await StartNFC(); // Execution Order - 2
+            }
+            if (_isBleEnabledForSite && !_isDeviceiOS)
+            {
+                StartPulse();
+                StartBLEScanner(); // Execution Order - 3
+            }
+
             await SetupHubConnection();  // Execution Order - 4
 
             duressCheckTimer.Start();
@@ -625,7 +637,7 @@ namespace C4iSytemsMobApp
             {
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    var formatted = new FormattedString();               
+                    var formatted = new FormattedString();
                     //var isPcar = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP;
 
                     var counterLabelColor = Colors.Gray;
@@ -1760,13 +1772,17 @@ namespace C4iSytemsMobApp
                     }
                     else
                     {
+                        //await ShowToastMessage($"[{ALERT_TITLE}] Error: {scannerSettings?.message ?? "Unknown error"}");
                         await DisplayAlert(ALERT_TITLE, scannerSettings?.message ?? "Unknown error", "OK");
+                        if (_isDeviceiOS) await BeginListening();
                         return;
                     }
                 }
                 else
                 {
-                    await DisplayAlert(ALERT_TITLE, scannerSettings?.message ?? "Unknown error", "OK");
+                    //await ShowToastMessage($"[{ALERT_TITLE}] Error: Failed to fetch tag info");
+                    await DisplayAlert(ALERT_TITLE, "Failed to fetch tag info", "OK");
+                    if (_isDeviceiOS) await BeginListening();
                     return;
                 }
 
@@ -1776,8 +1792,11 @@ namespace C4iSytemsMobApp
                 //var first = tagInfo.Records[0];
                 //await DisplayAlert(ALERT_TITLE, GetMessage(first), "OK");
                 await DisplayAlert(ALERT_TITLE, "Tag UID not found", "OK");
+                if (_isDeviceiOS) await BeginListening();
                 return;
             }
+
+            if (_isDeviceiOS) await BeginListening();
         }
 
         void Current_OniOSReadingSessionCancelled(object sender, EventArgs e) => Debug.WriteLine("iOS NFC Session has been cancelled");
@@ -1786,7 +1805,6 @@ namespace C4iSytemsMobApp
         {
             if (_isDeviceiOS)
             {
-                SubscribeEvents();
                 return;
             }
             await BeginListening();
@@ -1838,14 +1856,14 @@ namespace C4iSytemsMobApp
             {
                 bool.TryParse(isiBeaconEnabledForSiteLocalStored, out _isBleEnabledForSite);
             }
-            if (_isBleEnabledForSite && scanner.IsBluetoothSupported)
+            if (_isBleEnabledForSite && scanner != null && scanner.IsBluetoothSupported)
             {
                 BleOnOffChanged();
             }
         }
         private async Task StartBLEScanner()
         {
-            if (_isBleEnabledForSite && scanner.IsBluetoothSupported)
+            if (_isBleEnabledForSite && scanner != null && scanner.IsBluetoothSupported)
             {
                 _hasBlePermission = await PermissionService.CheckAndRequestPermissionsAsync();
 
@@ -1867,7 +1885,7 @@ namespace C4iSytemsMobApp
 
         private async Task StopBLEScanner()
         {
-            if (_isBleEnabledForSite && scanner.IsBluetoothSupported)
+            if (_isBleEnabledForSite && scanner != null && scanner.IsBluetoothSupported)
             {
                 await scanner.Stop();
             }
@@ -1879,28 +1897,40 @@ namespace C4iSytemsMobApp
             {
                 // DisplayAlert(BLE_ALERT_TITLE, $"Bluetooth State changed: {newState}", "OK");
                 BleOnOffChanged();
-            });
 
-            if (newState == BluetoothState.On)
-            {
-                //Console.WriteLine("Bluetooth is ON — start scanning");
-                if (_isBleEnabledForSite) { StartPulse(); }
-                StartBLEScanner();
-            }
-            else if (newState == BluetoothState.Off)
-            {
-                Console.WriteLine("Bluetooth is OFF — stop scanning");
-                StopPulse();
-                StopBLEScanner();
-            }
+                if (newState == BluetoothState.On)
+                {
+                    //Console.WriteLine("Bluetooth is ON — start scanning");
+                    if (_isBleEnabledForSite) { StartPulse(); }
+                    _ = StartBLEScanner();
+                }
+                else if (newState == BluetoothState.Off)
+                {
+                    Console.WriteLine("Bluetooth is OFF — stop scanning");
+                    StopPulse();
+                    _ = StopBLEScanner();
+                }
+            });
         }
 
         public void BleOnOffChanged()
         {
+            if (scanner == null) return;
             BleScannerOnOff = scanner.GetCurrentState() == BluetoothState.On ? true : false;
             BleOnOffColor = _isBleEnabledForSite ? (BleScannerOnOff ? Colors.Green : Colors.Red) : Colors.Black;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BleScannerOnOff)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BleOnOffColor)));
+        }
+
+        private async Task OnDeviceDiscoveredAsync(DeviceFound dev)
+        {
+            // Show a brief toast for EVERY discovery to confirm the scanner is working
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                var toast = Toast.Make($"BLE Found: {dev.DeviceName ?? "Unknown"} ({dev.MacID})", ToastDuration.Short);
+                await toast.Show();
+            });
+            await ProcessBLEData(dev);
         }
 
         private async Task OnDeviceFoundAsync(List<DeviceFound> device)

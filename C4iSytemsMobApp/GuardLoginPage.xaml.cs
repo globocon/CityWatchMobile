@@ -1,3 +1,9 @@
+using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Net.Http.Json;
+using System.Text.Json;
 using AutoMapper;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Data.Entity;
@@ -9,12 +15,6 @@ using C4iSytemsMobApp.Services;
 using C4iSytemsMobApp.Views;
 using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls;
-using System;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace C4iSytemsMobApp;
 
@@ -1400,7 +1400,7 @@ public partial class GuardLoginPage : ContentPage
     {
         string fileName = CommonHelper.GetSanitizedFileNameFromUrl(serverUrl);
         string localFileNameWithPath = Path.Combine(localPath, fileName);
-
+        //return "";
         try
         {
             using var client = new HttpClient

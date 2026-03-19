@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.Maui.ApplicationModel;
 
 namespace C4iSytemsMobApp.Services
@@ -37,14 +37,24 @@ namespace C4iSytemsMobApp.Services
                 return status == PermissionStatus.Granted;
             }
 #endif
+
 #if IOS
-            var statusLocation = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
-            if (statusLocation != PermissionStatus.Granted)
-            {
-                statusLocation = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-                if (statusLocation != PermissionStatus.Granted)
-                    return false;
-            }
+                        var statusLocation = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+                        if (statusLocation != PermissionStatus.Granted)
+                        {
+                            statusLocation = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                            if (statusLocation != PermissionStatus.Granted)
+                                return false;
+                        }
+
+                        // iOS Bluetooth Permission
+                        var statusBle = await Permissions.CheckStatusAsync<Permissions.Bluetooth>();
+                        if (statusBle != PermissionStatus.Granted)
+                        {
+                            statusBle = await Permissions.RequestAsync<Permissions.Bluetooth>();
+                            if (statusBle != PermissionStatus.Granted)
+                                return false;
+                        }
 #endif
             return true;
         }

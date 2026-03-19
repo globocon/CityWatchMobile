@@ -1,14 +1,14 @@
-﻿using C4iSytemsMobApp.Enums;
+﻿using System.Reflection;
+using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Services;
-using System.Reflection;
 //using CommunityToolkit.Mvvm.Messaging;
 
 namespace C4iSytemsMobApp
 {
     public partial class App : Application
     {
-        public static bool IsVolumeControlEnabledForCounter { get; set; } = false;        
+        public static bool IsVolumeControlEnabledForCounter { get; set; } = false;
         public static PatrolTouringMode TourMode { get; set; } = PatrolTouringMode.STND;
         public static bool IsOnline { get; private set; }
         // Global event that any page/VM can subscribe to
@@ -144,7 +144,7 @@ namespace C4iSytemsMobApp
         private string GetAppVersion()
         {
             var version = Assembly.GetExecutingAssembly().GetName().Version;
-            return version?.ToString() ?? "1.28.1";
+            return version?.ToString() ?? "1.1.0";
         }
     }
 

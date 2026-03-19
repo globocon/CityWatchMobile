@@ -1,12 +1,12 @@
-﻿#if ANDROID
+#if ANDROID
 using Android.Opengl;
 using Android.Webkit;
 #endif
+using System.Text;
 using Plugin.BLE;
 using Plugin.BLE.Abstractions;
 using Plugin.BLE.Abstractions.Contracts;
 using Plugin.BLE.Abstractions.EventArgs;
-using System.Text;
 
 namespace C4iSytemsMobApp.Services
 {
@@ -20,6 +20,7 @@ namespace C4iSytemsMobApp.Services
         // public int RssiThreshold { get; set; } = -80; // default: ignore weaker than -80
         private List<DeviceFound> _deviceFound;
         public event Action<BluetoothState>? OnStateChanged;
+        public Func<DeviceFound, Task>? OnDeviceDiscoveredAsync;
         public Func<List<DeviceFound>, Task>? OnDeviceFoundAsync;
         public event Action<bool>? OnScanningInProgress;
         public bool IsBluetoothSupported { get; private set; }
@@ -60,6 +61,7 @@ namespace C4iSytemsMobApp.Services
                 _ble.StateChanged += BleStateChanged;
                 _adapter.DeviceDiscovered += OnDeviceDiscovered;
                 _adapter.DeviceAdvertised += OnDeviceAdvertised;
+                _adapter.ScanMode = ScanMode.LowLatency;
             }
             catch (TypeInitializationException)
             {
@@ -96,26 +98,41 @@ namespace C4iSytemsMobApp.Services
 
         private async void OnDeviceDiscovered(object sender, DeviceEventArgs e)
         {
-            // Ignore weak RSSI
-            //if (e.Device.Rssi < RssiThreshold)
-            //    return;
-
             var device = e.Device;
             try
             {
-                var Macid = GuidToMac(device.Id.ToString());
+                // On iOS, device.Id is a random UUID. Attempt to find the real MAC in advertisement data first.
+                var realMac = TryGetMacFromAdvertisement(device);
+                var FakeMac = GuidToMac(device.Id.ToString());
+                var Macid = realMac ?? FakeMac;
+                var deviceName = device.Name ?? "Unknown";
+
+                // if (deviceName.ToLower().Contains("inode") || deviceName.ToLower().Contains("beat") || deviceName.ToLower().Contains("jodu"))
+                // {
+                //     Console.WriteLine($"[BLE] Discovered: {deviceName} ID: {device.Id} MAC_Derived: {Macid} {(realMac != null ? "(Real MAC)" : "(Derived from UUID)")}");
+                // }
+
+                Console.WriteLine($"[BLE] Discovered: {deviceName} ID: {device.Id} MAC_Derived: {Macid} {(realMac != null ? "(Real MAC)" : "(Derived from UUID)")}");
+
+                var devFound = new DeviceFound
+                {
+                    MacID = Macid,
+                    DeviceName = device.Name
+                };
+
                 if (!_deviceFound.Any(d => d.MacID == Macid))
                 {
-                    _deviceFound.Add(new DeviceFound
-                    {
-                        MacID = Macid,
-                        DeviceName = device.Name
-                    });
+                    _deviceFound.Add(devFound);
                 }
+
+                // if (OnDeviceDiscoveredAsync != null)
+                // {
+                //     await OnDeviceDiscoveredAsync.Invoke(devFound);
+                // }
             }
             catch (Exception ex)
             {
-                MessageBus.Send("INFO", $"Guid --> MAC Error:\n{ex.Message}");
+                Console.WriteLine($"[BLE] Error in OnDeviceDiscovered: {ex.Message}");
             }
         }
 
@@ -155,7 +172,7 @@ namespace C4iSytemsMobApp.Services
         {
             _runScanLoop = false;
 
-            if (_adapter.IsScanning)
+            if (_adapter != null && _adapter.IsScanning)
             {
                 await _adapter.StopScanningForDevicesAsync();
             }
@@ -167,25 +184,35 @@ namespace C4iSytemsMobApp.Services
         {
             while (_runScanLoop)
             {
-                if (!_adapter.IsScanning)
+                if (_adapter != null && !_adapter.IsScanning)
                 {
                     try
                     {
                         _deviceFound = new List<DeviceFound>();
                         OnScanningInProgress?.Invoke(true);
-                        await _adapter.StartScanningForDevicesAsync(allowDuplicatesKey: true);
-                        OnScanningInProgress?.Invoke(false);
-                        if (OnDeviceFoundAsync != null)
+
+                        // Use a 4-second timeout for the scan session to keep it looping and fresh
+                        var scanTask = _adapter.StartScanningForDevicesAsync(allowDuplicatesKey: true);
+                        var timeoutTask = Task.Delay(4000);
+
+                        await Task.WhenAny(scanTask, timeoutTask);
+
+                        if (!scanTask.IsCompleted)
                         {
-                            if (_deviceFound.Count > 0)
-                            {
-                                await OnDeviceFoundAsync.Invoke(_deviceFound);
-                                await Task.Delay(200);
-                            }
+                            await _adapter.StopScanningForDevicesAsync();
+                        }
+
+                        OnScanningInProgress?.Invoke(false);
+
+                        if (OnDeviceFoundAsync != null && _deviceFound.Count > 0)
+                        {
+                            await OnDeviceFoundAsync.Invoke(_deviceFound);
+                            await Task.Delay(200);
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Console.WriteLine($"[BLE] ScanLoop Error: {ex.Message}");
                         OnScanningInProgress?.Invoke(false);
                         await Task.Delay(2000);
                     }
@@ -205,7 +232,7 @@ namespace C4iSytemsMobApp.Services
 
             try
             {
-                if (_runScanLoop)
+                if (_runScanLoop && _adapter != null)
                 {
                     _deviceFound = new List<DeviceFound>();
                     OnScanningInProgress?.Invoke(true);
@@ -233,6 +260,37 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
+        /// <summary>
+        /// Attempts to extract the hardware MAC address from Manufacturer Specific Data advertisement records.
+        /// This is the most reliable way to get a consistent MAC address on iOS.
+        /// </summary>
+        private string? TryGetMacFromAdvertisement(IDevice device)
+        {
+            if (device.AdvertisementRecords == null) return null;
+
+            foreach (var record in device.AdvertisementRecords)
+            {
+                // Many beacons use Manufacturer Specific Data (0xFF) to broadcast their MAC
+                // Some "inode" beacons have the MAC at the start of the manufacturer data
+                if (record.Type == AdvertisementRecordType.ManufacturerSpecificData && record.Data != null && record.Data.Length >= 6)
+                {
+                    // Heuristic: Look for a 6-byte sequence at common positions
+                    // Most commonly at index 0 or index 2 depending on the beacon type
+                    // We'll take the first 6 bytes if it's a plausible MAC address format
+                    var macBytes = new byte[6];
+                    Array.Copy(record.Data, 0, macBytes, 0, 6);
+
+                    // Format as standard MAC address
+                    return string.Join(":", macBytes.Select(b => b.ToString("X2")));
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Converts a GUID/UUID to a MAC-formatted string.
+        /// NOTE: On iOS, this will result in a virtual/fake MAC address because the UUID is random.
+        /// </summary>
         public static string GuidToMac(string guidString)
         {
             // Parse GUID
@@ -275,6 +333,7 @@ namespace C4iSytemsMobApp.Services
 
         public BluetoothState GetCurrentState()
         {
+            if (_ble == null) return BluetoothState.Unknown;
             return _ble.State;
         }
 
