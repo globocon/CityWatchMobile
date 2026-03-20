@@ -42,6 +42,6 @@ public partial class CheckGuardPinPopup : Popup
 
     private void OnForgotPasswordClicked(object sender, EventArgs e)
     {
-        // Close("ForgotPassword");
+        Close("ForgotPassword");
     }
 }
