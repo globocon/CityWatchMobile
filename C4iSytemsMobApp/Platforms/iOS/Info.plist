@@ -58,5 +58,11 @@
 		<!-- NFC usage description -->
 		<key>NFCReaderUsageDescription</key>
 		<string>This app requires NFC to scan tags.</string>
+		<!-- Camera usage description -->
+		<key>NSCameraUsageDescription</key>
+		<string>This app requires camera access to scan QR codes.</string>
+		<!-- Microphone usage description -->
+		<key>NSMicrophoneUsageDescription</key>
+		<string>This app requires microphone access for audio and video features.</string>
 	</dict>
 </plist>

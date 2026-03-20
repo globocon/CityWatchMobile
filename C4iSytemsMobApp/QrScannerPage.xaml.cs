@@ -36,14 +36,27 @@ public partial class QrScannerPage : ContentPage
         cameraView.IsDetecting = true;
         cameraView.CameraLocation = CameraLocation.Rear;
 
-        // Automatically turn ON torch when scanner starts
-        cameraView.IsTorchOn = true;
+        // Automatically turn ON torch when scanner starts - Added safety
+        await Task.Delay(500); // Wait for camera to initialize
+        try
+        {
+            cameraView.IsTorchOn = true;
+        }
+        catch (Exception ex)
+        {
+            // Torch might not be available on some devices/simulators
+            System.Diagnostics.Debug.WriteLine($"Error turning on torch: {ex.Message}");
+        }
     }
 
     protected override void OnDisappearing()
     {
         // Turn OFF torch when scanner stops / page closes
-        cameraView.IsTorchOn = false;
+        try
+        {
+            cameraView.IsTorchOn = false;
+        }
+        catch { }
         cameraView.IsDetecting = false;
         base.OnDisappearing();
     }
@@ -81,7 +94,11 @@ public partial class QrScannerPage : ContentPage
             Preferences.Set("UserName", parts[3]);
 
             // Turn OFF torch once scanning is finished
-            cameraView.IsTorchOn = false;
+            try
+            {
+                cameraView.IsTorchOn = false;
+            }
+            catch { }
 
             // Navigate
             Application.Current.MainPage = new GuardLoginQRCode();
