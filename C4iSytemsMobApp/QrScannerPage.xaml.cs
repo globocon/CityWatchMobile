@@ -11,53 +11,70 @@ public partial class QrScannerPage : ContentPage
     public QrScannerPage()
     {
         InitializeComponent();
-
-        cameraView.Options = new BarcodeReaderOptions
-        {
-            Formats = BarcodeFormat.QrCode,
-            AutoRotate = true,
-            TryHarder = true
-        };
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
 
-        var status = await Permissions.RequestAsync<Permissions.Camera>();
-        if (status != PermissionStatus.Granted)
-        {
-            await DisplayAlert("Permission Denied", "Camera access is required to scan QR codes.", "OK");
-            await Navigation.PopAsync();
-            return;
-        }
+        await StartScanningAsync();
+    }
 
-        _isScanned = false;
-        cameraView.IsDetecting = true;
-        cameraView.CameraLocation = CameraLocation.Rear;
-
-        // Automatically turn ON torch when scanner starts - Added safety
-        await Task.Delay(500); // Wait for camera to initialize
+    private async Task StartScanningAsync()
+    {
         try
         {
-            cameraView.IsTorchOn = true;
+            var status = await Permissions.RequestAsync<Permissions.Camera>();
+            if (status != PermissionStatus.Granted)
+            {
+                await DisplayAlert("Permission Denied", "Camera access is required to scan QR codes.", "OK");
+                //await Navigation.PopAsync();
+                return;
+            }
+
+            _isScanned = false;
+
+            // Give the UI a bit more time to settle
+            await Task.Delay(250);
+
+            cameraView.Options = new BarcodeReaderOptions
+            {
+                Formats = BarcodeFormat.QrCode,
+                AutoRotate = true,
+                TryHarder = true
+            };
+
+            cameraView.IsDetecting = true;
+            cameraView.CameraLocation = CameraLocation.Rear;
+
+            // Automatically turn ON torch when scanner starts - Added safety
+            await Task.Delay(500); // Wait for camera to initialize
+            try
+            {
+                cameraView.IsTorchOn = true;
+            }
+            catch (Exception ex)
+            {
+                // Torch might not be available on some devices/simulators
+                System.Diagnostics.Debug.WriteLine($"Error turning on torch: {ex.Message}");
+            }
         }
         catch (Exception ex)
         {
-            // Torch might not be available on some devices/simulators
-            System.Diagnostics.Debug.WriteLine($"Error turning on torch: {ex.Message}");
+            await DisplayAlert("Scanner Error", $"Failed to start scanner: {ex.Message}", "OK");
+            //await Navigation.PopAsync();
         }
     }
 
     protected override void OnDisappearing()
     {
-        // Turn OFF torch when scanner stops / page closes
+        // Turn OFF torch and detection when scanner stops / page closes
         try
         {
+            cameraView.IsDetecting = false;
             cameraView.IsTorchOn = false;
         }
         catch { }
-        cameraView.IsDetecting = false;
         base.OnDisappearing();
     }
 
@@ -108,12 +125,12 @@ public partial class QrScannerPage : ContentPage
     private async Task ShowErrorAndCloseScanner(string message)
     {
         await DisplayAlert("Error", message, "OK");
-        await Navigation.PopAsync();
+        //await Navigation.PopAsync();
     }
 
     private async void OnCloseScannerClicked(object sender, EventArgs e)
     {
-        await Navigation.PopAsync();
+        Application.Current.MainPage = new LoginPage();
     }
 }
 

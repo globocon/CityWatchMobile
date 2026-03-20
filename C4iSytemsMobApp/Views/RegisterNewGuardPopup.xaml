@@ -3,7 +3,9 @@
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
                x:Class="C4iSytemsMobApp.Views.RegisterNewGuardPopup"
-               CanBeDismissedByTappingOutsideOfPopup="False">
+               CanBeDismissedByTappingOutsideOfPopup="False"
+               Size="300,650"
+               Color="{AppThemeBinding Light=White, Dark=Black}">
   
         
         
@@ -15,7 +17,7 @@
                HorizontalOptions="Center"
                WidthRequest="280"
                HeightRequest="600"
-               BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
+               BackgroundColor="Transparent">
 
             <ScrollView>
                 <VerticalStackLayout Spacing="3">

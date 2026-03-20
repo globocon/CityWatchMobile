@@ -15,9 +15,9 @@ public partial class LoginPage : ContentPage
     {
         InitializeComponent();
         _httpClient = new HttpClient();
-        lblAppVersion.Text = $"Version {App.CurrentAppVersion}";       
+        lblAppVersion.Text = $"Version {App.CurrentAppVersion}";
         LoadSavedCredentials();
-       
+
 
 
     }
@@ -123,7 +123,7 @@ public partial class LoginPage : ContentPage
         try
         {
             var apiUrl = $"{AppConfig.ApiBaseUrl}Auth/login";
-            
+
             var loginData = new { UserName = username, Password = password };
 
             using (HttpClient client = new HttpClient()) // Ensures HttpClient is always available
@@ -170,7 +170,8 @@ public partial class LoginPage : ContentPage
 
     private async void OnQRCodeLoginClicked(object sender, EventArgs e)
     {
-       await Navigation.PushAsync(new QrScannerPage());
+        //await Navigation.PushAsync(new QrScannerPage());
+        Application.Current.MainPage = new NavigationPage(new QrScannerPage());
     }
 
     //private async void OnNfcTestClicked(object sender, EventArgs e)
@@ -238,7 +239,7 @@ public partial class LoginPage : ContentPage
                 return;
             }
 
-           
+
 
             var location = await Geolocation.GetLocationAsync(new GeolocationRequest
             {
@@ -249,12 +250,12 @@ public partial class LoginPage : ContentPage
             if (location != null)
             {
 
-                Preferences.Set("GpsCoordinates", location.Latitude.ToString() +','+location.Longitude.ToString());
+                Preferences.Set("GpsCoordinates", location.Latitude.ToString() + ',' + location.Longitude.ToString());
                 //locationLabel.Text = $"Latitude: {location.Latitude}, Longitude: {location.Longitude}";
             }
             else
             {
-                
+
                 //locationLabel.Text = "Unable to retrieve location.";
             }
         }
