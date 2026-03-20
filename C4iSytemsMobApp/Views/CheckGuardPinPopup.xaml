@@ -37,8 +37,8 @@
                     TextColor="Red"
                     Clicked="OnCancelClicked" />
 
-            <!--<Button Text="Forgot PIN ?"
-                    Clicked="OnForgotPasswordClicked" />-->
+            <Button Text="Forgot PIN ?"
+                    Clicked="OnForgotPasswordClicked" />
         </VerticalStackLayout>
     </Frame>
 </toolkit:Popup>

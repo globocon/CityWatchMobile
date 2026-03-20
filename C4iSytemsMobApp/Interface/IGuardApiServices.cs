@@ -1,4 +1,4 @@
-﻿
+
 using C4iSytemsMobApp.Models;
 
 namespace C4iSytemsMobApp.Interface
@@ -17,5 +17,8 @@ namespace C4iSytemsMobApp.Interface
         Task<bool> CheckForHrBan(int DescriptionID);
         Task<(bool, string)> SaveHrDocument(GuardComplianceAndLicense guardComplianceAndLicense, FileResult? file);
         Task<(bool IsSuccess, string msg)> DeleteHrDocument(int id);
+        Task<(bool AccessPermission, string message)> CheckIfPINSetForTheGuard();
+        Task<(bool isSuccess, string message)> SaveNewPINSetForTheGuard(string newPin);
+        Task<(bool isSuccess, string message)> ResetGaurdHrPin(string siteName);
     }
 }
