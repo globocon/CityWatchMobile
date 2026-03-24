@@ -43,6 +43,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     private IDeviceInfoService infoService;
     private string devicename;
     private string deviceid;
+    private string selectedGPS;
 
 
     private ClientSite _currentClientSite;
@@ -362,6 +363,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 _currentClientSite = clientSite;
                 clientAddressEntry.Text = clientSite.Address; //
                 ShowClientTypeAndSite = clientSite.MobAppShowClientTypeandSite;
+                selectedGPS = clientSite.Gps;
             }
             else
             {
@@ -518,7 +520,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             reimbursementNoCheckBox.IsChecked = reusedReport?.DateLocation?.ReimbursementNo ?? false;
             reimbursementYesCheckBox.IsChecked = reusedReport?.DateLocation?.ReimbursementYes ?? false;
             supervisorEntry.Text = reusedReport?.ReportedBy ?? string.Empty;
-            incidentLocationCheckBox.IsChecked = reusedReport?.DateLocation?.ShowIncidentLocationAddress ?? false;
+            //incidentLocationCheckBox.IsChecked = reusedReport?.DateLocation?.ShowIncidentLocationAddress ?? false;
             //ApplyIncidentLocationState(incidentLocationCheckBox.IsChecked);
             clientAddressEntry.Text = reusedReport?.DateLocation?.ClientAddress ?? "";
 
@@ -835,7 +837,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             var guardName = Preferences.Get("GuardName", "");
             var savedLicenseNumber = Preferences.Get("LicenseNumber", "");
             var clientSite = Preferences.Get("ClientSite", "");
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = selectedGPS;
             var clientSiteId = Preferences.Get("SelectedClientSiteId", "");
             var userId = Preferences.Get("UserId", "");
 
@@ -1087,11 +1089,15 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     ClientType = clientTypeNew ?? string.Empty,
                     ClientSite = clientSite ?? string.Empty,
                     ClientArea = clientArea,
-                    ShowIncidentLocationAddress = incidentLocationCheckBox?.IsChecked ?? false,
+                    //ShowIncidentLocationAddress = incidentLocationCheckBox?.IsChecked ?? false,
+                    ShowIncidentLocationAddress = rbIncidentAddress?.IsChecked ?? false,
+                    IsClientSiteLocationAddress = rbClientAddress?.IsChecked ?? false,
+                    IsUnknownGpsLocationAddress = rbUnknownAddress?.IsChecked ?? false,
                     ClientAddress = clientAddressEntry?.Text ?? string.Empty,
                     State = _currentClientSite.State ?? string.Empty,
                     ClientStatus = _currentClientSite?.Status ?? 0,
-                    ClientSiteLiveGps = _currentClientSite.Gps ?? string.Empty,
+                    //ClientSiteLiveGps = _currentClientSite.Gps ?? string.Empty,
+                    ClientSiteLiveGps = selectedGPS ?? string.Empty,
                 },
                 LinkedSerialNos = null,
                 Feedback = descriptionEditor?.Text ?? string.Empty,
@@ -1221,7 +1227,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     Console.WriteLine(ex.ToString());
                     await DisplayAlert("Error", $"Failed to save report locally in offline mode:\n{ex.Message}", "OK");
                 }
-                
+
             }
             else
             {
@@ -1237,7 +1243,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     var staticBaseUrl = "https://cws-ir.com/Pdf/ToDropbox/";
                     var fullDownloadUrl = $"{staticBaseUrl}{Uri.EscapeDataString(result.FileName)}";
 
-                    Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, (result?.Domin),false));
+                    Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, (result?.Domin), false));
                 }
                 else
                 {
@@ -1259,7 +1265,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     }
 
     public void Reload(IncidentRequest request = null)
-    {           
+    {
         BindingContext = new WebIncidentReport(request);
     }
 
@@ -1377,26 +1383,123 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
     ((CollectionView)sender).SelectedItem = null;
     }
-    private void OnIncidentLocationCheckBoxChanged(object sender, CheckedChangedEventArgs e)
+    //private void OnIncidentLocationCheckBoxChanged(object sender, CheckedChangedEventArgs e)
+    //{
+
+    //    if (e.Value) // Checkbox is checked
+    //    {
+    //        _savedClientAddress = ClientAddress;
+    //        ClientAddress = string.Empty;
+    //        // vm.IsSuggestionsVisible = true;
+    //        IsSearchEnabled = true;
+    //    }
+    //    else // Checkbox is unchecked
+    //    {
+    //        IsSearchEnabled = false;
+    //        IsSuggestionsVisible = false;
+    //        ClientAddress = _savedClientAddress;
+    //        Suggestions.Clear();
+    //    }
+
+    //}
+
+
+    private async void OnAddressCheckChanged(object sender, CheckedChangedEventArgs e)
     {
+        if (!e.Value)
+            return; // Only handle when checked
 
-        if (e.Value) // Checkbox is checked
-        {
-            _savedClientAddress = ClientAddress;
-            ClientAddress = string.Empty;
-            // vm.IsSuggestionsVisible = true;
-            IsSearchEnabled = true;
-        }
-        else // Checkbox is unchecked
-        {
-            IsSearchEnabled = false;
-            IsSuggestionsVisible = false;
-            ClientAddress = _savedClientAddress;
-            Suggestions.Clear();
-        }
+        var radio = sender as RadioButton;
 
+        if (radio == null)
+            return;
+
+        int selectedValue = Convert.ToInt32(radio.Value);
+
+        switch (selectedValue)
+        {
+            case 0: // Client Address
+                IsSearchEnabled = false;
+                IsSuggestionsVisible = false;
+                ClientAddress = _savedClientAddress;
+                selectedGPS = _currentClientSite.Gps;
+                Suggestions.Clear();
+                clientAddressEntry.Text = _savedClientAddress;
+                clientAddressEntry.BackgroundColor = Colors.White;
+                break;
+
+            case 1: // Incident Location
+                _savedClientAddress = ClientAddress;
+                ClientAddress = string.Empty;
+                IsSearchEnabled = true;
+                selectedGPS = Preferences.Get("GpsCoordinates", "");
+                clientAddressEntry.BackgroundColor = Colors.White;
+                break;
+
+            case 2: // Unknown (Use GPS)
+                IsSearchEnabled = false;
+                IsSuggestionsVisible = false;
+                ClientAddress = "";
+                Suggestions.Clear();
+                await GetCurrentGpsLocation();
+                clientAddressEntry.Text = "";
+                clientAddressEntry.BackgroundColor = Colors.Gray;
+                break;
+        }
     }
 
+
+    private async Task GetCurrentGpsLocation()
+    {
+        string savedgps = Preferences.Get("GpsCoordinates", "");
+        selectedGPS = savedgps;
+
+        var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+        if (status != PermissionStatus.Granted)
+        {
+            // Inform the user why the permission is needed
+            bool answer = await DisplayAlert("Permission Required", "This app needs your location to continue. Please allow location access.", "OK", "Cancel");
+
+            if (!answer)
+            {
+                //Location permission denied by user.";
+                return;
+            }
+
+            status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+        }
+
+        if (status != PermissionStatus.Granted)
+        {
+            if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost") || AppConfig.ApiBaseUrl.Contains("192.168.1."))
+            {
+                Preferences.Set("GpsCoordinates", "40.748440,-73.984559");
+
+            }
+            return;
+        }
+
+
+        string currentgps = "";
+
+        var location = await Geolocation.GetLocationAsync(new GeolocationRequest
+        {
+            DesiredAccuracy = GeolocationAccuracy.Medium,
+            Timeout = TimeSpan.FromSeconds(10)
+        });
+
+        if (location != null)
+        {
+            currentgps = location.Latitude.ToString() + ',' + location.Longitude.ToString();
+        }
+        else
+        {
+            currentgps = savedgps;
+        }
+        selectedGPS = currentgps;
+
+        return;
+    }
 
 
     public class ProcessIrResponse
