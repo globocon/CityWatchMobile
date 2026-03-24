@@ -36,7 +36,7 @@
 
             <!-- Login Buttons -->
             <Button Text="Login" Clicked="OnLoginClicked"/>
-            <Button Text="Login with QR Code" Clicked="OnQRCodeLoginClicked" BackgroundColor="#28a745"/>
+            <!-- <Button Text="Login with QR Code" Clicked="OnQRCodeLoginClicked" BackgroundColor="#28a745"/> -->
 
             <!-- Loading Indicator -->
             <ActivityIndicator x:Name="loadingIndicator" IsRunning="False" IsVisible="False"/>

@@ -3,10 +3,64 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="C4iSytemsMobApp.AddiBeacon"
              Title="New iBeacon">
-    <VerticalStackLayout>
-        <Label 
-            Text="Feature coming soon!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
-    </VerticalStackLayout>
+
+             <ScrollView>
+
+        <VerticalStackLayout Spacing="20"
+                             Padding="10">
+
+            <!-- Row with Back (left) and Home (right) -->
+            <Grid Grid.Row="0"
+                  ColumnDefinitions="Auto,*,Auto"
+                  VerticalOptions="Center"
+                  Padding="0,5">
+
+                <!-- Back Button -->
+                <Button Text="← Back"
+                        Clicked="OnBackClicked"
+                        BackgroundColor="Transparent"
+                        TextColor="Blue"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Start"
+                        VerticalOptions="Center"
+                        Grid.Column="0" />
+
+                <!-- Title Label -->
+                <Label Text="Settings"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       Grid.Column="1"
+                       TextColor="Black" />
+
+                <!-- Home Button -->
+                <ImageButton Source="home.png"
+                             Clicked="OnHomeClicked"
+                             HeightRequest="30"
+                             WidthRequest="30"
+                             BackgroundColor="Transparent"
+                             HorizontalOptions="End"
+                             VerticalOptions="Center"
+                             Grid.Column="2" />
+            </Grid>
+
+
+
+
+            <!-- Main Buttons -->
+            <VerticalStackLayout Padding="5"
+                                 Spacing="15">
+
+                                 <Label 
+                    Text="Feature coming soon!"
+                    VerticalOptions="Center" 
+                    HorizontalOptions="Center" />
+            
+</VerticalStackLayout>
+
+
+        </VerticalStackLayout>
+
+    </ScrollView>
 </ContentPage>

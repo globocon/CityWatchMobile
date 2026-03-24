@@ -1,10 +1,10 @@
-using C4iSytemsMobApp.Interface;
+using System.ComponentModel;
+using System.Diagnostics;
 using C4iSytemsMobApp.Enums;
+using C4iSytemsMobApp.Interface;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using Plugin.NFC;
-using System.ComponentModel;
-using System.Diagnostics;
 
 namespace C4iSytemsMobApp;
 
@@ -65,7 +65,7 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
         if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
         {
             await StopListening();
-        }        
+        }
     }
 
     #region "NFC Methods"
@@ -114,7 +114,7 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
                     frame_ButtonSave.InputTransparent = true; // Prevent tap
                     //frame_ButtonCancel.IsEnabled = false;
                 });
-               
+
             }
         }
         else
@@ -190,7 +190,7 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
         {
             //await ShowToastMessage($"Tag scanned. Logging activity...");
             _scannedTagUid = serialNumber;
-            UpdateInfoLabel($"Tag received - {serialNumber}",false);
+            UpdateInfoLabel($"Tag received - {serialNumber}", false);
             LabelTagUID.Text = $"UID: {_scannedTagUid}";
             await DisplayAlert(ALERT_TITLE, $"Tag received - {serialNumber}", "OK");
         }
@@ -210,7 +210,7 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
         if (_isDeviceiOS)
         {
             SubscribeEvents();
-            return;
+            //return;
         }
         await BeginListening();
     }
@@ -251,7 +251,7 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
     #endregion "NFC Methods"
 
     private async void OnSaveTagClicked(object sender, EventArgs e)
-    {       
+    {
 
         if (string.IsNullOrEmpty(_scannedTagUid))
         {
@@ -276,7 +276,7 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
                 await DisplayAlert(ALERT_TITLE, scannerSettings.message, "OK");
                 //await ShowToastMessage(scannerSettings.message);
                 _scannedTagUid = string.Empty;
-                UpdateInfoLabel("Tap an NFC tag to scan...",false);
+                UpdateInfoLabel("Tap an NFC tag to scan...", false);
                 LabelTagUID.Text = $"UID: {_scannedTagUid}";
                 txtTagLabel.Text = "";
             }
@@ -288,7 +288,7 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
         else
         {
             await DisplayAlert(ALERT_TITLE, scannerSettings?.message ?? "Unknown error", "OK");
-        }        
+        }
     }
 
     private async void OnCloseClicked(object sender, EventArgs e)
@@ -296,12 +296,12 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
         Application.Current.MainPage = new MenuSettingsPage();
     }
 
-    private void UpdateInfoLabel(string message,bool IsError)
+    private void UpdateInfoLabel(string message, bool IsError)
     {
         LabelInfo.Text = message;
-        if(IsError)
+        if (IsError)
             LabelInfo.TextColor = Colors.Red;
-       else
+        else
             LabelInfo.TextColor = Colors.Green;
     }
 
