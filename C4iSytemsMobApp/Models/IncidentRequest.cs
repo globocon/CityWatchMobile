@@ -254,12 +254,10 @@ namespace C4iSytemsMobApp.Models
         public DateTime? ClientStatusDate { get; set; }
 
         public string ClientSiteLiveGps { get; set; }
-
-
-
         public string ClientSiteLiveGpsInDegrees { get; set; }
-
         public bool ShowIncidentLocationAddress { get; set; }
+        public bool IsClientSiteLocationAddress { get; set; }
+        public bool IsUnknownGpsLocationAddress { get; set; }
     }
 
 
