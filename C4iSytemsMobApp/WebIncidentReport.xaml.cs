@@ -242,7 +242,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
 
             ClientSites.Clear();
-            var _clientSites = _scanDataDbService.GetIrClientSitesLocalListByTypeId(clientTypeId);
+            var _clientSites = await _scanDataDbService.GetIrClientSitesLocalListByTypeId(clientTypeId);
             var response = _mapper.Map<List<DropdownItemWithAddress>>(_clientSites);
 
             foreach (var site in response ?? new List<DropdownItemWithAddress>())
