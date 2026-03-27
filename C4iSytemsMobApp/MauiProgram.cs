@@ -44,6 +44,8 @@ public static class MauiProgram
         // Register LoginPage with HttpClient dependency
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddTransient<AppUpgradePage>();
+
+        // Services
         builder.Services.AddSingleton<ICrowdControlServices, CrowdControlServices>();
         builder.Services.AddSingleton<IScannerControlServices, ScannerControlServices>();
         builder.Services.AddSingleton<ILogBookServices, LogBookServices>();
@@ -58,17 +60,27 @@ public static class MauiProgram
         builder.Services.AddAutoMapper(typeof(MappingProfile));
 
         // Register DbContext factory so each consumer gets a new context
-        builder.Services.AddTransient<AppDbContext>();
-        builder.Services.AddSingleton<IScanDataDbServices, ScanDataDbServices>(sp =>
-        {
-            // Provide factory to create new AppDbContext for each usage
-            return new ScanDataDbServices(() => sp.GetRequiredService<AppDbContext>());
-        });
-        builder.Services.AddSingleton<SyncService>(sp =>
-        {
-            // Provide factory to create new AppDbContext for each usage
-            return new SyncService(() => sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ISyncApiService>());
-        });
+         builder.Services.AddTransient<AppDbContext>();
+        // builder.Services.AddSingleton<IScanDataDbServices, ScanDataDbServices>(sp =>
+        // {
+        //     // Provide factory to create new AppDbContext for each usage
+        //     return new ScanDataDbServices(() => sp.GetRequiredService<AppDbContext>());
+        // });
+        // builder.Services.AddSingleton<SyncService>(sp =>
+        // {
+        //     // Provide factory to create new AppDbContext for each usage
+        //     return new SyncService(() => sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ISyncApiService>());
+        // });
+
+        // Database path 
+        var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db"); 
+        // Correct DbContext registration 
+        builder.Services.AddDbContext<AppDbContext>(options => 
+            options.UseSqlite($"Filename={dbPath}")
+        ); 
+        // Services using DbContext factory pattern 
+        builder.Services.AddSingleton<IScanDataDbServices, ScanDataDbServices>(sp => new ScanDataDbServices(() => sp.GetRequiredService<AppDbContext>())); 
+        builder.Services.AddSingleton<SyncService>(sp => new SyncService( () => sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ISyncApiService>() ));
 
 
 #if ANDROID
@@ -87,11 +99,18 @@ public static class MauiProgram
         // This line allows DI to create your App(LoginPage, IAppUpdateService)
         builder.Services.AddSingleton<App>();
 
-        var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
-        builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlite($"Filename={dbPath}"));
+        // var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
+        // builder.Services.AddDbContext<AppDbContext>(options =>
+        //     options.UseSqlite($"Filename={dbPath}"));
 
         var app = builder.Build();
+        // Initialize DB safely (NO Migrate in constructor) 
+        using (var scope = app.Services.CreateScope()) { 
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>(); 
+            // Use EnsureCreated for mobile apps (better than Migrate) 
+            db.Database.EnsureCreated(); 
+        } 
+        
 
         // Start connectivity watcher
         var connListener = app.Services.GetService<ConnectivityListener>();
