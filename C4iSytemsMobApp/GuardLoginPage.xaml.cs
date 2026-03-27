@@ -669,6 +669,9 @@ public partial class GuardLoginPage : ContentPage
             case "green":
                 led.Color = Colors.Green;
                 break;
+            case "orange":
+                led.Color = Colors.Orange; // Added new color
+                break;
             default:
                 led.Color = Colors.Gray;
                 break;
