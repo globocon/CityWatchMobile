@@ -191,6 +191,13 @@
                                         <Setter Property="BackgroundColor"
                                                 Value="Yellow" />
                                     </DataTrigger>
+
+                                    <DataTrigger TargetType="Frame"
+                 Binding="{Binding StatusColor}"
+                 Value="orange">
+                                        <Setter Property="BackgroundColor"
+                Value="Orange" />
+                                    </DataTrigger>
                                 </Frame.Triggers>
 
                                 <Frame.GestureRecognizers>

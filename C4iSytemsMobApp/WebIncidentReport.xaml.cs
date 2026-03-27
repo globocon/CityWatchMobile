@@ -242,7 +242,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
 
             ClientSites.Clear();
-            var _clientSites = _scanDataDbService.GetIrClientSitesLocalListByTypeId(clientTypeId);
+            var _clientSites = await _scanDataDbService.GetIrClientSitesLocalListByTypeId(clientTypeId);
             var response = _mapper.Map<List<DropdownItemWithAddress>>(_clientSites);
 
             foreach (var site in response ?? new List<DropdownItemWithAddress>())
@@ -1439,10 +1439,10 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             case 2: // Unknown (Use GPS)
                 IsSearchEnabled = false;
                 IsSuggestionsVisible = false;
-                ClientAddress = "";
+                ClientAddress = "Unknown, GPS used instead";
                 Suggestions.Clear();
                 await GetCurrentGpsLocation();
-                clientAddressEntry.Text = "";
+                clientAddressEntry.Text = "Unknown, GPS used instead";
                 clientAddressEntry.BackgroundColor = Colors.Gray;
                 break;
         }
