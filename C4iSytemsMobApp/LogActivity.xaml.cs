@@ -1,4 +1,4 @@
-﻿using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Data.Entity;
 using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Helpers;
@@ -952,17 +952,19 @@ public partial class LogActivity : ContentPage
 
         long rcPushMessageId = SelectedLogForPush?.RcPushMessageId ?? 0;
 
-        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SavePushNotificationTestMessage" +
-                     $"?guardId={_guardId}" +
-                     $"&clientsiteId={_clientSiteId}" +
-                     $"&userId={_userId}" +
-                     $"&notifications={Uri.EscapeDataString(messageToSend)}" +
-                     $"&rcPushMessageId={rcPushMessageId}";
+        var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SavePushNotificationTestMessageV2";
 
         try
         {
-            // Use POST (because API is [HttpPost])
-            HttpResponseMessage response = await _httpClient.PostAsync(apiUrl, null);
+            var content = new MultipartFormDataContent();
+            content.Add(new StringContent(_guardId.ToString()), "guardId");
+            content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
+            content.Add(new StringContent(_userId.ToString()), "userId");
+            content.Add(new StringContent(messageToSend ?? ""), "notifications");
+            content.Add(new StringContent(rcPushMessageId.ToString()), "rcPushMessageId");
+
+            // Use POST with form data
+            HttpResponseMessage response = await _httpClient.PostAsync(apiUrl, content);
 
             if (response.IsSuccessStatusCode)
             {
