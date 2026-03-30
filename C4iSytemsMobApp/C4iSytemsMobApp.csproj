@@ -30,7 +30,7 @@
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
-		<ApplicationVersion>2</ApplicationVersion>
+		<ApplicationVersion>4</ApplicationVersion>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
@@ -42,25 +42,6 @@
 		<!-- iOS Entitlements -->
 		<CodesignEntitlements Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">Platforms/iOS/Entitlements.plist</CodesignEntitlements>
 	</PropertyGroup>
-
-	<!-- FIX: Disable NativeAOT for iOS + safer linker --> 
-	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'"> 
-		<PublishAot>false</PublishAot> 
-		<MtouchLink>SdkOnly</MtouchLink> 
-		<!-- Optional for debugging --> 
-		<UseInterpreter>true</UseInterpreter> 
-	</PropertyGroup>
-
-	<ItemGroup>
-		<TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore" />
-		<TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore.Sqlite" />
-		<TrimmerRootAssembly Include="SQLitePCLRaw.core" />
-	</ItemGroup>
-
-	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
-		<LinkDescription Include="Platforms\iOS\linker.xml" />
-	</ItemGroup>
-
 
 	<ItemGroup>
 		<!-- App Icon -->

@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace C4iSytemsMobApp.Data.Entity
 {
-    [Preserve(AllMembers = true)]
     public class PatrolCarLogCache
     {
         [Key]
@@ -19,7 +18,6 @@ namespace C4iSytemsMobApp.Data.Entity
         public ClientSitePatrolCarCache ClientSitePatrolCar { get; set; }
     }
 
-    [Preserve(AllMembers = true)]
     public class ClientSitePatrolCarCache
     {
         [Key]

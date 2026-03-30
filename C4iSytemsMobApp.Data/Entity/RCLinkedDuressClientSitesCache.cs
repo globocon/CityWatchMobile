@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace C4iSytemsMobApp.Data.Entity
 {
-    [Preserve(AllMembers = true)]
     public class RCLinkedDuressClientSitesCache
     {
         [Key]

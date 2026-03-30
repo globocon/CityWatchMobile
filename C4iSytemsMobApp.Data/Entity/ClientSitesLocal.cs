@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace C4iSytemsMobApp.Data.Entity
 {
-    [Preserve(AllMembers = true)]
     public class ClientSitesLocal
     {
         [Key]
@@ -33,7 +32,6 @@ namespace C4iSytemsMobApp.Data.Entity
         public ClientSiteTypeLocal ClientSiteType { get; set; }
     }
 
-    [Preserve(AllMembers = true)]
     public class ClientSiteTypeLocal
     {
         [Key]
@@ -43,7 +41,6 @@ namespace C4iSytemsMobApp.Data.Entity
         public List<ClientSitesLocal> ClientSites { get; set; }
     }
 
-    [Preserve(AllMembers = true)]
     public class ClientSiteAreaLocal
     {
         [Key]

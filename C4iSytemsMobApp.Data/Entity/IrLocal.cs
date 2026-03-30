@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace C4iSytemsMobApp.Data.Entity
 {
-    [Preserve(AllMembers = true)]
     public class IrNotifiedByLocal
     {
         [Key]
@@ -14,7 +13,6 @@ namespace C4iSytemsMobApp.Data.Entity
         public string NotifiedBy { get; set; }
     }
 
-    [Preserve(AllMembers = true)]
     public class IrFeedbackTemplateViewModelLocal
     {
         [Key]
@@ -31,7 +29,6 @@ namespace C4iSytemsMobApp.Data.Entity
         public bool SendtoRC { get; set; }
     }
 
-    [Preserve(AllMembers = true)]
     public class AudioAndMultimediaLocal
     {
         [Key]
@@ -43,7 +40,6 @@ namespace C4iSytemsMobApp.Data.Entity
         public string LocalFilePath { get; set; }
     }
 
-    [Preserve(AllMembers = true)]
     public class irOfflineFilesAttachmentsCache
     {
         [Key]
@@ -67,7 +63,6 @@ namespace C4iSytemsMobApp.Data.Entity
 
     }
 
-    [Preserve(AllMembers = true)]
     public class irOfflineCache
     {
         [Key]
@@ -88,8 +83,5 @@ namespace C4iSytemsMobApp.Data.Entity
         public string DeviceId { get; set; }
         public string DeviceName { get; set; }
     }
-
-    
-
 
 }

@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace C4iSytemsMobApp.Data
 {
-    [Preserve(AllMembers = true)]
     public class AppDbContext : DbContext
     {
         public DbSet<ClientSiteSmartWandTagsHitLogCache> ClientSiteSmartWandTagsHitLogCache { get; set; }
@@ -31,7 +30,7 @@ namespace C4iSytemsMobApp.Data
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
-            //Database.Migrate();
+            Database.Migrate();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace C4iSytemsMobApp.Data.Entity
 {
-    [Preserve(AllMembers = true)]
     public class CustomFieldLogRequestHeadCache
     {
         [Key]
@@ -23,7 +22,6 @@ namespace C4iSytemsMobApp.Data.Entity
 
     }
 
-    [Preserve(AllMembers = true)]
     public class CustomFieldLogRequestDetailCache
     {
         [Key]
