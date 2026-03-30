@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace C4iSytemsMobApp.Data.Entity
 {
+    [Preserve(AllMembers = true)]
     public class ClientSiteSmartWandTagsHitLogCache
     {
         [Key]

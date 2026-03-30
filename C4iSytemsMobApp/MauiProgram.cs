@@ -1,4 +1,4 @@
-﻿//using Android.Net;
+//using Android.Net;
 using C4iSytemsMobApp.Data;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Interface;
@@ -96,6 +96,13 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
+
+        // ENSURE SQLite is initialized for iOS Release builds
+        SQLitePCL.Batteries_V2.Init();
+
+        // LINKER HINT: Ensure EF Core SQLite provider is not stripped
+        _ = typeof(Microsoft.EntityFrameworkCore.SqliteDbContextOptionsBuilderExtensions);
+
         // This line allows DI to create your App(LoginPage, IAppUpdateService)
         builder.Services.AddSingleton<App>();
 

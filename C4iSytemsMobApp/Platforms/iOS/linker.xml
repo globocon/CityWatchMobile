@@ -1,0 +1,34 @@
+<linker>
+  <!-- Entity Framework Core assemblies -->
+  <assembly fullname="Microsoft.EntityFrameworkCore">
+    <type fullname="*" preserve="all" />
+  </assembly>
+  <assembly fullname="Microsoft.EntityFrameworkCore.Abstractions">
+    <type fullname="*" preserve="all" />
+  </assembly>
+  <assembly fullname="Microsoft.EntityFrameworkCore.Relational">
+    <type fullname="*" preserve="all" />
+  </assembly>
+  <assembly fullname="Microsoft.EntityFrameworkCore.Sqlite">
+    <type fullname="*" preserve="all" />
+  </assembly>
+
+  <!-- SQLite and PCLRaw -->
+  <assembly fullname="SQLitePCLRaw.core">
+    <type fullname="*" preserve="all" />
+  </assembly>
+  <assembly fullname="SQLitePCLRaw.batteries_v2">
+    <type fullname="*" preserve="all" />
+  </assembly>
+  <assembly fullname="SQLitePCLRaw.provider.dynamic_cdecl">
+    <type fullname="*" preserve="all" />
+  </assembly>
+
+  <!-- Application Assemblies to keep reflection metadata for EF Core -->
+  <assembly fullname="C4iSytemsMobApp">
+    <type fullname="*" preserve="all" />
+  </assembly>
+  <assembly fullname="C4iSytemsMobApp.Data">
+    <type fullname="*" preserve="all" />
+  </assembly>
+</linker>

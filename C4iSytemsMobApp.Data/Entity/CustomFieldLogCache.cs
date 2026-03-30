@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace C4iSytemsMobApp.Data.Entity
 {
+    [Preserve(AllMembers = true)]
     public class CustomFieldLogHeadCache
     {
         [Key]
@@ -12,6 +13,7 @@ namespace C4iSytemsMobApp.Data.Entity
         public List<CustomFieldLogDetailCache> KeyValuePairs { get; set; }
     }
 
+    [Preserve(AllMembers = true)]
     public class CustomFieldLogDetailCache
     {
         [Key]
