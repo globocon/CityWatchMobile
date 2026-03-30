@@ -38,40 +38,45 @@ namespace C4iSytemsMobApp.Models
         public string IsLogin { get; set; }
         public string StatusColor { get; set; }
 
-        //public string StatusColor
-        //{
-        //    get
-        //    {
-        //        // Default
-        //        var statusColor = "green";
+        [JsonIgnore]
+        public string PendingDays
+        {
+            get
+            {
+                // Default
+                var _pendingDays = "N/A";
 
-        //        // If DateType is true → always green
-        //        if (DateType)
-        //            return "green";
+                // If DateType is true → always green
+                if (DateType)
+                    return _pendingDays;
 
-        //        // If ExpiryDate exists
-        //        if (ExpiryDate.HasValue)
-        //        {
-        //            var currentDate = DateTime.UtcNow.Date;
-        //            var expiryDate = ExpiryDate.Value.Date;
+                // If ExpiryDate exists
+                if (ExpiryDate.HasValue)
+                {
+                    var currentDate = DateTime.UtcNow.Date;
+                    var expiryDate = ExpiryDate.Value.Date;
 
-        //            var daysDifference = (expiryDate - currentDate).TotalDays;
+                    var daysDifference = (expiryDate - currentDate).TotalDays;
 
-        //            // Expired → red (highest priority)
-        //            if (expiryDate < currentDate && !DateType)
-        //            {
-        //                statusColor = "red";
-        //            }
-        //            // Expiring within 45 days → yellow
-        //            else if (daysDifference <= 45)
-        //            {
-        //                statusColor = "yellow";
-        //            }
-        //        }
+                    // Expired → red (highest priority)
+                    if (expiryDate < currentDate && !DateType)
+                    {
+                        _pendingDays = "00";
+                    }
+                    // Expiring within 60 days → yellow
+                    else if (daysDifference <= 60 && !DateType)
+                    {
+                        _pendingDays = daysDifference.ToString("N0");
+                    }
+                    else
+                    {
+                        _pendingDays = $"More than {(daysDifference -1 ).ToString("N0")} days";
+                    }
+                }
 
-        //        return statusColor;
-        //    }
-        //}
+                return _pendingDays;
+            }
+        }
 
     }
 }
