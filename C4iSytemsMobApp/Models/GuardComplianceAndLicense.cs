@@ -61,7 +61,7 @@ namespace C4iSytemsMobApp.Models
                     // Expired → red (highest priority)
                     if (expiryDate < currentDate && !DateType)
                     {
-                        _pendingDays = "00";
+                        _pendingDays = "0 days";
                     }
                     // Expiring within 60 days → yellow
                     else if (daysDifference <= 60 && !DateType)

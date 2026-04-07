@@ -1,18 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
-
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:C4iSytemsMobApp"
              x:Class="C4iSytemsMobApp.GuardLoginPage">
-
-
-
 
 
     <Grid RowDefinitions="*,Auto"
           Padding="15,15,15,15">
 
         <!-- Main Content -->
-        <VerticalStackLayout Spacing="18"
+        <VerticalStackLayout Spacing="5"
                              Grid.Row="0">
 
             <!-- Logged-in User -->
@@ -123,7 +120,7 @@
                    FontAttributes="Bold"
                    IsVisible="False" />
 
-            
+
 
             <!-- Instructional Text inside a bordered frame -->
             <Frame x:Name="instructionalFrame"
@@ -181,16 +178,6 @@
                        TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
             </StackLayout>
-
-
-
-
-
-
-
-
-
-
 
             <!-- Pickers (Initially Hidden) -->
             <Picker x:Name="pickerClientType"
@@ -291,13 +278,171 @@
 
             </HorizontalStackLayout>
 
+            <!-- Live and Calendar Events -->
+            <Grid RowDefinitions="Auto,Auto,Auto,*"
+                  x:Name="vslCalendarLiveEvents"
+                  BackgroundColor="Transparent"
+                  HeightRequest="280">
+                <!-- Live Events Header -->
+                <Frame Grid.Row="0"
+                       CornerRadius="5"
+                       HasShadow="False"
+                       BackgroundColor="#ea6326"
+                       Padding="0"
+                       Margin="2,2,0,0"
+                       BorderColor="Gray">
+                    <HorizontalStackLayout x:Name="HslliveEvents"
+                                           Spacing="5"
+                                           Margin="0,0,0,0"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"
+                                           IsVisible="True"
+                                           BackgroundColor="Transparent">
+
+                        <Label Text="&#xf09e;"
+                               FontFamily="FontAwesome"
+                               FontSize="12"
+                               Padding="3"
+                               TextColor="White">
+                        </Label>
+                        <Label Text="Live Events"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    </HorizontalStackLayout>
+                </Frame>
+
+                <!-- Scrollable Live Events CollectionView -->
+                <CollectionView Grid.Row="1"
+                                x:Name="LiveEventsCollectionView"
+                                Margin="0,2,0,2"
+                                ItemsSource="{Binding LiveBannerEvents}"
+                                SelectionMode="None"
+                                VerticalOptions="FillAndExpand">                    
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <VerticalStackLayout Margin="0,0,0,0">
+                                <Frame Margin="1"
+                                       Padding="5,0,0,5"
+                                       CornerRadius="10"
+                                       BorderColor="LightGray"
+                                       BackgroundColor="{AppThemeBinding Light=#F2F2F2, Dark=Black}">
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnLiveEventTapped" />
+                                    </Frame.GestureRecognizers>
+                                    <VerticalStackLayout Margin="0,10,0,0">
+                                        <Grid ColumnDefinitions="*"
+                                              ColumnSpacing="5">                                            
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding TextMessage}"
+                                                   FontSize="12"
+                                                   HorizontalTextAlignment="Start"
+                                                   LineBreakMode="WordWrap"
+                                                   HorizontalOptions="FillAndExpand"
+                                                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                    
+                                </Frame>
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Calendar Events Header-->
+                <Frame Grid.Row="2"
+                       CornerRadius="5"
+                       HasShadow="False"
+                       BackgroundColor="DodgerBlue"
+                       Padding="0"
+                       Margin="2,0,0,0"
+                       BorderColor="Gray">
+                    <HorizontalStackLayout x:Name="HslCalendarEvents"
+                                           Spacing="5"
+                                           Margin="0,0,0,0"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"
+                                           IsVisible="True"
+                                           BackgroundColor="Transparent">
+
+                        <Label Text="&#xf073;"
+                               FontFamily="FontAwesome"
+                               FontSize="12"
+                               Padding="3"
+                               TextColor="White">
+                        </Label>
+                        <Label Text="Calendar Events"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    </HorizontalStackLayout>
+                </Frame>
+
+                <!-- Scrollable Calendar CollectionView -->
+                <CollectionView Grid.Row="3"
+                                x:Name="CalendarEventsCollectionView"
+                                Margin="0,2,0,0"
+                                ItemsSource="{Binding BannerCalendarEvents}"
+                                SelectionMode="None"
+                                VerticalOptions="FillAndExpand">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <VerticalStackLayout Margin="0,0,0,0">
+                                <Frame Margin="1"
+                                       Padding="5,0,0,5"
+                                       CornerRadius="10"
+                                       BorderColor="LightGray"
+                                       BackgroundColor="{AppThemeBinding Light=#F2F2F2, Dark=Black}">
+                                    <VerticalStackLayout Margin="0,10,0,0">
+                                        <Grid ColumnDefinitions="Auto,*"
+                                              ColumnSpacing="5">
+                                            <Label Grid.Column="0"
+                                                   Text="Event: "
+                                                   FontSize="12"
+                                                   HorizontalTextAlignment="End"
+                                                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding TextMessage}"
+                                                   FontSize="12"
+                                                   HorizontalTextAlignment="Start"
+                                                   LineBreakMode="WordWrap"
+                                                   HorizontalOptions="FillAndExpand"
+                                                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                        </Grid>
+                                        <HorizontalStackLayout Spacing="5">
+                                            <Label Text="Start Date: "
+                                                   FontSize="12"
+                                                   HorizontalTextAlignment="End"
+                                                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                            <Label Text="{Binding FormattedStartDate}"
+                                                   FontSize="12"
+                                                   Margin="0,0,20,0"
+                                                   HorizontalTextAlignment="Start"
+                                                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                            <Label Text="Expiry Date: "
+                                                   FontSize="12"
+                                                   HorizontalTextAlignment="End"
+                                                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                            <Label Text="{Binding FormattedExpiryDate}"
+                                                   FontSize="12"
+                                                   HorizontalTextAlignment="Start"
+                                                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                        </HorizontalStackLayout>
+
+                                    </VerticalStackLayout>
+                                </Frame>
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+
         </VerticalStackLayout>
 
-        <VerticalStackLayout 
-            Spacing="10"
-            Grid.Row="1">
+
+
+        <VerticalStackLayout Spacing="10"
+                             Grid.Row="1">
             <Label x:Name="lblloadinginfo"
-                Text=""
+                   Text=""
                    FontAttributes="Bold"
                    FontSize="8"
                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
