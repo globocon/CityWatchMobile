@@ -38,6 +38,7 @@ public partial class LogActivity : ContentPage
     bool _eventsAlreadySubscribed = false;
     private readonly IScannerControlServices _scannerControlServices;
     private bool _isNfcEnabledForSite = false;
+    private bool _isNfcSupported = false;
     bool _isDeviceiOS = false;
     public bool DeviceIsListening
     {
@@ -1863,6 +1864,11 @@ public partial class LogActivity : ContentPage
 
     private async void OnNfcScanClicked(object sender, EventArgs e)
     {
+        if (!_isNfcSupported)
+        {
+            await DisplayAlert(ALERT_TITLE, "NFC is not supported on this device.", "OK");
+            return;
+        }
         if (_isDeviceiOS)
         {
             await BeginListening();
@@ -1993,6 +1999,7 @@ public partial class LogActivity : ContentPage
 
             if (CrossNFC.IsSupported)
             {
+                _isNfcSupported = true;
                 if (CrossNFC.Current.IsAvailable)
                 {
                     NfcIsEnabled = CrossNFC.Current.IsEnabled;
