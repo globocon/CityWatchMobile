@@ -677,7 +677,7 @@ public partial class LogActivity : ContentPage
             // Show the file list only if it has items
             FilesCollection.IsVisible = SelectedFiles.Any();
 
-            ShowPopup();
+            if(isFilePicked){ShowPopup();}
 
         }
         catch (Exception ex)
