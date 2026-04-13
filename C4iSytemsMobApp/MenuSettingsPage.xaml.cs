@@ -9,6 +9,7 @@ public partial class MenuSettingsPage : ContentPage
 
     private readonly IScannerControlServices _scannerControlServices;
     private readonly IAppUpdateService _appUpdateService;
+    public bool IsCheckForUpdatesEnabled { get; set; } = true;
     public MenuSettingsPage()
     {
         InitializeComponent();
@@ -31,6 +32,12 @@ public partial class MenuSettingsPage : ContentPage
         ThemeSwitch.IsToggled = isDark;
         ThemeStateLabel.Text = isDark ? "On" : "Off";
 
+        if(DeviceInfo.Platform == DevicePlatform.iOS)
+        {
+            IsCheckForUpdatesEnabled = false;
+            //OnPropertyChanged(nameof(IsCheckForUpdatesEnabled));
+        }
+
         base.OnAppearing();
     }
 
@@ -45,7 +52,11 @@ public partial class MenuSettingsPage : ContentPage
     private async void OnCheckForUpdatesClicked(object sender, EventArgs e)
     {
         // Your update check logic here
-        //DisplayAlert("Check for Updates", "You are running the latest version.", "OK");
+        if(!IsCheckForUpdatesEnabled)
+        {
+            await DisplayAlert("Check for Updates", "This feature is not available on ios platform.", "OK");
+            return;
+        }
         await CheckForUpdatesAsync();
     }
 
@@ -78,6 +89,11 @@ public partial class MenuSettingsPage : ContentPage
                     //await Application.Current.MainPage.Navigation.PushAsync(new AddNFCtag());
                     break;
                 case "IBeacon":
+                    if (DeviceInfo.Platform == DevicePlatform.iOS)
+                    {
+                        await DisplayAlert("Not Supported", "Adding iBeacon tags is not supported on iOS devices.", "OK");
+                        return;
+                    }
                     Application.Current.MainPage = new AddiBeacon();
                     //await Application.Current.MainPage.Navigation.PushAsync(new AddiBeacon());
                     break;

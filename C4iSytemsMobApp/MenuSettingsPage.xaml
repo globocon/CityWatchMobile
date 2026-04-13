@@ -54,7 +54,7 @@
 
                 <Button Text="Check for Updates..."
                         Clicked="OnCheckForUpdatesClicked"
-                        FontAttributes="Bold" />
+                        FontAttributes="Bold"/>
 
                 <Button Text="Add Tags"
                         Clicked="OnAddTagsClicked"

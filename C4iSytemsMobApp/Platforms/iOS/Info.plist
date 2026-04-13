@@ -35,34 +35,23 @@
 			<true/>
 		</dict>  -->
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>This app needs your location to continue. Please allow location access.</string>
+		<string>This app uses your location while in use to verify and record on-site security patrol activities, ensuring accuracy and accountability.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-		<string>This app requires continuous location access to function properly.</string>
+		<string>This app requires continuous location access to monitor and validate security patrol movements in real time, ensuring patrol integrity and enhancing safety compliance.</string>
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>audio</string>
-			<string>bluetooth-central</string>
-			<string>bluetooth-peripheral</string>
 			<string>fetch</string>
-			<string>remote-notification</string>
+			<!-- <string>remote-notification</string> -->
 		</array>
-
-		<!--Description of the Bluetooth request message (required on iOS 10, deprecated)-->
-		<key>NSBluetoothPeripheralUsageDescription</key>
-		<string>This app requires access to the bluetooth. Please allow location access.</string>
-
-		<!--Description of the Bluetooth request message (required on iOS 13)-->
-		<key>NSBluetoothAlwaysUsageDescription</key>
-		<string>This app requires access to the bluetooth. Please allow location access.</string>
-
 		<!-- NFC usage description -->
 		<key>NFCReaderUsageDescription</key>
-		<string>This app requires NFC to scan tags.</string>
+		<string>This app uses NFC to scan designated patrol checkpoints during security operations for the purpose of recording and verifying patrol activities, ensuring adherence to assigned patrol schedules, and maintaining audit and compliance records.</string>
 		<!-- Camera usage description -->
-		<key>NSCameraUsageDescription</key>
-		<string>This app requires camera access to scan QR codes.</string>
+		<!-- <key>NSCameraUsageDescription</key>
+		<string>This app requires camera access to scan QR codes.</string>  -->
 		<!-- Microphone usage description -->
-		<key>NSMicrophoneUsageDescription</key>
-		<string>This app requires microphone access for audio and video features.</string>
+		<!-- <key>NSMicrophoneUsageDescription</key>
+		<string>This app requires microphone access for audio and video features.</string> -->
 	</dict>
 </plist>

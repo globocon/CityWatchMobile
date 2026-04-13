@@ -770,19 +770,36 @@ public partial class GuardLoginPage : ContentPage
 
             if (string.IsNullOrWhiteSpace(gpsCoordinates))
             {
-                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
-                return;
+                if (DeviceInfo.Platform == DevicePlatform.iOS)
+                 {
+                    // Check and get saved GPS coordinates of the selected client site
+                    // If Patrol car then Gps can be wrong
+                    var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSiteDetails/{Uri.EscapeDataString(clientSiteIdString)}";
+                    var response = await _httpClient.GetAsync(url);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        string errorResponse = await response.Content.ReadAsStringAsync();
+                        Preferences.Set("GpsCoordinates", "");
+                        gpsCoordinates = "0,0";
+                    }
+                    else
+                    {
+                        var siteData = await response.Content.ReadFromJsonAsync<ClientSitesLocal>();
+                        if (siteData != null && !string.IsNullOrEmpty(siteData.Gps))
+                        {
+                            Preferences.Set("GpsCoordinates", siteData.Gps);
+                            gpsCoordinates = siteData.Gps;
+                        }
+                    }
+                 }
+                else
+                {
+                    await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                    return; 
+                }
             }
-
-            // API URL
-            //var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin" +
-            //             $"?guardId={guardId}" +
-            //             $"&clientsiteId={clientSiteId}" +
-            //             $"&userId={userId}" +
-            //             $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
-
-            //string apiUrl = $"https://cws-ir.com/api/GuardSecurityNumber/EnterGuardLogin?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
-
+            
             PostActivityRequest request = new PostActivityRequest()
             {
                 guardId = guardId,
@@ -1373,31 +1390,6 @@ public partial class GuardLoginPage : ContentPage
 
     }
 
-    //private async Task<string> DownloadMultimediaFileFromServer(string _serverUrl, string _localPath)
-    //{
-    //    string fileName = CommonHelper.GetSanitizedFileNameFromUrl(_serverUrl);
-    //    string localfileNameWithPath = Path.Combine(_localPath, fileName);
-    //    try
-    //    {
-    //        using (HttpClient client = new HttpClient())
-    //        {
-    //            client.Timeout = TimeSpan.FromMinutes(10);
-    //            var response = await client.GetAsync(_serverUrl);
-    //            if (response.IsSuccessStatusCode)
-    //            {
-    //                var content = await response.Content.ReadAsByteArrayAsync();
-    //                File.WriteAllBytes(localfileNameWithPath, content);
-    //            }
-    //        }
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        Debug.WriteLine($"Error downloading file {_serverUrl}: {ex.Message}");
-    //        return "";
-    //    }
-
-    //    return localfileNameWithPath;
-    //}
 
     private async Task<string> DownloadMultimediaFileFromServer(string serverUrl, string localPath)
     {

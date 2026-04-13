@@ -59,6 +59,7 @@
                                    FontFamily="FontAwesome"
                                    FontSize="8"
                                    TextColor="{Binding BleOnOffColor}"
+                                   IsVisible="{Binding ShowPulse}"
                                    Padding="2,0,0,0" />
 
                             <Label Text="{Binding OnlineText}"

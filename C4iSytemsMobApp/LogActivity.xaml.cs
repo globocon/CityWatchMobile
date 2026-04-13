@@ -643,6 +643,7 @@ public partial class LogActivity : ContentPage
 
     private async void OnPickFileClicked(object sender, EventArgs e)
     {
+        bool isFilePicked = false;
         try
         {
             var results = await FilePicker.PickMultipleAsync(); // Multiple files
@@ -656,6 +657,7 @@ public partial class LogActivity : ContentPage
 
                 foreach (var file in results)
                 {
+                    isFilePicked = true;
                     var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
                     if (!allowedExtensions.Contains(extension))
                     {

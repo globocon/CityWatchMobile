@@ -142,6 +142,7 @@ namespace C4iSytemsMobApp
         private bool _hasBlePermission = false;
         private bool BleScannerOnOff { get; set; }
         public Color BleOnOffColor { get; set; } = Colors.Black;
+        public bool ShowPulse { get; set; } = true;
         private bool _pulseActive = false;
         private CancellationTokenSource _pulseCts;
 
@@ -184,7 +185,11 @@ namespace C4iSytemsMobApp
             OnPropertyChanged(nameof(ShowCounters));
 
             if (DeviceInfo.Platform == DevicePlatform.iOS)
+            {
                 _isDeviceiOS = true;
+                ShowPulse = false;
+            }
+                
 
             // Temporary command for testing
             LongPressCommand = new Command(() => OnDuressClicked(sender: null, e: null));
@@ -1639,7 +1644,18 @@ namespace C4iSytemsMobApp
                     {
                         string content = await response.Content.ReadAsStringAsync();
                         Preferences.Clear(); // Clear SecureStorage (logout)
+                        if(DeviceInfo.Platform == DevicePlatform.iOS)
+                        {
+                            // Recreate Login page
+                            Preferences.Remove("UserId");
+                            Preferences.Remove("UserName");
+                            Preferences.Remove("UserRole");
+                            Application.Current.MainPage = new LoginPage();
+                        }
+                        else
+                        {
                         System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the appI
+                        }
                     }
                     else
                     {
