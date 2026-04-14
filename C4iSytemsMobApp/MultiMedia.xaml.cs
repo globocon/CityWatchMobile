@@ -140,6 +140,17 @@ public partial class MultiMedia : ContentPage
         FullscreenPlayer.IsVisible = false;
     }
 
+    private void OnFullscreenDoubleTapped(object sender, TappedEventArgs e)
+    {
+        // Toggle visibility
+        FullscreenPlayer.IsVisible = !FullscreenPlayer.IsVisible;
+
+        // Optional: stop video when closing fullscreen
+        if (!FullscreenPlayer.IsVisible)
+        {
+            VideoPlayer.Pause(); // or Stop()
+        }
+    }
 
     // VideoFile model class
 

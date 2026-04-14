@@ -780,7 +780,7 @@ public partial class GuardLoginPage : ContentPage
                     if (!response.IsSuccessStatusCode)
                     {
                         string errorResponse = await response.Content.ReadAsStringAsync();
-                        Preferences.Set("GpsCoordinates", "");
+                        Preferences.Set("GpsCoordinates", "0,0");
                         gpsCoordinates = "0,0";
                     }
                     else
@@ -790,6 +790,11 @@ public partial class GuardLoginPage : ContentPage
                         {
                             Preferences.Set("GpsCoordinates", siteData.Gps);
                             gpsCoordinates = siteData.Gps;
+                        }
+                        else
+                        {
+                            Preferences.Set("GpsCoordinates", "0,0");
+                            gpsCoordinates = "0,0";
                         }
                     }
                  }

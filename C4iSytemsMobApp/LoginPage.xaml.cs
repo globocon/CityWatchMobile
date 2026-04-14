@@ -61,8 +61,8 @@ public partial class LoginPage : ContentPage
             if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost") || AppConfig.ApiBaseUrl.Contains("192.168.1."))
             {
                 // Apply default test credentials if the API base URL is for testing
-                usernameEntry.Text = string.IsNullOrEmpty(savedUsername) ? "martha_cove" : savedUsername;
-                passwordEntry.Text = string.IsNullOrEmpty(savedPassword) ? "Qwerty123$" : savedPassword;
+                usernameEntry.Text = string.IsNullOrEmpty(savedUsername) ? "applestoretest" : savedUsername;
+                passwordEntry.Text = string.IsNullOrEmpty(savedPassword) ? "citywatch&2" : savedPassword;
             }
             else
             {
@@ -217,7 +217,7 @@ public partial class LoginPage : ContentPage
             {
                 // Inform the user why the permission is needed
                 bool answer = await DisplayAlert("Permission Required",
-                    "This app needs your location to continue. Please allow location access.", "OK", "Cancel");
+                    "This app uses your location while in use to verify and record on-site security patrol activities, ensuring accuracy and accountability. Please allow location access.", "OK", "Cancel");
 
                 if (!answer)
                 {

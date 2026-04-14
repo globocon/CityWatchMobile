@@ -135,20 +135,34 @@
 
         <!-- Fullscreen Video Player -->
         <Grid x:Name="FullscreenPlayer"
-      IsVisible="False"
-      BackgroundColor="Black"
-      AbsoluteLayout.LayoutBounds="0,0,1,1"
-      AbsoluteLayout.LayoutFlags="All"
-      Padding="0"
-      Margin="0" ZIndex="100">
+            IsVisible="False"
+            BackgroundColor="Black"
+            AbsoluteLayout.LayoutBounds="0,0,1,1"
+            AbsoluteLayout.LayoutFlags="All"
+            Padding="0"
+            Margin="0" 
+            ZIndex="100">
+            <!-- Double Tap Gesture -->
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer 
+                    NumberOfTapsRequired="2"
+                    Tapped="OnFullscreenDoubleTapped" />
+            </Grid.GestureRecognizers>
 
             <media:MediaElement
-    x:Name="VideoPlayer"
-    Aspect="AspectFill"
-    HorizontalOptions="FillAndExpand"
-    VerticalOptions="FillAndExpand"
-    ShouldLoopPlayback="True"
-    ShouldAutoPlay="True"/>
+                x:Name="VideoPlayer"
+                Aspect="AspectFill"
+                HorizontalOptions="FillAndExpand"
+                VerticalOptions="FillAndExpand"
+                ShouldLoopPlayback="True"
+                ShouldAutoPlay="True">
+                <media:MediaElement.GestureRecognizers>
+                    <TapGestureRecognizer 
+                        NumberOfTapsRequired="2"
+                        Tapped="OnFullscreenDoubleTapped" />
+                </media:MediaElement.GestureRecognizers>
+            </media:MediaElement>
+            
         </Grid>
 
     </AbsoluteLayout>
