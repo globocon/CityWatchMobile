@@ -91,10 +91,10 @@ public partial class MenuSettingsPage : ContentPage
                 case "IBeacon":
                     if (DeviceInfo.Platform == DevicePlatform.iOS)
                     {
-                        await DisplayAlert("Not Supported", "Adding iBeacon tags is not supported on iOS devices.", "OK");
+                        await DisplayAlert("Not Supported", "Adding Bluetooth tags is not supported on iOS devices.", "OK");
                         return;
                     }
-                    Application.Current.MainPage = new AddiBeacon();
+                    //Application.Current.MainPage = new AddiBeacon();
                     //await Application.Current.MainPage.Navigation.PushAsync(new AddiBeacon());
                     break;
                 case "Cancel":

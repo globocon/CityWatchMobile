@@ -1,7 +1,6 @@
 ﻿using C4iSytemsMobApp.Interface;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
-using Plugin.BLE.Abstractions;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;

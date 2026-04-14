@@ -20,8 +20,6 @@ using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Maui.Views;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Maui.Devices.Sensors;
-using Plugin.BLE.Abstractions;
-using Plugin.BLE.Abstractions.Contracts;
 using Plugin.NFC;
 using static Microsoft.Maui.ApplicationModel.Permissions;
 
@@ -135,8 +133,6 @@ namespace C4iSytemsMobApp
         public string OnlineText { get; set; }
         public Color OnlineColor { get; set; }
         public string SyncStatusText { get; set; }
-
-        private IBeaconScanner? scanner;
         public const string BLE_ALERT_TITLE = "BLE";
         private bool _isBleEnabledForSite = false;
         private bool _hasBlePermission = false;
@@ -149,17 +145,7 @@ namespace C4iSytemsMobApp
 
         public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
-            InitializeComponent();
-            try
-            {
-                scanner = new();
-            }
-            catch (Exception ex)
-            {
-
-                Console.WriteLine($"Error initializing scanner: {ex.Message}");
-            }
-
+            InitializeComponent();            
             App.ConnectivityChangedEvent += OnConnectivityChanged;
             OnConnectivityChanged(App.IsOnline);
             _syncService = IPlatformApplication.Current.Services.GetService<SyncService>();
@@ -195,17 +181,7 @@ namespace C4iSytemsMobApp
             LongPressCommand = new Command(() => OnDuressClicked(sender: null, e: null));
 
             PopupCollectionView.BindingContext = this;
-            BleOnOffColor = Colors.Black;
-            if (scanner != null && scanner.IsBluetoothSupported && !_isDeviceiOS)
-            {
-                CheckBleEnabledForSite();
-                scanner.OnStateChanged += BluetoothStateChanged;
-                scanner.OnScanningInProgress += OnScanningInProgress;
-                scanner.OnDeviceFoundAsync += OnDeviceFoundAsync;
-                scanner.OnDeviceDiscoveredAsync += OnDeviceDiscoveredAsync;
-            }
-
-
+            BleOnOffColor = Colors.Black;           
         }
 
         public void OnConnectivityChanged(bool isOnline)
@@ -304,13 +280,7 @@ namespace C4iSytemsMobApp
             if (!_isDeviceiOS)
             {
                 await StartNFC(); // Execution Order - 2
-            }
-            if (_isBleEnabledForSite && !_isDeviceiOS)
-            {
-                StartPulse();
-                StartBLEScanner(); // Execution Order - 3
-            }
-
+            }            
             await SetupHubConnection();  // Execution Order - 4
 
             duressCheckTimer.Start();
@@ -329,11 +299,6 @@ namespace C4iSytemsMobApp
             {
                 await StopListening();
             }
-
-            // Stop bluetooth scanning 
-            StopPulse();
-            await StopBLEScanner();
-
 
             if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
             {
@@ -1897,248 +1862,7 @@ namespace C4iSytemsMobApp
         #endregion "NFC Methods"
 
 
-        #region "BLE Methods"
-
-        private void CheckBleEnabledForSite()
-        {
-            _isBleEnabledForSite = false;
-            string isiBeaconEnabledForSiteLocalStored = Preferences.Get("iBeaconOnboarded", "");
-            if (!string.IsNullOrEmpty(isiBeaconEnabledForSiteLocalStored))
-            {
-                bool.TryParse(isiBeaconEnabledForSiteLocalStored, out _isBleEnabledForSite);
-            }
-            if (_isBleEnabledForSite && scanner != null && scanner.IsBluetoothSupported)
-            {
-                BleOnOffChanged();
-            }
-        }
-        private async Task StartBLEScanner()
-        {
-            if (_isBleEnabledForSite && scanner != null && scanner.IsBluetoothSupported)
-            {
-                _hasBlePermission = await PermissionService.CheckAndRequestPermissionsAsync();
-
-                if (!_hasBlePermission)
-                {
-                    await ShowAlert(BLE_ALERT_TITLE, "Bluetooth or Location permission is required to scan for iBeacons.");
-                    return;
-                }
-
-                if (scanner.GetCurrentState() == BluetoothState.Off)
-                {
-                    await ShowAlert(BLE_ALERT_TITLE, "Please switch on Bluetooth to scan for iBeacons.");
-                    return;
-                }
-
-                scanner.Start();
-            }
-        }
-
-        private async Task StopBLEScanner()
-        {
-            if (_isBleEnabledForSite && scanner != null && scanner.IsBluetoothSupported)
-            {
-                await scanner.Stop();
-            }
-        }
-
-        private void BluetoothStateChanged(BluetoothState newState)
-        {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                // DisplayAlert(BLE_ALERT_TITLE, $"Bluetooth State changed: {newState}", "OK");
-                BleOnOffChanged();
-
-                if (newState == BluetoothState.On)
-                {
-                    //Console.WriteLine("Bluetooth is ON — start scanning");
-                    if (_isBleEnabledForSite) { StartPulse(); }
-                    _ = StartBLEScanner();
-                }
-                else if (newState == BluetoothState.Off)
-                {
-                    Console.WriteLine("Bluetooth is OFF — stop scanning");
-                    StopPulse();
-                    _ = StopBLEScanner();
-                }
-            });
-        }
-
-        public void BleOnOffChanged()
-        {
-            if (scanner == null) return;
-            BleScannerOnOff = scanner.GetCurrentState() == BluetoothState.On ? true : false;
-            BleOnOffColor = _isBleEnabledForSite ? (BleScannerOnOff ? Colors.Green : Colors.Red) : Colors.Black;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BleScannerOnOff)));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BleOnOffColor)));
-        }
-
-        private async Task OnDeviceDiscoveredAsync(DeviceFound dev)
-        {
-            // Show a brief toast for EVERY discovery to confirm the scanner is working
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-            {
-                var toast = Toast.Make($"BLE Found: {dev.DeviceName ?? "Unknown"} ({dev.MacID})", ToastDuration.Short);
-                await toast.Show();
-            });
-            await ProcessBLEData(dev);
-        }
-
-        private async Task OnDeviceFoundAsync(List<DeviceFound> device)
-        {
-            foreach (var dev in device)
-            {
-                await ProcessBLEData(dev);
-            }
-
-        }
-
-        private void OnScanningInProgress(bool status)
-        {
-            _pulseActive = status;
-
-            if (status)
-                StartPulse();
-            else
-                StopPulse();
-        }
-        private void StartPulse()
-        {
-            // Cancel old loop first (if running)
-            _pulseCts?.Cancel();
-            _pulseCts = new CancellationTokenSource();
-
-            _ = RunPulseLoop(_pulseCts.Token);
-        }
-        private void StopPulse()
-        {
-            _pulseCts?.Cancel();
-        }
-
-
-        private async Task RunPulseLoop(CancellationToken token)
-        {
-            while (!token.IsCancellationRequested)
-            {
-                if (_pulseActive && _isBleEnabledForSite && BleScannerOnOff)
-                {
-                    await MainThread.InvokeOnMainThreadAsync(async () =>
-                    {
-                        await PulseLabel.ScaleTo(1.3, 400, Easing.CubicInOut);
-                        await PulseLabel.ScaleTo(1.0, 400, Easing.CubicInOut);
-                    });
-                }
-                else
-                {
-                    await MainThread.InvokeOnMainThreadAsync(() =>
-                    {
-                        PulseLabel.Scale = 1;
-                    });
-
-                    await Task.Delay(300, token).ContinueWith(t => { });
-                }
-            }
-
-            // Reset to normal size when cancelled
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                PulseLabel.Scale = 1;
-            });
-        }
-
-
-        private async Task ProcessBLEData(DeviceFound device)
-        {
-
-            var serialNumber = device.MacID;
-            var deviceName = device.DeviceName ?? " ";
-
-            if (!string.IsNullOrEmpty(serialNumber))
-            {
-                if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
-
-                //// Check if mac address is in the local db
-                //var tagExists = await _scannerControlServices.CheckIfTagExistsForSiteInLocalDb(serialNumber);
-                //if (!tagExists) { return; }
-
-                // Get site ID from scanned tag and store it in a global variable to be used across the app, especially for PCAR/INSP modules
-                var _taginfoLocal = await _scannerControlServices.GetTagDetailsFromLocalDbAsync(serialNumber);
-                // Check if mac address is in the local db
-                if (_taginfoLocal == null || _taginfoLocal?.ClientSiteId <= 0)
-                {
-                    App.PcarInspLastScannedSiteId = null;// Reset if tag not found or invalid
-                    return;
-                }
-
-                if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
-                {
-                    App.PcarInspLastScannedSiteId = _taginfoLocal?.ClientSiteId;
-                    App.PcarInspLastScannedTime = DateTime.Now;
-                }
-
-
-                if (!App.IsOnline)
-                {
-                    // Log To Cache                    
-                    await LogBLEScannedDataToCache(serialNumber, deviceName, ScanningType.BLUETOOTH);
-                    return;
-                }
-                await ShowToastMessage($"[{BLE_ALERT_TITLE}] Device Found:{deviceName}. Logging activity...");
-                var scannerSettings = await _scannerControlServices.FetchTagInfoDetailsAsync(_clientSiteId.ToString(), serialNumber, _guardId.ToString(), _userId.ToString(), ScanningType.BLUETOOTH);
-                if (scannerSettings != null)
-                {
-                    if (scannerSettings.IsSuccess)
-                    {
-                        // Valid tag - log activity
-                        int _scannerType = (int)ScanningType.BLUETOOTH;
-                        var _taguid = serialNumber;
-                        if (scannerSettings.tagFound)
-                        {
-                            int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
-                            LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer);
-                        }
-
-                    }
-                    else
-                    {
-                        var newmsg = $"[{BLE_ALERT_TITLE}] Error: {scannerSettings?.message ?? "Unknown error"}";
-                        await ShowToastMessage(newmsg);
-                        return;
-                    }
-                }
-                else
-                {
-                    var newmsg = $"[{BLE_ALERT_TITLE}] Error: {scannerSettings?.message ?? "Unknown error"}";
-                    await ShowToastMessage(newmsg);
-                    return;
-                }
-
-            }
-
-        }
-
-        private async Task LogBLEScannedDataToCache(string _TagUid, string _deviceName, ScanningType _scannerType)
-        {
-            await ShowToastMessage($"[{BLE_ALERT_TITLE}] Device Found:{_deviceName}. Logging activity to Cache.");
-            var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
-            if (isSuccess)
-            {
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    SyncState.SyncedCount = _ChaceCount;
-                });
-                //await ShowToastMessage($"{msg}");
-                await ShowToastMessage($"{msg}");
-            }
-            else
-            {
-                var newmsg = msg ?? "Failed to save tag scan.";
-                await ShowToastMessage($"{newmsg}");
-            }
-        }
-
-        #endregion "BLE Methods"
-
+       
         private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
         {
             var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);

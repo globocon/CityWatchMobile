@@ -93,7 +93,6 @@
 		<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
 		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.100" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
-		<PackageReference Include="Plugin.BLE" Version="3.2.0" />
 		<PackageReference Include="Plugin.Maui.Audio" Version="3.0.1" />
 		<PackageReference Include="Plugin.MediaManager" Version="1.2.2" />
 		<PackageReference Include="Plugin.NFC" Version="0.1.26" />
@@ -108,9 +107,6 @@
 	<ItemGroup>
 	  <Compile Update="AppUpgradePage.xaml.cs">
 	    <DependentUpon>AppUpgradePage.xaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="iBeaconScannerPage.xaml.cs">
-	    <DependentUpon>iBeaconScannerPage.xaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="HrRecordsPage.xaml.cs">
 	    <DependentUpon>HrRecordsPage.xaml</DependentUpon>
@@ -145,9 +141,6 @@
 	  <Compile Update="Views\AddDevicePopup.xaml.cs">
 	    <DependentUpon>AddDevicePopup.xaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="AddiBeacon.xaml.cs">
-	    <DependentUpon>AddiBeacon.xaml</DependentUpon>
-	  </Compile>
 	  <Compile Update="MenuSettingsPage.xaml.cs">
 	    <DependentUpon>MenuSettingsPage.xaml</DependentUpon>
 	  </Compile>
@@ -164,9 +157,6 @@
 
 	<ItemGroup>
 	  <MauiXaml Update="AppUpgradePage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="iBeaconScannerPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="HrRecordsPage.xaml">
@@ -203,9 +193,6 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\AddDevicePopup.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="AddiBeacon.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Audio.xaml">
