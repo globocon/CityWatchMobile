@@ -81,6 +81,8 @@ namespace C4iSytemsMobApp
                 else
                 {
                     NoRosterLabel.IsVisible = true;
+                    await DisplayAlert("Roster", "this site has no roster assigned", "OK");
+                    OnHomeClicked(null, null); // Redirect back to Home
                 }
             }
             catch (Exception ex)

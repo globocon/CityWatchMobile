@@ -1076,8 +1076,6 @@
 
                     <!-- [Roster Module] - Navigation to Roster section -->
                     <Button Text="Roster"
-                            TextColor="Red"
-                            FontAttributes="Bold"
                             Clicked="OnRosterClicked" />
 
                     <Button Text="PCAR Route"
