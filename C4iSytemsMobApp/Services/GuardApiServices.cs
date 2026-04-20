@@ -351,69 +351,134 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
-        // [Roster Module] - Isolated Implementation with Demo Data
+        // [Roster Module] - Live API Integration
         /// <summary>
-        /// Provides demo roster data for the mobile app. 
-        /// This can be replaced with a live API call to GuardSecurityNumber/GetGuardRoster later.
+        /// Fetches the guard roster from the live API.
+        /// [Isolation]: Separate from demo data, uses secure storage values.
         /// </summary>
         public async Task<WeeklyRoster> GetGuardRosterAsync(DateTime startDate, DateTime endDate)
         {
-            // Simulate API delay
-            await Task.Delay(500);
-
-            var roster = new WeeklyRoster
+            try
             {
-                WeekRange = $"{startDate:dd MMM} - {endDate:dd MMM}"
-            };
+                // Refresh secure storage values
+                GetSecureStorageValues();
 
-            // Generate demo data for each day in the range
-            for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
-            {
-                var day = new RosterDay { Date = date };
-
-                // Add sample shifts to some days
-                if (date.DayOfWeek == DayOfWeek.Monday || date.Date == DateTime.Today.Date)
+                if (guardId <= 0 || clientSiteId <= 0)
                 {
-                    day.Shifts.Add(new RosterShift
-                    {
-                        GuardName = "Ankus",
-                        StartTime = "00:01",
-                        EndTime = "08:00",
-                        Duration = "8h",
-                        Location = "Main Gate",
-                        Status = "Normal"
-                    });
+                    Console.WriteLine("GuardId or ClientSiteId not set in Preferences.");
+                    return new WeeklyRoster { WeekRange = "Error: Site/Guard not set" };
+                }
 
-                    if (date.Date == DateTime.Today.Date)
+                string dateParam = startDate.ToString("yyyy-MM-dd");
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetRoster?guardId={guardId}&siteId={clientSiteId}&date={dateParam}";
+
+                using HttpClient client = new HttpClient();
+                client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+                
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"API Error fetching roster: {errorMsg}");
+                    return new WeeklyRoster { WeekRange = "Error fetching data" };
+                }
+
+                // Parse the response manually due to the nested "days" structure (List of Lists)
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                var result = new WeeklyRoster
+                {
+                    StartDate = DateTime.Parse(root.GetProperty("startDate").GetString()),
+                    EndDate = DateTime.Parse(root.GetProperty("endDate").GetString()),
+                    SiteName = root.GetProperty("siteName").GetString(),
+                    ClientTypeName = root.GetProperty("clientTypeName").GetString(),
+                    Status = root.TryGetProperty("status", out var st) ? st.GetString() : "Live",
+                    WeekRange = $"{DateTime.Parse(root.GetProperty("startDate").GetString()):dd MMM} - {DateTime.Parse(root.GetProperty("endDate").GetString()):dd MMM}"
+                };
+
+                // Map Holidays
+                if (root.TryGetProperty("holidays", out var holidaysArray))
+                {
+                    foreach (var h in holidaysArray.EnumerateArray())
                     {
-                        day.Shifts.Add(new RosterShift
+                        var holiday = new Holiday
                         {
-                            GuardName = "Mohit X",
-                            StartTime = "14:00",
-                            EndTime = "23:00",
-                            Duration = "9h",
-                            Location = "Rear Entrance",
-                            Status = "Relief"
-                        });
+                            id = h.GetProperty("id").GetInt32(),
+                            StartDate = h.GetProperty("startDate").GetDateTime(),
+                            ExpiryDate = h.GetProperty("expiryDate").GetDateTime(),
+                            RepeatYearly = h.GetProperty("repeatYearly").GetBoolean(),
+                            Reason = h.GetProperty("reason").GetString()
+                        };
+                        if (h.TryGetProperty("states", out var statesArray))
+                        {
+                            foreach (var s in statesArray.EnumerateArray())
+                                holiday.States.Add(s.GetString());
+                        }
+                        result.Holidays.Add(holiday);
                     }
                 }
-                else if (date.DayOfWeek == DayOfWeek.Wednesday || date.DayOfWeek == DayOfWeek.Friday)
+
+                // Map Days and Shifts
+                if (root.TryGetProperty("days", out var daysArray))
                 {
-                    day.Shifts.Add(new RosterShift
+                    int dayIndex = 0;
+                    foreach (var dayShiftsJson in daysArray.EnumerateArray())
                     {
-                        GuardName = "Dileep (Self)",
-                        StartTime = "09:00",
-                        EndTime = "17:00",
-                        Duration = "8h",
-                        Location = "Front Desk",
-                        Status = "Normal"
-                    });
+                        DateTime currentDayDate = result.StartDate.AddDays(dayIndex);
+                        var rosterDay = new RosterDay
+                        {
+                            Date = currentDayDate,
+                            IsExpanded = currentDayDate.Date == DateTime.Today.Date // Expand today by default
+                        };
+
+                        // Check for public holiday highlighting
+                        var matchingHoliday = result.Holidays.FirstOrDefault(h => 
+                            (h.RepeatYearly && h.StartDate.Month == currentDayDate.Month && h.StartDate.Day == currentDayDate.Day) ||
+                            (currentDayDate.Date >= h.StartDate.Date && currentDayDate.Date <= h.ExpiryDate.Date));
+                        
+                        if (matchingHoliday != null)
+                        {
+                            rosterDay.IsPublicHoliday = true;
+                            rosterDay.HolidayReason = matchingHoliday.Reason;
+                        }
+
+                        // Map Shifts
+                        foreach (var s in dayShiftsJson.EnumerateArray())
+                        {
+                            rosterDay.Shifts.Add(new RosterShift
+                            {
+                                Id = s.GetProperty("id").GetInt32(),
+                                GuardName = s.GetProperty("guardName").GetString(),
+                                StartTime = s.GetProperty("shiftStart").GetString(),
+                                EndTime = s.GetProperty("shiftEnd").GetString(),
+                                Duration = s.TryGetProperty("duration", out var dur) ? dur.GetString() : s.GetProperty("durationHours").GetString(),
+                                DurationHours = s.GetProperty("durationHours").GetString(),
+                                Location = s.GetProperty("callsignName").GetString() ?? "N/A", // Using Callsign as Location for better UI
+                                Status = s.GetProperty("shiftType").GetString(), // e.g., Regular, Adhoc
+                                StatusCode = s.GetProperty("status").GetInt32(),
+                                ReliefGuardId = s.TryGetProperty("reliefGuardId", out var rId) && rId.ValueKind != JsonValueKind.Null ? rId.GetInt32() : (int?)null,
+                                ReliefGuardName = s.TryGetProperty("reliefGuardName", out var rName) ? rName.GetString() : null,
+                                ShiftType = s.GetProperty("shiftType").GetString(),
+                                CallsignName = s.GetProperty("callsignName").GetString(),
+                                GuardLicense = s.GetProperty("guardLicense").GetString(),
+                                ReliefGuardLicense = s.TryGetProperty("reliefGuardLicense", out var rLic) ? rLic.GetString() : null
+                            });
+                        }
+
+                        result.Days.Add(rosterDay);
+                        dayIndex++;
+                    }
                 }
 
-                roster.Days.Add(day);
+                return result;
             }
-
-            return roster;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in GetGuardRosterAsync: {ex.Message}");
+                return new WeeklyRoster { WeekRange = "Error: Exception occurred" };
+            }
         }
     }
 
