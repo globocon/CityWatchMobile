@@ -12,6 +12,7 @@
             <helpers:BooleanToArrowConverter x:Key="BooleanToArrowConverter" />
             <helpers:ShiftStatusToGradientConverter x:Key="ShiftStatusToGradientConverter" />
             <helpers:HolidayToColorConverter x:Key="HolidayToColorConverter" />
+            <helpers:NotNullToBooleanConverter x:Key="NotNullToBooleanConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -189,13 +190,12 @@
                                                            VerticalOptions="End" 
                                                            HorizontalOptions="End" />
 
-                                                    <!-- Relief Info if applicable -->
                                                     <Label Grid.Row="2" Grid.Column="2"
                                                            Text="Relief"
                                                            TextColor="White"
                                                            FontSize="10"
                                                            FontAttributes="Bold"
-                                                           IsVisible="{Binding ReliefGuardId, Converter={StaticResource x:Reference Name=GlobalLoading}, ConverterParameter='NotNull'}" 
+                                                           IsVisible="{Binding ReliefGuardId, Converter={StaticResource NotNullToBooleanConverter}}" 
                                                            HorizontalOptions="End" />
                                                     <!-- Note: Simplification here, using IsVisible for placeholder relief tag -->
                                                 </Grid>

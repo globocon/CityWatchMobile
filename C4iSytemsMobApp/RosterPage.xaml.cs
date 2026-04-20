@@ -127,7 +127,8 @@ namespace C4iSytemsMobApp
 
         private void OnHomeClicked(object sender, EventArgs e)
         {
-            Application.Current.MainPage = new MainPage();
+            var volumeService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+            Application.Current.MainPage = new MainPage(volumeService);
         }
     }
 }
