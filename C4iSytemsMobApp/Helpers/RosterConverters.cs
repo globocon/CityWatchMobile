@@ -109,11 +109,11 @@ namespace C4iSytemsMobApp.Helpers
             {
                 return Color.FromArgb("#FFF9C4"); // Light Yellow
             }
-
-            // Default day header colors (matching existing AppThemeBinding if possible, or returning null to use default)
             return null;
         }
 
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
 
     /// <summary>
     /// [Roster Module] - Returns true if the value is not null. Used for visibility.
