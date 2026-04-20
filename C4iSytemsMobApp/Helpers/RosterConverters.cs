@@ -129,4 +129,25 @@ namespace C4iSytemsMobApp.Helpers
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
+
+    /// <summary>
+    /// [Roster Module] - Converts roster status (Paid, Invoiced, etc.) to a label color.
+    /// </summary>
+    public class RosterStatusToColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null) return Colors.Gray;
+            string status = value.ToString().ToLower();
+
+            if (status.Contains("paid")) return Colors.Red; // Matching web stamp
+            if (status.Contains("live")) return Colors.Green;
+            if (status.Contains("inv")) return Colors.Blue; // Invoiced
+            if (status.Contains("can")) return Colors.Gray; // Canceled
+            
+            return Colors.Gray;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
 }

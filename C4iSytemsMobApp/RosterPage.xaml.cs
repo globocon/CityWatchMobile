@@ -54,6 +54,14 @@ namespace C4iSytemsMobApp
                 if (roster != null)
                 {
                     WeekRangeLabel.Text = roster.WeekRange;
+                    
+                    // Update Status Label and Color
+                    StatusLabel.Text = roster.Status;
+                    string status = (roster.Status ?? "").ToLower();
+                    if (status.Contains("paid")) StatusLabel.TextColor = Colors.Red;
+                    else if (status.Contains("live")) StatusLabel.TextColor = Colors.Green;
+                    else if (status.Contains("inv")) StatusLabel.TextColor = Colors.Blue;
+                    else StatusLabel.TextColor = Colors.Gray;
                 }
 
                 if (roster != null && roster.Days.Count > 0)
@@ -115,16 +123,24 @@ namespace C4iSytemsMobApp
             if (day != null)
             {
                 day.IsExpanded = !day.IsExpanded;
-                
-                // Trigger UI refresh for this item since RosterDay isn't INPC (it's a simple model)
-                // We recreate the collection or use a more advanced approach if needed.
-                // For simplicity with this demo, we can just refresh the BindableLayout.
-                var index = Days.IndexOf(day);
-                if (index != -1)
-                {
-                    Days[index] = null; // Forces refresh
-                    Days[index] = day;
-                }
+            }
+        }
+
+        private void OnExpandAllClicked(object sender, EventArgs e)
+        {
+            if (Days == null) return;
+            foreach (var day in Days)
+            {
+                day.IsExpanded = true;
+            }
+        }
+
+        private void OnCollapseAllClicked(object sender, EventArgs e)
+        {
+            if (Days == null) return;
+            foreach (var day in Days)
+            {
+                day.IsExpanded = false;
             }
         }
 

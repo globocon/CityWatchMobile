@@ -14,6 +14,7 @@
             <helpers:ShiftStatusToGradientConverter x:Key="ShiftStatusToGradientConverter" />
             <helpers:HolidayToColorConverter x:Key="HolidayToColorConverter" />
             <helpers:NotNullToBooleanConverter x:Key="NotNullToBooleanConverter" />
+            <helpers:RosterStatusToColorConverter x:Key="RosterStatusToColorConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -21,17 +22,35 @@
           Padding="10,5,10,10"
           RowSpacing="10">
 
-        <!-- Header Section: Title Left, Home Icon Right -->
-        <Grid ColumnDefinitions="*,Auto"
+        <!-- Header Section: Title Left + Expand/Collapse Buttons, Home Icon Right -->
+        <Grid ColumnDefinitions="*,Auto,Auto"
               VerticalOptions="Center"
               Grid.Row="0"
               Margin="0,0,0,5">
-            <Label Text="My Roster"
-                   FontSize="24"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Start"
-                   VerticalOptions="Center"
-                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+            
+            <HorizontalStackLayout Grid.Column="0" Spacing="10" VerticalOptions="Center">
+                <Label Text="My Roster"
+                       FontSize="24"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                
+                <HorizontalStackLayout Spacing="5" VerticalOptions="Center" Margin="10,0,0,0">
+                    <Button Text="&#xf103;" 
+                            FontFamily="FontAwesome" 
+                            FontSize="18" 
+                            BackgroundColor="Transparent" 
+                            TextColor="Gray"
+                            Padding="5"
+                            Clicked="OnExpandAllClicked" />
+                    <Button Text="&#xf102;" 
+                            FontFamily="FontAwesome" 
+                            FontSize="18" 
+                            BackgroundColor="Transparent" 
+                            TextColor="Gray"
+                            Padding="5"
+                            Clicked="OnCollapseAllClicked" />
+                </HorizontalStackLayout>
+            </HorizontalStackLayout>
 
             <!-- Blue circular Home Button -->
             <Frame Padding="0"
@@ -42,7 +61,7 @@
                    HasShadow="False"
                    HorizontalOptions="End"
                    VerticalOptions="Center"
-                   Grid.Column="1">
+                   Grid.Column="2">
                 <ImageButton Source="home.png"
                              Clicked="OnHomeClicked"
                              HeightRequest="22"
@@ -59,7 +78,7 @@
                CornerRadius="10" 
                HasShadow="False"
                BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#1E1E1E}">
-            <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalOptions="Center">
                 <Button Grid.Column="0"
                         Text="&#xf053;"
                         FontFamily="FontAwesome"
@@ -68,14 +87,19 @@
                         TextColor="{AppThemeBinding Light=Black, Dark=White}"
                         FontSize="14" />
 
-                <Label Grid.Column="1"
-                       x:Name="WeekRangeLabel"
-                       Text="Loading week..."
-                       FontSize="16"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                <HorizontalStackLayout Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
+                    <Label x:Name="WeekRangeLabel"
+                           Text="Loading week..."
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    
+                    <Label x:Name="StatusLabel"
+                           Text=""
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center" />
+                </HorizontalStackLayout>
 
                 <Button Grid.Column="2"
                         Text="&#xf054;"

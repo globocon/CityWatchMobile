@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace C4iSytemsMobApp.Models
 {
@@ -51,7 +53,7 @@ namespace C4iSytemsMobApp.Models
     /// Represents a day in the roster with its associated shifts.
     /// Used for grouping and the auto-expand UI logic.
     /// </summary>
-    public class RosterDay
+    public class RosterDay : INotifyPropertyChanged
     {
         public DateTime Date { get; set; }
         public string DayName => Date.ToString("ddd dd MMM");
@@ -63,7 +65,25 @@ namespace C4iSytemsMobApp.Models
         public string HolidayReason { get; set; }
 
         // Property for UI expansion state
-        public bool IsExpanded { get; set; }
+        private bool _isExpanded;
+        public bool IsExpanded 
+        { 
+            get => _isExpanded; 
+            set 
+            {
+                if (_isExpanded != value)
+                {
+                    _isExpanded = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 
     /// <summary>
