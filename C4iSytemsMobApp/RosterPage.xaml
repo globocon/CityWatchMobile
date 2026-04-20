@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:C4iSytemsMobApp.Models"
+             xmlns:helpers="clr-namespace:C4iSytemsMobApp.Helpers"
+             x:Class="C4iSytemsMobApp.RosterPage"
+             Title="Roster"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <helpers:BooleanToArrowConverter x:Key="BooleanToArrowConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto"
+          Padding="15"
+          RowSpacing="15">
+
+        <!-- Header Section -->
+        <Grid ColumnDefinitions="Auto,*,Auto"
+              VerticalOptions="Center"
+              Grid.Row="0">
+            <Label Text="My Roster"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Grid.Column="1"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+            <!-- Home Button to return to MainPage -->
+            <ImageButton Source="home.png"
+                         Clicked="OnHomeClicked"
+                         HeightRequest="35"
+                         WidthRequest="35"
+                         BackgroundColor="Transparent"
+                         HorizontalOptions="End"
+                         VerticalOptions="Center"
+                         Grid.Column="2" />
+        </Grid>
+
+        <!-- Week Navigation Controls -->
+        <Frame Grid.Row="1" 
+               Padding="5" 
+               CornerRadius="10" 
+               HasShadow="False"
+               BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#1E1E1E}">
+            <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+                <Button Grid.Column="0"
+                        Text="&#xf053;"
+                        FontFamily="FontAwesome"
+                        Clicked="OnPreviousWeekClicked"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                        FontSize="18" />
+
+                <Label Grid.Column="1"
+                       x:Name="WeekRangeLabel"
+                       Text="Loading week..."
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+                <Button Grid.Column="2"
+                        Text="&#xf054;"
+                        FontFamily="FontAwesome"
+                        Clicked="OnNextWeekClicked"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                        FontSize="18" />
+            </Grid>
+        </Frame>
+
+        <!-- Roster Content -->
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout x:Name="RosterContainer" Spacing="10">
+                
+                <!-- "No roster exist" Message -->
+                <Label x:Name="NoRosterLabel"
+                       Text="No roster exist"
+                       FontSize="18"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       Margin="0,50,0,0"
+                       IsVisible="False"
+                       TextColor="Gray" />
+
+                <!-- Roster Days List (Populated in Code-Behind) -->
+                <VerticalStackLayout x:Name="DaysList" BindableLayout.ItemsSource="{Binding Days}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="models:RosterDay">
+                            <VerticalStackLayout Spacing="2" Margin="0,0,0,10">
+                                
+                                <!-- Day Header (Expandable) -->
+                                <Frame Padding="10" 
+                                       CornerRadius="5" 
+                                       HasShadow="False"
+                                       BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnDayHeaderTapped" CommandParameter="{Binding .}" />
+                                    </Frame.GestureRecognizers>
+                                    <Grid ColumnDefinitions="*, Auto">
+                                        <Label Text="{Binding DayName}" 
+                                               TextColor="{AppThemeBinding Light=White, Dark=Black}" 
+                                               FontAttributes="Bold" 
+                                               FontSize="16" />
+                                        <Label Grid.Column="1" 
+                                               Text="{Binding IsExpanded, Converter={StaticResource BooleanToArrowConverter}}" 
+                                               TextColor="{AppThemeBinding Light=White, Dark=Black}" 
+                                               FontFamily="FontAwesome" />
+                                    </Grid>
+                                </Frame>
+
+                                <!-- Day Shifts (Visible when expanded) -->
+                                <VerticalStackLayout IsVisible="{Binding IsExpanded}" 
+                                                     BindableLayout.ItemsSource="{Binding Shifts}"
+                                                     Padding="10,5,0,0"
+                                                     Spacing="8">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="models:RosterShift">
+                                            <!-- Orange Card Styling for Shifts -->
+                                            <Frame Padding="15" 
+                                                   CornerRadius="8" 
+                                                   HasShadow="False"
+                                                   BackgroundColor="Orange"
+                                                   BorderColor="Transparent">
+                                                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto, *, Auto">
+                                                    
+                                                    <!-- Icon -->
+                                                    <Label Text="&#xf007;" 
+                                                           FontFamily="FontAwesome" 
+                                                           FontSize="24" 
+                                                           TextColor="White"
+                                                           Grid.RowSpan="2" 
+                                                           VerticalOptions="Center" 
+                                                           Margin="0,0,15,0" />
+
+                                                    <!-- Shift Details -->
+                                                    <Label Text="{Binding GuardName}" 
+                                                           TextColor="White" 
+                                                           FontAttributes="Bold" 
+                                                           FontSize="16" 
+                                                           Grid.Column="1" />
+                                                    
+                                                    <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="10">
+                                                        <Label Text="{Binding StartTime}" TextColor="White" FontSize="14" />
+                                                        <Label Text="-" TextColor="White" FontSize="14" />
+                                                        <Label Text="{Binding EndTime}" TextColor="White" FontSize="14" />
+                                                        <Label Text="{Binding Duration, StringFormat='({0})'}" TextColor="White" FontSize="14" Opacity="0.8" />
+                                                    </HorizontalStackLayout>
+
+                                                    <!-- Status/Location -->
+                                                    <Label Grid.Column="2" 
+                                                           Text="{Binding Location}" 
+                                                           TextColor="White" 
+                                                           FontSize="12" 
+                                                           VerticalOptions="Start" 
+                                                           HorizontalOptions="End" />
+                                                    
+                                                    <Label Grid.Row="1" Grid.Column="2" 
+                                                           Text="{Binding Status}" 
+                                                           TextColor="White" 
+                                                           FontSize="12" 
+                                                           FontAttributes="Italic"
+                                                           VerticalOptions="End" 
+                                                           HorizontalOptions="End" />
+                                                </Grid>
+                                            </Frame>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Footer / Placeholder -->
+        <Label Grid.Row="3" 
+               Text="Powered by CityWatch" 
+               HorizontalOptions="Center" 
+               FontSize="10" 
+               TextColor="Gray" />
+
+        <!-- Loading Activity Indicator -->
+        <ActivityIndicator x:Name="GlobalLoading"
+                         IsRunning="False"
+                         Color="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}"
+                         VerticalOptions="Center"
+                         HorizontalOptions="Center"
+                         Grid.RowSpan="4" />
+    </Grid>
+</ContentPage>

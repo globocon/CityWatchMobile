@@ -350,6 +350,71 @@ namespace C4iSytemsMobApp.Services
                 return (false, $"Exception occurd while resetting the PIN. {ex.Message}.");
             }
         }
+
+        // [Roster Module] - Isolated Implementation with Demo Data
+        /// <summary>
+        /// Provides demo roster data for the mobile app. 
+        /// This can be replaced with a live API call to GuardSecurityNumber/GetGuardRoster later.
+        /// </summary>
+        public async Task<WeeklyRoster> GetGuardRosterAsync(DateTime startDate, DateTime endDate)
+        {
+            // Simulate API delay
+            await Task.Delay(500);
+
+            var roster = new WeeklyRoster
+            {
+                WeekRange = $"{startDate:dd MMM} - {endDate:dd MMM}"
+            };
+
+            // Generate demo data for each day in the range
+            for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
+            {
+                var day = new RosterDay { Date = date };
+
+                // Add sample shifts to some days
+                if (date.DayOfWeek == DayOfWeek.Monday || date.Date == DateTime.Today.Date)
+                {
+                    day.Shifts.Add(new RosterShift
+                    {
+                        GuardName = "Ankus",
+                        StartTime = "00:01",
+                        EndTime = "08:00",
+                        Duration = "8h",
+                        Location = "Main Gate",
+                        Status = "Normal"
+                    });
+
+                    if (date.Date == DateTime.Today.Date)
+                    {
+                        day.Shifts.Add(new RosterShift
+                        {
+                            GuardName = "Mohit X",
+                            StartTime = "14:00",
+                            EndTime = "23:00",
+                            Duration = "9h",
+                            Location = "Rear Entrance",
+                            Status = "Relief"
+                        });
+                    }
+                }
+                else if (date.DayOfWeek == DayOfWeek.Wednesday || date.DayOfWeek == DayOfWeek.Friday)
+                {
+                    day.Shifts.Add(new RosterShift
+                    {
+                        GuardName = "Dileep (Self)",
+                        StartTime = "09:00",
+                        EndTime = "17:00",
+                        Duration = "8h",
+                        Location = "Front Desk",
+                        Status = "Normal"
+                    });
+                }
+
+                roster.Days.Add(day);
+            }
+
+            return roster;
+        }
     }
 
 }

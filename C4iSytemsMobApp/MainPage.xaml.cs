@@ -1536,6 +1536,16 @@ namespace C4iSytemsMobApp
 
         }
 
+        /// <summary>
+        /// [Roster Module] - Handles the Roster button click from the side menu.
+        /// Navigates to the RosterPage and ensures the drawer is closed.
+        /// </summary>
+        private async void OnRosterClicked(object sender, EventArgs e)
+        {
+            Application.Current.MainPage = new NavigationPage(new RosterPage());
+            CloseDrawer();
+        }
+
         private async void OnHrRecordsClicked(object sender, EventArgs e)
         {
             var _guardApiServices = IPlatformApplication.Current.Services.GetService<IGuardApiServices>();
