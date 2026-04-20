@@ -4,6 +4,7 @@
              xmlns:models="clr-namespace:C4iSytemsMobApp.Models"
              xmlns:helpers="clr-namespace:C4iSytemsMobApp.Helpers"
              x:Class="C4iSytemsMobApp.RosterPage"
+             NavigationPage.HasNavigationBar="False"
              Title="Roster"
              BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
 
@@ -23,27 +24,38 @@
         <!-- Header Section: Title Left, Home Icon Right -->
         <Grid ColumnDefinitions="*,Auto"
               VerticalOptions="Center"
-              Grid.Row="0">
+              Grid.Row="0"
+              Margin="0,0,0,5">
             <Label Text="My Roster"
-                   FontSize="22"
+                   FontSize="24"
                    FontAttributes="Bold"
                    HorizontalOptions="Start"
                    VerticalOptions="Center"
                    TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
-            <ImageButton Source="home.png"
-                         Clicked="OnHomeClicked"
-                         HeightRequest="30"
-                         WidthRequest="30"
-                         BackgroundColor="Transparent"
-                         HorizontalOptions="End"
-                         VerticalOptions="Center"
-                         Grid.Column="1" />
+            <!-- Blue circular Home Button -->
+            <Frame Padding="0"
+                   HeightRequest="40"
+                   WidthRequest="40"
+                   CornerRadius="20"
+                   BackgroundColor="#007bff"
+                   HasShadow="False"
+                   HorizontalOptions="End"
+                   VerticalOptions="Center"
+                   Grid.Column="1">
+                <ImageButton Source="home.png"
+                             Clicked="OnHomeClicked"
+                             HeightRequest="22"
+                             WidthRequest="22"
+                             BackgroundColor="Transparent"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center" />
+            </Frame>
         </Grid>
 
         <!-- Week Navigation Controls -->
         <Frame Grid.Row="1" 
-               Padding="5" 
+               Padding="2" 
                CornerRadius="10" 
                HasShadow="False"
                BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#1E1E1E}">
@@ -54,7 +66,7 @@
                         Clicked="OnPreviousWeekClicked"
                         BackgroundColor="Transparent"
                         TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                        FontSize="16" />
+                        FontSize="14" />
 
                 <Label Grid.Column="1"
                        x:Name="WeekRangeLabel"
@@ -71,7 +83,7 @@
                         Clicked="OnNextWeekClicked"
                         BackgroundColor="Transparent"
                         TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                        FontSize="16" />
+                        FontSize="14" />
             </Grid>
         </Frame>
 
@@ -94,7 +106,7 @@
                             <VerticalStackLayout Spacing="0" Margin="0,0,0,8">
                                 
                                 <!-- Day Header -->
-                                <Frame Padding="10,8" 
+                                <Frame Padding="10,6" 
                                        CornerRadius="4" 
                                        HasShadow="False"
                                        BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
@@ -112,7 +124,7 @@
                                                    TextColor="{AppThemeBinding Light=White, Dark=Black}" 
                                                    FontAttributes="Bold" 
                                                    FontSize="16" />
-                                            <Label Text=" (Holiday)" 
+                                            <Label Text="{Binding HolidayReason}" 
                                                    TextColor="Red" 
                                                    FontSize="12" 
                                                    VerticalOptions="Center" 
@@ -122,7 +134,7 @@
                                                Text="{Binding IsExpanded, Converter={StaticResource BooleanToArrowConverter}}" 
                                                TextColor="{AppThemeBinding Light=White, Dark=Black}" 
                                                FontFamily="FontAwesome" 
-                                               FontSize="14" />
+                                               FontSize="12" />
                                     </Grid>
                                 </Frame>
 
@@ -138,103 +150,92 @@
                                                    HasShadow="False"
                                                    Background="{Binding ., Converter={StaticResource ShiftStatusToGradientConverter}}"
                                                    BorderColor="Transparent">
-                                                <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto, *, Auto">
+                                                <Grid ColumnDefinitions="Auto, *, Auto">
                                                     
-                                                    <!-- Icon (User or R for Relief) -->
-                                                    <Frame Grid.RowSpan="3"
-                                                           Padding="0"
-                                                           HeightRequest="30"
-                                                           WidthRequest="30"
+                                                    <!-- Icon (Reduced size 50%) -->
+                                                    <Frame Padding="0"
+                                                           HeightRequest="22"
+                                                           WidthRequest="22"
                                                            CornerRadius="5"
                                                            BackgroundColor="Transparent"
                                                            BorderColor="White"
                                                            HorizontalOptions="Start"
-                                                           VerticalOptions="Center"
-                                                           Margin="0,0,10,0">
-                                                        <Label x:Name="IconLabel"
-                                                               Text="{Binding DisplayIcon}" 
+                                                           VerticalOptions="Start"
+                                                           Margin="0,2,8,0">
+                                                        <Label Text="{Binding DisplayIcon}" 
                                                                FontFamily="FontAwesome" 
-                                                               FontSize="18" 
+                                                               FontSize="14" 
                                                                TextColor="White"
                                                                HorizontalOptions="Center"
                                                                VerticalOptions="Center" />
                                                     </Frame>
 
-                                                    <!-- Shift Title: GuardName (License) -->
-                                                    <HorizontalStackLayout Grid.Column="1" Spacing="5" VerticalOptions="Center">
-                                                        <Label x:Name="TitleLabel"
-                                                               Text="{Binding DisplayName}" 
+                                                    <!-- Shift Info (Vertical Stack like Web UI) -->
+                                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                                        <!-- Line 1: Name -->
+                                                        <Label Text="{Binding DisplayName}" 
                                                                TextColor="White" 
                                                                FontAttributes="Bold" 
-                                                               FontSize="17" />
-                                                        <Label x:Name="LicenseLabel"
-                                                               Text="{Binding DisplayLicense, StringFormat='({0})'}" 
-                                                               TextColor="White" 
-                                                               FontSize="13" 
-                                                               VerticalOptions="Center" 
-                                                               Opacity="0.9" />
-                                                    </HorizontalStackLayout>
+                                                               FontSize="16" />
 
-                                                    <!-- Subtitle for Relief Shifts -->
-                                                    <HorizontalStackLayout Grid.Row="1" Grid.Column="1" 
-                                                                           Spacing="5" 
-                                                                           IsVisible="{Binding ReliefGuardId, Converter={StaticResource NotNullToBooleanConverter}}">
-                                                        <Label Text="{Binding ReliefReason, StringFormat='[{0}]'}" 
+                                                        <!-- Line 2: [Reason] Original Guard (Relief only) -->
+                                                        <HorizontalStackLayout Spacing="4" 
+                                                                               IsVisible="{Binding ReliefGuardId, Converter={StaticResource NotNullToBooleanConverter}}">
+                                                            <Label Text="{Binding ReliefReason, StringFormat='[{0}]'}" 
+                                                                   TextColor="White" 
+                                                                   FontSize="12" 
+                                                                   FontAttributes="Bold" />
+                                                            <Label Text="{Binding GuardName}" 
+                                                                   TextColor="White" 
+                                                                   FontSize="12" 
+                                                                   Opacity="0.8" />
+                                                        </HorizontalStackLayout>
+
+                                                        <!-- Line 3: License -->
+                                                        <Label Text="{Binding DisplayLicense, StringFormat='LIC: {0}'}" 
                                                                TextColor="White" 
-                                                               FontSize="13" 
-                                                               FontAttributes="Bold" />
-                                                        <Label Text="{Binding GuardName}" 
-                                                               TextColor="White" 
-                                                               FontSize="13" 
-                                                               Opacity="0.8" />
-                                                    </HorizontalStackLayout>
-                                                    
-                                                    <!-- Time and Duration -->
-                                                    <HorizontalStackLayout Grid.Row="2" Grid.Column="1" Spacing="8">
-                                                        <Label Text="{Binding StartTime}" TextColor="White" FontSize="14" />
-                                                        <Label Text="-" TextColor="White" FontSize="14" />
-                                                        <Label Text="{Binding EndTime}" TextColor="White" FontSize="14" />
-                                                        <Label Text="{Binding DurationHours, StringFormat='({0}h)'}" 
+                                                               FontSize="12" 
+                                                               Opacity="0.9"
+                                                               IsVisible="{Binding DisplayLicense, Converter={StaticResource NotNullToBooleanConverter}}" />
+
+                                                        <!-- Line 4: Time and Duration -->
+                                                        <HorizontalStackLayout Spacing="5" Margin="0,2,0,0">
+                                                            <Label Text="{Binding StartTime}" TextColor="White" FontSize="13" />
+                                                            <Label Text="-" TextColor="White" FontSize="13" />
+                                                            <Label Text="{Binding EndTime}" TextColor="White" FontSize="13" />
+                                                            <Label Text="{Binding DurationHours, StringFormat='({0}h)'}" 
+                                                                   TextColor="White" 
+                                                                   FontSize="13" 
+                                                                   Opacity="0.9" />
+                                                        </HorizontalStackLayout>
+                                                    </VerticalStackLayout>
+
+                                                    <!-- Callsign and Status (Right Aligned) -->
+                                                    <VerticalStackLayout Grid.Column="2" 
+                                                                         VerticalOptions="Start"
+                                                                         HorizontalOptions="End"
+                                                                         Spacing="2">
+                                                        <Label Text="{Binding CallsignName}" 
                                                                TextColor="White" 
                                                                FontSize="14" 
-                                                               Opacity="0.9" />
-                                                    </HorizontalStackLayout>
-
-                                                    <!-- Callsign and Type/Status (Right Aligned) -->
-                                                    <Label Grid.Column="2" 
-                                                           Text="{Binding CallsignName}" 
-                                                           TextColor="White" 
-                                                           FontSize="14" 
-                                                           FontAttributes="Bold"
-                                                           HorizontalOptions="End" />
-                                                    
-                                                    <VerticalStackLayout Grid.Row="1" Grid.RowSpan="2" Grid.Column="2" 
-                                                                         VerticalOptions="Center"
-                                                                         HorizontalOptions="End">
+                                                               FontAttributes="Bold"
+                                                               HorizontalOptions="End" />
+                                                        
                                                         <Label Text="{Binding Status}" 
                                                                TextColor="White" 
-                                                               FontSize="13" 
+                                                               FontSize="12" 
                                                                FontAttributes="Italic"
                                                                HorizontalOptions="End" />
+                                                               
                                                         <Label Text="Relief"
                                                                TextColor="White"
-                                                               FontSize="12"
+                                                               FontSize="11"
                                                                FontAttributes="Bold"
                                                                IsVisible="{Binding ReliefGuardId, Converter={StaticResource NotNullToBooleanConverter}}" 
                                                                HorizontalOptions="End" />
                                                     </VerticalStackLayout>
                                                 </Grid>
-                                                
-                                                <Frame.Triggers>
-                                                    <!-- Handle Relief Guard Identity Swap -->
-                                                    <DataTrigger TargetType="Frame" Binding="{Binding ReliefGuardId, Converter={StaticResource NotNullToBooleanConverter}}" Value="True">
-                                                        <!-- Swapping text is complex in XAML triggers for nested elements, but we can target them by name if they were in a Style, or handle here -->
-                                                    </DataTrigger>
-                                                </Frame.Triggers>
                                             </Frame>
-                                            
-                                            <!-- We use a simpler approach for the text swap: Conditional Bindings in Setter/Trigger is limited, 
-                                                 so I will use a simple DataTrigger on the Labels within the card. -->
                                         </DataTemplate>
                                     </BindableLayout.ItemTemplate>
                                 </VerticalStackLayout>
