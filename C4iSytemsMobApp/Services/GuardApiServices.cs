@@ -460,6 +460,7 @@ namespace C4iSytemsMobApp.Services
                                 StatusCode = s.GetProperty("status").GetInt32(),
                                 ReliefGuardId = s.TryGetProperty("reliefGuardId", out var rId) && rId.ValueKind != JsonValueKind.Null ? rId.GetInt32() : (int?)null,
                                 ReliefGuardName = s.TryGetProperty("reliefGuardName", out var rName) ? rName.GetString() : null,
+                                ReliefReason = s.TryGetProperty("reliefReason", out var rReason) ? rReason.GetString() : null,
                                 ShiftType = s.GetProperty("shiftType").GetString(),
                                 CallsignName = s.GetProperty("callsignName").GetString(),
                                 GuardLicense = s.GetProperty("guardLicense").GetString(),

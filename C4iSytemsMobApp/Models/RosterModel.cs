@@ -40,6 +40,11 @@ namespace C4iSytemsMobApp.Models
         public string DurationHours { get; set; }
         public string GuardLicense { get; set; }
         public string ReliefGuardLicense { get; set; }
+
+        // UI Helpers
+        public string DisplayName => ReliefGuardId != null ? ReliefGuardName : GuardName;
+        public string DisplayLicense => ReliefGuardId != null ? ReliefGuardLicense : GuardLicense;
+        public string DisplayIcon => ReliefGuardId != null ? "R" : "\uf007"; // \uf007 is user icon
     }
 
     /// <summary>
