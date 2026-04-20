@@ -453,8 +453,8 @@ namespace C4iSytemsMobApp.Services
                                 GuardName = s.GetProperty("guardName").GetString(),
                                 StartTime = s.GetProperty("shiftStart").GetString(),
                                 EndTime = s.GetProperty("shiftEnd").GetString(),
-                                Duration = s.TryGetProperty("duration", out var dur) ? dur.GetString() : s.GetProperty("durationHours").GetString(),
-                                DurationHours = s.GetProperty("durationHours").GetString(),
+                                Duration = s.TryGetProperty("duration", out var dur) && dur.ValueKind == JsonValueKind.String ? dur.GetString() : (s.TryGetProperty("durationHours", out var durH) ? durH.GetRawText() : "0"),
+                                DurationHours = s.TryGetProperty("durationHours", out var dh) ? dh.GetRawText() : "0",
                                 Location = s.GetProperty("callsignName").GetString() ?? "N/A", // Using Callsign as Location for better UI
                                 Status = s.GetProperty("shiftType").GetString(), // e.g., Regular, Adhoc
                                 StatusCode = s.GetProperty("status").GetInt32(),

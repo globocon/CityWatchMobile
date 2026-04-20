@@ -51,10 +51,13 @@ namespace C4iSytemsMobApp
                 DateTime endDate = startDate.AddDays(6);
                 var roster = await _guardApiServices.GetGuardRosterAsync(startDate, endDate);
 
-                if (roster != null && roster.Days.Count > 0)
+                if (roster != null)
                 {
                     WeekRangeLabel.Text = roster.WeekRange;
-                    
+                }
+
+                if (roster != null && roster.Days.Count > 0)
+                {
                     // Auto-expand the current day
                     foreach (var day in roster.Days)
                     {
