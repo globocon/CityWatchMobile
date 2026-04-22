@@ -50,13 +50,13 @@
                         
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                <Label Text="{Binding DisplayGuardName}" FontAttributes="Bold" FontSize="14" TextColor="White" />
+                                <Label Text="{Binding DisplayName}" FontAttributes="Bold" FontSize="14" TextColor="White" />
                                 <Label Text="{Binding CallsignName}" FontSize="12" TextColor="White" Opacity="0.9" />
                                 <HorizontalStackLayout Spacing="5">
                                     <Label Text="&#xf017;" FontFamily="FontAwesome" FontSize="12" TextColor="White" VerticalOptions="Center" />
-                                    <Label Text="{Binding ShiftStart}" FontSize="12" TextColor="White" />
+                                    <Label Text="{Binding StartTime}" FontSize="12" TextColor="White" />
                                     <Label Text="-" FontSize="12" TextColor="White" />
-                                    <Label Text="{Binding ShiftEnd}" FontSize="12" TextColor="White" />
+                                    <Label Text="{Binding EndTime}" FontSize="12" TextColor="White" />
                                 </HorizontalStackLayout>
                             </VerticalStackLayout>
                             
