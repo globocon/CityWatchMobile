@@ -242,11 +242,18 @@
                                                                          VerticalOptions="Start"
                                                                          HorizontalOptions="End"
                                                                          Spacing="2">
-                                                        <Label Text="{Binding CallsignName}" 
-                                                               TextColor="White" 
-                                                               FontSize="14" 
-                                                               FontAttributes="Bold"
-                                                               HorizontalOptions="End" />
+                                                        <HorizontalStackLayout Spacing="5" HorizontalOptions="End">
+                                                            <Label Text="&#xf303;" 
+                                                                   FontFamily="FontAwesome" 
+                                                                   FontSize="12" 
+                                                                   TextColor="White"
+                                                                   IsVisible="{Binding IsEditable}"
+                                                                   VerticalOptions="Center" />
+                                                            <Label Text="{Binding CallsignName}" 
+                                                                   TextColor="White" 
+                                                                   FontSize="14" 
+                                                                   FontAttributes="Bold" />
+                                                        </HorizontalStackLayout>
                                                         
                                                         <Label Text="{Binding Status}" 
                                                                TextColor="White" 

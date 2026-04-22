@@ -449,7 +449,7 @@ namespace C4iSytemsMobApp.Services
                         // Map Shifts
                         foreach (var s in dayShiftsJson.EnumerateArray())
                         {
-                            rosterDay.Shifts.Add(new RosterShift
+                            var shift = new RosterShift
                             {
                                 Id = s.GetProperty("id").GetInt32(),
                                 GuardId = s.TryGetProperty("guardId", out var gId) && gId.ValueKind != JsonValueKind.Null ? gId.GetInt32() : (int?)null,
@@ -468,7 +468,12 @@ namespace C4iSytemsMobApp.Services
                                 CallsignName = s.GetProperty("callsignName").GetString(),
                                 GuardLicense = s.GetProperty("guardLicense").GetString(),
                                 ReliefGuardLicense = s.TryGetProperty("reliefGuardLicense", out var rLic) ? rLic.GetString() : null
-                            });
+                            };
+
+                            // Determine if editable by the current guard
+                            shift.IsEditable = (shift.GuardId == guardId || shift.ReliefGuardId == guardId);
+
+                            rosterDay.Shifts.Add(shift);
                         }
 
                         result.Days.Add(rosterDay);

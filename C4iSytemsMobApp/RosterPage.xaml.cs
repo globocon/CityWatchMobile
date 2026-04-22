@@ -164,13 +164,9 @@ namespace C4iSytemsMobApp
 
             int currentGuardId = _guardApiServices.CurrentGuardId;
 
-            // Security Check: Only allow if shift belongs to current guard (Primary or Relief)
-            bool isPrimaryGuard = shift.GuardId == currentGuardId;
-            bool isReliefGuard = shift.ReliefGuardId == currentGuardId;
-
-            if (!isPrimaryGuard && !isReliefGuard)
+            if (!shift.IsEditable)
             {
-                await DisplayAlert("Roster", "You can only update your own roster shifts.", "OK");
+                await DisplayAlert("Roster", $"You can only update your own roster shifts. (Logged in ID: {currentGuardId}, Shift Owner ID: {shift.GuardId})", "OK");
                 return;
             }
 

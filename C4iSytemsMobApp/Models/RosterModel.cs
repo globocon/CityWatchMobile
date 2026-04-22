@@ -60,6 +60,7 @@ namespace C4iSytemsMobApp.Models
         public string ReliefGuardLicense { get; set; }
 
         // UI Helpers
+        public bool IsEditable { get; set; } // Whether the current guard can edit this shift
         public string DisplayName => ReliefGuardId != null ? ReliefGuardName : GuardName;
         public string DisplayLicense => ReliefGuardId != null ? ReliefGuardLicense : GuardLicense;
         public string DisplayIcon => ReliefGuardId != null ? "R" : "\uf007"; // \uf007 is user icon
