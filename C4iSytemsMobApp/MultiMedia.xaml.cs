@@ -184,7 +184,7 @@ public partial class MultiMedia : ContentPage
     {
         if (sender is Button btn)
         {
-            btn.IsEnabled = false;
+            btn.IsEnabled = false;            
 
             try
             {
@@ -215,6 +215,7 @@ public partial class MultiMedia : ContentPage
 
                     if (SelectedFiles.Any())
                     {
+                        FileUploadLoadingOverlay.IsVisible = true;
                         await UploadFileToApiAsync();
                     }
                     else
@@ -229,6 +230,7 @@ public partial class MultiMedia : ContentPage
             }
             finally
             {
+                FileUploadLoadingOverlay.IsVisible = false;
                 btn.IsEnabled = true;
             }
         }
@@ -326,8 +328,7 @@ public partial class MultiMedia : ContentPage
     {
         if (sender is Button btn)
         {
-            btn.IsEnabled = false;
-
+            btn.IsEnabled = false;            
             try
             {
                 var results = await FilePicker.PickMultipleAsync();
@@ -358,6 +359,7 @@ public partial class MultiMedia : ContentPage
 
                     if (SelectedFiles.Any())
                     {
+                        FileUploadLoadingOverlay.IsVisible = true;
                         await UploadVideoToApiAsync();
                     }
                     else
@@ -373,6 +375,7 @@ public partial class MultiMedia : ContentPage
             finally
             {
                 btn.IsEnabled = true;
+                FileUploadLoadingOverlay.IsVisible = false;
             }
         }
     }

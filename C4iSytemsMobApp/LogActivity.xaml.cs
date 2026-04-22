@@ -1352,7 +1352,7 @@ public partial class LogActivity : ContentPage
         if (sender is Button btn)
         {
             btn.IsEnabled = false;
-
+            FileUploadLoadingOverlay.IsVisible = true;
             try
             {
                 if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
@@ -1476,7 +1476,8 @@ public partial class LogActivity : ContentPage
             }
             finally
             {
-                btn.IsEnabled = true;
+                FileUploadLoadingOverlay.IsVisible = false;
+                btn.IsEnabled = true;                
             }
         }
         
