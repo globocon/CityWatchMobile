@@ -350,6 +350,53 @@ namespace C4iSytemsMobApp.Services
                 return (false, $"Exception occurd while resetting the PIN. {ex.Message}.");
             }
         }
-    }
 
+        // Roster Management Implementation
+        public async Task<List<List<RosterShift>>?> GetRosterAsync(int siteId, string date)
+        {
+            try
+            {
+                // Note: guardId, clientSiteId, and userId are already populated from Preferences in the constructor/GetSecureStorageValues
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetRoster?guardId={guardId}&siteId={siteId}&date={date}";
+                using var client = new HttpClient();
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    // The API returns a dynamic object containing 'days' which is a List<List<RosterShift>>
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(jsonResponse);
+                    var daysElement = doc.RootElement.GetProperty("days");
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    return JsonSerializer.Deserialize<List<List<RosterShift>>>(daysElement.GetRawText(), options);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetRosterAsync: {ex.Message}");
+            }
+            return null;
+        }
+
+        public async Task<(bool isSuccess, string message)> UpdateShiftStatusAsync(RosterStatusUpdateModel model)
+        {
+            try
+            {
+                // Ensure the calling guard ID is correct
+                model.CallingGuardId = guardId;
+                
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UpdateShiftStatus";
+                using var client = new HttpClient();
+                
+                var response = await client.PostAsJsonAsync(apiUrl, model);
+                var result = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                
+                return (result != null && result.isSuccess, result?.message ?? "Error updating shift status.");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Network error: {ex.Message}");
+            }
+        }
+    }
 }

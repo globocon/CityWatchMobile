@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:C4iSytemsMobApp"
+             xmlns:helpers="clr-namespace:C4iSytemsMobApp.Helpers"
+             xmlns:models="clr-namespace:C4iSytemsMobApp.Models"
+             x:Class="C4iSytemsMobApp.RosterPage"
+             Title="Guard Roster">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <helpers:RosterStatusColorConverter x:Key="StatusColorConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto"
+          Padding="20"
+          RowSpacing="10">
+
+        <!-- Header -->
+        <Grid ColumnDefinitions="Auto,*,Auto" Grid.Row="0">
+            <Label Text="Roster Hub" FontSize="20" FontAttributes="Bold" Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center"/>
+            <ImageButton Source="home.png" Clicked="OnHomeClicked" HeightRequest="30" WidthRequest="30" BackgroundColor="Transparent" Grid.Column="2" />
+        </Grid>
+
+        <!-- Date Navigation -->
+        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Center" Spacing="20" VerticalOptions="Center">
+            <Button Text="&#xf053;" FontFamily="FontAwesome" Clicked="OnPrevWeekClicked" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+            <VerticalStackLayout VerticalOptions="Center">
+                <Label x:Name="DateRangeLabel" Text="Loading..." HorizontalOptions="Center" FontAttributes="Bold" />
+                <Label Text="Week View" FontSize="10" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+            <Button Text="&#xf054;" FontFamily="FontAwesome" Clicked="OnNextWeekClicked" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+        </HorizontalStackLayout>
+
+        <!-- Roster List -->
+        <CollectionView x:Name="RosterCollectionView" Grid.Row="2" Margin="0,10,0,0">
+            <CollectionView.GroupHeaderTemplate>
+                <DataTemplate>
+                    <Label Text="{Binding .}" FontAttributes="Bold" FontSize="16" Margin="0,10,0,5" TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                </DataTemplate>
+            </CollectionView.GroupHeaderTemplate>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:RosterShift">
+                    <Frame Margin="0,5" Padding="15" CornerRadius="10" HasShadow="True" BorderColor="Transparent"
+                           BackgroundColor="{Binding ., Converter={StaticResource StatusColorConverter}}">
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnShiftTapped" CommandParameter="{Binding .}" />
+                        </Frame.GestureRecognizers>
+                        
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                <Label Text="{Binding DisplayGuardName}" FontAttributes="Bold" FontSize="14" TextColor="White" />
+                                <Label Text="{Binding CallsignName}" FontSize="12" TextColor="White" Opacity="0.9" />
+                                <HorizontalStackLayout Spacing="5">
+                                    <Label Text="&#xf017;" FontFamily="FontAwesome" FontSize="12" TextColor="White" VerticalOptions="Center" />
+                                    <Label Text="{Binding ShiftStart}" FontSize="12" TextColor="White" />
+                                    <Label Text="-" FontSize="12" TextColor="White" />
+                                    <Label Text="{Binding ShiftEnd}" FontSize="12" TextColor="White" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                            
+                            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End">
+                                <Label Text="{Binding DurationHours}" FontAttributes="Bold" TextColor="White" HorizontalOptions="End" />
+                                <Label Text="{Binding ShiftType}" FontSize="10" TextColor="White" Opacity="0.8" HorizontalOptions="End" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Loading Overlay -->
+        <Grid x:Name="LoadingOverlay" Grid.RowSpan="4" BackgroundColor="#80000000" IsVisible="False">
+            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
+                <ActivityIndicator IsRunning="True" Color="White" HeightRequest="50" WidthRequest="50" />
+                <Label Text="Updating Roster..." TextColor="White" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>
