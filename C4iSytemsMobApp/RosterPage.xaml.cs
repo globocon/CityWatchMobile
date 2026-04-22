@@ -146,11 +146,19 @@ namespace C4iSytemsMobApp
             else if (shift.StatusCode == (int)RosterShiftStatus.Accepted && 
                      (shift.GuardId == currentGuardId || shift.ReliefGuardId == currentGuardId))
             {
-                string reason = await DisplayPromptAsync("Decline Shift", "Please enter a reason for cancellation:", "Decline", "Cancel");
-                if (reason != null)
+                // Predefined reasons for cancellation
+                string action = await DisplayActionSheet("Reason for Relief", "Cancel", null, "Sick", "AL", "RDO", "LWOP", "Other");
+                
+                if (action == "Cancel" || string.IsNullOrEmpty(action)) return;
+
+                string reason = action;
+                if (action == "Other")
                 {
-                    await UpdateStatus(shift, RosterShiftStatus.Declined, reason);
+                    reason = await DisplayPromptAsync("Decline Shift", "Please enter details for 'Other' reason:", "Decline", "Cancel");
+                    if (string.IsNullOrEmpty(reason)) return;
                 }
+
+                await UpdateStatus(shift, RosterShiftStatus.Declined, reason);
             }
             else if (shift.StatusCode == (int)RosterShiftStatus.Declined)
             {
