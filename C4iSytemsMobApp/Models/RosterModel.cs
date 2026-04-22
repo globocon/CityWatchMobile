@@ -63,9 +63,9 @@ namespace C4iSytemsMobApp.Models
 
         // UI Helpers
         public bool IsEditable { get; set; } // Whether the current guard can edit this shift
-        public string DisplayName => ReliefGuardId != null ? ReliefGuardName : GuardName;
-        public string DisplayLicense => ReliefGuardId != null ? ReliefGuardLicense : GuardLicense;
-        public string DisplayIcon => ReliefGuardId != null ? "R" : "\uf007"; // \uf007 is user icon
+        public string DisplayName => (ReliefGuardId != null && ReliefGuardId > 0) ? ReliefGuardName : GuardName;
+        public string DisplayLicense => (ReliefGuardId != null && ReliefGuardId > 0) ? ReliefGuardLicense : GuardLicense;
+        public string DisplayIcon => (ReliefGuardId != null && ReliefGuardId > 0) ? "R" : "\uf007"; // \uf007 is user icon
 
         private Brush _backgroundBrush;
         public Brush BackgroundBrush
@@ -80,20 +80,13 @@ namespace C4iSytemsMobApp.Models
 
         public void UpdateBackgroundBrush()
         {
-            if (StatusCode == 1)
+            // 1. Declined Status (Black)
+            if (StatusCode == 2)
             {
-                BackgroundBrush = new LinearGradientBrush
-                {
-                    StartPoint = new Point(0, 0),
-                    EndPoint = new Point(1, 1),
-                    GradientStops = new GradientStopCollection
-                    {
-                        new GradientStop { Color = Color.FromArgb("#1B5E20"), Offset = 0.1f },
-                        new GradientStop { Color = Color.FromArgb("#2E7D32"), Offset = 1.0f }
-                    }
-                };
+                BackgroundBrush = new SolidColorBrush(Colors.Black);
             }
-            else if (ReliefGuardId != null)
+            // 2. Relief Shifts (Purple) - Highest priority if accepted or pending relief
+            else if (ReliefGuardId != null && ReliefGuardId > 0)
             {
                 BackgroundBrush = new LinearGradientBrush
                 {
@@ -106,29 +99,34 @@ namespace C4iSytemsMobApp.Models
                     }
                 };
             }
-            else if (ShiftType == "Adhoc")
+            // 3. Accepted Status (Green)
+            else if (StatusCode == 1)
             {
+                bool isAdhoc = ShiftType == "Adhoc";
                 BackgroundBrush = new LinearGradientBrush
                 {
                     StartPoint = new Point(0, 0),
                     EndPoint = new Point(1, 1),
                     GradientStops = new GradientStopCollection
                     {
-                        new GradientStop { Color = Color.FromArgb("#FF8F00"), Offset = 0.1f },
-                        new GradientStop { Color = Color.FromArgb("#E65100"), Offset = 1.0f }
+                        // Light Green for Regular, Dark Green for Adhoc
+                        new GradientStop { Color = Color.FromArgb(isAdhoc ? "#1B5E20" : "#90EE90"), Offset = 0.1f },
+                        new GradientStop { Color = Color.FromArgb(isAdhoc ? "#2E7D32" : "#32CD32"), Offset = 1.0f }
                     }
                 };
             }
+            // 4. Not Accepted (Orange)
             else
             {
+                bool isAdhoc = ShiftType == "Adhoc";
                 BackgroundBrush = new LinearGradientBrush
                 {
                     StartPoint = new Point(0, 0),
                     EndPoint = new Point(1, 1),
                     GradientStops = new GradientStopCollection
                     {
-                        new GradientStop { Color = Color.FromArgb("#FFB74D"), Offset = 0.1f },
-                        new GradientStop { Color = Color.FromArgb("#FB8C00"), Offset = 1.0f }
+                        new GradientStop { Color = Color.FromArgb(isAdhoc ? "#FF8F00" : "#FFB74D"), Offset = 0.1f },
+                        new GradientStop { Color = Color.FromArgb(isAdhoc ? "#E65100" : "#FB8C00"), Offset = 1.0f }
                     }
                 };
             }

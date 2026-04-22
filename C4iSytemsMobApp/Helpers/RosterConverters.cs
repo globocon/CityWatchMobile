@@ -37,7 +37,7 @@ namespace C4iSytemsMobApp.Helpers
                 }
 
                 // 2. Relief Shifts (Purple) - Accepted by a Relief Guard
-                if (shift.ReliefGuardId != null)
+                if (shift.ReliefGuardId != null && shift.ReliefGuardId > 0)
                 {
                     return new LinearGradientBrush
                     {

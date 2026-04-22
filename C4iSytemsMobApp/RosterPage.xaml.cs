@@ -1,6 +1,8 @@
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
+using Microsoft.AspNetCore.SignalR.Client;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace C4iSytemsMobApp
 {
@@ -9,6 +11,7 @@ namespace C4iSytemsMobApp
         private readonly IGuardApiServices _guardApiServices;
         private DateTime _currentWeekStart;
         private ObservableCollection<RosterDay> _days;
+        private HubConnection _hubConnection;
 
         public ObservableCollection<RosterDay> Days
         {
@@ -30,6 +33,37 @@ namespace C4iSytemsMobApp
             // Start with the current week (Monday-based)
             _currentWeekStart = GetStartOfWeek(DateTime.Today);
             LoadRoster(_currentWeekStart);
+
+            // Initialize SignalR for real-time updates
+            InitializeSignalR();
+        }
+
+        private async void InitializeSignalR()
+        {
+            try
+            {
+                string hubUrl = $"{AppConfig.MobileSignalRBaseUrl}/MobileAppSignalRHub";
+                _hubConnection = new HubConnectionBuilder()
+                    .WithUrl(hubUrl)
+                    .WithAutomaticReconnect()
+                    .Build();
+
+                _hubConnection.On<object>("RefreshRoster", (data) =>
+                {
+                    // Update UI when a broadcast is received
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        LoadRoster(_currentWeekStart);
+                    });
+                });
+
+                await _hubConnection.StartAsync();
+                Debug.WriteLine("SignalR connected for Roster updates.");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"SignalR connection failed: {ex.Message}");
+            }
         }
 
         private async void LoadRoster(DateTime startDate)
