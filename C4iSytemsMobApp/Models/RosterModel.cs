@@ -192,4 +192,16 @@ namespace C4iSytemsMobApp.Models
         public List<RosterDay> Days { get; set; } = new List<RosterDay>();
         public List<Holiday> Holidays { get; set; } = new List<Holiday>();
     }
+
+    /// <summary>
+    /// Model for updating roster shift status from mobile.
+    /// </summary>
+    public class RosterStatusUpdateModel
+    {
+        public int ShiftId { get; set; }
+        public int NewStatus { get; set; }
+        public int ExpectedStatus { get; set; }
+        public int CallingGuardId { get; set; }
+        public string Reason { get; set; }
+    }
 }
