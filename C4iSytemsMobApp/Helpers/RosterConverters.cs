@@ -30,7 +30,22 @@ namespace C4iSytemsMobApp.Helpers
         {
             if (value is Models.RosterShift shift)
             {
-                // 1. Relief Shifts (Purple)
+                // 1. Accepted Status (Green) - Should apply to all shift types when accepted
+                if (shift.StatusCode == 1)
+                {
+                    return new LinearGradientBrush
+                    {
+                        StartPoint = new Point(0, 0),
+                        EndPoint = new Point(1, 1),
+                        GradientStops = new GradientStopCollection
+                        {
+                            new GradientStop { Color = Color.FromArgb("#1B5E20"), Offset = 0.1f },
+                            new GradientStop { Color = Color.FromArgb("#2E7D32"), Offset = 1.0f }
+                        }
+                    };
+                }
+
+                // 2. Relief Shifts (Purple)
                 if (shift.ReliefGuardId != null)
                 {
                     return new LinearGradientBrush
@@ -45,40 +60,22 @@ namespace C4iSytemsMobApp.Helpers
                     };
                 }
 
-                // 2. Adhoc Shifts
+                // 3. Adhoc Shifts (Dark Orange)
                 if (shift.ShiftType == "Adhoc")
                 {
-                    // Accepted (Green)
-                    if (shift.StatusCode == 1)
+                    return new LinearGradientBrush
                     {
-                        return new LinearGradientBrush
+                        StartPoint = new Point(0, 0),
+                        EndPoint = new Point(1, 1),
+                        GradientStops = new GradientStopCollection
                         {
-                            StartPoint = new Point(0, 0),
-                            EndPoint = new Point(1, 1),
-                            GradientStops = new GradientStopCollection
-                            {
-                                new GradientStop { Color = Color.FromArgb("#1B5E20"), Offset = 0.1f },
-                                new GradientStop { Color = Color.FromArgb("#2E7D32"), Offset = 1.0f }
-                            }
-                        };
-                    }
-                    // Not Accepted / Pushed (Dark Orange)
-                    else
-                    {
-                        return new LinearGradientBrush
-                        {
-                            StartPoint = new Point(0, 0),
-                            EndPoint = new Point(1, 1),
-                            GradientStops = new GradientStopCollection
-                            {
-                                new GradientStop { Color = Color.FromArgb("#FF8F00"), Offset = 0.1f },
-                                new GradientStop { Color = Color.FromArgb("#E65100"), Offset = 1.0f }
-                            }
-                        };
-                    }
+                            new GradientStop { Color = Color.FromArgb("#FF8F00"), Offset = 0.1f },
+                            new GradientStop { Color = Color.FromArgb("#E65100"), Offset = 1.0f }
+                        }
+                    };
                 }
 
-                // 3. Regular Shifts (Orange)
+                // 4. Regular Shifts (Orange)
                 return new LinearGradientBrush
                 {
                     StartPoint = new Point(0, 0),
