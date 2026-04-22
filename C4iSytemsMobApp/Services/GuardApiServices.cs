@@ -24,6 +24,8 @@ namespace C4iSytemsMobApp.Services
             GetSecureStorageValues();
         }
 
+        public int CurrentGuardId => guardId;
+
         private void GetSecureStorageValues()
         {
             string msg = string.Empty;
@@ -450,6 +452,7 @@ namespace C4iSytemsMobApp.Services
                             rosterDay.Shifts.Add(new RosterShift
                             {
                                 Id = s.GetProperty("id").GetInt32(),
+                                GuardId = s.TryGetProperty("guardId", out var gId) && gId.ValueKind != JsonValueKind.Null ? gId.GetInt32() : (int?)null,
                                 GuardName = s.GetProperty("guardName").GetString(),
                                 StartTime = s.GetProperty("shiftStart").GetString(),
                                 EndTime = s.GetProperty("shiftEnd").GetString(),

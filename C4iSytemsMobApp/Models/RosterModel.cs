@@ -22,16 +22,32 @@ namespace C4iSytemsMobApp.Models
     /// Represents a single shift within the roster.
     /// [Isolation]: Specifically for the Roster module.
     /// </summary>
-    public class RosterShift
+    public class RosterShift : INotifyPropertyChanged
     {
         public int Id { get; set; }
+        public int? GuardId { get; set; } // The ID of the guard assigned to this shift
         public string GuardName { get; set; }
         public string StartTime { get; set; }
         public string EndTime { get; set; }
         public string Duration { get; set; }
         public string Location { get; set; }
         public string Status { get; set; } // Friendly status or original status
-        public int StatusCode { get; set; } // From API (0=Pushed, 1=Accepted, etc.)
+        
+        private int _statusCode;
+        public int StatusCode 
+        { 
+            get => _statusCode; 
+            set
+            {
+                if (_statusCode != value)
+                {
+                    _statusCode = value;
+                    OnPropertyChanged();
+                    // Notify that the whole object changed to refresh bindings to '.' (like the color converter)
+                    OnPropertyChanged(string.Empty);
+                }
+            }
+        } // From API (0=Pushed, 1=Accepted, etc.)
         
         // New fields for live API integration
         public int? ReliefGuardId { get; set; }
@@ -47,6 +63,12 @@ namespace C4iSytemsMobApp.Models
         public string DisplayName => ReliefGuardId != null ? ReliefGuardName : GuardName;
         public string DisplayLicense => ReliefGuardId != null ? ReliefGuardLicense : GuardLicense;
         public string DisplayIcon => ReliefGuardId != null ? "R" : "\uf007"; // \uf007 is user icon
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 
     /// <summary>

@@ -151,5 +151,42 @@ namespace C4iSytemsMobApp
             var volumeService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
             Application.Current.MainPage = new MainPage(volumeService);
         }
+
+        /// <summary>
+        /// Handles click event on a shift card.
+        /// Toggles between Accepted (1) and Pushed (0).
+        /// Only the currently logged-in guard can update their own shifts.
+        /// </summary>
+        private async void OnShiftTapped(object sender, EventArgs e)
+        {
+            var shift = (e as TappedEventArgs)?.Parameter as RosterShift;
+            if (shift == null) return;
+
+            int currentGuardId = _guardApiServices.CurrentGuardId;
+
+            // Security Check: Only allow if shift belongs to current guard (Primary or Relief)
+            bool isPrimaryGuard = shift.GuardId == currentGuardId;
+            bool isReliefGuard = shift.ReliefGuardId == currentGuardId;
+
+            if (!isPrimaryGuard && !isReliefGuard)
+            {
+                await DisplayAlert("Roster", "You can only update your own roster shifts.", "OK");
+                return;
+            }
+
+            // Toggle status logic
+            // 1 = Accepted (Green), 0 = Pushed/Not Accepted (Orange)
+            if (shift.StatusCode == 1)
+            {
+                shift.StatusCode = 0;
+            }
+            else
+            {
+                shift.StatusCode = 1;
+            }
+
+            // Note: Next step is to call the API to persist this change
+            // await _guardApiServices.UpdateRosterStatusAsync(shift.Id, shift.StatusCode);
+        }
     }
 }

@@ -23,6 +23,11 @@ namespace C4iSytemsMobApp.Interface
 
         // [Roster Module] - isolated roster data fetching
         /// <summary>
+        /// Gets the currently logged-in guard ID.
+        /// </summary>
+        int CurrentGuardId { get; }
+
+        /// <summary>
         /// Fetches the roster for the guard for a specific date range.
         /// </summary>
         Task<WeeklyRoster> GetGuardRosterAsync(DateTime startDate, DateTime endDate);
