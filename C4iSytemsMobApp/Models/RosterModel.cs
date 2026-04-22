@@ -57,6 +57,9 @@ namespace C4iSytemsMobApp.Models
         public string DurationHours { get; set; }
         public string GuardLicense { get; set; }
         public string ReliefGuardLicense { get; set; }
+        public string ReliefProviderName { get; set; }
+        public decimal SellRate { get; set; }
+        public decimal BuyRate { get; set; }
 
         // UI Helpers
         public bool IsEditable { get; set; } // Whether the current guard can edit this shift

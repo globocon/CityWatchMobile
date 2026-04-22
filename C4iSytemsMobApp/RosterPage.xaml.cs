@@ -15,10 +15,10 @@ namespace C4iSytemsMobApp
         {
             InitializeComponent();
             
-            // Resolve the API service from the DI container (registered in MauiProgram)
-            _apiService = ServiceHelper.GetService<IGuardApiServices>();
+            // Resolve the API service from the DI container
+            _apiService = IPlatformApplication.Current.Services.GetService<IGuardApiServices>();
             
-            // Initialize to current week
+            // Initialize to current week (Monday-based)
             _currentWeekStart = GetStartOfWeek(DateTime.Today);
             
             // Retrieve the selected site from preferences (set during login/site selection)
@@ -47,8 +47,7 @@ namespace C4iSytemsMobApp
 
                 if (data != null)
                 {
-                    // Map the List<List<RosterShift>> to a flattened or grouped structure for the UI
-                    // For this simple version, we'll just display them in a list
+                    // Map the List<List<RosterShift>> to a flattened list for the UI
                     var flattenedList = data.SelectMany(d => d).ToList();
                     RosterCollectionView.ItemsSource = flattenedList;
                     
@@ -72,8 +71,8 @@ namespace C4iSytemsMobApp
 
             int currentGuardId = int.Parse(Preferences.Get("GuardId", "0"));
 
-            // Determine available actions based on current status
-            if (shift.Status == (int)RosterShiftStatus.Pushed)
+            // Determine available actions based on current StatusCode
+            if (shift.StatusCode == (int)RosterShiftStatus.Pushed)
             {
                 // Unassigned -> Accept
                 bool accept = await DisplayAlert("Accept Shift", "Do you want to accept this shift?", "Yes", "No");
@@ -82,7 +81,8 @@ namespace C4iSytemsMobApp
                     await UpdateStatus(shift, RosterShiftStatus.Accepted);
                 }
             }
-            else if (shift.Status == (int)RosterShiftStatus.Accepted && shift.IsMyShift(currentGuardId))
+            else if (shift.StatusCode == (int)RosterShiftStatus.Accepted && 
+                     (shift.GuardId == currentGuardId || shift.ReliefGuardId == currentGuardId))
             {
                 // Accepted & Mine -> Decline
                 string reason = await DisplayPromptAsync("Decline Shift", "Please enter a reason for cancellation:", "Decline", "Cancel");
@@ -91,7 +91,7 @@ namespace C4iSytemsMobApp
                     await UpdateStatus(shift, RosterShiftStatus.Declined, reason);
                 }
             }
-            else if (shift.Status == (int)RosterShiftStatus.Declined)
+            else if (shift.StatusCode == (int)RosterShiftStatus.Declined)
             {
                 // Declined -> Anyone can pick up as Relief Guard
                 bool acceptRelief = await DisplayAlert("Accept Relief", "This shift was declined. Do you want to accept it as a Relief Guard?", "Yes", "No");
@@ -111,7 +111,7 @@ namespace C4iSytemsMobApp
                 {
                     ShiftId = shift.Id,
                     NewStatus = (int)newStatus,
-                    ExpectedStatus = shift.Status, // Concurrency check value
+                    ExpectedStatus = shift.StatusCode, // Concurrency check value
                     Reason = reason
                 };
 
@@ -150,7 +150,9 @@ namespace C4iSytemsMobApp
 
         private async void OnHomeClicked(object sender, EventArgs e)
         {
-            Application.Current.MainPage = new MainPage();
+            // Resolve required services for MainPage
+            var volumeService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+            Application.Current.MainPage = new MainPage(volumeService);
         }
 
         private DateTime GetStartOfWeek(DateTime dt)
@@ -159,19 +161,5 @@ namespace C4iSytemsMobApp
             int diff = (7 + (dt.DayOfWeek - DayOfWeek.Monday)) % 7;
             return dt.AddDays(-1 * diff).Date;
         }
-    }
-
-    // Helper to resolve services in code-behind if needed
-    public static class ServiceHelper
-    {
-        public static T GetService<T>() => Current.GetService<T>();
-        public static IServiceProvider Current => 
-#if ANDROID
-            MauiApplication.Current.Services;
-#elif IOS || MACCATALYST
-            MauiUIApplicationDelegate.Current.Services;
-#else
-            null;
-#endif
     }
 }

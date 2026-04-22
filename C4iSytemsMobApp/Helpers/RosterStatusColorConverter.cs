@@ -13,11 +13,11 @@ namespace C4iSytemsMobApp.Helpers
             if (value is RosterShift shift)
             {
                 // Declined status always returns Black
-                if (shift.Status == (int)RosterShiftStatus.Declined)
+                if (shift.StatusCode == (int)RosterShiftStatus.Declined)
                     return Colors.Black;
 
                 // Accepted status logic
-                if (shift.Status == (int)RosterShiftStatus.Accepted)
+                if (shift.StatusCode == (int)RosterShiftStatus.Accepted)
                 {
                     // Light Green for Regular, Dark Green for Adhoc
                     return (shift.ShiftType == "AdhocAccepted") ? Color.FromArgb("#006400") : Color.FromArgb("#90EE90");
