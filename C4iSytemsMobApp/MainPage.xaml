@@ -1074,8 +1074,7 @@
                     <Button Text="HR Records"
                             Clicked="OnHrRecordsClicked" />
 
-                    <!-- [Roster Module] - Navigation to Roster section -->
-                    <Button Text="Roster"
+                    <Button Text="Guard Roster"
                             Clicked="OnRosterClicked" />
 
                     <Button Text="PCAR Route"

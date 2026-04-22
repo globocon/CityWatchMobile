@@ -20,16 +20,9 @@ namespace C4iSytemsMobApp.Interface
         Task<(bool AccessPermission, string message)> CheckIfPINSetForTheGuard();
         Task<(bool isSuccess, string message)> SaveNewPINSetForTheGuard(string newPin);
         Task<(bool isSuccess, string message)> ResetGaurdHrPin(string siteName);
-
-        // [Roster Module] - isolated roster data fetching
-        /// <summary>
-        /// Gets the currently logged-in guard ID.
-        /// </summary>
-        int CurrentGuardId { get; }
-
-        /// <summary>
-        /// Fetches the roster for the guard for a specific date range.
-        /// </summary>
-        Task<WeeklyRoster> GetGuardRosterAsync(DateTime startDate, DateTime endDate);
+        
+        // Roster Management
+        Task<List<List<RosterShift>>?> GetRosterAsync(int siteId, string date);
+        Task<(bool isSuccess, string message)> UpdateShiftStatusAsync(RosterStatusUpdateModel model);
     }
 }

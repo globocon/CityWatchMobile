@@ -1,4 +1,4 @@
-﻿//using Android.Net;
+//using Android.Net;
 using C4iSytemsMobApp.Data;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Interface;
@@ -43,6 +43,7 @@ public static class MauiProgram
 
         // Register LoginPage with HttpClient dependency
         builder.Services.AddTransient<LoginPage>();
+        builder.Services.AddTransient<RosterPage>();
         builder.Services.AddTransient<AppUpgradePage>();
         builder.Services.AddSingleton<ICrowdControlServices, CrowdControlServices>();
         builder.Services.AddSingleton<IScannerControlServices, ScannerControlServices>();
