@@ -481,6 +481,7 @@ namespace C4iSytemsMobApp.Services
                                                 (shift.GuardLicense == guardLicenceNo || shift.ReliefGuardLicense == guardLicenceNo));
 
                             shift.IsEditable = idMatch || licenseMatch;
+                            shift.UpdateBackgroundBrush();
 
                             rosterDay.Shifts.Add(shift);
                         }

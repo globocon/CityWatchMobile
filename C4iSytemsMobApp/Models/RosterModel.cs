@@ -43,8 +43,7 @@ namespace C4iSytemsMobApp.Models
                 {
                     _statusCode = value;
                     OnPropertyChanged();
-                    // Notify that the whole object changed to refresh bindings to '.' (like the color converter)
-                    OnPropertyChanged(string.Empty);
+                    UpdateBackgroundBrush();
                 }
             }
         } // From API (0=Pushed, 1=Accepted, etc.)
@@ -64,6 +63,73 @@ namespace C4iSytemsMobApp.Models
         public string DisplayName => ReliefGuardId != null ? ReliefGuardName : GuardName;
         public string DisplayLicense => ReliefGuardId != null ? ReliefGuardLicense : GuardLicense;
         public string DisplayIcon => ReliefGuardId != null ? "R" : "\uf007"; // \uf007 is user icon
+
+        private Brush _backgroundBrush;
+        public Brush BackgroundBrush
+        {
+            get => _backgroundBrush;
+            set
+            {
+                _backgroundBrush = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public void UpdateBackgroundBrush()
+        {
+            if (StatusCode == 1)
+            {
+                BackgroundBrush = new LinearGradientBrush
+                {
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(1, 1),
+                    GradientStops = new GradientStopCollection
+                    {
+                        new GradientStop { Color = Color.FromArgb("#1B5E20"), Offset = 0.1f },
+                        new GradientStop { Color = Color.FromArgb("#2E7D32"), Offset = 1.0f }
+                    }
+                };
+            }
+            else if (ReliefGuardId != null)
+            {
+                BackgroundBrush = new LinearGradientBrush
+                {
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(1, 1),
+                    GradientStops = new GradientStopCollection
+                    {
+                        new GradientStop { Color = Color.FromArgb("#6f42c1"), Offset = 0.1f },
+                        new GradientStop { Color = Color.FromArgb("#4a148c"), Offset = 1.0f }
+                    }
+                };
+            }
+            else if (ShiftType == "Adhoc")
+            {
+                BackgroundBrush = new LinearGradientBrush
+                {
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(1, 1),
+                    GradientStops = new GradientStopCollection
+                    {
+                        new GradientStop { Color = Color.FromArgb("#FF8F00"), Offset = 0.1f },
+                        new GradientStop { Color = Color.FromArgb("#E65100"), Offset = 1.0f }
+                    }
+                };
+            }
+            else
+            {
+                BackgroundBrush = new LinearGradientBrush
+                {
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(1, 1),
+                    GradientStops = new GradientStopCollection
+                    {
+                        new GradientStop { Color = Color.FromArgb("#FFB74D"), Offset = 0.1f },
+                        new GradientStop { Color = Color.FromArgb("#FB8C00"), Offset = 1.0f }
+                    }
+                };
+            }
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
