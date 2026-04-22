@@ -452,7 +452,6 @@ namespace C4iSytemsMobApp.Services
                             var shift = new RosterShift
                             {
                                 Id = s.GetProperty("id").GetInt32(),
-                                GuardId = s.TryGetProperty("guardId", out var gId) && gId.ValueKind != JsonValueKind.Null ? gId.GetInt32() : (int?)null,
                                 GuardName = s.GetProperty("guardName").GetString(),
                                 StartTime = s.GetProperty("shiftStart").GetString(),
                                 EndTime = s.GetProperty("shiftEnd").GetString(),
@@ -470,8 +469,18 @@ namespace C4iSytemsMobApp.Services
                                 ReliefGuardLicense = s.TryGetProperty("reliefGuardLicense", out var rLic) ? rLic.GetString() : null
                             };
 
+                            // Try multiple possible JSON property names for guardId
+                            if (s.TryGetProperty("guardId", out var gId1) && gId1.ValueKind != JsonValueKind.Null) shift.GuardId = gId1.GetInt32();
+                            else if (s.TryGetProperty("guardID", out var gId2) && gId2.ValueKind != JsonValueKind.Null) shift.GuardId = gId2.GetInt32();
+                            else if (s.TryGetProperty("assignedGuardId", out var gId3) && gId3.ValueKind != JsonValueKind.Null) shift.GuardId = gId3.GetInt32();
+
                             // Determine if editable by the current guard
-                            shift.IsEditable = (shift.GuardId == guardId || shift.ReliefGuardId == guardId);
+                            // Fallback to License Number if IDs are missing or mismatched
+                            bool idMatch = (shift.GuardId == guardId || shift.ReliefGuardId == guardId);
+                            bool licenseMatch = (!string.IsNullOrEmpty(guardLicenceNo) && 
+                                                (shift.GuardLicense == guardLicenceNo || shift.ReliefGuardLicense == guardLicenceNo));
+
+                            shift.IsEditable = idMatch || licenseMatch;
 
                             rosterDay.Shifts.Add(shift);
                         }
