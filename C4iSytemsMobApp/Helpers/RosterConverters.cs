@@ -34,7 +34,7 @@ namespace C4iSytemsMobApp.Helpers
                 // PRIORITY: This must come first so declined shifts are always black
                 if (shift.StatusCode == 2)
                 {
-                    return new SolidColorBrush(Colors.Black);
+                    return new SolidColorBrush(Color.FromArgb("#000000"));
                 }
 
                 // 2. Relief Shifts (Purple) - Accepted by a Relief Guard

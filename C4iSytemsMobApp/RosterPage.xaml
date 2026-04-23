@@ -31,7 +31,7 @@
               Margin="0,0,0,5">
             
             <HorizontalStackLayout Grid.Column="0" Spacing="10" VerticalOptions="Center">
-                <Label Text="My Roster"
+                <Label Text="Roster"
                        FontSize="24"
                        FontAttributes="Bold"
                        TextColor="{AppThemeBinding Light=Black, Dark=White}" />
