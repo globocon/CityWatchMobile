@@ -350,6 +350,174 @@ namespace C4iSytemsMobApp.Services
                 return (false, $"Exception occurd while resetting the PIN. {ex.Message}.");
             }
         }
-    }
 
+        // Roster Management Implementation
+        public async Task<WeeklyRoster?> GetGuardRosterAsync(DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                GetSecureStorageValues();
+
+                if (guardId <= 0 || clientSiteId <= 0)
+                {
+                    return new WeeklyRoster { WeekRange = "Error: Site/Guard not set" };
+                }
+
+                string dateParam = startDate.ToString("yyyy-MM-dd");
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetRoster?guardId={guardId}&siteId={clientSiteId}&date={dateParam}";
+
+                using HttpClient client = new HttpClient();
+                client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+                
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new WeeklyRoster { WeekRange = "Error fetching data" };
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                var result = new WeeklyRoster
+                {
+                    StartDate = DateTime.Parse(root.GetProperty("startDate").GetString()),
+                    EndDate = DateTime.Parse(root.GetProperty("endDate").GetString()),
+                    SiteName = root.GetProperty("siteName").GetString(),
+                    ClientTypeName = root.GetProperty("clientTypeName").GetString(),
+                    Status = root.TryGetProperty("status", out var st) ? st.GetString() : "Live",
+                    WeekRange = $"{DateTime.Parse(root.GetProperty("startDate").GetString()):dd MMM} - {DateTime.Parse(root.GetProperty("endDate").GetString()):dd MMM}"
+                };
+
+                // Map Holidays
+                if (root.TryGetProperty("holidays", out var holidaysArray))
+                {
+                    foreach (var h in holidaysArray.EnumerateArray())
+                    {
+                        var holiday = new Holiday
+                        {
+                            id = h.GetProperty("id").GetInt32(),
+                            StartDate = h.GetProperty("startDate").GetDateTime(),
+                            ExpiryDate = h.GetProperty("expiryDate").GetDateTime(),
+                            RepeatYearly = h.GetProperty("repeatYearly").GetBoolean(),
+                            Reason = h.GetProperty("reason").GetString()
+                        };
+                        result.Holidays.Add(holiday);
+                    }
+                }
+
+                // Map Days and Shifts
+                if (root.TryGetProperty("days", out var daysArray))
+                {
+                    int dayIndex = 0;
+                    foreach (var dayShiftsJson in daysArray.EnumerateArray())
+                    {
+                        DateTime currentDayDate = result.StartDate.AddDays(dayIndex);
+                        var rosterDay = new RosterDay
+                        {
+                            Date = currentDayDate,
+                            IsExpanded = currentDayDate.Date == DateTime.Today.Date
+                        };
+
+                        // Check for public holiday
+                        var matchingHoliday = result.Holidays.FirstOrDefault(h => 
+                            (h.RepeatYearly && h.StartDate.Month == currentDayDate.Month && h.StartDate.Day == currentDayDate.Day) ||
+                            (currentDayDate.Date >= h.StartDate.Date && currentDayDate.Date <= h.ExpiryDate.Date));
+                        
+                        if (matchingHoliday != null)
+                        {
+                            rosterDay.IsPublicHoliday = true;
+                            rosterDay.HolidayReason = matchingHoliday.Reason;
+                        }
+
+                        // Map Shifts
+                        foreach (var s in dayShiftsJson.EnumerateArray())
+                        {
+                            var shift = new RosterShift
+                            {
+                                Id = s.GetProperty("id").GetInt32(),
+                                GuardName = s.GetProperty("guardName").GetString(),
+                                StartTime = s.GetProperty("shiftStart").GetString(),
+                                EndTime = s.GetProperty("shiftEnd").GetString(),
+                                DurationHours = s.TryGetProperty("durationHours", out var dh) ? dh.GetRawText() : "0",
+                                ShiftType = s.GetProperty("shiftType").GetString(),
+                                CallsignName = s.GetProperty("callsignName").GetString(),
+                                StatusCode = s.GetProperty("status").GetInt32(),
+                                ReliefGuardId = s.TryGetProperty("reliefGuardId", out var rId) && rId.ValueKind != JsonValueKind.Null ? rId.GetInt32() : (int?)null,
+                                ReliefGuardName = s.TryGetProperty("reliefGuardName", out var rName) ? rName.GetString() : null,
+                                ReliefReason = s.TryGetProperty("reliefReason", out var rReason) ? rReason.GetString() : null,
+                                GuardLicense = s.GetProperty("guardLicense").GetString(),
+                                ReliefGuardLicense = s.TryGetProperty("reliefGuardLicense", out var rLic) ? rLic.GetString() : null
+                            };
+
+                            if (s.TryGetProperty("guardId", out var gId) && gId.ValueKind != JsonValueKind.Null) shift.GuardId = gId.GetInt32();
+
+                            // Determine editability
+                            if (shift.ReliefGuardId.HasValue && shift.ReliefGuardId > 0)
+                            {
+                                shift.IsEditable = (shift.ReliefGuardId == guardId);
+                            }
+                            else
+                            {
+                                shift.IsEditable = (shift.GuardId == guardId);
+                            }
+                            
+                            rosterDay.Shifts.Add(shift);
+                        }
+
+                        result.Days.Add(rosterDay);
+                        dayIndex++;
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in GetGuardRosterAsync: {ex.Message}");
+                return new WeeklyRoster { WeekRange = "Error occurred" };
+            }
+        }
+
+        public async Task<(bool isSuccess, string message)> UpdateShiftStatusAsync(RosterStatusUpdateModel model)
+        {
+            try
+            {
+                GetSecureStorageValues();
+                model.CallingGuardId = guardId;
+
+                using HttpClient client = new HttpClient();
+                client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+                
+                var response = await client.PostAsJsonAsync($"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UpdateShiftStatus", model);
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return (true, "Status updated successfully");
+                }
+                else
+                {
+                    try 
+                    {
+                        // Use a more flexible parsing approach to extract 'message'
+                        using var doc = JsonDocument.Parse(content);
+                        if (doc.RootElement.TryGetProperty("message", out var msgProp))
+                        {
+                            return (false, msgProp.GetString());
+                        }
+                    }
+                    catch 
+                    {
+                        // Fallback to a generic error if parsing fails
+                    }
+                    return (false, "An error occurred while updating the shift status.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
+    }
 }

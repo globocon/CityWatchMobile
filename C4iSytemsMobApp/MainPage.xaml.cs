@@ -1536,6 +1536,12 @@ namespace C4iSytemsMobApp
 
         }
 
+        private void OnRosterClicked(object sender, EventArgs e)
+        {
+            // Navigate to the RosterPage
+            Application.Current.MainPage = new RosterPage();
+        }
+
         private async void OnHrRecordsClicked(object sender, EventArgs e)
         {
             var _guardApiServices = IPlatformApplication.Current.Services.GetService<IGuardApiServices>();

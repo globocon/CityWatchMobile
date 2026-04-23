@@ -20,5 +20,9 @@ namespace C4iSytemsMobApp.Interface
         Task<(bool AccessPermission, string message)> CheckIfPINSetForTheGuard();
         Task<(bool isSuccess, string message)> SaveNewPINSetForTheGuard(string newPin);
         Task<(bool isSuccess, string message)> ResetGaurdHrPin(string siteName);
+        
+        // Roster Management
+        Task<WeeklyRoster?> GetGuardRosterAsync(DateTime startDate, DateTime endDate);
+        Task<(bool isSuccess, string message)> UpdateShiftStatusAsync(RosterStatusUpdateModel model);
     }
 }
