@@ -453,7 +453,14 @@ namespace C4iSytemsMobApp.Services
                             if (s.TryGetProperty("guardId", out var gId) && gId.ValueKind != JsonValueKind.Null) shift.GuardId = gId.GetInt32();
 
                             // Determine editability
-                            shift.IsEditable = (shift.GuardId == guardId || shift.ReliefGuardId == guardId);
+                            if (shift.ReliefGuardId.HasValue && shift.ReliefGuardId > 0)
+                            {
+                                shift.IsEditable = (shift.ReliefGuardId == guardId);
+                            }
+                            else
+                            {
+                                shift.IsEditable = (shift.GuardId == guardId);
+                            }
                             shift.UpdateBackgroundBrush();
 
                             rosterDay.Shifts.Add(shift);
@@ -492,6 +499,18 @@ namespace C4iSytemsMobApp.Services
                 }
                 else
                 {
+                    try 
+                    {
+                        var errorResult = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<object>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        if (errorResult != null && !string.IsNullOrEmpty(errorResult.message))
+                        {
+                            return (false, errorResult.message);
+                        }
+                    }
+                    catch 
+                    {
+                        // Ignore parse error and fallback
+                    }
                     return (false, content);
                 }
             }
