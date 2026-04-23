@@ -165,8 +165,8 @@
                                                 </HorizontalStackLayout>
                                                 <!-- Black: Open -->
                                                 <HorizontalStackLayout Spacing="2" IsVisible="{Binding OpenCount, Converter={StaticResource CountToVisibilityConverter}}">
-                                                    <Ellipse WidthRequest="10" HeightRequest="10" Fill="{AppThemeBinding Light=Black, Dark=White}" VerticalOptions="Center" />
-                                                    <Label Text="{Binding OpenCount}" TextColor="{AppThemeBinding Light=Black, Dark=White}" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
+                                                    <Ellipse WidthRequest="10" HeightRequest="10" Fill="#212121" VerticalOptions="Center" />
+                                                    <Label Text="{Binding OpenCount}" TextColor="#212121" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
                                                 </HorizontalStackLayout>
                                             </HorizontalStackLayout>
 
@@ -194,7 +194,7 @@
                                             <Frame Padding="10" 
                                                    CornerRadius="10" 
                                                    HasShadow="False"
-                                                   Background="{Binding BackgroundBrush}"
+                                                   Background="{Binding ., Converter={StaticResource ShiftStatusToGradientConverter}}"
                                                    BorderColor="Transparent">
                                                 <Frame.GestureRecognizers>
                                                     <TapGestureRecognizer Tapped="OnShiftTapped" CommandParameter="{Binding .}" />

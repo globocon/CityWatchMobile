@@ -31,6 +31,7 @@ namespace C4iSytemsMobApp.Helpers
             if (value is Models.RosterShift shift)
             {
                 // 1. Declined Status (Black) - Awaiting Relief
+                // PRIORITY: This must come first so declined shifts are always black
                 if (shift.StatusCode == 2)
                 {
                     return new SolidColorBrush(Colors.Black);
@@ -61,7 +62,6 @@ namespace C4iSytemsMobApp.Helpers
                         EndPoint = new Point(1, 1),
                         GradientStops = new GradientStopCollection
                         {
-                            // Light Green for Regular, Dark Green for Adhoc
                             new GradientStop { Color = Color.FromArgb(isAdhoc ? "#1B5E20" : "#90EE90"), Offset = 0.1f },
                             new GradientStop { Color = Color.FromArgb(isAdhoc ? "#2E7D32" : "#32CD32"), Offset = 1.0f }
                         }
@@ -76,7 +76,6 @@ namespace C4iSytemsMobApp.Helpers
                     EndPoint = new Point(1, 1),
                     GradientStops = new GradientStopCollection
                     {
-                        // Orange for Regular, Dark Orange for Adhoc
                         new GradientStop { Color = Color.FromArgb(isAdhocNotAccepted ? "#FF8F00" : "#FFB74D"), Offset = 0.1f },
                         new GradientStop { Color = Color.FromArgb(isAdhocNotAccepted ? "#E65100" : "#FB8C00"), Offset = 1.0f }
                     }
