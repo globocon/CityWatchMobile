@@ -148,6 +148,11 @@
                                                    TextColor="{AppThemeBinding Light=White, Dark=Black}" 
                                                    FontAttributes="Bold" 
                                                    FontSize="16" />
+                                            <Label Text="{Binding AvailableShiftsCount, StringFormat='({0})'}" 
+                                                   TextColor="{AppThemeBinding Light=Orange, Dark=OrangeRed}" 
+                                                   FontAttributes="Bold" 
+                                                   FontSize="16" 
+                                                   VerticalOptions="Center" />
                                             <Label Text="{Binding HolidayReason}" 
                                                    TextColor="Red" 
                                                    FontSize="12" 

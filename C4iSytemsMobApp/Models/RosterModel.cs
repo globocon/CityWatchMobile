@@ -149,6 +149,7 @@ namespace C4iSytemsMobApp.Models
         public string DayName => Date.ToString("ddd dd MMM");
         public bool IsToday => Date.Date == DateTime.Today.Date;
         public List<RosterShift> Shifts { get; set; } = new List<RosterShift>();
+        public int AvailableShiftsCount { get; set; } // Count of declined shifts available for relief
         
         // Holiday info
         public bool IsPublicHoliday { get; set; }

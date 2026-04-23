@@ -92,6 +92,12 @@ namespace C4iSytemsMobApp
 
                 if (roster != null && roster.Days.Count > 0)
                 {
+                    foreach (var day in roster.Days)
+                    {
+                        // Count shifts that are declined (StatusCode 2) - these are available for relief
+                        day.AvailableShiftsCount = day.Shifts?.Count(s => s.StatusCode == 2) ?? 0;
+                    }
+
                     Days = new ObservableCollection<RosterDay>(roster.Days);
                     DaysList.IsVisible = true;
                 }
