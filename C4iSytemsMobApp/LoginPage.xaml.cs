@@ -44,9 +44,6 @@ public partial class LoginPage : ContentPage
         }
     }
 
-
-
-
     private async void OnPageLoaded(object sender, EventArgs e)
     {
         await GetAndShowLocationAsync();
@@ -76,7 +73,6 @@ public partial class LoginPage : ContentPage
             Debug.WriteLine($"Error loading saved credentials: {ex.Message}");
         }
     }
-
 
     private async void OnLoginClicked(object sender, EventArgs e)
     {
@@ -174,18 +170,6 @@ public partial class LoginPage : ContentPage
         Application.Current.MainPage = new NavigationPage(new QrScannerPage());
     }
 
-    //private async void OnNfcTestClicked(object sender, EventArgs e)
-    //{
-    //    var nfcScannerTestPage = IPlatformApplication.Current.Services.GetService<INfcService>();
-    //    Application.Current.MainPage = new NfcScannerTestPage(nfcScannerTestPage);
-    //}
-
-    //private string GetAppVersion()
-    //{
-    //    var version = Assembly.GetExecutingAssembly().GetName().Version;
-    //    return version?.ToString() ?? "1.28.1";
-    //}
-
 
     protected override bool OnBackButtonPressed()
     {
@@ -215,16 +199,6 @@ public partial class LoginPage : ContentPage
 
             if (status != PermissionStatus.Granted)
             {
-                // Inform the user why the permission is needed
-                bool answer = await DisplayAlert("Permission Required",
-                    "This app uses your location while in use to verify and record on-site security patrol activities, ensuring accuracy and accountability. Please allow location access.", "OK", "Cancel");
-
-                if (!answer)
-                {
-                    //locationLabel.Text = "Location permission denied by user.";
-                    return;
-                }
-
                 status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
             }
 
@@ -259,19 +233,11 @@ public partial class LoginPage : ContentPage
                 //locationLabel.Text = "Unable to retrieve location.";
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             //locationLabel.Text = $"Error: {ex.Message}";
         }
     }
-
-
-
-
-
-
-
-
 
 }
 

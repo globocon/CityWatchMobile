@@ -53,5 +53,7 @@
 		<!-- Microphone usage description -->
 		<!-- <key>NSMicrophoneUsageDescription</key>
 		<string>This app requires microphone access for audio and video features.</string> -->
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app requires access to your photo library to select images for the purpose of uploading proof of on-site security patrol activities.</string>
 	</dict>
 </plist>

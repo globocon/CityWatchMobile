@@ -127,22 +127,6 @@
             </ScrollView>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         </Grid>
 
 
@@ -262,6 +246,30 @@
                                 FontSize="12"
                                 CornerRadius="6" />
                     </HorizontalStackLayout>
+
+                    <!-- File Upload Loading Overlay -->
+                    <Grid x:Name="FileUploadLoadingOverlay"
+                          Grid.RowSpan="4"
+                          BackgroundColor="#80FFFFFF"
+                          IsVisible="False"
+                          ZIndex="10">
+
+                        <VerticalStackLayout HorizontalOptions="Center"
+                                             VerticalOptions="Center"
+                                             Spacing="8">
+
+                            <ActivityIndicator IsRunning="True"
+                                               Color="Green"
+                                               WidthRequest="40"
+                                               HeightRequest="40" />
+
+                            <Label Text="Uploading..."
+                                   FontSize="12"
+                                   TextColor="Black"
+                                   HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Grid>
+
 
                 </Grid>
             </Frame>
