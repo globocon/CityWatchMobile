@@ -501,17 +501,18 @@ namespace C4iSytemsMobApp.Services
                 {
                     try 
                     {
-                        var errorResult = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<object>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                        if (errorResult != null && !string.IsNullOrEmpty(errorResult.message))
+                        // Use a more flexible parsing approach to extract 'message'
+                        using var doc = JsonDocument.Parse(content);
+                        if (doc.RootElement.TryGetProperty("message", out var msgProp))
                         {
-                            return (false, errorResult.message);
+                            return (false, msgProp.GetString());
                         }
                     }
                     catch 
                     {
-                        // Ignore parse error and fallback
+                        // Fallback to a generic error if parsing fails
                     }
-                    return (false, content);
+                    return (false, "An error occurred while updating the shift status.");
                 }
             }
             catch (Exception ex)

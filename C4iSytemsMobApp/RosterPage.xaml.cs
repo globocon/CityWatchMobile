@@ -222,15 +222,16 @@ namespace C4iSytemsMobApp
                 if (success)
                 {
                     LoadRoster(_currentWeekStart); // Refresh
+                    await DisplayAlert("Roster Update", "Shift status updated successfully.", "OK");
                 }
                 else
                 {
-                    await DisplayAlert("Update Failed", message, "OK");
+                    await DisplayAlert("Roster Message", message, "OK");
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", ex.Message, "OK");
+                await DisplayAlert("Roster Error", "Unable to update shift. Please check your internet connection and try again.", "OK");
             }
             finally
             {
