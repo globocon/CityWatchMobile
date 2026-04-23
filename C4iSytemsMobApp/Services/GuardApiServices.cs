@@ -461,8 +461,7 @@ namespace C4iSytemsMobApp.Services
                             {
                                 shift.IsEditable = (shift.GuardId == guardId);
                             }
-                            shift.UpdateBackgroundBrush();
-
+                            
                             rosterDay.Shifts.Add(shift);
                         }
 
