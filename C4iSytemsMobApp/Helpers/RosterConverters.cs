@@ -142,4 +142,19 @@ namespace C4iSytemsMobApp.Helpers
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
+
+    /// <summary>
+    /// [Roster Module] - Returns true if an integer count is greater than zero.
+    /// </summary>
+    public class CountToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int count)
+                return count > 0;
+            return false;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
 }

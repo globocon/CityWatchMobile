@@ -15,6 +15,7 @@
             <helpers:HolidayToColorConverter x:Key="HolidayToColorConverter" />
             <helpers:NotNullToBooleanConverter x:Key="NotNullToBooleanConverter" />
             <helpers:RosterStatusToColorConverter x:Key="RosterStatusToColorConverter" />
+            <helpers:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -22,7 +23,8 @@
           Padding="10,5,10,10"
           RowSpacing="10">
 
-        <!-- Header Section: Title Left + Expand/Collapse Buttons, Home Icon Right -->
+        <!-- ... Header Section ... -->
+
         <Grid ColumnDefinitions="*,Auto,Auto"
               VerticalOptions="Center"
               Grid.Row="0"
@@ -143,16 +145,31 @@
                                         <TapGestureRecognizer Tapped="OnDayHeaderTapped" CommandParameter="{Binding .}" />
                                     </Frame.GestureRecognizers>
                                     <Grid ColumnDefinitions="*, Auto">
-                                        <HorizontalStackLayout Spacing="5">
+                                        <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
                                             <Label Text="{Binding DayName}" 
                                                    TextColor="{AppThemeBinding Light=White, Dark=Black}" 
                                                    FontAttributes="Bold" 
                                                    FontSize="16" />
-                                            <Label Text="{Binding AvailableShiftsCount, StringFormat='({0})'}" 
-                                                   TextColor="{AppThemeBinding Light=Orange, Dark=OrangeRed}" 
-                                                   FontAttributes="Bold" 
-                                                   FontSize="16" 
-                                                   VerticalOptions="Center" />
+                                            
+                                            <!-- Status Summary Indicators -->
+                                            <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Margin="5,0,0,0">
+                                                <!-- Orange: Pending -->
+                                                <HorizontalStackLayout Spacing="2" IsVisible="{Binding PendingCount, Converter={StaticResource CountToVisibilityConverter}}">
+                                                    <Ellipse WidthRequest="10" HeightRequest="10" Fill="Orange" VerticalOptions="Center" />
+                                                    <Label Text="{Binding PendingCount}" TextColor="Orange" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
+                                                </HorizontalStackLayout>
+                                                <!-- Green: Accepted -->
+                                                <HorizontalStackLayout Spacing="2" IsVisible="{Binding AcceptedCount, Converter={StaticResource CountToVisibilityConverter}}">
+                                                    <Ellipse WidthRequest="10" HeightRequest="10" Fill="{AppThemeBinding Light=#90EE90, Dark=#2E7D32}" VerticalOptions="Center" />
+                                                    <Label Text="{Binding AcceptedCount}" TextColor="{AppThemeBinding Light=#90EE90, Dark=#2E7D32}" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
+                                                </HorizontalStackLayout>
+                                                <!-- Black: Open -->
+                                                <HorizontalStackLayout Spacing="2" IsVisible="{Binding OpenCount, Converter={StaticResource CountToVisibilityConverter}}">
+                                                    <Ellipse WidthRequest="10" HeightRequest="10" Fill="{AppThemeBinding Light=Black, Dark=White}" VerticalOptions="Center" />
+                                                    <Label Text="{Binding OpenCount}" TextColor="{AppThemeBinding Light=Black, Dark=White}" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
+                                                </HorizontalStackLayout>
+                                            </HorizontalStackLayout>
+
                                             <Label Text="{Binding HolidayReason}" 
                                                    TextColor="Red" 
                                                    FontSize="12" 
