@@ -167,13 +167,47 @@ namespace C4iSytemsMobApp.Models
         public DateTime Date { get; set; }
         public string DayName => Date.ToString("ddd dd MMM");
         public bool IsToday => Date.Date == DateTime.Today.Date;
-        public List<RosterShift> Shifts { get; set; } = new List<RosterShift>();
-        public int PendingCount { get; set; }  
-        public int AcceptedCount { get; set; } 
-        public int OpenCount { get; set; }     
+        private List<RosterShift> _shifts = new List<RosterShift>();
+        public List<RosterShift> Shifts 
+        { 
+            get => _shifts; 
+            set { _shifts = value; OnPropertyChanged(); } 
+        }
+
+        private int _pendingCount;
+        public int PendingCount 
+        { 
+            get => _pendingCount; 
+            set { _pendingCount = value; OnPropertyChanged(); } 
+        }
+
+        private int _acceptedCount;
+        public int AcceptedCount 
+        { 
+            get => _acceptedCount; 
+            set { _acceptedCount = value; OnPropertyChanged(); } 
+        }
+
+        private int _openCount;
+        public int OpenCount 
+        { 
+            get => _openCount; 
+            set { _openCount = value; OnPropertyChanged(); } 
+        }
         
-        public bool IsPublicHoliday { get; set; }
-        public string HolidayReason { get; set; }
+        private bool _isPublicHoliday;
+        public bool IsPublicHoliday 
+        { 
+            get => _isPublicHoliday; 
+            set { _isPublicHoliday = value; OnPropertyChanged(); } 
+        }
+
+        private string _holidayReason;
+        public string HolidayReason 
+        { 
+            get => _holidayReason; 
+            set { _holidayReason = value; OnPropertyChanged(); } 
+        }
 
         private bool _isExpanded;
         public bool IsExpanded 

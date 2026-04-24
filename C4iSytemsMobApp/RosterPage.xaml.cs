@@ -70,11 +70,11 @@ namespace C4iSytemsMobApp
         {
             GlobalLoading.IsRunning = true;
             
-            // Force a UI reset to prevent stale background colors
-            MainThread.BeginInvokeOnMainThread(() => { Days = null; });
-            
-            DaysList.IsVisible = false;
-            NoRosterLabel.IsVisible = false;
+            if (Days == null || Days.Count == 0)
+            {
+                DaysList.IsVisible = false;
+                NoRosterLabel.IsVisible = false;
+            }
 
             try
             {
@@ -103,11 +103,32 @@ namespace C4iSytemsMobApp
                         day.OpenCount = day.Shifts?.Count(s => s.StatusCode == 2) ?? 0;
                     }
 
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    Days = new ObservableCollection<RosterDay>(roster.Days);
-                    DaysList.IsVisible = true;
-                });
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        if (Days != null && Days.Count == roster.Days.Count && Days[0].Date.Date == roster.Days[0].Date.Date)
+                        {
+                            // [Smooth Update] - Update existing day objects to avoid full UI rebuild
+                            for (int i = 0; i < Days.Count; i++)
+                            {
+                                var existingDay = Days[i];
+                                var newDay = roster.Days[i];
+
+                                existingDay.PendingCount = newDay.PendingCount;
+                                existingDay.AcceptedCount = newDay.AcceptedCount;
+                                existingDay.OpenCount = newDay.OpenCount;
+                                existingDay.IsPublicHoliday = newDay.IsPublicHoliday;
+                                existingDay.HolidayReason = newDay.HolidayReason;
+                                existingDay.Shifts = newDay.Shifts; // Triggers BindableLayout refresh for this day only
+                            }
+                        }
+                        else
+                        {
+                            // [Full Update] - Rebuild collection for different week or first load
+                            Days = new ObservableCollection<RosterDay>(roster.Days);
+                        }
+                        DaysList.IsVisible = true;
+                        NoRosterLabel.IsVisible = false;
+                    });
                 }
                 else
                 {
