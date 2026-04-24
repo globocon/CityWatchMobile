@@ -99,8 +99,11 @@ namespace C4iSytemsMobApp
                         day.OpenCount = day.Shifts?.Count(s => s.StatusCode == 2) ?? 0;
                     }
 
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
                     Days = new ObservableCollection<RosterDay>(roster.Days);
                     DaysList.IsVisible = true;
+                });
                 }
                 else
                 {
@@ -244,6 +247,8 @@ namespace C4iSytemsMobApp
                         shift.ReliefGuardName = null;
                     }
                     
+                    // Brief delay to allow backend DB commit to settle
+                    await Task.Delay(200);
                     await LoadRoster(_currentWeekStart); // Full Refresh
                     await DisplayAlert("Roster Update", "Shift status updated successfully.", "OK");
                 }
