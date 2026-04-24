@@ -453,7 +453,15 @@ namespace C4iSytemsMobApp.Services
                             if (s.TryGetProperty("guardId", out var gId) && gId.ValueKind != JsonValueKind.Null) shift.GuardId = gId.GetInt32();
 
                             // Determine editability
-                            if (shift.ReliefGuardId.HasValue && shift.ReliefGuardId > 0)
+                            if (currentDayDate.Date < DateTime.Today.Date)
+                            {
+                                shift.IsEditable = false; // Previous days are read-only
+                            }
+                            else if (shift.StatusCode == 2) // Declined / Open
+                            {
+                                shift.IsEditable = true; // Anyone can pick up or re-accept
+                            }
+                            else if (shift.ReliefGuardId.HasValue && shift.ReliefGuardId > 0)
                             {
                                 shift.IsEditable = (shift.ReliefGuardId == guardId);
                             }

@@ -1077,8 +1077,10 @@
                     <Button Text="Guard Roster"
                             Clicked="OnRosterClicked" />
 
-                    <Button Text="PCAR Route"
-                            Clicked="OnPcarClicked" />
+                    <Button x:Name="PcarRouteButton"
+                            Text="PCAR Route"
+                            Clicked="OnPcarClicked"
+                            IsVisible="{Binding IsPcar}" />
 
                     <Button Text="SOP’s"
                             Clicked="OnSOPClicked" />

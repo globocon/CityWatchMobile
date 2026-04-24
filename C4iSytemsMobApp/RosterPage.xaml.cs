@@ -66,11 +66,15 @@ namespace C4iSytemsMobApp
             }
         }
 
-        private async void LoadRoster(DateTime startDate)
+        private async Task LoadRoster(DateTime startDate)
         {
             GlobalLoading.IsRunning = true;
-            DaysList.IsVisible = false;
-            NoRosterLabel.IsVisible = false;
+            
+            if (Days == null || Days.Count == 0)
+            {
+                DaysList.IsVisible = false;
+                NoRosterLabel.IsVisible = false;
+            }
 
             try
             {
@@ -99,8 +103,32 @@ namespace C4iSytemsMobApp
                         day.OpenCount = day.Shifts?.Count(s => s.StatusCode == 2) ?? 0;
                     }
 
-                    Days = new ObservableCollection<RosterDay>(roster.Days);
-                    DaysList.IsVisible = true;
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        if (Days != null && Days.Count == roster.Days.Count && Days[0].Date.Date == roster.Days[0].Date.Date)
+                        {
+                            // [Smooth Update] - Update existing day objects to avoid full UI rebuild
+                            for (int i = 0; i < Days.Count; i++)
+                            {
+                                var existingDay = Days[i];
+                                var newDay = roster.Days[i];
+
+                                existingDay.PendingCount = newDay.PendingCount;
+                                existingDay.AcceptedCount = newDay.AcceptedCount;
+                                existingDay.OpenCount = newDay.OpenCount;
+                                existingDay.IsPublicHoliday = newDay.IsPublicHoliday;
+                                existingDay.HolidayReason = newDay.HolidayReason;
+                                existingDay.Shifts = newDay.Shifts; // Triggers BindableLayout refresh for this day only
+                            }
+                        }
+                        else
+                        {
+                            // [Full Update] - Rebuild collection for different week or first load
+                            Days = new ObservableCollection<RosterDay>(roster.Days);
+                        }
+                        DaysList.IsVisible = true;
+                        NoRosterLabel.IsVisible = false;
+                    });
                 }
                 else
                 {
@@ -173,6 +201,9 @@ namespace C4iSytemsMobApp
             var shift = (e as TappedEventArgs)?.Parameter as RosterShift;
             if (shift == null) return;
 
+            // Requirement: dont allow users to click if can't change thir shift
+            if (!shift.IsEditable) return;
+
             int currentGuardId = int.Parse(Preferences.Get("GuardId", "0"));
 
             // Determine available actions based on current StatusCode
@@ -184,8 +215,7 @@ namespace C4iSytemsMobApp
                     await UpdateStatus(shift, RosterShiftStatus.Accepted);
                 }
             }
-            else if (shift.StatusCode == (int)RosterShiftStatus.Accepted && 
-                     (shift.GuardId == currentGuardId || shift.ReliefGuardId == currentGuardId))
+            else if (shift.StatusCode == (int)RosterShiftStatus.Accepted)
             {
                 // Predefined reasons for cancellation
                 string action = await DisplayActionSheet("Reason for Relief", "Cancel", null, "Sick", "AL", "RDO", "LWOP", "Other");
@@ -195,7 +225,7 @@ namespace C4iSytemsMobApp
                 string reason = action;
                 if (action == "Other")
                 {
-                    reason = await DisplayPromptAsync("Decline Shift", "Please enter details for 'Other' reason:", "Decline", "Cancel");
+                    reason = await DisplayPromptAsync("Relief Details", "Please enter notes for 'Other' reason:", "Submit", "Cancel");
                     if (string.IsNullOrEmpty(reason)) return;
                 }
 
@@ -203,8 +233,14 @@ namespace C4iSytemsMobApp
             }
             else if (shift.StatusCode == (int)RosterShiftStatus.Declined)
             {
-                bool acceptRelief = await DisplayAlert("Accept Relief", "This shift was declined. Do you want to accept it as a Relief Guard?", "Yes", "No");
-                if (acceptRelief)
+                // Re-Acceptance or Relief Pickup
+                string title = (shift.GuardId == currentGuardId) ? "Re-Accept Shift" : "Relief Pickup";
+                string message = (shift.GuardId == currentGuardId) 
+                    ? "This shift was declined. Do you want to re-accept it?" 
+                    : "Do you want to pick up this shift as a Relief Guard?";
+
+                bool accept = await DisplayAlert(title, message, "Yes", "No");
+                if (accept)
                 {
                     await UpdateStatus(shift, RosterShiftStatus.Accepted);
                 }
@@ -228,7 +264,17 @@ namespace C4iSytemsMobApp
                 
                 if (success)
                 {
-                    LoadRoster(_currentWeekStart); // Refresh
+                    // Immediate local update for better UX responsiveness
+                    shift.StatusCode = (int)newStatus;
+                    if (newStatus == RosterShiftStatus.Declined)
+                    {
+                        shift.ReliefGuardId = null;
+                        shift.ReliefGuardName = null;
+                    }
+                    
+                    // Brief delay to allow backend DB commit to settle
+                    await Task.Delay(200);
+                    await LoadRoster(_currentWeekStart); // Full Refresh
                     await DisplayAlert("Roster Update", "Shift status updated successfully.", "OK");
                 }
                 else

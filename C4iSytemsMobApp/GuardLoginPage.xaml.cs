@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Data.Entity;
 using C4iSytemsMobApp.Enums;
@@ -831,8 +831,9 @@ public partial class GuardLoginPage : ContentPage
                     UpdateInfoLabel("Processing Offline Data...Please wait...");
                     string contentData = await response.Content.ReadAsStringAsync();
                     var responseJson = JsonSerializer.Deserialize<JsonElement>(contentData);
-                    int tourMode = responseJson.GetProperty("tourMode").GetInt32();
-                    App.TourMode = (PatrolTouringMode)tourMode;
+                     int tourMode = responseJson.GetProperty("tourMode").GetInt32();
+                     App.TourMode = (PatrolTouringMode)tourMode;
+                     Preferences.Set("IsPcarSite", (tourMode == 1).ToString().ToLower());
 
                     try
                     {

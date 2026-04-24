@@ -194,9 +194,9 @@
                                             <Frame Padding="10" 
                                                    CornerRadius="10" 
                                                    HasShadow="False"
-                                                   Background="{Binding ., Converter={StaticResource ShiftStatusToGradientConverter}}"
-                                                   BorderColor="Transparent">
-                                                <Frame.GestureRecognizers>
+                                                    Background="{Binding StatusBrush}"
+                                                    BorderColor="Transparent">
+                                                 <Frame.GestureRecognizers>
                                                     <TapGestureRecognizer Tapped="OnShiftTapped" CommandParameter="{Binding .}" />
                                                 </Frame.GestureRecognizers>
                                                 <Grid ColumnDefinitions="Auto, *, Auto">
@@ -233,7 +233,8 @@
                                                             <Label Text="{Binding ReliefReason, StringFormat='[{0}]'}" 
                                                                    TextColor="White" 
                                                                    FontSize="12" 
-                                                                   FontAttributes="Bold" />
+                                                                   FontAttributes="Bold"
+                                                                   IsVisible="{Binding ReliefReason, Converter={StaticResource NotNullToBooleanConverter}}" />
                                                             <Label Text="{Binding GuardName}" 
                                                                    TextColor="White" 
                                                                    FontSize="12" 
@@ -305,7 +306,7 @@
 
         <!-- Footer / Placeholder -->
         <Label Grid.Row="3" 
-               Text="Powered by CityWatch" 
+               Text="C4i System" 
                HorizontalOptions="Center" 
                FontSize="10" 
                TextColor="Gray" />
