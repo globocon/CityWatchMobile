@@ -145,6 +145,16 @@ namespace C4iSytemsMobApp
         private bool _pulseActive = false;
         private CancellationTokenSource _pulseCts;
 
+        public bool IsPcar
+        {
+            get
+            {
+                var isPcar = Preferences.Get("IsPcarSite", "false") == "true";
+                Console.WriteLine($"IsPcar property called. Preference IsPcarSite: {isPcar}");
+                return isPcar;
+            }
+        }
+
 
         public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
@@ -279,6 +289,8 @@ namespace C4iSytemsMobApp
             {
                 OpenDrawer();
             }
+
+            OnPropertyChanged(nameof(IsPcar));
 
 
 
