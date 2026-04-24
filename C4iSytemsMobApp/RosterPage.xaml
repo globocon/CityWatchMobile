@@ -194,14 +194,9 @@
                                             <Frame Padding="10" 
                                                    CornerRadius="10" 
                                                    HasShadow="False"
-                                                   Background="{Binding StatusBrush}"
-                                                   BorderColor="Transparent">
-                                                 <Frame.Triggers>
-                                                     <DataTrigger TargetType="Frame" Binding="{Binding StatusCode}" Value="2">
-                                                         <Setter Property="Background" Value="#212121" />
-                                                     </DataTrigger>
-                                                 </Frame.Triggers>
-                                                <Frame.GestureRecognizers>
+                                                    Background="{Binding StatusBrush}"
+                                                    BorderColor="Transparent">
+                                                 <Frame.GestureRecognizers>
                                                     <TapGestureRecognizer Tapped="OnShiftTapped" CommandParameter="{Binding .}" />
                                                 </Frame.GestureRecognizers>
                                                 <Grid ColumnDefinitions="Auto, *, Auto">

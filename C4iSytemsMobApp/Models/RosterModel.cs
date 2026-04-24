@@ -96,7 +96,17 @@ namespace C4iSytemsMobApp.Models
                 // 1. Declined Status (Black) - Match the header dot color #212121
                 if (StatusCode == 2)
                 {
-                    return new SolidColorBrush(Color.FromArgb("#212121"));
+                    // Using a very subtle gradient for black to ensure rendering stability on mobile
+                    return new LinearGradientBrush
+                    {
+                        StartPoint = new Point(0, 0),
+                        EndPoint = new Point(1, 1),
+                        GradientStops = new GradientStopCollection
+                        {
+                            new GradientStop { Color = Color.FromArgb("#212121"), Offset = 0.1f },
+                            new GradientStop { Color = Color.FromArgb("#1a1a1a"), Offset = 1.0f }
+                        }
+                    };
                 }
 
                 // 2. Relief Shifts (Purple) - Accepted by a Relief Guard

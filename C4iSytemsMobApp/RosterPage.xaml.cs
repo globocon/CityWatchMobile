@@ -69,6 +69,10 @@ namespace C4iSytemsMobApp
         private async Task LoadRoster(DateTime startDate)
         {
             GlobalLoading.IsRunning = true;
+            
+            // Force a UI reset to prevent stale background colors
+            MainThread.BeginInvokeOnMainThread(() => { Days = null; });
+            
             DaysList.IsVisible = false;
             NoRosterLabel.IsVisible = false;
 
