@@ -194,7 +194,7 @@
                                             <Frame Padding="10" 
                                                    CornerRadius="10" 
                                                    HasShadow="False"
-                                                   Background="{Binding ., Converter={StaticResource ShiftStatusToGradientConverter}}"
+                                                   Background="{Binding StatusBrush}"
                                                    BorderColor="Transparent">
                                                 <Frame.GestureRecognizers>
                                                     <TapGestureRecognizer Tapped="OnShiftTapped" CommandParameter="{Binding .}" />
