@@ -66,7 +66,7 @@ namespace C4iSytemsMobApp
             }
         }
 
-        private async void LoadRoster(DateTime startDate)
+        private async Task LoadRoster(DateTime startDate)
         {
             GlobalLoading.IsRunning = true;
             DaysList.IsVisible = false;
@@ -236,7 +236,15 @@ namespace C4iSytemsMobApp
                 
                 if (success)
                 {
-                    LoadRoster(_currentWeekStart); // Refresh
+                    // Immediate local update for better UX responsiveness
+                    shift.StatusCode = (int)newStatus;
+                    if (newStatus == RosterShiftStatus.Declined)
+                    {
+                        shift.ReliefGuardId = null;
+                        shift.ReliefGuardName = null;
+                    }
+                    
+                    await LoadRoster(_currentWeekStart); // Full Refresh
                     await DisplayAlert("Roster Update", "Shift status updated successfully.", "OK");
                 }
                 else
