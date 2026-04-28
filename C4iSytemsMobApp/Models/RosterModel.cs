@@ -125,8 +125,8 @@ namespace C4iSytemsMobApp.Models
                     };
                 }
 
-                // 3. Relief Shifts (Purple) - Pushed Status (Not Accepted)
-                if (ReliefGuardId != null && ReliefGuardId > 0)
+                // 3. Relief Shifts (Purple) - Pushed Status (Not Accepted) for Normal Shifts
+                if (ReliefGuardId != null && ReliefGuardId > 0 && ShiftType != "Adhoc")
                 {
                     return new LinearGradientBrush
                     {
