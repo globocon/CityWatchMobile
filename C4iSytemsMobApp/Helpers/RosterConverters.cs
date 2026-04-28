@@ -38,22 +38,7 @@ namespace C4iSytemsMobApp.Helpers
                     return new SolidColorBrush(Color.FromArgb("#212121"));
                 }
 
-                // 2. Relief Shifts (Purple) - Accepted by a Relief Guard
-                if (shift.ReliefGuardId != null && shift.ReliefGuardId > 0)
-                {
-                    return new LinearGradientBrush
-                    {
-                        StartPoint = new Point(0, 0),
-                        EndPoint = new Point(1, 1),
-                        GradientStops = new GradientStopCollection
-                        {
-                            new GradientStop { Color = Color.FromArgb("#6f42c1"), Offset = 0.1f },
-                            new GradientStop { Color = Color.FromArgb("#4a148c"), Offset = 1.0f }
-                        }
-                    };
-                }
-
-                // 3. Accepted Status (Green)
+                // 2. Accepted Status (Green)
                 if (shift.StatusCode == 1)
                 {
                     bool isAdhoc = shift.ShiftType == "Adhoc";
@@ -65,6 +50,21 @@ namespace C4iSytemsMobApp.Helpers
                         {
                             new GradientStop { Color = Color.FromArgb(isAdhoc ? "#1B5E20" : "#90EE90"), Offset = 0.1f },
                             new GradientStop { Color = Color.FromArgb(isAdhoc ? "#2E7D32" : "#32CD32"), Offset = 1.0f }
+                        }
+                    };
+                }
+
+                // 3. Relief Shifts (Purple) - Pushed Status (Not Accepted)
+                if (shift.ReliefGuardId != null && shift.ReliefGuardId > 0)
+                {
+                    return new LinearGradientBrush
+                    {
+                        StartPoint = new Point(0, 0),
+                        EndPoint = new Point(1, 1),
+                        GradientStops = new GradientStopCollection
+                        {
+                            new GradientStop { Color = Color.FromArgb("#6f42c1"), Offset = 0.1f },
+                            new GradientStop { Color = Color.FromArgb("#4a148c"), Offset = 1.0f }
                         }
                     };
                 }
