@@ -19,23 +19,24 @@
 
             <!-- Header Row -->
             <Grid ColumnDefinitions="*, Auto"
-                  Padding="2"
-                  Grid.Row="0">
+                    Padding="2"
+                    Grid.Row="0">
                 <Label Text="MultiMedia"
                        FontSize="14"
                        FontAttributes="Bold"
                        VerticalOptions="Center"
                        HorizontalOptions="Start"
-                       TextColor="Black" />
+                       TextColor="Black"/>
 
-                <ImageButton Source="home.png"
-                             Clicked="OnBackButtonClicked"
-                             HeightRequest="30"
-                             WidthRequest="30"
-                             BackgroundColor="Transparent"
-                             HorizontalOptions="End"
-                             VerticalOptions="Center"
-                             Grid.Column="1" />
+                <ImageButton
+                    Source="home.png"
+                    Clicked="OnBackButtonClicked"
+                    HeightRequest="30"
+                    WidthRequest="30"
+                    BackgroundColor="Transparent"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center"
+                    Grid.Column="1"/>
             </Grid>
 
             <!-- Video list -->
@@ -54,7 +55,7 @@
                                         BackgroundColor="Blue"
                                         TextColor="White"
                                         Clicked="OnVideoButtonClicked"
-                                        CommandParameter="{Binding}" />
+                                        CommandParameter="{Binding}"/>
                             </StackLayout>
                         </ViewCell>
                     </DataTemplate>
@@ -63,16 +64,18 @@
 
             <!-- Buttons Row -->
             <StackLayout Grid.Row="2"
-                         Padding="5"
-                         Spacing="5">
-                <Button Text="+ Add Photo to Logbook"
-                        Clicked="OnPickFileClicked"
-                        BackgroundColor="Green"
-                        TextColor="White" />
-                <Button Text="+ Add Video to Logbook"
-                        Clicked="OnPickVideoClicked"
-                        BackgroundColor="Green"
-                        TextColor="White" />
+                    Padding="5"
+                    Spacing="5">
+                <Button
+                    Text="+ Add Photo to Logbook"
+                    Clicked="OnPickFileClicked"
+                    BackgroundColor="Green"
+                    TextColor="White"/>
+                <Button
+                    Text="+ Add Video to Logbook"
+                    Clicked="OnPickVideoClicked"
+                    BackgroundColor="Green"
+                    TextColor="White"/>
             </StackLayout>
 
             <!-- File Upload Loading Overlay -->
@@ -89,30 +92,33 @@
                     <ActivityIndicator IsRunning="True"
                                        Color="Green"
                                        WidthRequest="40"
-                                       HeightRequest="40" />
+                                       HeightRequest="40"/>
 
                     <Label Text="Uploading..."
                            FontSize="12"
                            TextColor="Black"
-                           HorizontalOptions="Center" />
+                           HorizontalOptions="Center"/>
                 </VerticalStackLayout>
             </Grid>
         </Grid>
 
+
+
+
         <!-- Fullscreen Video Player -->
         <Grid x:Name="FullscreenPlayer"
-            IsVisible="False"
-            BackgroundColor="Black"
-            AbsoluteLayout.LayoutBounds="0,0,1,1"
-            AbsoluteLayout.LayoutFlags="All"
-            Padding="0"
-            Margin="0" 
-            ZIndex="100">
+              IsVisible="False"
+              BackgroundColor="Black"
+              AbsoluteLayout.LayoutBounds="0,0,1,1"
+              AbsoluteLayout.LayoutFlags="All"
+              Padding="0"
+              Margin="0"
+              ZIndex="100">
             <!-- Double Tap Gesture -->
             <Grid.GestureRecognizers>
-                <TapGestureRecognizer 
+                <TapGestureRecognizer
                     NumberOfTapsRequired="2"
-                    Tapped="OnFullscreenDoubleTapped" />
+                    Tapped="OnFullscreenDoubleTapped"/>
             </Grid.GestureRecognizers>
 
             <media:MediaElement
@@ -123,12 +129,12 @@
                 ShouldLoopPlayback="True"
                 ShouldAutoPlay="True">
                 <media:MediaElement.GestureRecognizers>
-                    <TapGestureRecognizer 
+                    <TapGestureRecognizer
                         NumberOfTapsRequired="2"
-                        Tapped="OnFullscreenDoubleTapped" />
+                        Tapped="OnFullscreenDoubleTapped"/>
                 </media:MediaElement.GestureRecognizers>
             </media:MediaElement>
-            
+
         </Grid>
 
        

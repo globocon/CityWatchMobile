@@ -195,34 +195,29 @@ public partial class MultiMedia : ContentPage
     {
         if (sender is Button btn)
         {
-            btn.IsEnabled = false;            
-
+            btn.IsEnabled = false;
             try
             {
-                var results = await FilePicker.PickMultipleAsync();
-                if (results != null && results.Any())
+                var results = await MediaPicker.PickPhotoAsync();
+                if (results != null && !string.IsNullOrEmpty(results.FileName))
                 {
                     string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
 
-                    foreach (var file in results)
+                    // Default type is twentyfive unless user ticks "rear full page"
+                    string fileType = "twentyfive";
+                    var extension = Path.GetExtension(results.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
                     {
-                        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                        if (!allowedExtensions.Contains(extension))
-                        {
-                            await DisplayAlert("Invalid File",
-                                $"File '{file.FileName}' is not a supported image type.", "OK");
-                            continue;
-                        }
-
-                        // Default type is twentyfive unless user ticks "rear full page"
-                        string fileType = "twentyfive";
-
-                        SelectedFiles.Add(new MyFileModel
-                        {
-                            File = file,
-                            FileType = fileType
-                        });
+                        await DisplayAlert("Invalid File", $"File '{results.FileName}' is not a supported image type.", "OK");
+                        return; // Exit if file is not valid
                     }
+
+
+                    SelectedFiles.Add(new MyFileModel
+                    {
+                        File = results,
+                        FileType = fileType
+                    });
 
                     if (SelectedFiles.Any())
                     {
@@ -339,34 +334,28 @@ public partial class MultiMedia : ContentPage
     {
         if (sender is Button btn)
         {
-            btn.IsEnabled = false;            
+            btn.IsEnabled = false;
             try
             {
-                var results = await FilePicker.PickMultipleAsync();
-                if (results != null && results.Any())
+                var results = await MediaPicker.PickVideoAsync();
+                if (results != null && !string.IsNullOrEmpty(results.FileName))
                 {
                     // Allowed video extensions
                     string[] allowedExtensions = { ".mp4", ".mov", ".avi", ".mkv" };
 
-                    foreach (var file in results)
+                    string fileType = "video";
+                    var extension = Path.GetExtension(results.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
                     {
-                        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                        if (!allowedExtensions.Contains(extension))
-                        {
-                            await DisplayAlert("Invalid File",
-                                $"File '{file.FileName}' is not a supported video type.", "OK");
-                            continue;
-                        }
-
-                        // Default type is twentyfive unless user ticks "rear full page"
-                        string fileType = "video";
-
-                        SelectedFiles.Add(new MyFileModel
-                        {
-                            File = file,
-                            FileType = fileType
-                        });
+                        await DisplayAlert("Invalid File", $"File '{results.FileName}' is not a supported video type.", "OK");
+                        return; // Exit if file is not valid
                     }
+
+                    SelectedFiles.Add(new MyFileModel
+                    {
+                        File = results,
+                        FileType = fileType
+                    });
 
                     if (SelectedFiles.Any())
                     {
@@ -385,8 +374,8 @@ public partial class MultiMedia : ContentPage
             }
             finally
             {
-                btn.IsEnabled = true;
                 FileUploadLoadingOverlay.IsVisible = false;
+                btn.IsEnabled = true;
             }
         }
     }

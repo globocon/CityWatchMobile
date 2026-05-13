@@ -644,11 +644,12 @@ public partial class LogActivity : ContentPage
 
     private async void OnPickFileClicked(object sender, EventArgs e)
     {
-        bool isFilePicked = false;
+        int FilePickedCount = 0;
         try
         {
-            var results = await FilePicker.PickMultipleAsync(); // Multiple files
-            if (results != null && results.Any())
+            //var results = await FilePicker.PickMultipleAsync(); // Multiple files
+            var results = await MediaPicker.PickPhotoAsync();
+            if (results != null && !string.IsNullOrEmpty(results.FileName))
             {
                 // Allowed file extensions
                 string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
@@ -656,29 +657,43 @@ public partial class LogActivity : ContentPage
                 // Determine the file type based on the checkboxes
                 string fileType = chkRearFullPage.IsChecked ? "rear" : "twentyfive";
 
-                foreach (var file in results)
+                // foreach (var file in results)
+                // {
+                //     var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                //     if (!allowedExtensions.Contains(extension))
+                //     {
+                //         await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
+                //         continue; // Skip this file
+                //     }
+                //     FilePickedCount++;
+                //     SelectedFiles.Add(new MyFileModel
+                //     {
+                //         File = file,
+                //         FileType = fileType,
+                //         IsNew = true // Mark as new file
+                //     });
+                // }
+
+                var extension = Path.GetExtension(results.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(extension))
                 {
-                    isFilePicked = true;
-                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                    if (!allowedExtensions.Contains(extension))
-                    {
-                        await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
-                        continue; // Skip this file
-                    }
-                    FilePickedCount++;
-                    SelectedFiles.Add(new MyFileModel
-                    {
-                        File = file,
-                        FileType = fileType,
-                        IsNew = true // Mark as new file
-                    });
+                    await DisplayAlert("Invalid File", $"File '{results.FileName}' is not a supported image type.", "OK");
+                    return; // Exit if file is not valid
                 }
+
+                FilePickedCount++;
+                SelectedFiles.Add(new MyFileModel
+                {
+                    File = results,
+                    FileType = fileType,
+                    IsNew = true // Mark as new file
+                });
             }
 
             // Show the file list only if it has items
             FilesCollection.IsVisible = SelectedFiles.Any();
 
-            if(isFilePicked){ShowPopup();}
+            if (FilePickedCount > 0) { ShowPopup(); }
 
         }
         catch (Exception ex)
@@ -1237,13 +1252,15 @@ public partial class LogActivity : ContentPage
                 chkEditWithinField.IsChecked = true;
         }
     }
-        
+
     private async void OnEditPickFileClicked(object sender, EventArgs e)
     {
+        int FilePickedCount = 0;
         try
         {
-            var results = await FilePicker.PickMultipleAsync(); // Allow multiple file selection
-            if (results != null && results.Any())
+            //var results = await FilePicker.PickMultipleAsync(); // Allow multiple file selection
+            var results = await MediaPicker.PickPhotoAsync();
+            if (results != null && !string.IsNullOrEmpty(results.FileName))
             {
                 // Allowed image formats
                 string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
@@ -1251,28 +1268,45 @@ public partial class LogActivity : ContentPage
                 // Determine the file type from checkboxes
                 string fileType = chkEditRearFullPage.IsChecked ? "rear" : "twentyfive";
 
-                foreach (var file in results)
+                // foreach (var file in results)
+                // {
+                //     var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+                //     if (!allowedExtensions.Contains(extension))
+                //     {
+                //         await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
+                //         continue;
+                //     }
+
+                //     SelectedFiles.Add(new MyFileModel
+                //     {
+                //         File = file,
+                //         FileType = fileType,
+                //         IsNew = true,
+                //         LogBookId = _selectedLogForEdit.Id
+                //     });
+                // }
+
+                var extension = Path.GetExtension(results.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(extension))
                 {
-                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-                    if (!allowedExtensions.Contains(extension))
-                    {
-                        await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
-                        continue;
-                    }
-
-                    SelectedFiles.Add(new MyFileModel
-                    {
-                        File = file,
-                        FileType = fileType,
-                        IsNew = true,
-                        LogBookId = _selectedLogForEdit.Id
-                    });
+                    await DisplayAlert("Invalid File", $"File '{results.FileName}' is not a supported image type.", "OK");
+                    return; // Exit if file is not valid
                 }
+
+                FilePickedCount++;
+                SelectedFiles.Add(new MyFileModel
+                {
+                    File = results,
+                    FileType = fileType,
+                    IsNew = true,
+                    LogBookId = _selectedLogForEdit.Id
+                });
             }
 
             // Show the file list only if it has items
             FilesCollectionEditImage.IsVisible = SelectedFiles.Any();
+
         }
         catch (Exception ex)
         {
@@ -1351,6 +1385,8 @@ public partial class LogActivity : ContentPage
     private async void OnSaveAndCloseClicked(object sender, EventArgs e)
     {
 
+    private async void OnSaveAndCloseClicked(object sender, EventArgs e)
+    {
         if (sender is Button btn)
         {
             btn.IsEnabled = false;
@@ -1360,41 +1396,41 @@ public partial class LogActivity : ContentPage
                 if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
                 string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
-            if (!App.IsOnline)
-            {
-                var _fileGroupId = Guid.NewGuid();
-                foreach (var fileModel in SelectedFiles)
+                if (!App.IsOnline)
                 {
-                    // Save file to local storage with unique name
-                    var extension = Path.GetExtension(fileModel.File.FileName);
-                    var cacheFileName = $"{Guid.NewGuid():N}{extension}";
-                    var stream = await fileModel.File.OpenReadAsync();
-                    var path = await SaveFileOffline(stream, "ActivityLogbook", cacheFileName);
-                    // Update details in local db
-                    OfflineFilesRecords offlineFilesRecords = new OfflineFilesRecords()
+                    var _fileGroupId = Guid.NewGuid();
+                    foreach (var fileModel in SelectedFiles)
                     {
-                        RecordLabel = "LBACTIVITYNEW",
-                        FileNameActual = fileModel.File.FileName,
-                        FileNameCache = cacheFileName,
-                        FileNameWithPathCache = path,
-                        EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
-                        EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
-                        EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
-                        EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
-                        EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
-                        IsSynced = false,
-                        UniqueRecordId = Guid.NewGuid(),
-                        FileType = fileModel.FileType,
-                        IsNew = true,
-                        LogBookId = null,
-                        guardId = _guardId.Value,
-                        clientsiteId = _clientSiteId.Value,
-                        userId = _userId.Value,
-                        gps = gpsCoordinates ?? "",
-                        FileGroupId = _fileGroupId,
-                        DeviceId = deviceid,
-                        DeviceName = devicename
-                    };
+                        // Save file to local storage with unique name
+                        var extension = Path.GetExtension(fileModel.File.FileName);
+                        var cacheFileName = $"{Guid.NewGuid():N}{extension}";
+                        var stream = await fileModel.File.OpenReadAsync();
+                        var path = await SaveFileOffline(stream, "ActivityLogbook", cacheFileName);
+                        // Update details in local db
+                        OfflineFilesRecords offlineFilesRecords = new OfflineFilesRecords()
+                        {
+                            RecordLabel = "LBACTIVITYNEW",
+                            FileNameActual = fileModel.File.FileName,
+                            FileNameCache = cacheFileName,
+                            FileNameWithPathCache = path,
+                            EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+                            EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+                            EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+                            EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+                            EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                            IsSynced = false,
+                            UniqueRecordId = Guid.NewGuid(),
+                            FileType = fileModel.FileType,
+                            IsNew = true,
+                            LogBookId = null,
+                            guardId = _guardId.Value,
+                            clientsiteId = _clientSiteId.Value,
+                            userId = _userId.Value,
+                            gps = gpsCoordinates ?? "",
+                            FileGroupId = _fileGroupId,
+                            DeviceId = deviceid,
+                            DeviceName = devicename
+                        };
 
                         var r = await _scanDataDbService.SaveLogActivityDocumentsCacheData(offlineFilesRecords);
                     }
@@ -1479,10 +1515,9 @@ public partial class LogActivity : ContentPage
             finally
             {
                 FileUploadLoadingOverlay.IsVisible = false;
-                btn.IsEnabled = true;                
+                btn.IsEnabled = true;
             }
         }
-        
     }
 
     private void UpdateCacheRecordCount(int _ChaceCount)

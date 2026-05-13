@@ -48,13 +48,13 @@ namespace C4iSytemsMobApp.Services
                         }
 
                         // iOS Bluetooth Permission
-                        var statusBle = await Permissions.CheckStatusAsync<Permissions.Bluetooth>();
-                        if (statusBle != PermissionStatus.Granted)
-                        {
-                            statusBle = await Permissions.RequestAsync<Permissions.Bluetooth>();
-                            if (statusBle != PermissionStatus.Granted)
-                                return false;
-                        }
+                        // var statusBle = await Permissions.CheckStatusAsync<Permissions.Bluetooth>();
+                        // if (statusBle != PermissionStatus.Granted)
+                        // {
+                        //     statusBle = await Permissions.RequestAsync<Permissions.Bluetooth>();
+                        //     if (statusBle != PermissionStatus.Granted)
+                        //         return false;
+                        // }
 #endif
             return true;
         }
