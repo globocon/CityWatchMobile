@@ -112,6 +112,10 @@ public partial class GuardLoginPage : ContentPage
     private ObservableCollection<string> _filteredSuggestions = new ObservableCollection<string>();
     private const string LastNumberKey = "LastEnteredNumber";
 
+    public ObservableCollection<BroadcastBannerCalendarEvents> BannerCalendarEvents { get; set; } = new();
+    public ObservableCollection<BroadcastBannerLiveEvents> LiveBannerEvents { get; set; } = new();
+    private string LiveEventWebLink;
+
     private void OnLicenseUnfocused(object sender, FocusEventArgs e)
     {
         SuggestionsView.IsVisible = false;
@@ -167,6 +171,10 @@ public partial class GuardLoginPage : ContentPage
         _customLogEntryServices = IPlatformApplication.Current.Services.GetService<ICustomLogEntryServices>();
 
         BindingContext = this;
+
+        vslCalendarLiveEvents.IsVisible = false;
+        LiveEventWebLink = string.Empty;
+
         LoadLoggedInUser();
         //LoadDropdownData();
         if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost") || AppConfig.ApiBaseUrl.Contains("192.168.1."))
@@ -277,7 +285,6 @@ public partial class GuardLoginPage : ContentPage
         SaveNumbers();
     }
 
-
     private void OnLicenseTextChanged(object sender, TextChangedEventArgs e)
     {
         string query = e.NewTextValue?.Trim() ?? "";
@@ -365,10 +372,6 @@ public partial class GuardLoginPage : ContentPage
                 pickerClientSite.IsVisible = true;
                 SelectedClientSite = siteItem;
                 pickerClientSite.SelectedItem = siteItem;
-
-
-
-
             }
             else
             {
@@ -380,8 +383,6 @@ public partial class GuardLoginPage : ContentPage
 
         }
     }
-
-
 
     protected override async void OnDisappearing()
     {
@@ -425,34 +426,6 @@ public partial class GuardLoginPage : ContentPage
         }
     }
 
-    //private async void LoadDropdownData()
-    //{
-    //    try
-    //    {
-    //        string userId = Preferences.Get("UserId","");
-
-    //        if (string.IsNullOrEmpty(userId))
-    //        {
-    //            Debug.WriteLine("User ID not found.");
-    //            return;
-    //        }
-
-    //        var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(
-    //        //$"https://cws-ir.com/api/GuardSecurityNumber/GetUserClientTypes?userId={Uri.EscapeDataString(userId)}");
-    //            $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetUserClientTypes?userId={Uri.EscapeDataString(userId)}");
-
-    //        ClientTypes.Clear();
-    //        foreach (var type in response ?? new List<DropdownItem>())
-    //        {
-    //            ClientTypes.Add(type);
-    //        }
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        Debug.WriteLine($"Error loading dropdown: {ex.Message}");
-    //    }
-    //}
-
     private async Task LoadDropdownData()
     {
         try
@@ -485,9 +458,6 @@ public partial class GuardLoginPage : ContentPage
             await DisplayAlert("Error", "Failed to load client types: " + ex.Message, "OK");
         }
     }
-
-
-
 
     private async void LoadClientSites(int clientTypeId)
     {
@@ -523,10 +493,6 @@ public partial class GuardLoginPage : ContentPage
     }
 
 
-
-
-
-
     public event PropertyChangedEventHandler PropertyChanged;
     protected void OnPropertyChanged(string propertyName)
     {
@@ -548,6 +514,12 @@ public partial class GuardLoginPage : ContentPage
     private async void OnReadClicked(object sender, EventArgs e)
     {
         string licenseNumber = txtLicenseNumber.Text;
+        vslCalendarLiveEvents.IsVisible = false;
+        LiveBannerEvents.Clear();
+        BannerCalendarEvents.Clear();
+
+        CalendarEventsCollectionView.IsVisible = true;
+        LiveEventsCollectionView.IsVisible = true;
 
         if (string.IsNullOrWhiteSpace(licenseNumber))
         {
@@ -581,10 +553,32 @@ public partial class GuardLoginPage : ContentPage
                 return;
             }
 
+            if (guardData?.LiveEventsNotExpired != null)
+            {                
+                LiveEventWebLink = guardData.LiveEventsweblink;
+
+                LiveBannerEvents.Clear();
+                LiveBannerEvents.Add(new BroadcastBannerLiveEvents() { 
+                    TextMessage = guardData.LiveEventsNotExpired, 
+                    LiveEventWebLink = guardData.LiveEventsweblink 
+                });
+                LiveEventsCollectionView.IsVisible = true;
+                vslCalendarLiveEvents.IsVisible = true;
+            }
+
+            if (guardData?.CalendarEvents?.Count > 0 && guardData.CalendarEvents != null && guardData.CalendarEvents.Any())
+            {                
+                BannerCalendarEvents.Clear();
+                foreach(var r in guardData.CalendarEvents.OrderBy(x => x.StartDate).ToList())
+                {
+                    BannerCalendarEvents.Add(r);
+                }
+                CalendarEventsCollectionView.IsVisible = true;
+                vslCalendarLiveEvents.IsVisible = true;
+            }
+
             if (!isLoggedIn)
             {
-
-
                 // Valid guard, proceed
                 //LoadSavedNumbers();
                 SaveNewNumber(licenseNumber);
@@ -618,6 +612,8 @@ public partial class GuardLoginPage : ContentPage
                 pickerClientType.IsVisible = true;
                 pickerClientSite.IsVisible = true;
                 btnEnterLogbook.IsVisible = true;
+                vslCalendarLiveEvents.IsVisible = true;
+
                 ToggleInstructionalTextVisibility();
 
                 // Load client types properly
@@ -629,7 +625,6 @@ public partial class GuardLoginPage : ContentPage
                     pickerClientSite.IsVisible = true;
 
             }
-
             else
             {
                 // Handle "Back" or "Clear" action
@@ -647,6 +642,7 @@ public partial class GuardLoginPage : ContentPage
                 btnEnterLogbook.IsVisible = false;
                 btnRegister.IsEnabled = true;
                 btnRegister.IsVisible = true;
+                vslCalendarLiveEvents.IsVisible = false;
                 ToggleInstructionalTextVisibility();
             }
         }
@@ -655,7 +651,7 @@ public partial class GuardLoginPage : ContentPage
             await DisplayAlert("Error", "Network error: " + ex.Message + ". Please ensure you are online and have an internet connection", "OK");
         }
     }
-
+       
     private void SetLedColor(BoxView led, string status)
     {
         switch (status?.Trim().ToLower())
@@ -694,6 +690,28 @@ public partial class GuardLoginPage : ContentPage
             instructionalTextContainer.IsVisible = true;
             ConsentSection.IsVisible = true;
         }
+    }
+
+
+    private async void OnLiveEventTapped(object sender, TappedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(LiveEventWebLink))
+        {
+            try
+            {
+                Uri uri = new Uri(LiveEventWebLink);
+                await Browser.Default.OpenAsync(uri, BrowserLaunchMode.SystemPreferred);
+            }
+            catch (Exception ex)
+            {
+                // await DisplayAlert("Error", $"Failed to download: {ex.Message}", "OK");
+            }
+        }
+    }
+
+    private void OnCalendarEventTapped(object sender, TappedEventArgs e)
+    {
+
     }
 
     private async void OnEnterLogbookClicked(object sender, EventArgs e)
@@ -835,8 +853,9 @@ public partial class GuardLoginPage : ContentPage
                     UpdateInfoLabel("Processing Offline Data...Please wait...");
                     string contentData = await response.Content.ReadAsStringAsync();
                     var responseJson = JsonSerializer.Deserialize<JsonElement>(contentData);
-                    int tourMode = responseJson.GetProperty("tourMode").GetInt32();
-                    App.TourMode = (PatrolTouringMode)tourMode;
+                     int tourMode = responseJson.GetProperty("tourMode").GetInt32();
+                     App.TourMode = (PatrolTouringMode)tourMode;
+                     Preferences.Set("IsPcarSite", (tourMode == 1).ToString().ToLower());
 
                     try
                     {
@@ -1455,6 +1474,10 @@ public class GuardResponse
     public string HR2Status { get; set; }
     public string HR3Status { get; set; }
     public bool GuardLockStatusBasedOnRedDoc { get; set; }
+    public List<BroadcastBannerCalendarEvents>? CalendarEvents { get; set; }
+    public string LiveEventsNotExpired { get; set; }
+    public string LiveEventsNotExpiredUrls { get; set; }
+    public string LiveEventsweblink { get; set; }
 }
 public class DropdownItem
 {
@@ -1466,4 +1489,24 @@ public class LicenseEntry
 {
     public string Number { get; set; }
     public DateTime LastUsed { get; set; }
+}
+
+public class BroadcastBannerCalendarEvents
+{
+    public int id { get; set; }
+    public string ReferenceNo { get; set; }
+    public string TextMessage { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime ExpiryDate { get; set; }
+    public bool RepeatYearly { get; set; }
+    public bool IsPublicHoliday { get; set; }
+    public string FormattedStartDate { get { return StartDate.ToString("dd-MMM-yyyy"); } }
+    public string FormattedExpiryDate { get { return ExpiryDate.ToString("dd-MMM-yyyy"); } }
+    public string States { get; set; }
+}
+
+public class BroadcastBannerLiveEvents
+{
+    public string TextMessage { get; set; }
+    public string LiveEventWebLink { get; set; }
 }

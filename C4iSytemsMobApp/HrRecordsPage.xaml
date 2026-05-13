@@ -97,7 +97,7 @@
                    HorizontalOptions="Center"
                    VerticalOptions="Center" />
         </VerticalStackLayout>
-        
+
         <!-- Scrollable CollectionView -->
         <CollectionView x:Name="LogsCollectionView"
                         Grid.Row="2"
@@ -116,7 +116,7 @@
                                 <SwipeItems Mode="Reveal">
                                     <SwipeItemView HorizontalOptions="Start"
                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type local:HrRecordsPage}},Path=BindingContext.DeleteCommand}"
-                                                   CommandParameter="{Binding .}">                                        
+                                                   CommandParameter="{Binding .}">
                                         <Frame Margin="1"
                                                Padding="1"
                                                CornerRadius="10"
@@ -142,7 +142,7 @@
                                 <SwipeItems Mode="Reveal">
                                     <SwipeItemView HorizontalOptions="Start"
                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type local:HrRecordsPage}},Path=BindingContext.EditCommand}"
-                                                   CommandParameter="{Binding .}">                                        
+                                                   CommandParameter="{Binding .}">
                                         <Frame Margin="1"
                                                Padding="1"
                                                CornerRadius="10"
@@ -193,10 +193,10 @@
                                     </DataTrigger>
 
                                     <DataTrigger TargetType="Frame"
-                 Binding="{Binding StatusColor}"
-                 Value="orange">
+                                                 Binding="{Binding StatusColor}"
+                                                 Value="orange">
                                         <Setter Property="BackgroundColor"
-                Value="Orange" />
+                                                Value="Orange" />
                                     </DataTrigger>
                                 </Frame.Triggers>
 
@@ -373,6 +373,100 @@
                                                    FontSize="12"
                                                    TextColor="Black">
                                                 <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="green">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="red">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="yellow">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </HorizontalStackLayout>
+
+                                        <HorizontalStackLayout Spacing="5" 
+                                                               IsVisible="Hidden">
+                                            <HorizontalStackLayout.Triggers>
+                                                <DataTrigger TargetType="HorizontalStackLayout"
+                                                             Binding="{Binding DateType}"
+                                                             Value="True">
+                                                    <Setter Property="IsVisible"
+                                                            Value="False" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="HorizontalStackLayout"
+                                                             Binding="{Binding DateType}"
+                                                             Value="False">
+                                                    <Setter Property="IsVisible"
+                                                            Value="True" />
+                                                </DataTrigger>
+                                            </HorizontalStackLayout.Triggers>                                            
+                                            
+                                            <Label Text="Pending: "
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="Black">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding DateType}"
+                                                                 Value="True">
+                                                        <Setter Property="IsVisible"
+                                                                Value="False" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding DateType}"
+                                                                 Value="False">
+                                                        <Setter Property="IsVisible"
+                                                                Value="True" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="green">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="red">
+                                                        <Setter Property="TextColor"
+                                                                Value="White" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding StatusColor}"
+                                                                 Value="yellow">
+                                                        <Setter Property="TextColor"
+                                                                Value="Black" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+
+                                            <Label Text="{Binding PendingDays}"
+                                                   FontAttributes="Bold"
+                                                   FontSize="12"
+                                                   TextColor="Black">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding DateType}"
+                                                                 Value="True">
+                                                        <Setter Property="IsVisible"
+                                                                Value="False" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding DateType}"
+                                                                 Value="False">
+                                                        <Setter Property="IsVisible"
+                                                                Value="True" />
+                                                    </DataTrigger>
                                                     <DataTrigger TargetType="Label"
                                                                  Binding="{Binding StatusColor}"
                                                                  Value="green">
@@ -624,31 +718,39 @@
                                        FontAttributes="Bold"
                                        FontSize="14"
                                        VerticalOptions="Center" />
-                                 <Border Padding="1"
-                                         StrokeShape="RoundRectangle 15">
+                                <Border Padding="1"
+                                        StrokeShape="RoundRectangle 15">
                                     <Border.Triggers>
-                                         <DataTrigger TargetType="Border" Binding="{Binding IsDateTypeBoth}" Value="False">
-                                             <Setter Property="Opacity" Value="0" />
-                                             <Setter Property="InputTransparent" Value="True" />
-                                         </DataTrigger>
-                                         <DataTrigger TargetType="Border" Binding="{Binding IsDateTypeBoth}" Value="True">
-                                             <Setter Property="Opacity" Value="1" />
-                                             <Setter Property="InputTransparent" Value="False" />
-                                         </DataTrigger>
-                                         <DataTrigger TargetType="Border"
-                                                      Binding="{Binding IsIssueToggle}"
-                                                      Value="True">
-                                             <Setter Property="BackgroundColor"
-                                                     Value="#007AFF" />
-                                         </DataTrigger>
- 
-                                         <DataTrigger TargetType="Border"
-                                                      Binding="{Binding IsIssueToggle}"
-                                                      Value="False">
-                                             <Setter Property="BackgroundColor"
-                                                     Value="#D0D0D0" />
-                                         </DataTrigger>
-                                     </Border.Triggers>
+                                        <DataTrigger TargetType="Border"
+                                                     Binding="{Binding IsDateTypeBoth}"
+                                                     Value="False">
+                                            <Setter Property="Opacity"
+                                                    Value="0" />
+                                            <Setter Property="InputTransparent"
+                                                    Value="True" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border"
+                                                     Binding="{Binding IsDateTypeBoth}"
+                                                     Value="True">
+                                            <Setter Property="Opacity"
+                                                    Value="1" />
+                                            <Setter Property="InputTransparent"
+                                                    Value="False" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border"
+                                                     Binding="{Binding IsIssueToggle}"
+                                                     Value="True">
+                                            <Setter Property="BackgroundColor"
+                                                    Value="#007AFF" />
+                                        </DataTrigger>
+
+                                        <DataTrigger TargetType="Border"
+                                                     Binding="{Binding IsIssueToggle}"
+                                                     Value="False">
+                                            <Setter Property="BackgroundColor"
+                                                    Value="#D0D0D0" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
 
                                     <Switch IsToggled="{Binding IsIssueToggle}"
                                             IsEnabled="{Binding IsToggleEnabled}"
@@ -657,16 +759,24 @@
 
                             </HorizontalStackLayout>
 
-                             <Label x:Name="LabelExpiryOrIssueDateNote"
-                                    FontSize="10">
+                            <Label x:Name="LabelExpiryOrIssueDateNote"
+                                   FontSize="10">
                                 <Label.Triggers>
-                                    <DataTrigger TargetType="Label" Binding="{Binding IsDateTypeBoth}" Value="False">
-                                        <Setter Property="Opacity" Value="0" />
-                                        <Setter Property="InputTransparent" Value="True" />
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding IsDateTypeBoth}"
+                                                 Value="False">
+                                        <Setter Property="Opacity"
+                                                Value="0" />
+                                        <Setter Property="InputTransparent"
+                                                Value="True" />
                                     </DataTrigger>
-                                    <DataTrigger TargetType="Label" Binding="{Binding IsDateTypeBoth}" Value="True">
-                                        <Setter Property="Opacity" Value="1" />
-                                        <Setter Property="InputTransparent" Value="False" />
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding IsDateTypeBoth}"
+                                                 Value="True">
+                                        <Setter Property="Opacity"
+                                                Value="1" />
+                                        <Setter Property="InputTransparent"
+                                                Value="False" />
                                     </DataTrigger>
                                 </Label.Triggers>
                                 <Label.FormattedText>

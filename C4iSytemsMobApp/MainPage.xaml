@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -1077,8 +1077,13 @@
                     <Button Text="HR Records"
                             Clicked="OnHrRecordsClicked" />
 
-                    <Button Text="PCAR Route"
-                            Clicked="OnPcarClicked" />
+                    <Button Text="Guard Roster"
+                            Clicked="OnRosterClicked" />
+
+                    <Button x:Name="PcarRouteButton"
+                            Text="PCAR Route"
+                            Clicked="OnPcarClicked"
+                            IsVisible="{Binding IsPcar}" />
 
                     <Button Text="SOP’s"
                             Clicked="OnSOPClicked" />

@@ -665,7 +665,7 @@ public partial class LogActivity : ContentPage
                         await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
                         continue; // Skip this file
                     }
-
+                    FilePickedCount++;
                     SelectedFiles.Add(new MyFileModel
                     {
                         File = file,
@@ -1237,47 +1237,7 @@ public partial class LogActivity : ContentPage
                 chkEditWithinField.IsChecked = true;
         }
     }
-
-    //private async void OnPickFileClicked(object sender, EventArgs e)
-    //{
-    //    try
-    //    {
-    //        var results = await FilePicker.PickMultipleAsync(); // Multiple files
-    //        if (results != null && results.Any())
-    //        {
-    //            // Allowed file extensions
-    //            string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
-
-    //            // Determine the file type based on the checkboxes
-    //            string fileType = chkRearFullPage.IsChecked ? "rear" : "twentyfive";
-
-    //            foreach (var file in results)
-    //            {
-    //                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-    //                if (!allowedExtensions.Contains(extension))
-    //                {
-    //                    await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
-    //                    continue; // Skip this file
-    //                }
-
-    //                SelectedFiles.Add(new MyFileModel
-    //                {
-    //                    File = file,
-    //                    FileType = fileType
-    //                });
-    //            }
-    //        }
-
-    //        // Show the file list only if it has items
-    //        FilesCollection.IsVisible = SelectedFiles.Any();
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
-    //    }
-    //}
-
-
+        
     private async void OnEditPickFileClicked(object sender, EventArgs e)
     {
         try
@@ -1388,72 +1348,17 @@ public partial class LogActivity : ContentPage
         }
     }
 
-
-    //    private async void OnSaveAndCloseClicked(object sender, EventArgs e)
-    //    {
-    //        try
-    //        {
-    //            using var client = new HttpClient();
-
-    //            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-    //            if (guardId <= 0 || clientSiteId <= 0 || userId <= 0)
-    //            {
-    //                await DisplayAlert("Error", "Invalid session. Please login again.", "OK");
-    //                return;
-    //            }
-
-    //            //  Build ONE multipart content for all files
-    //            var content = new MultipartFormDataContent
-    //        {
-    //            { new StringContent("rear"), "type" }, // or "twentyfive"
-    //            { new StringContent(guardId.ToString()), "guardId" },
-    //            { new StringContent(AppConfig.ApiBaseUrl), "url" }
-    //        };
-
-    //            //Add all files into the same request
-    //            foreach (var file in SelectedFiles)
-    //            {
-    //                if (file == null)
-    //                    continue;
-
-    //                var stream = await file.OpenReadAsync();
-    //                var fileContent = new StreamContent(stream);
-    //                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-
-    //                content.Add(fileContent, "files", file.FileName);
-    //                // "files" should match your backend handler's expected parameter name
-    //            }
-
-    //            //Send one request with all files
-    //            var uploadResponse = await client.PostAsync(
-    //    $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
-    //    content
-    //);
-
-    //            if (!uploadResponse.IsSuccessStatusCode)
-    //            {
-    //                await DisplayAlert("Error", "One or more files failed to upload.", "OK");
-    //            }
-    //            else
-    //            {
-    //                // Clear files only after successful upload
-    //                SelectedFiles.Clear();
-    //                await DisplayAlert("Success", "Activity saved and all files uploaded successfully.", "OK");
-    //            }
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            await DisplayAlert("Error", $"Save & Close failed: {ex.Message}", "OK");
-    //        }
-    //    }
-
-
     private async void OnSaveAndCloseClicked(object sender, EventArgs e)
     {
-        try
+
+        if (sender is Button btn)
         {
-            if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            btn.IsEnabled = false;
+            FileUploadLoadingOverlay.IsVisible = true;
+            try
+            {
+                if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
+                string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
             if (!App.IsOnline)
             {
@@ -1491,86 +1396,93 @@ public partial class LogActivity : ContentPage
                         DeviceName = devicename
                     };
 
-                    var r = await _scanDataDbService.SaveLogActivityDocumentsCacheData(offlineFilesRecords);
-                }
+                        var r = await _scanDataDbService.SaveLogActivityDocumentsCacheData(offlineFilesRecords);
+                    }
 
-                var _ChaceCount = _scanDataDbService.GetCacheRecordsCount();
-                UpdateCacheRecordCount(_ChaceCount);
+                    var _ChaceCount = _scanDataDbService.GetCacheRecordsCount();
+                    UpdateCacheRecordCount(_ChaceCount);
 
-                await DisplayAlert("Success", "All files saved to cache and will be uploaded when online.", "OK");
-            }
-            else
-            {
-                using var client = new HttpClient();
-                var content = new MultipartFormDataContent();
-
-                // Add files + types (same index order)
-                foreach (var fileModel in SelectedFiles)
-                {
-                    var stream = await fileModel.File.OpenReadAsync();
-                    var fileContent = new StreamContent(stream);
-                    fileContent.Headers.ContentType =
-                        new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-
-                    // Add file
-                    content.Add(fileContent, "files", fileModel.File.FileName);
-
-                    // Add matching type (rear / twentyfive / etc.)
-                    content.Add(new StringContent(fileModel.FileType), "types");
-                }
-
-                // Add other form data
-                content.Add(new StringContent(_guardId.ToString()), "guardId");
-                content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
-                content.Add(new StringContent(_userId.ToString()), "userId");
-                content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
-
-                // Send request
-                var uploadResponse = await client.PostAsync(
-                    $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
-                    content
-                );
-
-                if (!uploadResponse.IsSuccessStatusCode)
-                {
-                    await DisplayAlert("Error", "One or more files failed to upload.", "OK");
-                    // since error don't close popup
-                    return;
+                    await DisplayAlert("Success", "All files saved to cache and will be uploaded when online.", "OK");
                 }
                 else
                 {
-                    await DisplayAlert("Success", "All files uploaded successfully.", "OK");
+                    using var client = new HttpClient();
+                    var content = new MultipartFormDataContent();
+
+                    // Add files + types (same index order)
+                    foreach (var fileModel in SelectedFiles)
+                    {
+                        var stream = await fileModel.File.OpenReadAsync();
+                        var fileContent = new StreamContent(stream);
+                        fileContent.Headers.ContentType =
+                            new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+                        // Add file
+                        content.Add(fileContent, "files", fileModel.File.FileName);
+
+                        // Add matching type (rear / twentyfive / etc.)
+                        content.Add(new StringContent(fileModel.FileType), "types");
+                    }
+
+                    // Add other form data
+                    content.Add(new StringContent(_guardId.ToString()), "guardId");
+                    content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
+                    content.Add(new StringContent(_userId.ToString()), "userId");
+                    content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+
+                    // Send request
+                    var uploadResponse = await client.PostAsync(
+                        $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
+                        content
+                    );
+
+                    if (!uploadResponse.IsSuccessStatusCode)
+                    {
+                        await DisplayAlert("Error", "One or more files failed to upload.", "OK");
+                        // since error don't close popup
+                        return;
+                    }
+                    else
+                    {
+                        await DisplayAlert("Success", "All files uploaded successfully.", "OK");
+                    }
                 }
+
+
+
+                SelectedFiles.Clear();
+
+                // Small delay for smoother UI transition
+                await Task.Delay(300);
+
+                // Hide popup
+                PopupOverlay.IsVisible = false;
+
+                // Reset checkboxes to default values
+                chkRearFullPage.IsChecked = false;
+                chkWithinField.IsChecked = true;
+
+                // Clear the file list
+                if (FilesCollection.ItemsSource is ObservableCollection<MyFileModel> files)
+                {
+                    files.Clear();
+                }
+
+                // Hide the file list control
+                FilesCollection.IsVisible = false;
+
             }
-
-
-
-            SelectedFiles.Clear();
-
-            // Small delay for smoother UI transition
-            await Task.Delay(300);
-
-            // Hide popup
-            PopupOverlay.IsVisible = false;
-
-            // Reset checkboxes to default values
-            chkRearFullPage.IsChecked = false;
-            chkWithinField.IsChecked = true;
-
-            // Clear the file list
-            if (FilesCollection.ItemsSource is ObservableCollection<MyFileModel> files)
+            catch (Exception ex)
             {
-                files.Clear();
+                await DisplayAlert("Error", $"Save & Close failed: {ex.Message}", "OK");
             }
-
-            // Hide the file list control
-            FilesCollection.IsVisible = false;
-
+            finally
+            {
+                FileUploadLoadingOverlay.IsVisible = false;
+                btn.IsEnabled = true;                
+            }
         }
-        catch (Exception ex)
-        {
-            await DisplayAlert("Error", $"Save & Close failed: {ex.Message}", "OK");
-        }
+        
     }
 
     private void UpdateCacheRecordCount(int _ChaceCount)

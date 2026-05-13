@@ -82,7 +82,9 @@ namespace C4iSytemsMobApp.Services
             await CheckIfSmartWandIsDeRegisteredAsync(_clientSiteId); // Check if smartwand is deregistered before fetching tag info
             string savedSmartWandIdKeyName = $"{_clientSiteId}_SavedSmartWandId";
             var savedSmartWandId = Preferences.Get(savedSmartWandIdKeyName, 0);
-            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetScannerTagInfoData?siteId={_clientSiteId}&TagUid={_tagUid}&GuardId={_guardId}&UserId={_userId}&TagsTypeId={(int)_scannerType}&SmartWandId={savedSmartWandId}";
+            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinatesEncoded = Uri.EscapeDataString(gpsCoordinates);
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetScannerTagInfoData?siteId={_clientSiteId}&TagUid={_tagUid}&GuardId={_guardId}&UserId={_userId}&TagsTypeId={(int)_scannerType}&SmartWandId={savedSmartWandId}&gpsCoordinates={gpsCoordinatesEncoded}";
             // Here you would typically make an HTTP request to the API endpoint
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);

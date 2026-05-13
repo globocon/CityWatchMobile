@@ -42,7 +42,7 @@ public partial class MultiMedia : ContentPage
             if (videos != null)
             {
                 foreach (var video in videos)
-                {                    
+                {
                     VideoFiles.Add(video);
                 }
             }
@@ -193,46 +193,57 @@ public partial class MultiMedia : ContentPage
 
     private async void OnPickFileClicked(object sender, EventArgs e)
     {
-        try
+        if (sender is Button btn)
         {
-            var results = await FilePicker.PickMultipleAsync();
-            if (results != null && results.Any())
-            {
-                string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+            btn.IsEnabled = false;            
 
-                foreach (var file in results)
+            try
+            {
+                var results = await FilePicker.PickMultipleAsync();
+                if (results != null && results.Any())
                 {
-                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                    if (!allowedExtensions.Contains(extension))
+                    string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+
+                    foreach (var file in results)
                     {
-                        await DisplayAlert("Invalid File",
-                            $"File '{file.FileName}' is not a supported image type.", "OK");
-                        continue;
+                        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                        if (!allowedExtensions.Contains(extension))
+                        {
+                            await DisplayAlert("Invalid File",
+                                $"File '{file.FileName}' is not a supported image type.", "OK");
+                            continue;
+                        }
+
+                        // Default type is twentyfive unless user ticks "rear full page"
+                        string fileType = "twentyfive";
+
+                        SelectedFiles.Add(new MyFileModel
+                        {
+                            File = file,
+                            FileType = fileType
+                        });
                     }
 
-                    // Default type is twentyfive unless user ticks "rear full page"
-                    string fileType =  "twentyfive";
-
-                    SelectedFiles.Add(new MyFileModel
+                    if (SelectedFiles.Any())
                     {
-                        File = file,
-                        FileType = fileType
-                    });
-                }
-
-                if (SelectedFiles.Any())
-                {
-                    await UploadFileToApiAsync();
-                }
-                else
-                {
-                    await DisplayAlert("Notice", "No valid files selected.", "OK");
+                        FileUploadLoadingOverlay.IsVisible = true;
+                        await UploadFileToApiAsync();
+                    }
+                    else
+                    {
+                        await DisplayAlert("Notice", "No valid files selected.", "OK");
+                    }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
+            }
+            finally
+            {
+                FileUploadLoadingOverlay.IsVisible = false;
+                btn.IsEnabled = true;
+            }
         }
     }
 
@@ -285,9 +296,9 @@ public partial class MultiMedia : ContentPage
                 // Small delay for smoother UI transition
                 await Task.Delay(300);
 
-                
 
-                
+
+
             }
         }
         catch (Exception ex)
@@ -300,8 +311,8 @@ public partial class MultiMedia : ContentPage
     private async Task<(int guardId, int clientSiteId, int userId)> GetSecureStorageValues()
     {
         int.TryParse(Preferences.Get("GuardId", "0"), out int guardId);
-        int.TryParse(Preferences.Get("SelectedClientSiteId","0"), out int clientSiteId);
-        int.TryParse(Preferences.Get("UserId","0"), out int userId);
+        int.TryParse(Preferences.Get("SelectedClientSiteId", "0"), out int clientSiteId);
+        int.TryParse(Preferences.Get("UserId", "0"), out int userId);
 
         if (guardId <= 0)
         {
@@ -326,47 +337,57 @@ public partial class MultiMedia : ContentPage
 
     private async void OnPickVideoClicked(object sender, EventArgs e)
     {
-        try
+        if (sender is Button btn)
         {
-            var results = await FilePicker.PickMultipleAsync();
-            if (results != null && results.Any())
+            btn.IsEnabled = false;            
+            try
             {
-                // Allowed video extensions
-                string[] allowedExtensions = { ".mp4", ".mov", ".avi", ".mkv" };
-
-                foreach (var file in results)
+                var results = await FilePicker.PickMultipleAsync();
+                if (results != null && results.Any())
                 {
-                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                    if (!allowedExtensions.Contains(extension))
+                    // Allowed video extensions
+                    string[] allowedExtensions = { ".mp4", ".mov", ".avi", ".mkv" };
+
+                    foreach (var file in results)
                     {
-                        await DisplayAlert("Invalid File",
-                            $"File '{file.FileName}' is not a supported video type.", "OK");
-                        continue;
+                        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                        if (!allowedExtensions.Contains(extension))
+                        {
+                            await DisplayAlert("Invalid File",
+                                $"File '{file.FileName}' is not a supported video type.", "OK");
+                            continue;
+                        }
+
+                        // Default type is twentyfive unless user ticks "rear full page"
+                        string fileType = "video";
+
+                        SelectedFiles.Add(new MyFileModel
+                        {
+                            File = file,
+                            FileType = fileType
+                        });
                     }
 
-                    // Default type is twentyfive unless user ticks "rear full page"
-                    string fileType =   "video";
-
-                    SelectedFiles.Add(new MyFileModel
+                    if (SelectedFiles.Any())
                     {
-                        File = file,
-                        FileType = fileType
-                    });
-                }
-
-                if (SelectedFiles.Any())
-                {
-                    await UploadVideoToApiAsync();
-                }
-                else
-                {
-                    await DisplayAlert("Notice", "No valid videos selected.", "OK");
+                        FileUploadLoadingOverlay.IsVisible = true;
+                        await UploadVideoToApiAsync();
+                    }
+                    else
+                    {
+                        await DisplayAlert("Notice", "No valid videos selected.", "OK");
+                    }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlert("Error", $"Video picking failed: {ex.Message}", "OK");
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Video picking failed: {ex.Message}", "OK");
+            }
+            finally
+            {
+                btn.IsEnabled = true;
+                FileUploadLoadingOverlay.IsVisible = false;
+            }
         }
     }
 
@@ -430,7 +451,7 @@ public partial class MultiMedia : ContentPage
 
                 await Task.Delay(300);
 
-               
+
             }
         }
         catch (Exception ex)
