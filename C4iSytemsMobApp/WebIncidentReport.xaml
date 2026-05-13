@@ -641,6 +641,18 @@
                             </ScrollView>
                         </Frame>
 
+                        <!-- Integrity Declaration -->
+                        <Label Text="Integrity Declaration"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="Black" />
+                        <Editor x:Name="aiDeclarationEditor"
+                                HeightRequest="100"
+                                FontSize="14"
+                                BackgroundColor="White"
+                                TextColor="Black"
+                                AutoSize="TextChanges" />
+
 
                         <!-- Text Field instead of Dropdown -->
                         <Label Text="Supervisor or person you reported this to and/or will email:"
@@ -702,17 +714,6 @@
                        BorderColor="LightGray">
                     <VerticalStackLayout Spacing="10">
 
-                        <!-- AI Declaration -->
-                        <Label Text="AI Declaration"
-                               FontSize="14"
-                               FontAttributes="Bold"
-                               TextColor="Black" />
-                        <Editor x:Name="aiDeclarationEditor"
-                                HeightRequest="100"
-                                FontSize="14"
-                                BackgroundColor="White"
-                                TextColor="Black"
-                                AutoSize="TextChanges" />
 
                         <!-- Submit Button Only -->
                         <Button Text="Submit"
