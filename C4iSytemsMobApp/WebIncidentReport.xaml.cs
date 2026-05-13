@@ -1,4 +1,4 @@
-
+﻿
 using AutoMapper;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Data.Entity;
@@ -524,7 +524,8 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             //ApplyIncidentLocationState(incidentLocationCheckBox.IsChecked);
             clientAddressEntry.Text = reusedReport?.DateLocation?.ClientAddress ?? "";
 
-
+            // Initialize AI Declaration text
+            aiDeclarationEditor.Text = "For integrity reasons, I acknowledge and declare that this submission is genuine, and I have NOT incorporated artificial intelligence (Ai) tools in the completion of this document.  Where I have done so, the tool used was: __________  and the purpose was: ___________";
         }
         catch (Exception ex)
         {
@@ -1101,6 +1102,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 },
                 LinkedSerialNos = null,
                 Feedback = descriptionEditor?.Text ?? string.Empty,
+                AiDec = aiDeclarationEditor?.Text ?? string.Empty,
                 ReportedBy = supervisorEntry?.Text ?? string.Empty,
                 FeedbackType = _selectedTemplate?.Type ?? 0,
                 FeedbackTemplates = _selectedTemplate?.TemplateId ?? 0,
@@ -1177,7 +1179,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, result.Domin, false));
 
                 // Step 5: Notify user
-                await DisplayAlert("Test Mode", "Form data saved locally � no API call made.", "OK");
+                await DisplayAlert("Test Mode", "Form data saved locally Ã¢â‚¬â€ no API call made.", "OK");
             }
             else if (!App.IsOnline)
             {
