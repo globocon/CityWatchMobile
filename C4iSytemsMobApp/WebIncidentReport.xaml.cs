@@ -354,7 +354,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         // Initialize Integrity Declaration text
         if (string.IsNullOrWhiteSpace(aiDeclarationEditor.Text))
         {
-            aiDeclarationEditor.Text = "For integrity reasons, I acknowledge and declare that this submission is genuine, and I have NOT incorporated artificial intelligence (Ai) tools in the completion of this document.  Where I have done so, the tool used was: __________  and the purpose was: ___________";
+            aiDeclarationEditor.Text = "For integrity reasons, I acknowledge and declare that this submission is genuine, and I have NOT incorporated artificial intelligence (Ai) tools in the completion of this document. Where I have done so, the tool used was: __________ and the purpose was: ___________";
         }
 
         try
@@ -1182,7 +1182,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, result.Domin, false));
 
                 // Step 5: Notify user
-                await DisplayAlert("Test Mode", "Form data saved locally ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no API call made.", "OK");
+                await DisplayAlert("Test Mode", "Form data saved locally ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â no API call made.", "OK");
             }
             else if (!App.IsOnline)
             {

@@ -644,14 +644,18 @@
                         <!-- Integrity Declaration -->
                         <Label Text="Integrity Declaration"
                                FontSize="14"
-                               FontAttributes="Bold"
-                               TextColor="Black" />
-                        <Editor x:Name="aiDeclarationEditor"
-                                HeightRequest="100"
-                                FontSize="14"
-                                BackgroundColor="White"
-                                TextColor="Black"
-                                AutoSize="TextChanges" />
+                               HorizontalOptions="Start" />
+                        <Frame BorderColor="Gray"
+                               CornerRadius="6"
+                               Padding="0"
+                               HasShadow="False">
+                            <Editor x:Name="aiDeclarationEditor"
+                                    FontSize="14"
+                                    BackgroundColor="White"
+                                    TextColor="Black"
+                                    AutoSize="TextChanges"
+                                    Margin="0" />
+                        </Frame>
 
 
                         <!-- Text Field instead of Dropdown -->
