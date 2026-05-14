@@ -27,14 +27,14 @@
                    HorizontalOptions="CenterAndExpand"
                    HeightRequest="100"
                    MaxLength="50"
-                   IsEnabled="True" />
+                   IsEnabled="True"
+                   Keyboard="Numeric"/>
 
 
             <Button Text="Ok"
                     Clicked="OnOkClicked" />
 
             <Button Text="Cancel"
-                    TextColor="Red"
                     Clicked="OnCancelClicked" />
 
             <Button Text="Forgot PIN ?"
