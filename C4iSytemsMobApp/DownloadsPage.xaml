@@ -4,95 +4,9 @@
              x:Class="C4iSytemsMobApp.DownloadsPage"
              Title="Downloads">
 
-    <!--<VerticalStackLayout Padding="20" Spacing="10">
-
-        --><!-- Title --><!--
-        <Label x:Name="TitleLabel"
-               FontSize="24"
-               FontAttributes="Bold"
-               HorizontalOptions="Center" />
-
-        --><!-- Row with Back (left) and Home (right) --><!--
-        <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
-            --><!-- Back Button --><!--
-            <Button Text="← Back"
-                    Clicked="OnBackClicked"
-                    BackgroundColor="Transparent"
-                    TextColor="Blue"
-                    FontAttributes="Bold"
-                    HorizontalOptions="Start"
-                    Grid.Column="0" />
-
-            --><!-- Spacer --><!--
-            <BoxView WidthRequest="0" Grid.Column="1" />
-
-            --><!-- Home Button --><!--
-            <ImageButton Source="home.png"
-                         Clicked="OnHomeClicked"
-                         HeightRequest="30"
-                         WidthRequest="30"
-                         BackgroundColor="Transparent"
-                         HorizontalOptions="End"
-                         VerticalOptions="Center"
-                         Grid.Column="2" />
-        </Grid>
-
-        --><!-- File List --><!--
-        <CollectionView ItemsSource="{Binding StaffDocuments}"
-                Margin="10"
-                VerticalOptions="FillAndExpand">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Grid>
-                        --><!-- Add spacing around each card --><!--
-                        <Frame HasShadow="False"
-                       BackgroundColor="#f0f0f0"
-                       CornerRadius="8"
-                       Padding="10"
-                       Margin="0,5,0,5">
-                            --><!-- Top & Bottom spacing --><!--
-
-                            <Grid ColumnDefinitions="*,Auto"
-                          ColumnSpacing="10"
-                          VerticalOptions="Center">
-
-                                --><!-- File Name --><!--
-                                <Label Text="{Binding FileName}"
-                               FontSize="14"
-                               FontAttributes="Bold"
-                               TextColor="DarkSlateGray"
-                               LineBreakMode="WordWrap"
-                               MaxLines="2"
-                               Grid.Column="0"
-                               VerticalOptions="Center"
-                               HorizontalOptions="StartAndExpand" />
-
-                                --><!-- Download Button --><!--
-                                <ImageButton Source="download_icon.png"
-                                     CommandParameter="{Binding FilePath}"
-                                     Clicked="OnDownloadClicked"
-                                     BackgroundColor="Transparent"
-                                     WidthRequest="30"
-                                     HeightRequest="30"
-                                     Grid.Column="1"
-                                     VerticalOptions="Center"
-                                     HorizontalOptions="End" />
-                            </Grid>
-                        </Frame>
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-
-
-
-
-
-
-    </VerticalStackLayout>-->
-
-
-    <Grid RowDefinitions="Auto,Auto,*" Padding="20" RowSpacing="10">
+    <Grid RowDefinitions="Auto,Auto,*"
+          Padding="20"
+          RowSpacing="10">
 
         <!-- Title -->
         <Label x:Name="TitleLabel"
@@ -115,62 +29,73 @@
                     Grid.Column="0" />
 
             <!-- Spacer -->
-            <BoxView WidthRequest="0" Grid.Column="1" />
+            <BoxView WidthRequest="0"
+                     Grid.Column="1" />
 
-            <!-- Home Button -->
-            <ImageButton Source="home.png"
-                         Clicked="OnHomeClicked"
-                         HeightRequest="30"
-                         WidthRequest="30"
-                         BackgroundColor="Transparent"
-                         HorizontalOptions="End"
-                         VerticalOptions="Center"
-                         Grid.Column="2" />
+            <Frame Padding="0"
+                   HeightRequest="40"
+                   WidthRequest="40"
+                   CornerRadius="20"
+                   BackgroundColor="#007bff"
+                   HasShadow="False"
+                   HorizontalOptions="End"
+                   VerticalOptions="Center"
+                   Grid.Column="2">
+                <!-- Home Button -->
+                <ImageButton Source="home.png"
+                             Clicked="OnHomeClicked"
+                             HeightRequest="22"
+                             WidthRequest="22"
+                             BackgroundColor="Transparent"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center" />
+            </Frame>
         </Grid>
 
 
         <CollectionView ItemsSource="{Binding StaffDocuments}"
-                Margin="10"
-                VerticalOptions="FillAndExpand"
-                Grid.Row="2">
+                        Margin="10"
+                        VerticalOptions="FillAndExpand"
+                        Grid.Row="2">
             <CollectionView.ItemsLayout>
-                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+                <LinearItemsLayout Orientation="Vertical"
+                                   ItemSpacing="8" />
                 <!-- spacing between cards -->
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Frame HasShadow="False"
-                   BackgroundColor="#f0f0f0"    
-                        CornerRadius="8"
-                   Padding="10"
-                   Margin="0,5,0,5">
+                           BackgroundColor="#f0f0f0"
+                           CornerRadius="8"
+                           Padding="10"
+                           Margin="0,5,0,5">
                         <!-- top & bottom spacing -->
                         <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="10"
-                      VerticalOptions="Center">
+                              ColumnSpacing="10"
+                              VerticalOptions="Center">
 
                             <!-- File Name -->
                             <Label Text="{Binding FileName}"
-                           FontSize="14"
-                           FontAttributes="Bold"
-                           TextColor="DarkSlateGray"
-                           LineBreakMode="WordWrap"
-                           MaxLines="2"
-                           Grid.Column="0"
-                           VerticalOptions="Center"
-                           HorizontalOptions="StartAndExpand" />
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="DarkSlateGray"
+                                   LineBreakMode="WordWrap"
+                                   MaxLines="2"
+                                   Grid.Column="0"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="StartAndExpand" />
 
                             <!-- Download Button -->
                             <ImageButton Source="download_icon.png"
-                                 CommandParameter="{Binding FilePath}"
-                                 Clicked="OnDownloadClicked"
-                                 BackgroundColor="Transparent"
-                                 WidthRequest="30"
-                                 HeightRequest="30"
-                                 Grid.Column="1"
-                                 VerticalOptions="Center"
-                                 HorizontalOptions="End" />
+                                         CommandParameter="{Binding FilePath}"
+                                         Clicked="OnDownloadClicked"
+                                         BackgroundColor="Transparent"
+                                         WidthRequest="30"
+                                         HeightRequest="30"
+                                         Grid.Column="1"
+                                         VerticalOptions="Center"
+                                         HorizontalOptions="End" />
                         </Grid>
                     </Frame>
                 </DataTemplate>
@@ -179,7 +104,7 @@
 
 
 
-      
+
     </Grid>
 </ContentPage>
 

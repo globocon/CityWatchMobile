@@ -1,124 +1,126 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="C4iSytemsMobApp.DownloadIr"
-             >
+             x:Class="C4iSytemsMobApp.DownloadIr">
 
     <ScrollView>
-        <StackLayout Padding="2" Spacing="2" VerticalOptions="StartAndExpand">
+        <StackLayout Padding="2"
+                     Spacing="2"
+                     VerticalOptions="StartAndExpand">
 
             <!-- Top Buttons Row -->
-        <Grid ColumnDefinitions="*,*">
-            <!-- Back Button Left -->
-            <Button Text="← Back"
-            Clicked="OnBackClicked"
-            BackgroundColor="Transparent"
-            TextColor="Blue"
-            FontAttributes="Bold"
-            HorizontalOptions="Start"
-            Grid.Column="0" />
+            <Grid ColumnDefinitions="*,*">
+                <!-- Back Button Left -->
+                <Button Text="← Back"
+                        Clicked="OnBackClicked"
+                        BackgroundColor="Transparent"
+                        TextColor="Blue"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Start"
+                        Grid.Column="0" />
 
-            <!-- Home Icon Right -->
-            <ImageButton Source="home.png"
-                 Clicked="OnHomeClicked"
-                 HeightRequest="30"
-                 WidthRequest="30"
-                 BackgroundColor="Transparent"
-                 HorizontalOptions="End"
-                 VerticalOptions="Center"
-                 Grid.Column="1" />
-        </Grid>
+                <Frame Padding="0"
+                       HeightRequest="40"
+                       WidthRequest="40"
+                       CornerRadius="20"
+                       BackgroundColor="#007bff"
+                       HasShadow="False"
+                       HorizontalOptions="End"
+                       VerticalOptions="Center"
+                       Grid.Column="1">
+                    <!-- Home Icon Right -->
+                    <ImageButton Source="home.png"
+                                 Clicked="OnHomeClicked"
+                                 HeightRequest="22"
+                                 WidthRequest="22"
+                                 BackgroundColor="Transparent"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center" />
+                </Frame>
+            </Grid>
 
-        <!-- Title -->
-        <Label x:Name="ResultInfoLabel"
-    Text="Incident Report Submitted Successfully"
-    FontSize="20"
-    FontAttributes="Bold"
-    TextColor="DarkGreen"
-    HorizontalTextAlignment="Center"
-    Padding="10,5,10,5" />
+            <!-- Title -->
+            <Label x:Name="ResultInfoLabel"
+                   Text="Incident Report Submitted Successfully"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   TextColor="DarkGreen"
+                   HorizontalTextAlignment="Center"
+                   Padding="10,5,10,5" />
 
             <!-- Download Button -->
             <Button x:Name="DownloadButton"
-    Text="Download Report"
-    Clicked="OnDownloadClicked"
-    FontSize="14"
-    BackgroundColor="DarkGreen"
-    TextColor="White"
-    CornerRadius="10"
-    Padding="8,4"
-    WidthRequest="300"
-    HeightRequest="40"
-    HorizontalOptions="Center"
-    Margin="0,0,0,10" />
+                    Text="Download Report"
+                    Clicked="OnDownloadClicked"
+                    FontSize="14"
+                    BackgroundColor="DarkGreen"
+                    TextColor="White"
+                    CornerRadius="10"
+                    Padding="8,4"
+                    WidthRequest="300"
+                    HeightRequest="40"
+                    HorizontalOptions="Center"
+                    Margin="0,0,0,10" />
             <!-- Adds spacing below this button -->
 
             <!-- Re-use content button -->
-            <Button 
-    Text="Re-use content for another IR?"
-    Clicked="OnReuseClicked"
-    FontSize="14"
-    BackgroundColor="White"
-    TextColor="Green"
-    BorderColor="Green"
-    BorderWidth="2"
-    CornerRadius="10"
-    Padding="8,4"
-    WidthRequest="300"
-    HeightRequest="40"
-    HorizontalOptions="Center"
-    ImageSource="playnew.png"
-    ContentLayout="Left,10" />
+            <Button Text="Re-use content for another IR?"
+                    Clicked="OnReuseClicked"
+                    FontSize="14"
+                    BackgroundColor="White"
+                    TextColor="Green"
+                    BorderColor="Green"
+                    BorderWidth="2"
+                    CornerRadius="10"
+                    Padding="8,4"
+                    WidthRequest="300"
+                    HeightRequest="40"
+                    HorizontalOptions="Center"
+                    ImageSource="playnew.png"
+                    ContentLayout="Left,10" />
 
 
 
             <!-- Thank You Note -->
-            <Label 
-    x:Name="ThankYouLabel"
-    Text="Thank you! Your report has been emailed to CityWatch HQ and, if needed, to the client as well."
-    FontSize="13"
-    HorizontalTextAlignment="Center"
-    Padding="10"
-     />
+            <Label x:Name="ThankYouLabel"
+                   Text="Thank you! Your report has been emailed to CityWatch HQ and, if needed, to the client as well."
+                   FontSize="13"
+                   HorizontalTextAlignment="Center"
+                   Padding="10" />
 
 
 
-            <Frame
-    Padding="12"
-    Margin="8"
-    CornerRadius="10"
-    BorderColor="OrangeRed"
-    BackgroundColor="#FFF8E1"
-    HasShadow="True">
+            <Frame Padding="12"
+                   Margin="8"
+                   CornerRadius="10"
+                   BorderColor="OrangeRed"
+                   BackgroundColor="#FFF8E1"
+                   HasShadow="True">
 
                 <VerticalStackLayout Spacing="8">
 
                     <!-- Header section: icon + heading text -->
-                    <HorizontalStackLayout
-    Spacing="8"
-    VerticalOptions="Center"
-    HorizontalOptions="Center">
+                    <HorizontalStackLayout Spacing="8"
+                                           VerticalOptions="Center"
+                                           HorizontalOptions="Center">
 
-                        <Image
-        Source="warning.png"
-        WidthRequest="40"
-        HeightRequest="40"
-        VerticalOptions="Center"
-        HorizontalOptions="Center" />
+                        <Image Source="warning.png"
+                               WidthRequest="40"
+                               HeightRequest="40"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center" />
                     </HorizontalStackLayout>
 
                     <!-- Content paragraphs -->
-                    <Label
-            Text="Subject to site SOP's, some events will require the Client to be called on their mobile or SMS sent to alert them (e.g. FIRE issue, EPA issue, Flood, Break In etc)."
-            FontSize="13"
-            TextColor="Black"
-            LineBreakMode="WordWrap" />
+                    <Label Text="Subject to site SOP's, some events will require the Client to be called on their mobile or SMS sent to alert them (e.g. FIRE issue, EPA issue, Flood, Break In etc)."
+                           FontSize="13"
+                           TextColor="Black"
+                           LineBreakMode="WordWrap" />
 
-                    <Label
-            Text="Some incidents can be traumatic and stressful. Under 'Tools' hyperlink on system, all guards have access to Mental Health Support Weblinks and confidential Employee Assistance Programs (EAP)."
-            FontSize="13"
-            TextColor="Black"
-            LineBreakMode="WordWrap" />
+                    <Label Text="Some incidents can be traumatic and stressful. Under 'Tools' hyperlink on system, all guards have access to Mental Health Support Weblinks and confidential Employee Assistance Programs (EAP)."
+                           FontSize="13"
+                           TextColor="Black"
+                           LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
             </Frame>
 
