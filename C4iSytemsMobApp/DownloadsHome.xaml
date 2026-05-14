@@ -6,63 +6,65 @@
 
     <ScrollView>
 
-        <VerticalStackLayout Spacing="20" Padding="10">
+        <VerticalStackLayout Spacing="20"
+                             Padding="10">
 
 
-          
-                <!-- Row with Back (left) and Home (right) -->
-            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center" Padding="0,5">
+
+            <!-- Row with Back (left) and Home (right) -->
+            <Grid Grid.Row="0"
+                  ColumnDefinitions="Auto,*,Auto"
+                  VerticalOptions="Center"
+                  Padding="0,5">
 
                 <!-- Back Button -->
                 <Button Text="← Back"
-        Clicked="OnBackClicked"
-        BackgroundColor="Transparent"
-        TextColor="Blue"
-        FontAttributes="Bold"
-        HorizontalOptions="Start"
-        VerticalOptions="Center"
-        Grid.Column="0" />
+                        Clicked="OnBackClicked"
+                        BackgroundColor="Transparent"
+                        TextColor="Blue"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Start"
+                        VerticalOptions="Center"
+                        Grid.Column="0" />
 
                 <!-- Title Label -->
                 <Label Text="Downloads"
-       FontSize="16"
-       FontAttributes="Bold"
-       HorizontalOptions="Center"
-       VerticalOptions="Center"
-       Grid.Column="1"
-       TextColor="Black" />
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       Grid.Column="1"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
                 <!-- Home Button -->
                 <ImageButton Source="home.png"
-             Clicked="OnHomeClicked"
-             HeightRequest="30"
-             WidthRequest="30"
-             BackgroundColor="Transparent"
-             HorizontalOptions="End"
-             VerticalOptions="Center"
-             Grid.Column="2" />
+                             Clicked="OnHomeClicked"
+                             HeightRequest="30"
+                             WidthRequest="30"
+                             BackgroundColor="Transparent"
+                             HorizontalOptions="End"
+                             VerticalOptions="Center"
+                             Grid.Column="2" />
             </Grid>
 
 
 
 
             <!-- Main Buttons -->
-            <VerticalStackLayout Padding="5" Spacing="15">
+            <VerticalStackLayout Padding="5"
+                                 Spacing="15">
 
                 <Button Text="Company SOPs"
-            Clicked="OnCompanySopClicked"
-            
-            FontAttributes="Bold" />
+                        Clicked="OnCompanySopClicked"
+                        FontAttributes="Bold" />
 
                 <Button Text="Training"
-            Clicked="OnTrainingClicked"
-           
-            FontAttributes="Bold" />
+                        Clicked="OnTrainingClicked"
+                        FontAttributes="Bold" />
 
                 <Button Text="Forms &amp; Templates"
-            Clicked="OnFormsClicked"
-           
-            FontAttributes="Bold" />
+                        Clicked="OnFormsClicked"
+                        FontAttributes="Bold" />
 
             </VerticalStackLayout>
 
