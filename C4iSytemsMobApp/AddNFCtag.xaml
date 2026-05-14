@@ -73,10 +73,10 @@
                              HorizontalOptions="FillAndExpand"
                              Spacing="1">
                     <Label x:Name="LabelTagInfo"
-                       Text="Tag Label"
+                           Text="Tag Label"
                            VerticalOptions="Center"
                            HorizontalOptions="Start"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
                     <Entry x:Name="txtTagLabel"
                            Margin="0,5,0,0"
@@ -85,7 +85,7 @@
                            VerticalOptions="Center"
                            HeightRequest="100"
                            MaxLength="100"
-                           IsEnabled="True"/>
+                           IsEnabled="True" />
                 </StackLayout>
 
             </Frame>
@@ -110,7 +110,7 @@
                 <Frame.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnSaveTagClicked" />
                 </Frame.GestureRecognizers>
-                
+
                 <Label x:Name="button_label_save"
                        Text="Save"
                        VerticalOptions="Center"
@@ -147,6 +147,6 @@
                        TextColor="{AppThemeBinding Light=White, Dark=Black}" />
 
             </Frame>
-        </Grid>        
+        </Grid>
     </AbsoluteLayout>
 </ContentPage>

@@ -8,52 +8,76 @@
     <Grid RowDefinitions="Auto,*">
         <!-- Top Bar with Back and Home Buttons -->
         <!-- Row with Back (left) and Home (right) -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center" Padding="0,5">
+        <Grid Grid.Row="0"
+              ColumnDefinitions="Auto,*,Auto"
+              VerticalOptions="Center"
+              Padding="0,5">
 
             <!-- Back Button -->
             <Button Text="← Back"
-                Clicked="OnBackClicked"
-                BackgroundColor="Transparent"
-                TextColor="Blue"
-                FontAttributes="Bold"
-                HorizontalOptions="Start"
-                VerticalOptions="Center"
-                Grid.Column="0" />
+                    Clicked="OnBackClicked"
+                    BackgroundColor="Transparent"
+                    TextColor="Blue"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Start"
+                    VerticalOptions="Center"
+                    Grid.Column="0" />
 
             <!-- Title Label -->
             <Label Text="Tools"
-               FontSize="16"
-               FontAttributes="Bold"
-               HorizontalOptions="Center"
-               VerticalOptions="Center"
-               Grid.Column="1"
-               TextColor="Black" />
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Grid.Column="1"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
-            <!-- Home Button -->
-            <ImageButton Source="home.png"
-                     Clicked="OnHomeClicked"
-                     HeightRequest="30"
-                     WidthRequest="30"
-                     BackgroundColor="Transparent"
-                     HorizontalOptions="End"
-                     VerticalOptions="Center"
-                     Grid.Column="2" />
+            <Frame Padding="0"
+                   HeightRequest="40"
+                   WidthRequest="40"
+                   CornerRadius="20"
+                   BackgroundColor="#007bff"
+                   HasShadow="False"
+                   HorizontalOptions="End"
+                   VerticalOptions="Center"
+                   Grid.Column="2">
+                <!-- Home Button -->
+                <ImageButton Source="home.png"
+                             Clicked="OnHomeClicked"
+                             HeightRequest="22"
+                             WidthRequest="22"
+                             BackgroundColor="Transparent"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center" />
+            </Frame>
         </Grid>
 
         <!-- Scrollable Content -->
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="10" Spacing="10">
-                <Button Text="IT Tools" Clicked="OnButtonClicked" />
-                <Button Text="Mental Health &amp; Support" Clicked="OnButtonClicked" />
-                <Button Text="NATIONAL / COMMONWEALTH" Clicked="OnButtonClicked" />
-                <Button Text="STATE - ACT" Clicked="OnButtonClicked" />
-                <Button Text="STATE - SA" Clicked="OnButtonClicked" />
-                <Button Text="STATE - NSW" Clicked="OnButtonClicked" />
-                <Button Text="STATE - TAS" Clicked="OnButtonClicked" />
-                <Button Text="STATE - NT" Clicked="OnButtonClicked" />
-                <Button Text="STATE - VIC" Clicked="OnButtonClicked" />
-                <Button Text="STATE - QLD" Clicked="OnButtonClicked" />
-                <Button Text="STATE - WA" Clicked="OnButtonClicked" />
+            <VerticalStackLayout Padding="10"
+                                 Spacing="10">
+                <Button Text="IT Tools"
+                        Clicked="OnButtonClicked" />
+                <Button Text="Mental Health &amp; Support"
+                        Clicked="OnButtonClicked" />
+                <Button Text="NATIONAL / COMMONWEALTH"
+                        Clicked="OnButtonClicked" />
+                <Button Text="STATE - ACT"
+                        Clicked="OnButtonClicked" />
+                <Button Text="STATE - SA"
+                        Clicked="OnButtonClicked" />
+                <Button Text="STATE - NSW"
+                        Clicked="OnButtonClicked" />
+                <Button Text="STATE - TAS"
+                        Clicked="OnButtonClicked" />
+                <Button Text="STATE - NT"
+                        Clicked="OnButtonClicked" />
+                <Button Text="STATE - VIC"
+                        Clicked="OnButtonClicked" />
+                <Button Text="STATE - QLD"
+                        Clicked="OnButtonClicked" />
+                <Button Text="STATE - WA"
+                        Clicked="OnButtonClicked" />
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

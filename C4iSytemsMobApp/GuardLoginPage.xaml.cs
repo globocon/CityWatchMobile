@@ -520,6 +520,8 @@ public partial class GuardLoginPage : ContentPage
 
         CalendarEventsCollectionView.IsVisible = true;
         LiveEventsCollectionView.IsVisible = true;
+        FrameliveEvents.IsVisible = false;
+        FrameCalendarEvents.IsVisible = false;
 
         if (string.IsNullOrWhiteSpace(licenseNumber))
         {
@@ -554,16 +556,21 @@ public partial class GuardLoginPage : ContentPage
             }
 
             if (guardData?.LiveEventsNotExpired != null)
-            {                
-                LiveEventWebLink = guardData.LiveEventsweblink;
+            {
+                if (!string.IsNullOrEmpty(guardData?.LiveEventsNotExpired))
+                {
+                    LiveEventWebLink = guardData.LiveEventsweblink;
 
-                LiveBannerEvents.Clear();
-                LiveBannerEvents.Add(new BroadcastBannerLiveEvents() { 
-                    TextMessage = guardData.LiveEventsNotExpired, 
-                    LiveEventWebLink = guardData.LiveEventsweblink 
-                });
-                LiveEventsCollectionView.IsVisible = true;
-                vslCalendarLiveEvents.IsVisible = true;
+                    LiveBannerEvents.Clear();
+                    LiveBannerEvents.Add(new BroadcastBannerLiveEvents()
+                    {
+                        TextMessage = guardData.LiveEventsNotExpired,
+                        LiveEventWebLink = guardData.LiveEventsweblink
+                    });
+                    LiveEventsCollectionView.IsVisible = true;
+                    vslCalendarLiveEvents.IsVisible = true;
+                    FrameliveEvents.IsVisible = true;
+                }
             }
 
             if (guardData?.CalendarEvents?.Count > 0 && guardData.CalendarEvents != null && guardData.CalendarEvents.Any())
@@ -575,6 +582,7 @@ public partial class GuardLoginPage : ContentPage
                 }
                 CalendarEventsCollectionView.IsVisible = true;
                 vslCalendarLiveEvents.IsVisible = true;
+                FrameCalendarEvents.IsVisible = true;
             }
 
             if (!isLoggedIn)
