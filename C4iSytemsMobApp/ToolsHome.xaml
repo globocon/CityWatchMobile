@@ -30,7 +30,7 @@
                    HorizontalOptions="Center"
                    VerticalOptions="Center"
                    Grid.Column="1"
-                   TextColor="Black" />
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
             <!-- Blue circular Home Button -->
             <Frame Padding="0"
