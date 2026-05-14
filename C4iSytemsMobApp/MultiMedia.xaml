@@ -21,22 +21,34 @@
             <Grid ColumnDefinitions="*, Auto"
                     Padding="2"
                     Grid.Row="0">
+                    
                 <Label Text="MultiMedia"
                        FontSize="14"
                        FontAttributes="Bold"
                        VerticalOptions="Center"
                        HorizontalOptions="Start"
-                       TextColor="Black"/>
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
-                <ImageButton
-                    Source="home.png"
-                    Clicked="OnBackButtonClicked"
-                    HeightRequest="30"
-                    WidthRequest="30"
-                    BackgroundColor="Transparent"
+                <!-- Blue circular Home Button -->
+                <Frame Padding="0"
+                    HeightRequest="40"
+                    WidthRequest="40"
+                    CornerRadius="20"
+                    BackgroundColor="#007bff"
+                    HasShadow="False"
                     HorizontalOptions="End"
                     VerticalOptions="Center"
-                    Grid.Column="1"/>
+                    Grid.Column="1">
+
+                    <ImageButton
+                        Source="home.png"
+                        Clicked="OnBackButtonClicked"
+                        HeightRequest="30"
+                        WidthRequest="30"
+                        BackgroundColor="Transparent"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"/>
+                </Frame>
             </Grid>
 
             <!-- Video list -->

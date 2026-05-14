@@ -29,17 +29,26 @@
                            HorizontalOptions="Center"
                            VerticalOptions="Center"
                            Grid.Column="0"
-                           TextColor="Black" />
-
-                    <!-- Home Button -->
-                    <ImageButton Source="home.png"
-                                 Clicked="OnHomeClicked"
-                                 HeightRequest="30"
-                                 WidthRequest="30"
-                                 BackgroundColor="Transparent"
-                                 HorizontalOptions="End"
-                                 VerticalOptions="Center"
-                                 Grid.Column="2" />
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    <!-- Blue circular Home Button -->
+                    <Frame Padding="0"
+                        HeightRequest="40"
+                        WidthRequest="40"
+                        CornerRadius="20"
+                        BackgroundColor="#007bff"
+                        HasShadow="False"
+                        HorizontalOptions="End"
+                        VerticalOptions="Center"
+                        Grid.Column="2">
+                            <!-- Home Button -->
+                            <ImageButton Source="home.png"
+                                        Clicked="OnHomeClicked"
+                                        HeightRequest="30"
+                                        WidthRequest="30"
+                                        BackgroundColor="Transparent"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"/>
+                        </Frame>
                 </Grid>
                 <!-- Event Type Container with Border -->
                 <Frame CornerRadius="10"

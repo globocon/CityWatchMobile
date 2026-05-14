@@ -6,49 +6,56 @@
     <Grid Padding="2" Margin="0">
         <!-- Main content -->
         <StackLayout Padding="0" Margin="0" Spacing="10">
-
             <!-- Title and Buttons Row -->
            <Grid ColumnDefinitions="*, Auto"  Margin="0">
     
-    <!-- Label on the left -->
-    <Label Text="Audio"
-           FontSize="14"
-           FontAttributes="Bold"
-           VerticalOptions="Center"
-           HorizontalOptions="Start"
-           TextColor="Black"
-          
-           Grid.Column="0"/>
+                <!-- Label on the left -->
+                <Label Text="Audio"
+                    FontSize="14"
+                    FontAttributes="Bold"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Start"
+                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                    Grid.Column="0"/>
 
-    <!-- Buttons on the right -->
-    <HorizontalStackLayout Grid.Column="1" Spacing="5" VerticalOptions="Center" HorizontalOptions="End">
-        <Button x:Name="LoopPlaybackButton"
-                Text="☑ Repeat Play"
-                IsEnabled="True"
-                Clicked="LoopPlaybackButton_Clicked"
-                BackgroundColor="Green"
-                TextColor="White"
-                FontAttributes="Bold"
-                Padding="10,5"
-                VerticalOptions="Center"/>
+                <!-- Buttons on the right -->
+                <HorizontalStackLayout Grid.Column="1" Spacing="5" VerticalOptions="Center" HorizontalOptions="End">
+                    <Button x:Name="LoopPlaybackButton"
+                            Text="☑ Repeat Play"
+                            IsEnabled="True"
+                            Clicked="LoopPlaybackButton_Clicked"
+                            BackgroundColor="Green"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            Padding="10,5"
+                            VerticalOptions="Center"/>
 
-        <ImageButton Source="play.png"
-                     Clicked="OnStopButtonClicked"
-                     HeightRequest="30"
-                     WidthRequest="30"
-                     BackgroundColor="Transparent"
-                     IsEnabled="False"
-                     x:Name="StopButton"
-                     VerticalOptions="Center"/>
-
-        <ImageButton Source="home.png"
-                     Clicked="OnBackButtonClicked"
-                     HeightRequest="30"
-                     WidthRequest="30"
-                     BackgroundColor="Transparent"
-                     VerticalOptions="Center"/>
-    </HorizontalStackLayout>
-</Grid>
+                    <ImageButton Source="play.png"
+                                Clicked="OnStopButtonClicked"
+                                HeightRequest="30"
+                                WidthRequest="30"
+                                BackgroundColor="Transparent"
+                                IsEnabled="False"
+                                x:Name="StopButton"
+                                VerticalOptions="Center"/>
+                    <!-- Blue circular Home Button -->
+                    <Frame Padding="0"
+                            HeightRequest="40"
+                            WidthRequest="40"
+                            CornerRadius="20"
+                            BackgroundColor="#007bff"
+                            HasShadow="False"
+                            HorizontalOptions="End"
+                            VerticalOptions="Center">
+                        <ImageButton Source="home.png"
+                                    Clicked="OnBackButtonClicked"
+                                    HeightRequest="22"
+                                    WidthRequest="22"
+                                    BackgroundColor="Transparent"
+                                    VerticalOptions="Center"/>
+                    </Frame>
+                </HorizontalStackLayout>
+            </Grid>
 
 
             <!-- Loading Indicator -->

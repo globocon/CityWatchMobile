@@ -332,7 +332,7 @@ public partial class GuardLoginPage : ContentPage
             //SuggestionsFrame.IsVisible = false;
         }
 
-    ((CollectionView)sender).SelectedItem = null;
+        ((CollectionView)sender).SelectedItem = null;
     }
 
     private void RestorePreviousSelection()
@@ -554,22 +554,23 @@ public partial class GuardLoginPage : ContentPage
             }
 
             if (guardData?.LiveEventsNotExpired != null)
-            {                
+            {
                 LiveEventWebLink = guardData.LiveEventsweblink;
 
                 LiveBannerEvents.Clear();
-                LiveBannerEvents.Add(new BroadcastBannerLiveEvents() { 
-                    TextMessage = guardData.LiveEventsNotExpired, 
-                    LiveEventWebLink = guardData.LiveEventsweblink 
+                LiveBannerEvents.Add(new BroadcastBannerLiveEvents()
+                {
+                    TextMessage = guardData.LiveEventsNotExpired,
+                    LiveEventWebLink = guardData.LiveEventsweblink
                 });
                 LiveEventsCollectionView.IsVisible = true;
                 vslCalendarLiveEvents.IsVisible = true;
             }
 
             if (guardData?.CalendarEvents?.Count > 0 && guardData.CalendarEvents != null && guardData.CalendarEvents.Any())
-            {                
+            {
                 BannerCalendarEvents.Clear();
-                foreach(var r in guardData.CalendarEvents.OrderBy(x => x.StartDate).ToList())
+                foreach (var r in guardData.CalendarEvents.OrderBy(x => x.StartDate).ToList())
                 {
                     BannerCalendarEvents.Add(r);
                 }
@@ -651,7 +652,7 @@ public partial class GuardLoginPage : ContentPage
             await DisplayAlert("Error", "Network error: " + ex.Message + ". Please ensure you are online and have an internet connection", "OK");
         }
     }
-       
+
     private void SetLedColor(BoxView led, string status)
     {
         switch (status?.Trim().ToLower())
@@ -789,7 +790,7 @@ public partial class GuardLoginPage : ContentPage
             if (string.IsNullOrWhiteSpace(gpsCoordinates))
             {
                 if (DeviceInfo.Platform == DevicePlatform.iOS)
-                 {
+                {
                     // Check and get saved GPS coordinates of the selected client site
                     // If Patrol car then Gps can be wrong
                     var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSiteDetails/{Uri.EscapeDataString(clientSiteIdString)}";
@@ -815,14 +816,14 @@ public partial class GuardLoginPage : ContentPage
                             gpsCoordinates = "0,0";
                         }
                     }
-                 }
+                }
                 else
                 {
                     await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
-                    return; 
+                    return;
                 }
             }
-            
+
             PostActivityRequest request = new PostActivityRequest()
             {
                 guardId = guardId,
@@ -853,9 +854,9 @@ public partial class GuardLoginPage : ContentPage
                     UpdateInfoLabel("Processing Offline Data...Please wait...");
                     string contentData = await response.Content.ReadAsStringAsync();
                     var responseJson = JsonSerializer.Deserialize<JsonElement>(contentData);
-                     int tourMode = responseJson.GetProperty("tourMode").GetInt32();
-                     App.TourMode = (PatrolTouringMode)tourMode;
-                     Preferences.Set("IsPcarSite", (tourMode == 1).ToString().ToLower());
+                    int tourMode = responseJson.GetProperty("tourMode").GetInt32();
+                    App.TourMode = (PatrolTouringMode)tourMode;
+                    Preferences.Set("IsPcarSite", (tourMode == 1).ToString().ToLower());
 
                     try
                     {
@@ -1419,7 +1420,7 @@ public partial class GuardLoginPage : ContentPage
     {
         string fileName = CommonHelper.GetSanitizedFileNameFromUrl(serverUrl);
         string localFileNameWithPath = Path.Combine(localPath, fileName);
-        //return "";
+        return "";
         try
         {
             using var client = new HttpClient

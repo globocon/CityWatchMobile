@@ -1384,9 +1384,6 @@ public partial class LogActivity : ContentPage
 
     private async void OnSaveAndCloseClicked(object sender, EventArgs e)
     {
-
-    private async void OnSaveAndCloseClicked(object sender, EventArgs e)
-    {
         if (sender is Button btn)
         {
             btn.IsEnabled = false;
