@@ -21,14 +21,25 @@
                    Grid.Column="1"
                    TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
-            <ImageButton Source="home.png"
-                         Clicked="OnHomeClicked"
-                         HeightRequest="30"
-                         WidthRequest="30"
-                         BackgroundColor="Transparent"
-                         HorizontalOptions="End"
-                         VerticalOptions="Center"
-                         Grid.Column="2" />
+            <!-- Blue circular Home Button -->
+            <Frame Padding="0"
+                   HeightRequest="40"
+                   WidthRequest="40"
+                   CornerRadius="20"
+                   BackgroundColor="#007bff"
+                   HasShadow="False"
+                   HorizontalOptions="End"
+                   VerticalOptions="Center"
+                   Grid.Column="2">
+
+                <ImageButton Source="home.png"
+                             Clicked="OnHomeClicked"
+                             HeightRequest="22"
+                             WidthRequest="22"
+                             BackgroundColor="Transparent"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center" />
+            </Frame>
         </Grid>
 
         <!-- Scrollable CollectionView -->

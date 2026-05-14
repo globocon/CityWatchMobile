@@ -43,8 +43,8 @@
                     <ImageButton
                         Source="home.png"
                         Clicked="OnBackButtonClicked"
-                        HeightRequest="30"
-                        WidthRequest="30"
+                        HeightRequest="22"
+                        WidthRequest="22"
                         BackgroundColor="Transparent"
                         HorizontalOptions="Center"
                         VerticalOptions="Center"/>

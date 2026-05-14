@@ -518,8 +518,10 @@ public partial class GuardLoginPage : ContentPage
         LiveBannerEvents.Clear();
         BannerCalendarEvents.Clear();
 
-        CalendarEventsCollectionView.IsVisible = true;
-        LiveEventsCollectionView.IsVisible = true;
+        FrameliveEvents.IsVisible = false;
+        FrameCalendarEvents.IsVisible = false;
+        CalendarEventsCollectionView.IsVisible = false;
+        LiveEventsCollectionView.IsVisible = false;
 
         if (string.IsNullOrWhiteSpace(licenseNumber))
         {
@@ -565,6 +567,7 @@ public partial class GuardLoginPage : ContentPage
                 });
                 LiveEventsCollectionView.IsVisible = true;
                 vslCalendarLiveEvents.IsVisible = true;
+                FrameliveEvents.IsVisible = true;
             }
 
             if (guardData?.CalendarEvents?.Count > 0 && guardData.CalendarEvents != null && guardData.CalendarEvents.Any())
@@ -576,6 +579,7 @@ public partial class GuardLoginPage : ContentPage
                 }
                 CalendarEventsCollectionView.IsVisible = true;
                 vslCalendarLiveEvents.IsVisible = true;
+                FrameCalendarEvents.IsVisible = true;
             }
 
             if (!isLoggedIn)

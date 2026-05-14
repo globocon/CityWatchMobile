@@ -211,7 +211,7 @@
             <!-- HR Status Indicators -->
             <HorizontalStackLayout x:Name="hrStatusLayout"
                                    Spacing="60"
-                                   Margin="0,20,0,0"
+                                   Margin="0,20,0,10"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"
                                    IsVisible="False"
@@ -285,6 +285,7 @@
                   HeightRequest="280">
                 <!-- Live Events Header -->
                 <Frame Grid.Row="0"
+                       x:Name="FrameliveEvents"
                        CornerRadius="5"
                        HasShadow="False"
                        BackgroundColor="#ea6326"
@@ -350,6 +351,7 @@
 
                 <!-- Calendar Events Header-->
                 <Frame Grid.Row="2"
+                       x:Name="FrameCalendarEvents"
                        CornerRadius="5"
                        HasShadow="False"
                        BackgroundColor="DodgerBlue"
