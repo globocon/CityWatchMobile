@@ -556,17 +556,21 @@ public partial class GuardLoginPage : ContentPage
             }
 
             if (guardData?.LiveEventsNotExpired != null)
-            {                
-                LiveEventWebLink = guardData.LiveEventsweblink;
+            {
+                if (!string.IsNullOrEmpty(guardData?.LiveEventsNotExpired))
+                {
+                    LiveEventWebLink = guardData.LiveEventsweblink;
 
-                LiveBannerEvents.Clear();
-                LiveBannerEvents.Add(new BroadcastBannerLiveEvents() { 
-                    TextMessage = guardData.LiveEventsNotExpired, 
-                    LiveEventWebLink = guardData.LiveEventsweblink 
-                });
-                LiveEventsCollectionView.IsVisible = true;
-                vslCalendarLiveEvents.IsVisible = true;
-                FrameliveEvents.IsVisible = true;
+                    LiveBannerEvents.Clear();
+                    LiveBannerEvents.Add(new BroadcastBannerLiveEvents()
+                    {
+                        TextMessage = guardData.LiveEventsNotExpired,
+                        LiveEventWebLink = guardData.LiveEventsweblink
+                    });
+                    LiveEventsCollectionView.IsVisible = true;
+                    vslCalendarLiveEvents.IsVisible = true;
+                    FrameliveEvents.IsVisible = true;
+                }
             }
 
             if (guardData?.CalendarEvents?.Count > 0 && guardData.CalendarEvents != null && guardData.CalendarEvents.Any())
