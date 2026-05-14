@@ -26,16 +26,25 @@
                        FontAttributes="Bold"
                        VerticalOptions="Center"
                        HorizontalOptions="Start"
-                       TextColor="Black" />
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
-                <ImageButton Source="home.png"
-                             Clicked="OnBackButtonClicked"
-                             HeightRequest="30"
-                             WidthRequest="30"
-                             BackgroundColor="Transparent"
-                             HorizontalOptions="End"
-                             VerticalOptions="Center"
-                             Grid.Column="1" />
+                <Frame Padding="0"
+                       HeightRequest="40"
+                       WidthRequest="40"
+                       CornerRadius="20"
+                       BackgroundColor="#007bff"
+                       HasShadow="False"
+                       HorizontalOptions="End"
+                       VerticalOptions="Center"
+                       Grid.Column="1">
+                    <ImageButton Source="home.png"
+                                 Clicked="OnBackButtonClicked"
+                                 HeightRequest="22"
+                                 WidthRequest="22"
+                                 BackgroundColor="Transparent"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center" />
+                </Frame>
             </Grid>
 
             <!-- Video list -->
@@ -117,7 +126,7 @@
                                 ShouldAutoPlay="True" />
         </Grid>
 
-       
+
 
     </AbsoluteLayout>
 </ContentPage>
