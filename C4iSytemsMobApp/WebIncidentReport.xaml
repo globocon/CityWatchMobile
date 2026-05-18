@@ -748,21 +748,20 @@
         <StackLayout x:Name="FileTypeSelectorPopUp"
                      BackgroundColor="#80000000"
                      IsVisible="False"
-                     VerticalOptions="Center"
-                     HorizontalOptions="Center"
-                     AbsoluteLayout.LayoutBounds="0.5,0.5,-1,-1"
-                     AbsoluteLayout.LayoutFlags="PositionProportional"
+                     AbsoluteLayout.LayoutBounds="0,0,1,1"
+                     AbsoluteLayout.LayoutFlags="All"
                      Padding="20"
                      ZIndex="100">
             <Frame BackgroundColor="White"
                    CornerRadius="10"
                    Padding="5"
+                   WidthRequest="300"
                    HorizontalOptions="Center"
                    VerticalOptions="Center">
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
                     <VerticalStackLayout Grid.Row="0"
                                          Padding="0,2,0,2">
-                        <Button Text="Choose Image From Phone\n (.bmp, .jpeg, .jpg, .png, .heic, .gif)"
+                        <Button Text="Choose Image From Phone&#x0a; (.bmp, .jpeg, .jpg, .png, .heic, .gif)"
                                 Clicked="OnAttachImageClicked"
                                 BackgroundColor="Green"
                                 TextColor="White"
@@ -771,7 +770,8 @@
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Row="1"
                                          Padding="0,2,0,2">
-                        <Button Text="Choose Audio&#10;(.mp3)"
+                        <Button Text="Choose Audio
+                                (.mp3)"
                                 Clicked="OnAttachAudioClicked"
                                 BackgroundColor="Green"
                                 TextColor="White"
@@ -780,7 +780,7 @@
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Row="2"
                                          Padding="0,2,0,2">
-                        <Button Text="Choose Video From Phone\n (.avi, .mp4)"
+                        <Button Text="Choose Video From Phone&#x0a; (.avi, .mp4)"
                                 Clicked="OnAttachVideoClicked"
                                 BackgroundColor="Green"
                                 TextColor="White"
@@ -789,7 +789,8 @@
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Row="3" 
                                          Padding="0,2,0,2">
-                        <Button Text="Choose from iCloud Drive\n (.pdf, .xlsx)"
+                        <Button Text="Choose from iCloud Drive
+                                (.pdf, .xlsx)"
                                 Clicked="OnAttachDocumentClicked"
                                 BackgroundColor="Green"
                                 TextColor="White"
