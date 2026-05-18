@@ -748,8 +748,8 @@
         <StackLayout x:Name="FileTypeSelectorPopUp"
                      BackgroundColor="#80000000"
                      IsVisible="False"
-                     AbsoluteLayout.LayoutBounds="0,0,1,1"
-                     AbsoluteLayout.LayoutFlags="All"
+                     AbsoluteLayout.LayoutBounds="0.5,0.5,-1,-1"
+                     AbsoluteLayout.LayoutFlags="PositionProportional"
                      Padding="20"
                      ZIndex="100">
             <Frame BackgroundColor="White"
@@ -761,12 +761,18 @@
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
                     <VerticalStackLayout Grid.Row="0"
                                          Padding="0,2,0,2">
-                        <Button Text="Choose Image From Phone&#x0a; (.bmp, .jpeg, .jpg, .png, .heic, .gif)"
-                                Clicked="OnAttachImageClicked"
+                        <Button Clicked="OnAttachImageClicked"
                                 BackgroundColor="Green"
                                 TextColor="White"
                                 FontSize="12"
-                                CornerRadius="6" />
+                                CornerRadius="6"
+                                LineBreakMode="WordWrap"
+                                HeightRequest="60">
+                            <Button.Text>
+                                Choose Image From Phone
+                                (.bmp, .jpeg, .jpg, .png, .heic, .gif)
+                            </Button.Text>
+                        </Button>
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Row="1"
                                          Padding="0,2,0,2">
@@ -785,17 +791,21 @@
                                 BackgroundColor="Green"
                                 TextColor="White"
                                 FontSize="12"
-                                CornerRadius="6" />
+                                CornerRadius="6"
+                                LineBreakMode="WordWrap"
+                                HeightRequest="60" />
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Row="3" 
                                          Padding="0,2,0,2">
                         <Button Text="Choose from iCloud Drive
                                 (.pdf, .xlsx)"
                                 Clicked="OnAttachDocumentClicked"
-                                BackgroundColor="Green"
+                                BackgroundColor="#007AFF"
                                 TextColor="White"
                                 FontSize="12"
-                                CornerRadius="6" />
+                                CornerRadius="6"
+                                LineBreakMode="WordWrap"
+                                HeightRequest="60" />
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Row="4"
                                          Padding="0,2,0,2">
