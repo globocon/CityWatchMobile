@@ -748,10 +748,10 @@
         <StackLayout x:Name="FileTypeSelectorPopUp"
                      BackgroundColor="#80000000"
                      IsVisible="False"
-                     VerticalOptions="FillAndExpand"
-                     HorizontalOptions="FillAndExpand"
-                     AbsoluteLayout.LayoutBounds="0,0,1,1"
-                     AbsoluteLayout.LayoutFlags="All"
+                     VerticalOptions="Center"
+                     HorizontalOptions="Center"
+                     AbsoluteLayout.LayoutBounds="0.5,0.5,-1,-1"
+                     AbsoluteLayout.LayoutFlags="PositionProportional"
                      Padding="20"
                      ZIndex="100">
             <Frame BackgroundColor="White"
@@ -762,7 +762,7 @@
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
                     <VerticalStackLayout Grid.Row="0"
                                          Padding="0,2,0,2">
-                        <Button Text="Choose Image&#10;(.bmp, .jpeg, .jpg, .png, .heic, .gif)"
+                        <Button Text="Choose Image From Phone\n (.bmp, .jpeg, .jpg, .png, .heic, .gif)"
                                 Clicked="OnAttachImageClicked"
                                 BackgroundColor="Green"
                                 TextColor="White"
@@ -780,7 +780,7 @@
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Row="2"
                                          Padding="0,2,0,2">
-                        <Button Text="Choose Video&#10;(.avi, .mp4)"
+                        <Button Text="Choose Video From Phone\n (.avi, .mp4)"
                                 Clicked="OnAttachVideoClicked"
                                 BackgroundColor="Green"
                                 TextColor="White"
@@ -789,7 +789,7 @@
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Row="3" 
                                          Padding="0,2,0,2">
-                        <Button Text="Choose from iCloud Drive&#10;(.pdf, .xlsx)"
+                        <Button Text="Choose from iCloud Drive\n (.pdf, .xlsx)"
                                 Clicked="OnAttachDocumentClicked"
                                 BackgroundColor="Green"
                                 TextColor="White"
