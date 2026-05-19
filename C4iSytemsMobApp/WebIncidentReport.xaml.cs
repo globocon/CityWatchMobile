@@ -26,7 +26,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     private List<string> uploadedServerFileNames = new(); // filenames returned by server
     private readonly string[] imageAllowedExtensions = new[] { ".bmp", ".jpeg", ".jpg", ".png", ".heic", ".gif" };
     private readonly string[] documentAllowedExtensions = new[] { ".pdf", ".xlsx" };
-    private readonly string[] allAllowedExtensions = new[] { ".bmp", ".jpeg", ".jpg", ".png", ".heic", ".gif", ".mp3", ".avi", ".mp4", ".pdf", ".xlsx" };
+    private readonly string[] allAllowedExtensions = new[] { "bmp", "jpeg", "jpg", "png", "heic", "gif", "mp3", "avi", "mp4", "pdf", "xlsx" };
     private readonly string[] videoAllowedExtensions = new[] { ".avi", ".mp4" };
     private string _selectedFeedbackType;
     private FeedbackTemplateViewModel _selectedTemplate;
@@ -1822,12 +1822,12 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             if (results == null) return;
 
             var filesToSave = results
-                .Where(f => allAllowedExtensions.Contains(Path.GetExtension(f.FileName).ToLower()))
+                .Where(f => allAllowedExtensions.Contains(Path.GetExtension(f.FileName).ToLower().Replace(".","")))
                 .ToList();
 
             if (!filesToSave.Any())
             {
-                await DisplayAlert("No Valid Files", "Please select supported file types.", "OK");
+                //await DisplayAlert("No Valid Files", "Please select supported file types.", "OK");
                 return;
             }
 
