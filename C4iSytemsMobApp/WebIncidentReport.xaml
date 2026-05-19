@@ -755,68 +755,105 @@
             <Frame BackgroundColor="White"
                    CornerRadius="10"
                    Padding="5"
-                   WidthRequest="300"
+                   WidthRequest="310"
                    HorizontalOptions="Center"
                    VerticalOptions="Center">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
+                <Grid RowDefinitions="Auto,Auto,Auto,*"
+                    RowSpacing="5">
                     <VerticalStackLayout Grid.Row="0"
                                          Padding="0,2,0,2">
-                        <Button Clicked="OnAttachImageClicked"
-                                BackgroundColor="Green"
-                                TextColor="White"
-                                FontSize="12"
-                                CornerRadius="6"
-                                LineBreakMode="WordWrap"
-                                HeightRequest="60">
-                            <Button.Text>
-                                Choose Image From Phone
-                                (.bmp, .jpeg, .jpg, .png, .heic, .gif)
-                            </Button.Text>
-                        </Button>
+                        <Border Stroke="Green"
+                            BackgroundColor="Green"
+                            StrokeShape="RoundRectangle 6"
+                            HeightRequest="45"
+                            Padding="5">
+                            <VerticalStackLayout>
+                                <Label Text="Choose Image From Device"
+                                    TextColor="White"
+                                    FontSize="12"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"/>
+                                <Label Text="(.bmp, .jpeg, .jpg, .png, .heic, .gif)"
+                                    TextColor="White"
+                                    FontSize="10"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"/>
+                            </VerticalStackLayout>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnAttachImageClicked" />
+                            </Border.GestureRecognizers>
+                        </Border>
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Row="1"
                                          Padding="0,2,0,2">
-                        <Button Text="Choose Audio
-                                (.mp3)"
-                                Clicked="OnAttachAudioClicked"
-                                BackgroundColor="Green"
-                                TextColor="White"
-                                FontSize="12"
-                                CornerRadius="6" />
+                        <Border Stroke="Green"
+                            BackgroundColor="Green"
+                            StrokeShape="RoundRectangle 6"
+                            HeightRequest="45"
+                            Padding="5">
+                            <VerticalStackLayout>
+                                <Label Text="Choose Video From Device"
+                                    TextColor="White"
+                                    FontSize="12"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"/>
+                                <Label Text="(.avi, .mp4)"
+                                    TextColor="White"
+                                    FontSize="10"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"/>
+                            </VerticalStackLayout>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnAttachVideoClicked" />
+                            </Border.GestureRecognizers>
+                        </Border>
                     </VerticalStackLayout>
-                    <VerticalStackLayout Grid.Row="2"
+                    <VerticalStackLayout Grid.Row="2" 
                                          Padding="0,2,0,2">
-                        <Button Text="Choose Video From Phone&#x0a; (.avi, .mp4)"
-                                Clicked="OnAttachVideoClicked"
-                                BackgroundColor="Green"
-                                TextColor="White"
-                                FontSize="12"
-                                CornerRadius="6"
-                                LineBreakMode="WordWrap"
-                                HeightRequest="60" />
+                        <Border Stroke="#007AFF"
+                            BackgroundColor="#007AFF"
+                            StrokeShape="RoundRectangle 6"
+                            HeightRequest="45"
+                            Padding="5">
+                            <VerticalStackLayout>
+                                <Label Text="Choose from iCloud Drive"
+                                    TextColor="White"
+                                    FontSize="12"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"/>
+                                <Label Text="(.avi, .mp4, .mp3, .bmp, .jpeg, .jpg, .png, .heic, .gif, .pdf, .xlsx)"
+                                    TextColor="White"
+                                    FontSize="10"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center"/>
+                            </VerticalStackLayout>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnAttachDocumentClicked" />
+                            </Border.GestureRecognizers>
+                        </Border>
                     </VerticalStackLayout>
-                    <VerticalStackLayout Grid.Row="3" 
-                                         Padding="0,2,0,2">
-                        <Button Text="Choose from iCloud Drive
-                                (.pdf, .xlsx)"
-                                Clicked="OnAttachDocumentClicked"
-                                BackgroundColor="#007AFF"
-                                TextColor="White"
-                                FontSize="12"
-                                CornerRadius="6"
-                                LineBreakMode="WordWrap"
-                                HeightRequest="60" />
-                    </VerticalStackLayout>
-                    <VerticalStackLayout Grid.Row="4"
+                    <VerticalStackLayout Grid.Row="3"
                                          Padding="0,2,0,2">
                         <Button Text="Cancel"
                                 Clicked="OnClosePopupClicked"
                                 BackgroundColor="Gray"
                                 TextColor="White"
                                 FontSize="12"
-                                CornerRadius="6" />
+                                CornerRadius="6"
+                                HeightRequest="45" />
                     </VerticalStackLayout>
-
                 </Grid>
             </Frame>
         </StackLayout>

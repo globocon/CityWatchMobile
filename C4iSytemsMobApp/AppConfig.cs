@@ -26,8 +26,8 @@ namespace C4iSytemsMobApp
         // public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
 
         //#### Added for ios local testing by Binoy
-        public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.41:92";
-        public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.41:5000";
+        public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.42:92";
+        public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.42:5000";
         public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
 
 
