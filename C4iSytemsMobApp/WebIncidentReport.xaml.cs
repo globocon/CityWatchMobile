@@ -1616,7 +1616,11 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
         if (!string.IsNullOrEmpty(fileName))
         {
-            UploadedFiles.Remove(fileName);
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                UploadedFiles.Remove(fileName);
+            });
+
             uploadedServerFileNames.Remove(fileName);
 
             // Remove from offline if any
@@ -1800,37 +1804,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         FileTypeSelectorPopUp.IsVisible = false;
     }
 
-    private async void OnAttachImageClicked(object sender, EventArgs e)
-    {
-        try
-        {
-            var results = await MediaPicker.PickPhotoAsync(new MediaPickerOptions { Title = "Select Image File" });
-            if (results != null && !string.IsNullOrEmpty(results.FileName))
-            {
-                var extension = Path.GetExtension(results.FileName).ToLowerInvariant();
-                if (!imageAllowedExtensions.Contains(extension))
-                {
-                    await DisplayAlert("Invalid File", $"File '{results.FileName}' is not a supported image type.", "OK");
-                    return; // Exit if file is not valid
-                }
 
-                string reportReference = IrSession.ReportReference;
-                var uploadedFileName = await ReadFileToUploadAsync(results, reportReference);
-                if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
-                {
-                    UploadedFiles.Add(uploadedFileName);
-                    uploadedServerFileNames.Add(uploadedFileName);
-                }
-
-            }
-
-
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlert("Error", $"Image picking failed: {ex.Message}", "OK");
-        }
-    }
 
     private async void OnAttachDocumentClicked(object sender, EventArgs e)
     {
@@ -1862,97 +1836,61 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
             int totalFiles = filesToSave.Count;
             int uploadedCount = 0;
-
+            List<string> uploadedfilesList = new List<string>();
             foreach (var file in filesToSave)
             {
                 string reportReference = IrSession.ReportReference;
                 var uploadedFileName = await ReadFileToUploadAsync(file, reportReference);
-                if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
-                {
-                    UploadedFiles.Add(uploadedFileName);
-                    uploadedServerFileNames.Add(uploadedFileName);
-                }
+                uploadedfilesList.Add(uploadedFileName);
+                //if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
+                //{
+                //    AddtoUploadedList(uploadedFileName);
+                //    uploadedServerFileNames.Add(uploadedFileName);
+                //}
 
                 uploadedCount++;
                 uploadProgressBar.Progress = (double)uploadedCount / totalFiles;
 
-
-
-                //var safeFileName = Path.GetFileName(file.FileName);
-                //Directory.CreateDirectory(onlinelocalFilePath); // Safe even if exists
-                //var localFilePath = Path.Combine(onlinelocalFilePath, safeFileName);
-                //await using var sourceStream = await file.OpenReadAsync();
-                //await using var destinationStream = File.Create(localFilePath);
-                //await sourceStream.CopyToAsync(destinationStream);
-                //sourceStream.Dispose();
-                //destinationStream.Dispose();
-
-                //string reportReference = IrSession.ReportReference;
-                //if (App.IsOnline)
-                //{
-                //    var uploadedFileName = await UploadFileToServer(localFilePath, reportReference);
-
-                //    if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
-                //    {
-                //        UploadedFiles.Add(uploadedFileName);
-                //        uploadedServerFileNames.Add(uploadedFileName);
-                //    }
-
-                //    uploadedCount++;
-                //    uploadProgressBar.Progress = (double)uploadedCount / totalFiles;
-                //}
-                //else
-                //{
-                //    Directory.CreateDirectory(offlinelocalFilePath); // Safe even if exists
-                //    var offlinelocalFile = Path.Combine(offlinelocalFilePath, file.FileName);
-                //    await using var offlinestream = await file.OpenReadAsync();
-                //    await using var offlineFilestream = File.Create(offlinelocalFile);
-                //    await offlinestream.CopyToAsync(offlineFilestream);
-
-                //    var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-                //    string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
-                //    // Store in local list to upload later
-                //    var _fileName = Path.GetFileName(file.FileName);
-                //    irOfflineFilesAttachmentsCache _irOfflineFilesAttachmentsCache = new irOfflineFilesAttachmentsCache()
-                //    {
-                //        IrId = reportReference,
-                //        FileNameActual = _fileName,
-                //        FileNameCache = _fileName,
-                //        FileNameWithPathCache = offlinelocalFile,
-                //        EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
-                //        EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
-                //        EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
-                //        EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
-                //        EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
-                //        IsSynced = false,
-                //        guardId = guardId,
-                //        clientsiteId = clientSiteId,
-                //        userId = userId,
-                //        gps = gpsCoordinates ?? "",
-                //        DeviceId = deviceid,
-                //        DeviceName = devicename,
-                //    };
-
-                //    await _scanDataDbService.SaveIrReportAttachmentsToLocalCache(_irOfflineFilesAttachmentsCache);
-
-                //    if (!string.IsNullOrWhiteSpace(_fileName) && !UploadedFiles.Contains(_fileName))
-                //    {
-                //        UploadedFiles.Add(_fileName);
-                //        uploadedServerFileNames.Add(_fileName);
-                //    }
-
-                //}
             }
 
             uploadProgressBar.IsVisible = false;
 
             // Show uploaded list
             uploadDisplaySection.IsVisible = UploadedFiles.Any();
+            if (uploadedfilesList.Any())
+                await DisplayAlert("Success", string.Join(Environment.NewLine, uploadedfilesList), "OK");
+            FileTypeSelectorPopUp.IsVisible = false;
         }
         catch (Exception ex)
         {
             uploadProgressBar.IsVisible = false;
             await DisplayAlert("Error", $"File selection failed: {ex.Message}", "OK");
+        }
+    }
+
+    private async void OnAttachImageClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var results = await MediaPicker.PickPhotoAsync(new MediaPickerOptions { Title = "Select Image File" });
+            if (results != null && !string.IsNullOrEmpty(results.FileName))
+            {
+                var extension = Path.GetExtension(results.FileName).ToLowerInvariant();
+                if (!imageAllowedExtensions.Contains(extension))
+                {
+                    await DisplayAlert("Invalid File", $"File '{results.FileName}' is not a supported image type.", "OK");
+                    return; // Exit if file is not valid
+                }
+
+                string reportReference = IrSession.ReportReference;
+                var uploadedFileName = await ReadFileToUploadAsync(results, reportReference);
+                await DisplayAlert("Success", uploadedFileName, "OK");
+                FileTypeSelectorPopUp.IsVisible = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Image picking failed: {ex.Message}", "OK");
         }
     }
 
@@ -1970,92 +1908,93 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
             string reportReference = IrSession.ReportReference;
             var uploadedFileName = await ReadFileToUploadAsync(results, reportReference);
-            if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
-            {
-                UploadedFiles.Add(uploadedFileName);
-                uploadedServerFileNames.Add(uploadedFileName);
-            }
+            await DisplayAlert("Success", uploadedFileName, "OK");
+            FileTypeSelectorPopUp.IsVisible = false;
         }
-
-
     }
 
     private async Task<string> ReadFileToUploadAsync(FileResult file, string reportReference)
     {
-        
-            var safeFileName = Path.GetFileName(file.FileName);
-            Directory.CreateDirectory(onlinelocalFilePath); // Safe even if exists
-            var localFilePath = Path.Combine(onlinelocalFilePath, safeFileName);
-            await using var sourceStream = await file.OpenReadAsync();
-            await using var destinationStream = File.Create(localFilePath);
-            await sourceStream.CopyToAsync(destinationStream);
-            sourceStream.Dispose();
-            destinationStream.Dispose();
-                    
-            if (App.IsOnline)
+
+        var safeFileName = Path.GetFileName(file.FileName);
+        Directory.CreateDirectory(onlinelocalFilePath); // Safe even if exists
+        var localFilePath = Path.Combine(onlinelocalFilePath, safeFileName);
+        await using var sourceStream = await file.OpenReadAsync();
+        await using var destinationStream = File.Create(localFilePath);
+        await sourceStream.CopyToAsync(destinationStream);
+        sourceStream.Dispose();
+        destinationStream.Dispose();
+
+        if (App.IsOnline)
+        {
+            var uploadedFileName = await UploadFileToServer(localFilePath, reportReference);
+            if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
             {
-                var uploadedFileName = await UploadFileToServer(localFilePath, reportReference);
-                return uploadedFileName;
-            }
-            else
-            {
-                Directory.CreateDirectory(offlinelocalFilePath); // Safe even if exists
-                var offlinelocalFile = Path.Combine(offlinelocalFilePath, file.FileName);
-                await using var offlinestream = await file.OpenReadAsync();
-                await using var offlineFilestream = File.Create(offlinelocalFile);
-                await offlinestream.CopyToAsync(offlineFilestream);
-
-                var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-                string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
-                // Store in local list to upload later
-                var _fileName = Path.GetFileName(file.FileName);
-                irOfflineFilesAttachmentsCache _irOfflineFilesAttachmentsCache = new irOfflineFilesAttachmentsCache()
+                AddtoUploadedList(uploadedFileName);
+                uploadedServerFileNames.Add(uploadedFileName);
+                try
                 {
-                    IrId = reportReference,
-                    FileNameActual = _fileName,
-                    FileNameCache = _fileName,
-                    FileNameWithPathCache = offlinelocalFile,
-                    EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
-                    EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
-                    EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
-                    EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
-                    EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
-                    IsSynced = false,
-                    guardId = guardId,
-                    clientsiteId = clientSiteId,
-                    userId = userId,
-                    gps = gpsCoordinates ?? "",
-                    DeviceId = deviceid,
-                    DeviceName = devicename,
-                };
-
-                await _scanDataDbService.SaveIrReportAttachmentsToLocalCache(_irOfflineFilesAttachmentsCache);
-
-                if (!string.IsNullOrWhiteSpace(_fileName) && !UploadedFiles.Contains(_fileName))
-                {
-                    UploadedFiles.Add(_fileName);
-                    uploadedServerFileNames.Add(_fileName);
+                    File.Delete(localFilePath);
                 }
+                catch (Exception)
+                {
 
-                return _fileName;
+                }
             }
-        
+            return $"File {safeFileName} uploaded successfully";
+        }
+        else
+        {
+            Directory.CreateDirectory(offlinelocalFilePath); // Safe even if exists
+            var offlinelocalFile = Path.Combine(offlinelocalFilePath, file.FileName);
+            await using var offlinestream = await file.OpenReadAsync();
+            await using var offlineFilestream = File.Create(offlinelocalFile);
+            await offlinestream.CopyToAsync(offlineFilestream);
+
+            var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
+            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            // Store in local list to upload later
+            var _fileName = Path.GetFileName(file.FileName);
+            irOfflineFilesAttachmentsCache _irOfflineFilesAttachmentsCache = new irOfflineFilesAttachmentsCache()
+            {
+                IrId = reportReference,
+                FileNameActual = _fileName,
+                FileNameCache = _fileName,
+                FileNameWithPathCache = offlinelocalFile,
+                EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+                EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+                EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+                EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+                EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                IsSynced = false,
+                guardId = guardId,
+                clientsiteId = clientSiteId,
+                userId = userId,
+                gps = gpsCoordinates ?? "",
+                DeviceId = deviceid,
+                DeviceName = devicename,
+            };
+
+            await _scanDataDbService.SaveIrReportAttachmentsToLocalCache(_irOfflineFilesAttachmentsCache);
+
+            if (!string.IsNullOrWhiteSpace(_fileName) && !UploadedFiles.Contains(_fileName))
+            {
+                AddtoUploadedList(_fileName);
+                uploadedServerFileNames.Add(_fileName);
+            }
+
+            return $"File {_fileName} uploaded to cache and will be uploaded once online.";
+        }
+
 
     }
 
-    private async void OnAttachAudioClicked(object sender, EventArgs e)
+    private void AddtoUploadedList(string uploadedFileName)
     {
-        var result = await FilePicker.Default.PickAsync(new PickOptions
+        MainThread.BeginInvokeOnMainThread(() =>
         {
-            PickerTitle = "Select Audio File",
-            FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>> { { DevicePlatform.iOS, new[] { "public.mp3" } } })
+            UploadedFiles.Add(uploadedFileName);
         });
-
-        if (result != null && !string.IsNullOrEmpty(result.FileName))
-        {
-            string fileName = result.FileName;
-            string fullPath = result.FullPath;
-        }
     }
 }
 
