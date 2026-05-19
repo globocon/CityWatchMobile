@@ -670,11 +670,6 @@
                         <Button Text="Select Attachment(s)"
                                 Clicked="OnUploadAttachmentClicked" />
 
-                        <!-- Show progress during upload -->
-                        <ProgressBar x:Name="uploadProgressBar"
-                                     Progress="0"
-                                     IsVisible="False" />
-
                         <StackLayout x:Name="uploadDisplaySection"
                                      IsVisible="False">
 
@@ -853,6 +848,12 @@
                                 FontSize="12"
                                 CornerRadius="6"
                                 HeightRequest="45" />
+
+                        <!-- Show progress during upload -->
+                        <ProgressBar x:Name="uploadProgressBar"
+                                     Margin="0,5,0,0"
+                                     Progress="0"
+                                     IsVisible="False" />
                     </VerticalStackLayout>
                 </Grid>
             </Frame>
