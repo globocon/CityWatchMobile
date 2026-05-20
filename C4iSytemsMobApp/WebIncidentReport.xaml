@@ -673,24 +673,38 @@
                         <StackLayout x:Name="uploadDisplaySection"
                                      IsVisible="False">
 
-                            <!-- Uploaded files display -->
-                            <CollectionView x:Name="uploadedFilesView"
-                                            ItemsSource="{Binding UploadedFiles}"
-                                            HeightRequest="120">
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate>
-                                        <HorizontalStackLayout Spacing="5">
-                                            <Label Text="{Binding .}"
-                                                   FontSize="12" />
-                                            <ImageButton Source="delete_icon.png"
-                                                         Clicked="OnRemoveFileClicked"
-                                                         CommandParameter="{Binding .}"
-                                                         WidthRequest="10"
-                                                         HeightRequest="10" />
-                                        </HorizontalStackLayout>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
+                            <!-- Uploaded files display (now scrollable) -->
+                            <ScrollView HeightRequest="80" Orientation="Vertical">
+                                <VerticalStackLayout
+                                    Spacing="5"
+                                    BindableLayout.ItemsSource="{Binding UploadedFiles}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate>
+                                            <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                                                <Label Text="{Binding .}"
+                                                       FontSize="12"
+                                                       VerticalOptions="Center" />
+                                                <Frame Padding="0" 
+                                                       CornerRadius="10"
+                                                       BorderColor="Transparent"
+                                                       HasShadow="False"
+                                                       HeightRequest="24"
+                                                       WidthRequest="24"
+                                                       VerticalOptions="Center">
+                                                    <Image Source="delete_icon.png"
+                                                           Aspect="AspectFit">
+                                                        <Image.GestureRecognizers>
+                                                            <TapGestureRecognizer 
+                                                                Tapped="OnRemoveFileClicked"
+                                                                CommandParameter="{Binding .}"/>
+                                                        </Image.GestureRecognizers>
+                                                    </Image>
+                                                </Frame>
+                                            </HorizontalStackLayout>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                            </ScrollView>
                         </StackLayout>
                     </VerticalStackLayout>
                 </Frame>
@@ -747,7 +761,7 @@
                      AbsoluteLayout.LayoutFlags="PositionProportional"
                      Padding="20"
                      ZIndex="100">
-            <Frame BackgroundColor="White"
+            <Frame BackgroundColor="{AppThemeBinding Light=Black, Dark=White}" 
                    CornerRadius="10"
                    Padding="5"
                    WidthRequest="310"
@@ -853,7 +867,9 @@
                         <ProgressBar x:Name="uploadProgressBar"
                                      Margin="0,5,0,0"
                                      Progress="0"
-                                     IsVisible="False" />
+                                     IsVisible="False"  
+                                     BackgroundColor="{AppThemeBinding Light=White, Dark=Black}" 
+                                     ProgressColor="Green"/>
                     </VerticalStackLayout>
                 </Grid>
             </Frame>

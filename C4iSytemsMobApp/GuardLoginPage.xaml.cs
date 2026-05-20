@@ -1427,7 +1427,7 @@ public partial class GuardLoginPage : ContentPage
     {
         string fileName = CommonHelper.GetSanitizedFileNameFromUrl(serverUrl);
         string localFileNameWithPath = Path.Combine(localPath, fileName);
-        return "";
+        //return "";
         try
         {
             using var client = new HttpClient

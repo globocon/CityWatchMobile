@@ -1180,7 +1180,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 Application.Current.MainPage = new NavigationPage(new DownloadIr(fullDownloadUrl, result.Domin, false));
 
                 // Step 5: Notify user
-                await DisplayAlert("Test Mode", "Form data saved locally — no API call made.", "OK");
+                await DisplayAlert("Test Mode", "Form data saved locally ï¿½ no API call made.", "OK");
             }
             else if (!App.IsOnline)
             {
@@ -1384,7 +1384,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
         }
 
-    ((CollectionView)sender).SelectedItem = null;
+        ((CollectionView)sender).SelectedItem = null;
     }
     //private void OnIncidentLocationCheckBoxChanged(object sender, CheckedChangedEventArgs e)
     //{
@@ -1611,14 +1611,25 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
     private async void OnRemoveFileClicked(object sender, EventArgs e)
     {
-        var button = sender as ImageButton;
-        var fileName = button?.CommandParameter as string;
+        string fileName = null;
+
+        // Handle TapGestureRecognizer (sender is Image, no CommandParameter directly)
+        if (sender is Image image && image.BindingContext is string fileNameFromBinding)
+        {
+            fileName = fileNameFromBinding;
+        }
+        // Handle legacy ImageButton (sender is ImageButton with CommandParameter)
+        else if (sender is ImageButton button && button.CommandParameter is string fileNameFromButton)
+        {
+            fileName = fileNameFromButton;
+        }
 
         if (!string.IsNullOrEmpty(fileName))
         {
-            MainThread.BeginInvokeOnMainThread(() =>
+            await MainThread.InvokeOnMainThreadAsync(() =>
             {
                 UploadedFiles.Remove(fileName);
+                uploadDisplaySection.IsVisible = UploadedFiles.Any();
             });
 
             uploadedServerFileNames.Remove(fileName);
@@ -1631,9 +1642,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 if (File.Exists(filelocalcachepath))
                     File.Delete(filelocalcachepath);
             }
-
         }
-        uploadDisplaySection.IsVisible = UploadedFiles.Any();
     }
 
 
@@ -1810,50 +1819,42 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     {
         try
         {
-            var results = await FilePicker.Default.PickMultipleAsync(new PickOptions
-            {
-                PickerTitle = "Select File",
-                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>> {
-                    { DevicePlatform.iOS, allAllowedExtensions }
-                })
-            });
+            // For iOS iCloud Drive, we don't specify file types to avoid disabling files
+            // Instead, we filter client-side after selection
+            var results = await FilePicker.Default.PickMultipleAsync();
 
-            //var results = await FilePicker.PickMultipleAsync();
             if (results == null) return;
 
             var filesToSave = results
-                .Where(f => allAllowedExtensions.Contains(Path.GetExtension(f.FileName).ToLower().Replace(".","")))
+                .Where(f => allAllowedExtensions.Contains(Path.GetExtension(f.FileName).ToLower().Replace(".", "")))
                 .ToList();
 
             if (!filesToSave.Any())
             {
-                //await DisplayAlert("No Valid Files", "Please select supported file types.", "OK");
+                await DisplayAlert("No Valid Files", "Please select supported file types: " + string.Join(", ", allAllowedExtensions), "OK");
                 return;
             }
 
-            uploadProgressBar.IsVisible = true;
-            uploadProgressBar.Progress = 0;
+            await UpdateProgressBarAsync(true, 0);
 
             int totalFiles = filesToSave.Count;
             int uploadedCount = 0;
             List<string> uploadedfilesList = new List<string>();
             foreach (var file in filesToSave)
             {
+                if (!allAllowedExtensions.Contains(Path.GetExtension(file.FileName).ToLower().Replace(".", "")))
+                {
+                    continue; // Skip unsupported file types
+                }
                 string reportReference = IrSession.ReportReference;
                 var uploadedFileName = await ReadFileToUploadAsync(file, reportReference);
                 uploadedfilesList.Add(uploadedFileName);
-                //if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
-                //{
-                //    AddtoUploadedList(uploadedFileName);
-                //    uploadedServerFileNames.Add(uploadedFileName);
-                //}
 
                 uploadedCount++;
-                uploadProgressBar.Progress = (double)uploadedCount / totalFiles;
-
+                await UpdateProgressBarAsync(true, ((double)uploadedCount / totalFiles));
             }
 
-            uploadProgressBar.IsVisible = false;
+            await UpdateProgressBarAsync(false);
 
             // Show uploaded list
             uploadDisplaySection.IsVisible = UploadedFiles.Any();
@@ -1863,7 +1864,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            uploadProgressBar.IsVisible = false;
+            await UpdateProgressBarAsync(false);
             await DisplayAlert("Error", $"File selection failed: {ex.Message}", "OK");
         }
     }
@@ -1890,6 +1891,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
+            Console.WriteLine(ex.ToString());
             await DisplayAlert("Error", $"Image picking failed: {ex.Message}", "OK");
         }
     }
@@ -1930,7 +1932,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             var uploadedFileName = await UploadFileToServer(localFilePath, reportReference);
             if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
             {
-                AddtoUploadedList(uploadedFileName);
+                await AddtoUploadedListAsync(uploadedFileName);
                 uploadedServerFileNames.Add(uploadedFileName);
                 try
                 {
@@ -1979,7 +1981,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
             if (!string.IsNullOrWhiteSpace(_fileName) && !UploadedFiles.Contains(_fileName))
             {
-                AddtoUploadedList(_fileName);
+                await AddtoUploadedListAsync(_fileName);
                 uploadedServerFileNames.Add(_fileName);
             }
 
@@ -1989,13 +1991,42 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
     }
 
-    private void AddtoUploadedList(string uploadedFileName)
+    private async Task AddtoUploadedListAsync(string uploadedFileName)
     {
-        MainThread.BeginInvokeOnMainThread(() =>
+        try
         {
-            UploadedFiles.Add(uploadedFileName);
-        });
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                if (!UploadedFiles.Contains(uploadedFileName))
+                {
+                    UploadedFiles.Add(uploadedFileName);
+                }
+
+                uploadDisplaySection.IsVisible = UploadedFiles.Any();
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding uploaded file to list: {ex}");
+        }
     }
+
+    private async Task UpdateProgressBarAsync(bool IsVisible, double progress = 0)
+    {
+        try
+        {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                uploadProgressBar.IsVisible = IsVisible;
+                uploadProgressBar.Progress = progress;
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating progress bar: {ex}");
+        }
+    }
+    
 }
 
 
