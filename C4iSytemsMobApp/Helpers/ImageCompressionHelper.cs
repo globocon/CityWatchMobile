@@ -23,7 +23,7 @@ namespace C4iSytemsMobApp.Helpers
         {
             try
             {
-                string logPath = @"C:\Users\Dileep\source\repos\CityWatchMobile\C4iSytemsMobApp\compression_log.txt";
+                string logPath = Path.Combine(FileSystem.CacheDirectory, "compression_log.txt");
                 string logMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}{Environment.NewLine}";
                 System.IO.File.AppendAllText(logPath, logMessage);
             }
@@ -35,14 +35,14 @@ namespace C4iSytemsMobApp.Helpers
         }
 
         /// <summary>
-        /// Downscales and compresses the provided FileResult using visually lossless JPEG compression (75% quality, max 1280px width/height).
+        /// Downscales and compresses the provided FileResult using visually lossless JPEG compression (60% quality, max 1024px width/height).
         /// If any exception occurs or if it is an unsupported file format, it will safely fallback and return the original uncompressed stream.
         /// </summary>
         /// <param name="file">The FileResult object representing the selected image file.</param>
-        /// <param name="maxDimension">The maximum allowable width or height in pixels. Defaults to 1280px.</param>
-        /// <param name="quality">The JPEG compression quality, between 1 and 100. Defaults to 75.</param>
+        /// <param name="maxDimension">The maximum allowable width or height in pixels. Defaults to 1024px.</param>
+        /// <param name="quality">The JPEG compression quality, between 1 and 100. Defaults to 60.</param>
         /// <returns>A Stream of the compressed image data, or the original file stream as a safe fallback.</returns>
-        public static async Task<Stream> CompressImageAsync(FileResult file, float maxDimension = 1280f, int quality = 75)
+        public static async Task<Stream> CompressImageAsync(FileResult file, float maxDimension = 1024f, int quality = 60)
         {
             if (file == null)
             {
