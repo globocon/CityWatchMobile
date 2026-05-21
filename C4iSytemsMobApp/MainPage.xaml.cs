@@ -177,7 +177,7 @@ namespace C4iSytemsMobApp
             BindingContext = this;
             NavigationPage.SetHasNavigationBar(this, false);
             LoadLoggedInUser();
-            LoadSecureData();
+            _ = LoadSecureDataAsync();
             _shouldOpenDrawerOnReturn = showDrawerOnStart ?? false; // Defaults to false if null
             _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
             _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
@@ -287,7 +287,7 @@ namespace C4iSytemsMobApp
 
             OnPropertyChanged(nameof(IsPcar));
 
-
+            await LoadSecureDataAsync();
 
             SyncState.SyncedCountChanged += SyncState_SyncedCountChanged;
             SyncState.SyncingStatusChanged += SyncState_SyncingStatusChanged;
@@ -691,7 +691,7 @@ namespace C4iSytemsMobApp
             }
         }
 
-        private async void LoadSecureData()
+        private async Task LoadSecureDataAsync()
         {
             lblClientSite.Text = $"Client Site: {Preferences.Get("ClientSite", "N/A")}";
             _clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
