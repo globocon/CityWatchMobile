@@ -31,6 +31,7 @@ namespace C4iSytemsMobApp
     public partial class MainPage : ContentPage, INotifyPropertyChanged
     {
         private readonly HttpClient _httpClient;
+        private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
         private readonly IVolumeButtonService _volumeButtonService;
         private readonly ILogBookServices _logBookServices;
         private readonly SyncService _syncService;
@@ -177,7 +178,11 @@ namespace C4iSytemsMobApp
             BindingContext = this;
             NavigationPage.SetHasNavigationBar(this, false);
             LoadLoggedInUser();
-            _ = LoadSecureDataAsync();
+            LoadSecureData();
+            // Start checking duress status on app load
+            duressCheckTimer.Elapsed += async (s, e) => await CheckDuressStatus();
+            duressCheckTimer.AutoReset = true;
+            //duressCheckTimer.Start();
             _shouldOpenDrawerOnReturn = showDrawerOnStart ?? false; // Defaults to false if null
             _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
             _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
@@ -287,7 +292,7 @@ namespace C4iSytemsMobApp
 
             OnPropertyChanged(nameof(IsPcar));
 
-            await LoadSecureDataAsync();
+
 
             SyncState.SyncedCountChanged += SyncState_SyncedCountChanged;
             SyncState.SyncingStatusChanged += SyncState_SyncingStatusChanged;
@@ -303,8 +308,7 @@ namespace C4iSytemsMobApp
             StartBLEScanner(); // Execution Order - 3
             await SetupHubConnection();  // Execution Order - 4
 
-            // Load initial duress status once asynchronously upon page entry
-            _ = CheckDuressStatus();
+            duressCheckTimer.Start();
 
             MainLayout.IsVisible = true;
         }
@@ -312,6 +316,7 @@ namespace C4iSytemsMobApp
         protected override async void OnDisappearing()
         {
             base.OnDisappearing();
+            duressCheckTimer.Stop();
             App.IsVolumeControlEnabledForCounter = false; // Disable custom volume handling
 
             // Stop NFC listening
@@ -691,7 +696,7 @@ namespace C4iSytemsMobApp
             }
         }
 
-        private async Task LoadSecureDataAsync()
+        private async void LoadSecureData()
         {
             lblClientSite.Text = $"Client Site: {Preferences.Get("ClientSite", "N/A")}";
             _clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
@@ -2256,8 +2261,7 @@ namespace C4iSytemsMobApp
 
             if (_clientSiteId == null) return;
 
-            // SignalR is now unconditionally required for real-time Duress status synchronization
-            bool ishubConnectionRequired = true;
+            bool ishubConnectionRequired = _isNfcEnabledForSite || _IsCrowdControlCounterEnabled;
 
             if (ishubConnectionRequired)
             {
@@ -2425,31 +2429,6 @@ namespace C4iSytemsMobApp
             else
             {
                 LoadTourModeAsync(_clientSiteId);
-            }
-
-            if (_hubConnection != null)
-            {
-                _hubConnection.On<string>("UpdateDuressStatus", (status) =>
-                {
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        if (DuressButtonFrame != null && DuressStatusLabel != null)
-                        {
-                            if (status == "Active")
-                            {
-                                DuressButtonFrame.BackgroundColor = Colors.Red;
-                                DuressStatusLabel.Text = "Status: Active";
-                                DuressStatusLabel.TextColor = Colors.White;
-                            }
-                            else
-                            {
-                                DuressButtonFrame.BackgroundColor = Color.FromArgb("#FFC107");
-                                DuressStatusLabel.Text = "Status: Normal";
-                                DuressStatusLabel.TextColor = Colors.Black;
-                            }
-                        }
-                    });
-                });
             }
 
             if (ishubConnectionRequired)
