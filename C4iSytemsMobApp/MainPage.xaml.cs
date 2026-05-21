@@ -31,7 +31,6 @@ namespace C4iSytemsMobApp
     public partial class MainPage : ContentPage, INotifyPropertyChanged
     {
         private readonly HttpClient _httpClient;
-        private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
         private readonly IVolumeButtonService _volumeButtonService;
         private readonly ILogBookServices _logBookServices;
         private readonly SyncService _syncService;
@@ -179,10 +178,6 @@ namespace C4iSytemsMobApp
             NavigationPage.SetHasNavigationBar(this, false);
             LoadLoggedInUser();
             LoadSecureData();
-            // Start checking duress status on app load
-            duressCheckTimer.Elapsed += async (s, e) => await CheckDuressStatus();
-            duressCheckTimer.AutoReset = true;
-            //duressCheckTimer.Start();
             _shouldOpenDrawerOnReturn = showDrawerOnStart ?? false; // Defaults to false if null
             _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
             _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
@@ -308,7 +303,8 @@ namespace C4iSytemsMobApp
             StartBLEScanner(); // Execution Order - 3
             await SetupHubConnection();  // Execution Order - 4
 
-            duressCheckTimer.Start();
+            // Load initial duress status once asynchronously upon page entry
+            _ = CheckDuressStatus();
 
             MainLayout.IsVisible = true;
         }
@@ -316,7 +312,6 @@ namespace C4iSytemsMobApp
         protected override async void OnDisappearing()
         {
             base.OnDisappearing();
-            duressCheckTimer.Stop();
             App.IsVolumeControlEnabledForCounter = false; // Disable custom volume handling
 
             // Stop NFC listening
@@ -2261,7 +2256,8 @@ namespace C4iSytemsMobApp
 
             if (_clientSiteId == null) return;
 
-            bool ishubConnectionRequired = _isNfcEnabledForSite || _IsCrowdControlCounterEnabled;
+            // SignalR is now unconditionally required for real-time Duress status synchronization
+            bool ishubConnectionRequired = true;
 
             if (ishubConnectionRequired)
             {
@@ -2429,6 +2425,31 @@ namespace C4iSytemsMobApp
             else
             {
                 LoadTourModeAsync(_clientSiteId);
+            }
+
+            if (_hubConnection != null)
+            {
+                _hubConnection.On<string>("UpdateDuressStatus", (status) =>
+                {
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        if (DuressButtonFrame != null && DuressStatusLabel != null)
+                        {
+                            if (status == "Active")
+                            {
+                                DuressButtonFrame.BackgroundColor = Colors.Red;
+                                DuressStatusLabel.Text = "Status: Active";
+                                DuressStatusLabel.TextColor = Colors.White;
+                            }
+                            else
+                            {
+                                DuressButtonFrame.BackgroundColor = Color.FromArgb("#FFC107");
+                                DuressStatusLabel.Text = "Status: Normal";
+                                DuressStatusLabel.TextColor = Colors.Black;
+                            }
+                        }
+                    });
+                });
             }
 
             if (ishubConnectionRequired)
