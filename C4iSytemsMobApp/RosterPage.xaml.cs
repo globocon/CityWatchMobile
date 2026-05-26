@@ -97,7 +97,7 @@ namespace C4iSytemsMobApp
 
                 DateTime endDate = startDate.AddDays(6);
                 var newSiteRosters = new ObservableCollection<SiteRoster>();
-                var validRosters = new List<(SiteInfo site, WeeklyRoster roster)>();
+                bool hasAnyRosters = false;
 
                 foreach (var site in sitesToFetch)
                 {
@@ -105,46 +105,19 @@ namespace C4iSytemsMobApp
 
                     if (roster != null && roster.Days.Count > 0)
                     {
-                        validRosters.Add((site, roster));
-                    }
-                }
-
-                if (isLinkedGroup)
-                {
-                    var filtered = validRosters.Where(vr => vr.roster.Days.Any(d => d.Shifts != null && d.Shifts.Count > 0)).ToList();
-                    
-                    if (filtered.Count > 0)
-                    {
-                        validRosters = filtered;
-                    }
-                    else
-                    {
-                        // Fallback if all sites are empty: show the main site empty
-                        validRosters = validRosters.Where(vr => vr.site.SiteId == currentSiteId).ToList();
-                    }
-                }
-
-                bool hasAnyRosters = validRosters.Count > 0;
-
-                if (hasAnyRosters)
-                {
-                    // Set the overall status and week range to the first valid one we find
-                    var firstRoster = validRosters[0].roster;
-                    if (string.IsNullOrEmpty(WeekRangeLabel.Text) || WeekRangeLabel.Text == "Loading week...")
-                    {
-                        WeekRangeLabel.Text = firstRoster.WeekRange;
-                        StatusLabel.Text = firstRoster.Status;
-                        string status = (firstRoster.Status ?? "").ToLower();
-                        if (status.Contains("paid")) StatusLabel.TextColor = Colors.Red;
-                        else if (status.Contains("live")) StatusLabel.TextColor = Colors.Green;
-                        else if (status.Contains("inv")) StatusLabel.TextColor = Colors.Blue;
-                        else StatusLabel.TextColor = Colors.Gray;
-                    }
-
-                    foreach (var validItem in validRosters)
-                    {
-                        var site = validItem.site;
-                        var roster = validItem.roster;
+                        hasAnyRosters = true;
+                        
+                        // Set the overall status and week range to the first valid one we find
+                        if (string.IsNullOrEmpty(WeekRangeLabel.Text) || WeekRangeLabel.Text == "Loading week...")
+                        {
+                            WeekRangeLabel.Text = roster.WeekRange;
+                            StatusLabel.Text = roster.Status;
+                            string status = (roster.Status ?? "").ToLower();
+                            if (status.Contains("paid")) StatusLabel.TextColor = Colors.Red;
+                            else if (status.Contains("live")) StatusLabel.TextColor = Colors.Green;
+                            else if (status.Contains("inv")) StatusLabel.TextColor = Colors.Blue;
+                            else StatusLabel.TextColor = Colors.Gray;
+                        }
 
                         foreach (var day in roster.Days)
                         {
@@ -154,7 +127,7 @@ namespace C4iSytemsMobApp
                         }
 
                         bool showSiteBar = isLinkedGroup;
-                        bool isExpanded = !isLinkedGroup || (isLinkedGroup && validRosters.Count == 1);
+                        bool isExpanded = !isLinkedGroup || (isLinkedGroup && sitesToFetch.Count == 1);
 
                         var siteRoster = new SiteRoster
                         {
