@@ -98,6 +98,7 @@ namespace C4iSytemsMobApp
                 DateTime endDate = startDate.AddDays(6);
                 var newSiteRosters = new ObservableCollection<SiteRoster>();
                 bool hasAnyRosters = false;
+                bool isHeaderUpdated = false;
 
                 foreach (var site in sitesToFetch)
                 {
@@ -108,8 +109,9 @@ namespace C4iSytemsMobApp
                         hasAnyRosters = true;
                         
                         // Set the overall status and week range to the first valid one we find
-                        if (string.IsNullOrEmpty(WeekRangeLabel.Text) || WeekRangeLabel.Text == "Loading week...")
+                        if (!isHeaderUpdated)
                         {
+                            isHeaderUpdated = true;
                             WeekRangeLabel.Text = roster.WeekRange;
                             StatusLabel.Text = roster.Status;
                             string status = (roster.Status ?? "").ToLower();
