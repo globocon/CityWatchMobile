@@ -22,7 +22,8 @@ namespace C4iSytemsMobApp.Interface
         Task<(bool isSuccess, string message)> ResetGaurdHrPin(string siteName);
         
         // Roster Management
-        Task<WeeklyRoster?> GetGuardRosterAsync(DateTime startDate, DateTime endDate);
+        Task<LinkedSitesResponse?> GetLinkedSitesAsync(int siteId);
+        Task<WeeklyRoster?> GetGuardRosterAsync(DateTime startDate, DateTime endDate, int? specificSiteId = null);
         Task<(bool isSuccess, string message)> UpdateShiftStatusAsync(RosterStatusUpdateModel model);
     }
 }

@@ -10,15 +10,15 @@ namespace C4iSytemsMobApp
     {
         private readonly IGuardApiServices _guardApiServices;
         private DateTime _currentWeekStart;
-        private ObservableCollection<RosterDay> _days;
+        private ObservableCollection<SiteRoster> _siteRosters;
         private HubConnection _hubConnection;
 
-        public ObservableCollection<RosterDay> Days
+        public ObservableCollection<SiteRoster> SiteRosters
         {
-            get => _days;
+            get => _siteRosters;
             set
             {
-                _days = value;
+                _siteRosters = value;
                 OnPropertyChanged();
             }
         }
@@ -70,70 +70,91 @@ namespace C4iSytemsMobApp
         {
             GlobalLoading.IsRunning = true;
             
-            if (Days == null || Days.Count == 0)
+            if (SiteRosters == null || SiteRosters.Count == 0)
             {
-                DaysList.IsVisible = false;
+                RosterContainer.IsVisible = false;
                 NoRosterLabel.IsVisible = false;
             }
 
             try
             {
-                DateTime endDate = startDate.AddDays(6);
-                var roster = await _guardApiServices.GetGuardRosterAsync(startDate, endDate);
+                int currentSiteId = int.Parse(Preferences.Get("SelectedClientSiteId", "0"));
+                
+                var linkedSitesResp = await _guardApiServices.GetLinkedSitesAsync(currentSiteId);
+                List<SiteInfo> sitesToFetch = new List<SiteInfo>();
+                bool isLinkedGroup = false;
 
-                if (roster != null)
+                if (linkedSitesResp != null && linkedSitesResp.IsLinkedSiteGroup && linkedSitesResp.Sites.Count > 0)
                 {
-                    WeekRangeLabel.Text = roster.WeekRange;
-                    
-                    // Update Status Label and Color
-                    StatusLabel.Text = roster.Status;
-                    string status = (roster.Status ?? "").ToLower();
-                    if (status.Contains("paid")) StatusLabel.TextColor = Colors.Red;
-                    else if (status.Contains("live")) StatusLabel.TextColor = Colors.Green;
-                    else if (status.Contains("inv")) StatusLabel.TextColor = Colors.Blue;
-                    else StatusLabel.TextColor = Colors.Gray;
-                }
-
-                if (roster != null && roster.Days.Count > 0)
-                {
-                    foreach (var day in roster.Days)
-                    {
-                        day.PendingCount = day.Shifts?.Count(s => s.StatusCode == 0) ?? 0;
-                        day.AcceptedCount = day.Shifts?.Count(s => s.StatusCode == 1) ?? 0;
-                        day.OpenCount = day.Shifts?.Count(s => s.StatusCode == 2) ?? 0;
-                    }
-
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        if (Days != null && Days.Count == roster.Days.Count && Days[0].Date.Date == roster.Days[0].Date.Date)
-                        {
-                            // [Smooth Update] - Update existing day objects to avoid full UI rebuild
-                            for (int i = 0; i < Days.Count; i++)
-                            {
-                                var existingDay = Days[i];
-                                var newDay = roster.Days[i];
-
-                                existingDay.PendingCount = newDay.PendingCount;
-                                existingDay.AcceptedCount = newDay.AcceptedCount;
-                                existingDay.OpenCount = newDay.OpenCount;
-                                existingDay.IsPublicHoliday = newDay.IsPublicHoliday;
-                                existingDay.HolidayReason = newDay.HolidayReason;
-                                existingDay.Shifts = newDay.Shifts; // Triggers BindableLayout refresh for this day only
-                            }
-                        }
-                        else
-                        {
-                            // [Full Update] - Rebuild collection for different week or first load
-                            Days = new ObservableCollection<RosterDay>(roster.Days);
-                        }
-                        DaysList.IsVisible = true;
-                        NoRosterLabel.IsVisible = false;
-                    });
+                    isLinkedGroup = true;
+                    sitesToFetch = linkedSitesResp.Sites;
                 }
                 else
                 {
-                    NoRosterLabel.IsVisible = true;
+                    // Fallback to current single site
+                    sitesToFetch.Add(new SiteInfo { SiteId = currentSiteId, SiteName = "Current Site" });
                 }
+
+                DateTime endDate = startDate.AddDays(6);
+                var newSiteRosters = new ObservableCollection<SiteRoster>();
+                bool hasAnyRosters = false;
+
+                foreach (var site in sitesToFetch)
+                {
+                    var roster = await _guardApiServices.GetGuardRosterAsync(startDate, endDate, site.SiteId);
+
+                    if (roster != null && roster.Days.Count > 0)
+                    {
+                        hasAnyRosters = true;
+                        
+                        // Set the overall status and week range to the first valid one we find
+                        if (string.IsNullOrEmpty(WeekRangeLabel.Text) || WeekRangeLabel.Text == "Loading week...")
+                        {
+                            WeekRangeLabel.Text = roster.WeekRange;
+                            StatusLabel.Text = roster.Status;
+                            string status = (roster.Status ?? "").ToLower();
+                            if (status.Contains("paid")) StatusLabel.TextColor = Colors.Red;
+                            else if (status.Contains("live")) StatusLabel.TextColor = Colors.Green;
+                            else if (status.Contains("inv")) StatusLabel.TextColor = Colors.Blue;
+                            else StatusLabel.TextColor = Colors.Gray;
+                        }
+
+                        foreach (var day in roster.Days)
+                        {
+                            day.PendingCount = day.Shifts?.Count(s => s.StatusCode == 0) ?? 0;
+                            day.AcceptedCount = day.Shifts?.Count(s => s.StatusCode == 1) ?? 0;
+                            day.OpenCount = day.Shifts?.Count(s => s.StatusCode == 2) ?? 0;
+                        }
+
+                        bool showSiteBar = isLinkedGroup;
+                        bool isExpanded = !isLinkedGroup || (isLinkedGroup && sitesToFetch.Count == 1);
+
+                        var siteRoster = new SiteRoster
+                        {
+                            SiteId = site.SiteId,
+                            SiteName = site.SiteName,
+                            ShowSiteBar = showSiteBar,
+                            IsExpanded = isExpanded,
+                            Days = new ObservableCollection<RosterDay>(roster.Days)
+                        };
+                        newSiteRosters.Add(siteRoster);
+                    }
+                }
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    if (hasAnyRosters)
+                    {
+                        SiteRosters = newSiteRosters;
+                        RosterContainer.IsVisible = true;
+                        NoRosterLabel.IsVisible = false;
+                    }
+                    else
+                    {
+                        NoRosterLabel.IsVisible = true;
+                        RosterContainer.IsVisible = false;
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -174,19 +195,34 @@ namespace C4iSytemsMobApp
 
         private void OnExpandAllClicked(object sender, EventArgs e)
         {
-            if (Days == null) return;
-            foreach (var day in Days)
+            if (SiteRosters == null) return;
+            foreach (var site in SiteRosters)
             {
-                day.IsExpanded = true;
+                foreach (var day in site.Days)
+                {
+                    day.IsExpanded = true;
+                }
             }
         }
 
         private void OnCollapseAllClicked(object sender, EventArgs e)
         {
-            if (Days == null) return;
-            foreach (var day in Days)
+            if (SiteRosters == null) return;
+            foreach (var site in SiteRosters)
             {
-                day.IsExpanded = false;
+                foreach (var day in site.Days)
+                {
+                    day.IsExpanded = false;
+                }
+            }
+        }
+
+        private void OnSiteBarTapped(object sender, EventArgs e)
+        {
+            var site = (e as TappedEventArgs)?.Parameter as SiteRoster;
+            if (site != null)
+            {
+                site.IsExpanded = !site.IsExpanded;
             }
         }
 
