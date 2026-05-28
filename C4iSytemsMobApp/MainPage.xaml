@@ -520,7 +520,8 @@
               BackgroundColor="#80000000"
               AbsoluteLayout.LayoutBounds="0,0,1,1"
               AbsoluteLayout.LayoutFlags="All"
-              IsVisible="False">
+              IsVisible="False"
+              ZIndex="10">
 
             <Frame BackgroundColor="White"
                    CornerRadius="10"
@@ -540,10 +541,11 @@
                            FontSize="12"
                            HorizontalOptions="Center"
                            Grid.Row="0"
+                           TextColor="Black"
                            Margin="0,0,0,5" />
 
                     <!-- Table Headers -->
-                    <Grid ColumnDefinitions="*,150,*,*"
+                    <Grid ColumnDefinitions="79,*,60,60"
                           BackgroundColor="#EEEEEE"
                           Grid.Row="1">
                         <!--<Grid ColumnDefinitions="*,*,*,*"
@@ -600,7 +602,7 @@
                         </CollectionView.ItemsLayout>
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <Grid ColumnDefinitions="*,*,*,*"
+                                <Grid ColumnDefinitions="79,*,60,60"
                                       Padding="0">
                                     <Frame BorderColor="Gray"
                                            Padding="3"
@@ -615,10 +617,11 @@
                                            Padding="3"
                                            HasShadow="False"
                                            CornerRadius="0"
+                                           HorizontalOptions="FillAndExpand"
                                            Grid.Column="1">
                                         <Label Text="{Binding LabelDescription}"
                                                FontSize="10"
-                                               HorizontalOptions="Center" />
+                                               HorizontalOptions="StartAndExpand" />
                                     </Frame>
                                     <Frame BorderColor="Gray"
                                            Padding="3"
@@ -1084,6 +1087,9 @@
 
                     <Button Text="SOP’s"
                             Clicked="OnSOPClicked" />
+
+                    <Button Text="Fq &quot;to midnight&quot; Progress"
+                            Clicked="OnFqButtonClicked" />
 
                     <Button Text="Tools"
                             Clicked="OnToolsClicked" />
