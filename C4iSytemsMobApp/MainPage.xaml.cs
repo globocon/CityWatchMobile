@@ -574,23 +574,25 @@ namespace C4iSytemsMobApp
                             Command = new Command(async () =>
                             {
 
-                                PopupOverlay.IsVisible = true;
-                                var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
-                                if (clientSiteId == null) return;
-                                // Call API to get tag fields
-                                // Call API to get tag fields for this client site
-                                var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
-                                if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
+                                //PopupOverlay.IsVisible = true;
+                                //var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+                                //if (clientSiteId == null) return;
+                                //// Call API to get tag fields
+                                //// Call API to get tag fields for this client site
+                                //var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
+                                //if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
 
-                                // Clear the existing collection
-                                TagFields.Clear();
+                                //// Clear the existing collection
+                                //TagFields.Clear();
 
-                                // Add fetched fields to the ObservableCollection
-                                foreach (var field in fieldsFromApi)
-                                {
-                                    TagFields.Add(field);
-                                }
-                                //await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");
+                                //// Add fetched fields to the ObservableCollection
+                                //foreach (var field in fieldsFromApi)
+                                //{
+                                //    TagFields.Add(field);
+                                //}
+                                ////await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");                                
+
+                                await CallMissedFq();
                             })
                         });
 
@@ -2255,6 +2257,36 @@ namespace C4iSytemsMobApp
             }
         }
 
+
+        private async Task CallMissedFq()
+        {
+            if (App.IsOnline)
+            {
+                PopupOverlay.IsVisible = true;
+                //var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+                //if (clientSiteId == null) return;
+                //_tagclientId
+                // Call API to get tag fields
+                // Call API to get tag fields for this client site
+                //var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
+                var fieldsFromApi = await GetTagFieldsFromApi(_clientSiteId);
+                if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
+
+                // Clear the existing collection
+                TagFields.Clear();
+
+                // Add fetched fields to the ObservableCollection
+                foreach (var field in fieldsFromApi)
+                {
+                    TagFields.Add(field);
+                }
+            }
+            else
+            {
+                await DisplayAlert("Offline", "Please check your internet connection.", "OK");
+            }
+        }
+
         private void OnPcarClicked(object sender, EventArgs e)
         {
 
@@ -2262,6 +2294,11 @@ namespace C4iSytemsMobApp
 
         }
 
+        private async void OnFqButtonClicked(object sender, EventArgs e)
+        {
+            await CloseDrawer();
+            await CallMissedFq();
+        }
     }
 
 

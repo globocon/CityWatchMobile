@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -135,6 +135,7 @@ namespace C4iSytemsMobApp.Models
         public int? FeedbackTemplates { get; set; }
 
         public ReportCreatedLocalTimeZone ReportCreatedLocalTimeZone { get; set; }
+        public string AiDec { get; set; }
 
     }
 

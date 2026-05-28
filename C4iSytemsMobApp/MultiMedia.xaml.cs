@@ -255,7 +255,8 @@ public partial class MultiMedia : ContentPage
             // Add files + types (same index order)
             foreach (var fileModel in SelectedFiles)
             {
-                var stream = await fileModel.File.OpenReadAsync();
+                // Antigravity: Added modular image compression and downsizing to dramatically reduce data usage
+                var stream = await Helpers.ImageCompressionHelper.CompressImageAsync(fileModel.File);
                 var fileContent = new StreamContent(stream);
                 fileContent.Headers.ContentType =
                     new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");

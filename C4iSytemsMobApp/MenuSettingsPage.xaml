@@ -54,10 +54,7 @@
                                  VerticalOptions="Center" />
                 </Frame>
             </Grid>
-
-
-
-
+            
             <!-- Main Buttons -->
             <VerticalStackLayout Padding="5"
                                  Spacing="15">

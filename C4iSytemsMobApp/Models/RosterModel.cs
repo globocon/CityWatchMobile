@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.Maui.Controls;
@@ -249,5 +250,50 @@ namespace C4iSytemsMobApp.Models
         public int ExpectedStatus { get; set; }
         public int CallingGuardId { get; set; }
         public string Reason { get; set; }
+    }
+
+    public class SiteInfo
+    {
+        public int SiteId { get; set; }
+        public string SiteName { get; set; }
+    }
+
+    public class LinkedSitesResponse
+    {
+        public bool IsLinkedSiteGroup { get; set; }
+        public List<SiteInfo> Sites { get; set; } = new List<SiteInfo>();
+    }
+
+    public class SiteRoster : INotifyPropertyChanged
+    {
+        public int SiteId { get; set; }
+        public string SiteName { get; set; }
+        
+        private bool _showSiteBar;
+        public bool ShowSiteBar 
+        { 
+            get => _showSiteBar; 
+            set { _showSiteBar = value; OnPropertyChanged(); } 
+        }
+
+        private bool _isExpanded;
+        public bool IsExpanded 
+        { 
+            get => _isExpanded; 
+            set { _isExpanded = value; OnPropertyChanged(); } 
+        }
+
+        private ObservableCollection<RosterDay> _days = new ObservableCollection<RosterDay>();
+        public ObservableCollection<RosterDay> Days 
+        { 
+            get => _days; 
+            set { _days = value; OnPropertyChanged(); } 
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }
