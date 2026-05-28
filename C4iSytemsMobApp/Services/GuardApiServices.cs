@@ -351,20 +351,43 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
-        // Roster Management Implementation
-        public async Task<WeeklyRoster?> GetGuardRosterAsync(DateTime startDate, DateTime endDate)
+        public async Task<LinkedSitesResponse?> GetLinkedSitesAsync(int siteId)
+        {
+            try
+            {
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetLinkedSitesForRoster?siteId={siteId}";
+                using HttpClient client = new HttpClient();
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<LinkedSitesResponse>();
+                    return result;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching Linked Sites: {ex.Message}");
+                return null;
+            }
+        }
+
+        // Roster Management
+        public async Task<WeeklyRoster?> GetGuardRosterAsync(DateTime startDate, DateTime endDate, int? specificSiteId = null)
         {
             try
             {
                 GetSecureStorageValues();
 
-                if (guardId <= 0 || clientSiteId <= 0)
+                int effectiveSiteId = specificSiteId ?? clientSiteId;
+
+                if (guardId <= 0 || effectiveSiteId <= 0)
                 {
                     return new WeeklyRoster { WeekRange = "Error: Site/Guard not set" };
                 }
 
                 string dateParam = startDate.ToString("yyyy-MM-dd");
-                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetRoster?guardId={guardId}&siteId={clientSiteId}&date={dateParam}";
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetRoster?guardId={guardId}&siteId={effectiveSiteId}&date={dateParam}";
 
                 using HttpClient client = new HttpClient();
                 client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
