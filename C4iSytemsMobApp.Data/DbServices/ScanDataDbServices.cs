@@ -558,7 +558,8 @@ namespace C4iSytemsMobApp.Data.DbServices
         public async Task<List<AudioAndMultimediaLocal>> GetMultimediaLocalList(int audioType)
         {
             using var _db = _dbFactory();
-            return await _db.AudioAndMultimediaLocal.AsNoTracking().Where(x => x.AudioType == audioType && x.LocalFilePath.Trim() != "").ToListAsync();
+            return await _db.AudioAndMultimediaLocal.AsNoTracking().Where(x => x.AudioType == audioType && x.LocalFilePath.Trim() != "")
+                .OrderBy(x=> x.Label).ToListAsync();
         }
 
         //public async Task RefreshAudioAndMultimediaLocalList(List<AudioAndMultimediaLocal> _audioVideoFiles)
