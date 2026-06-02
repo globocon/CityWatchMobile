@@ -19,7 +19,7 @@
                        FontAttributes="Bold"
                        VerticalOptions="Center"
                        HorizontalOptions="Start"
-                       TextColor="Black"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}"
                        Grid.Column="0" />
 
                 <!-- Buttons on the right -->
@@ -45,24 +45,14 @@
                                  IsEnabled="False"
                                  x:Name="StopButton"
                                  VerticalOptions="Center" />
-                    <!-- Blue circular Home Button -->
-                    <Frame Padding="0"
-                           HeightRequest="40"
-                           WidthRequest="40"
-                           CornerRadius="20"
-                           BackgroundColor="#007bff"
-                           HasShadow="False"
-                           HorizontalOptions="End"
-                           VerticalOptions="Center">
 
-                        <ImageButton Source="home.png"
-                                     Clicked="OnBackButtonClicked"
-                                     HeightRequest="22"
-                                     WidthRequest="22"
-                                     BackgroundColor="Transparent"
-                                     HorizontalOptions="Center"
-                                     VerticalOptions="Center" />
-                    </Frame>
+                    <ImageButton Source="home.png"
+                                 Clicked="OnBackButtonClicked"
+                                 HeightRequest="50"
+                                 WidthRequest="50"
+                                 BackgroundColor="Transparent"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center" />
                 </HorizontalStackLayout>
 
             </Grid>
