@@ -54,8 +54,17 @@
                 </HorizontalStackLayout>
             </HorizontalStackLayout>
 
+            <ImageButton Source="home.png"
+                         Clicked="OnHomeClicked"
+                         HeightRequest="50"
+                         WidthRequest="50"
+                         BackgroundColor="Transparent"
+                         HorizontalOptions="End"
+                         VerticalOptions="Center"
+                         Grid.Column="2" />
+
             <!-- Blue circular Home Button -->
-            <Frame Padding="0"
+            <!--<Frame Padding="0"
                    HeightRequest="40"
                    WidthRequest="40"
                    CornerRadius="20"
@@ -64,14 +73,8 @@
                    HorizontalOptions="End"
                    VerticalOptions="Center"
                    Grid.Column="2">
-                <ImageButton Source="home.png"
-                             Clicked="OnHomeClicked"
-                             HeightRequest="22"
-                             WidthRequest="22"
-                             BackgroundColor="Transparent"
-                             HorizontalOptions="Center"
-                             VerticalOptions="Center" />
-            </Frame>
+                
+            </Frame>-->
         </Grid>
 
         <!-- Week Navigation Controls -->
@@ -126,173 +129,208 @@
                        IsVisible="False"
                        TextColor="Gray" />
 
-                <VerticalStackLayout x:Name="DaysList" BindableLayout.ItemsSource="{Binding Days}">
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding SiteRosters}" Spacing="10">
                     <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="models:RosterDay">
-                            <VerticalStackLayout Spacing="0" Margin="0,0,0,8">
+                        <DataTemplate x:DataType="models:SiteRoster">
+                            <VerticalStackLayout Spacing="5">
                                 
-                                <!-- Day Header -->
-                                <Frame Padding="10,6" 
-                                       CornerRadius="4" 
-                                       HasShadow="False"
-                                       BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
-                                    <Frame.Triggers>
-                                        <DataTrigger TargetType="Frame" Binding="{Binding IsPublicHoliday}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="#FFF9C4" />
-                                        </DataTrigger>
-                                    </Frame.Triggers>
+                                <!-- Site Bar (Accordion Header) -->
+                                <Frame IsVisible="{Binding ShowSiteBar}"
+                                       Padding="10" 
+                                       CornerRadius="8" 
+                                       HasShadow="True"
+                                       BackgroundColor="{AppThemeBinding Light=#007bff, Dark=#0056b3}">
                                     <Frame.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnDayHeaderTapped" CommandParameter="{Binding .}" />
+                                        <TapGestureRecognizer Tapped="OnSiteBarTapped" CommandParameter="{Binding .}" />
                                     </Frame.GestureRecognizers>
                                     <Grid ColumnDefinitions="*, Auto">
-                                        <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-                                            <Label Text="{Binding DayName}" 
-                                                   TextColor="{AppThemeBinding Light=White, Dark=Black}" 
-                                                   FontAttributes="Bold" 
-                                                   FontSize="16" />
-                                            
-                                            <!-- Status Summary Indicators -->
-                                            <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Margin="5,0,0,0">
-                                                <!-- Orange: Pending -->
-                                                <HorizontalStackLayout Spacing="2" IsVisible="{Binding PendingCount, Converter={StaticResource CountToVisibilityConverter}}">
-                                                    <Ellipse WidthRequest="10" HeightRequest="10" Fill="Orange" VerticalOptions="Center" />
-                                                    <Label Text="{Binding PendingCount}" TextColor="Orange" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
-                                                </HorizontalStackLayout>
-                                                <!-- Green: Accepted -->
-                                                <HorizontalStackLayout Spacing="2" IsVisible="{Binding AcceptedCount, Converter={StaticResource CountToVisibilityConverter}}">
-                                                    <Ellipse WidthRequest="10" HeightRequest="10" Fill="{AppThemeBinding Light=#90EE90, Dark=#2E7D32}" VerticalOptions="Center" />
-                                                    <Label Text="{Binding AcceptedCount}" TextColor="{AppThemeBinding Light=#90EE90, Dark=#2E7D32}" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
-                                                </HorizontalStackLayout>
-                                                <!-- Black: Open -->
-                                                <HorizontalStackLayout Spacing="2" IsVisible="{Binding OpenCount, Converter={StaticResource CountToVisibilityConverter}}">
-                                                    <Ellipse WidthRequest="10" HeightRequest="10" Fill="#212121" VerticalOptions="Center" />
-                                                    <Label Text="{Binding OpenCount}" TextColor="#212121" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
-                                                </HorizontalStackLayout>
-                                            </HorizontalStackLayout>
-
-                                            <Label Text="{Binding HolidayReason}" 
-                                                   TextColor="Red" 
-                                                   FontSize="12" 
-                                                   VerticalOptions="Center" 
-                                                   IsVisible="{Binding IsPublicHoliday}" />
-                                        </HorizontalStackLayout>
+                                        <Label Text="{Binding SiteName}" 
+                                               TextColor="White" 
+                                               FontAttributes="Bold" 
+                                               FontSize="18" 
+                                               VerticalOptions="Center" />
                                         <Label Grid.Column="1" 
                                                Text="{Binding IsExpanded, Converter={StaticResource BooleanToArrowConverter}}" 
-                                               TextColor="{AppThemeBinding Light=White, Dark=Black}" 
+                                               TextColor="White" 
                                                FontFamily="FontAwesome" 
-                                               FontSize="12" />
+                                               FontSize="14"
+                                               VerticalOptions="Center" />
                                     </Grid>
                                 </Frame>
 
-                                <!-- Day Shifts -->
-                                <VerticalStackLayout IsVisible="{Binding IsExpanded}" 
-                                                     BindableLayout.ItemsSource="{Binding Shifts}"
-                                                     Padding="0,4,0,0"
-                                                     Spacing="4">
+                                <!-- Days List for the Site -->
+                                <VerticalStackLayout IsVisible="{Binding IsExpanded}"
+                                                     BindableLayout.ItemsSource="{Binding Days}">
                                     <BindableLayout.ItemTemplate>
-                                        <DataTemplate x:DataType="models:RosterShift">
-                                            <Frame Padding="10" 
-                                                   CornerRadius="10" 
-                                                   HasShadow="False"
-                                                    Background="{Binding StatusBrush}"
-                                                    BorderColor="Transparent">
-                                                 <Frame.GestureRecognizers>
-                                                    <TapGestureRecognizer Tapped="OnShiftTapped" CommandParameter="{Binding .}" />
-                                                </Frame.GestureRecognizers>
-                                                <Grid ColumnDefinitions="Auto, *, Auto">
-                                                    
-                                                    <!-- Icon (Reduced size 50%) -->
-                                                    <Frame Padding="0"
-                                                           HeightRequest="22"
-                                                           WidthRequest="22"
-                                                           CornerRadius="5"
-                                                           BackgroundColor="Transparent"
-                                                           BorderColor="White"
-                                                           HorizontalOptions="Start"
-                                                           VerticalOptions="Start"
-                                                           Margin="0,2,8,0">
-                                                        <Label Text="{Binding DisplayIcon}" 
+                                        <DataTemplate x:DataType="models:RosterDay">
+                                            <VerticalStackLayout Spacing="0" Margin="0,0,0,8">
+                                                
+                                                <!-- Day Header -->
+                                                <Frame Padding="10,6" 
+                                                       CornerRadius="4" 
+                                                       HasShadow="False"
+                                                       BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
+                                                    <Frame.Triggers>
+                                                        <DataTrigger TargetType="Frame" Binding="{Binding IsPublicHoliday}" Value="True">
+                                                            <Setter Property="BackgroundColor" Value="#FFF9C4" />
+                                                        </DataTrigger>
+                                                    </Frame.Triggers>
+                                                    <Frame.GestureRecognizers>
+                                                        <TapGestureRecognizer Tapped="OnDayHeaderTapped" CommandParameter="{Binding .}" />
+                                                    </Frame.GestureRecognizers>
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                                                            <Label Text="{Binding DayName}" 
+                                                                   TextColor="{AppThemeBinding Light=White, Dark=Black}" 
+                                                                   FontAttributes="Bold" 
+                                                                   FontSize="16" />
+                                                            
+                                                            <!-- Status Summary Indicators -->
+                                                            <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Margin="5,0,0,0">
+                                                                <!-- Orange: Pending -->
+                                                                <HorizontalStackLayout Spacing="2" IsVisible="{Binding PendingCount, Converter={StaticResource CountToVisibilityConverter}}">
+                                                                    <Ellipse WidthRequest="10" HeightRequest="10" Fill="Orange" VerticalOptions="Center" />
+                                                                    <Label Text="{Binding PendingCount}" TextColor="Orange" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
+                                                                </HorizontalStackLayout>
+                                                                <!-- Green: Accepted -->
+                                                                <HorizontalStackLayout Spacing="2" IsVisible="{Binding AcceptedCount, Converter={StaticResource CountToVisibilityConverter}}">
+                                                                    <Ellipse WidthRequest="10" HeightRequest="10" Fill="{AppThemeBinding Light=#90EE90, Dark=#2E7D32}" VerticalOptions="Center" />
+                                                                    <Label Text="{Binding AcceptedCount}" TextColor="{AppThemeBinding Light=#90EE90, Dark=#2E7D32}" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
+                                                                </HorizontalStackLayout>
+                                                                <!-- Black: Open -->
+                                                                <HorizontalStackLayout Spacing="2" IsVisible="{Binding OpenCount, Converter={StaticResource CountToVisibilityConverter}}">
+                                                                    <Ellipse WidthRequest="10" HeightRequest="10" Fill="#212121" VerticalOptions="Center" />
+                                                                    <Label Text="{Binding OpenCount}" TextColor="#212121" FontSize="13" FontAttributes="Bold" VerticalOptions="Center" />
+                                                                </HorizontalStackLayout>
+                                                            </HorizontalStackLayout>
+
+                                                            <Label Text="{Binding HolidayReason}" 
+                                                                   TextColor="Red" 
+                                                                   FontSize="12" 
+                                                                   VerticalOptions="Center" 
+                                                                   IsVisible="{Binding IsPublicHoliday}" />
+                                                        </HorizontalStackLayout>
+                                                        <Label Grid.Column="1" 
+                                                               Text="{Binding IsExpanded, Converter={StaticResource BooleanToArrowConverter}}" 
+                                                               TextColor="{AppThemeBinding Light=White, Dark=Black}" 
                                                                FontFamily="FontAwesome" 
-                                                               FontSize="14" 
-                                                               TextColor="White"
-                                                               HorizontalOptions="Center"
-                                                               VerticalOptions="Center" />
-                                                    </Frame>
+                                                               FontSize="12" />
+                                                    </Grid>
+                                                </Frame>
 
-                                                    <!-- Shift Info (Vertical Stack like Web UI) -->
-                                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                                        <!-- Line 1: Name -->
-                                                        <Label Text="{Binding DisplayName}" 
-                                                               TextColor="White" 
-                                                               FontAttributes="Bold" 
-                                                               FontSize="16" />
+                                                <!-- Day Shifts -->
+                                                <VerticalStackLayout IsVisible="{Binding IsExpanded}" 
+                                                                     BindableLayout.ItemsSource="{Binding Shifts}"
+                                                                     Padding="0,4,0,0"
+                                                                     Spacing="4">
+                                                    <BindableLayout.ItemTemplate>
+                                                        <DataTemplate x:DataType="models:RosterShift">
+                                                            <Frame Padding="10" 
+                                                                   CornerRadius="10" 
+                                                                   HasShadow="False"
+                                                                    Background="{Binding StatusBrush}"
+                                                                    BorderColor="Transparent">
+                                                                 <Frame.GestureRecognizers>
+                                                                    <TapGestureRecognizer Tapped="OnShiftTapped" CommandParameter="{Binding .}" />
+                                                                </Frame.GestureRecognizers>
+                                                                <Grid ColumnDefinitions="Auto, *, Auto">
+                                                                    
+                                                                    <!-- Icon (Reduced size 50%) -->
+                                                                    <Frame Padding="0"
+                                                                           HeightRequest="22"
+                                                                           WidthRequest="22"
+                                                                           CornerRadius="5"
+                                                                           BackgroundColor="Transparent"
+                                                                           BorderColor="White"
+                                                                           HorizontalOptions="Start"
+                                                                           VerticalOptions="Start"
+                                                                           Margin="0,2,8,0">
+                                                                        <Label Text="{Binding DisplayIcon}" 
+                                                                               FontFamily="FontAwesome" 
+                                                                               FontSize="14" 
+                                                                               TextColor="White"
+                                                                               HorizontalOptions="Center"
+                                                                               VerticalOptions="Center" />
+                                                                    </Frame>
 
-                                                        <!-- Line 2: [Reason] Original Guard (Relief only) -->
-                                                        <HorizontalStackLayout Spacing="4" 
-                                                                               IsVisible="{Binding ReliefGuardId, Converter={StaticResource NotNullToBooleanConverter}}">
-                                                            <Label Text="{Binding ReliefReason, StringFormat='[{0}]'}" 
-                                                                   TextColor="White" 
-                                                                   FontSize="12" 
-                                                                   FontAttributes="Bold"
-                                                                   IsVisible="{Binding ReliefReason, Converter={StaticResource NotNullToBooleanConverter}}" />
-                                                            <Label Text="{Binding GuardName}" 
-                                                                   TextColor="White" 
-                                                                   FontSize="12" 
-                                                                   Opacity="0.8" />
-                                                        </HorizontalStackLayout>
+                                                                    <!-- Shift Info (Vertical Stack like Web UI) -->
+                                                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                                                        <!-- Line 1: Name -->
+                                                                        <Label Text="{Binding DisplayName}" 
+                                                                               TextColor="White" 
+                                                                               FontAttributes="Bold" 
+                                                                               FontSize="16" />
 
-                                                        <!-- Line 3: License -->
-                                                        <Label Text="{Binding DisplayLicense, StringFormat='LIC: {0}'}" 
-                                                               TextColor="White" 
-                                                               FontSize="12" 
-                                                               Opacity="0.9"
-                                                               IsVisible="{Binding DisplayLicense, Converter={StaticResource NotNullToBooleanConverter}}" />
+                                                                        <!-- Line 2: [Reason] Original Guard (Relief only) -->
+                                                                        <HorizontalStackLayout Spacing="4" 
+                                                                                               IsVisible="{Binding ReliefGuardId, Converter={StaticResource NotNullToBooleanConverter}}">
+                                                                            <Label Text="{Binding ReliefReason, StringFormat='[{0}]'}" 
+                                                                                   TextColor="White" 
+                                                                                   FontSize="12" 
+                                                                                   FontAttributes="Bold"
+                                                                                   IsVisible="{Binding ReliefReason, Converter={StaticResource NotNullToBooleanConverter}}" />
+                                                                            <Label Text="{Binding GuardName}" 
+                                                                                   TextColor="White" 
+                                                                                   FontSize="12" 
+                                                                                   Opacity="0.8" />
+                                                                        </HorizontalStackLayout>
 
-                                                        <!-- Line 4: Time and Duration -->
-                                                        <HorizontalStackLayout Spacing="5" Margin="0,2,0,0">
-                                                            <Label Text="{Binding StartTime}" TextColor="White" FontSize="13" />
-                                                            <Label Text="-" TextColor="White" FontSize="13" />
-                                                            <Label Text="{Binding EndTime}" TextColor="White" FontSize="13" />
-                                                            <Label Text="{Binding DurationHours, StringFormat='({0}h)'}" 
-                                                                   TextColor="White" 
-                                                                   FontSize="13" 
-                                                                   Opacity="0.9" />
-                                                        </HorizontalStackLayout>
-                                                    </VerticalStackLayout>
+                                                                        <!-- Line 3: License -->
+                                                                        <Label Text="{Binding DisplayLicense, StringFormat='LIC: {0}'}" 
+                                                                               TextColor="White" 
+                                                                               FontSize="12" 
+                                                                               Opacity="0.9"
+                                                                               IsVisible="{Binding DisplayLicense, Converter={StaticResource NotNullToBooleanConverter}}" />
 
-                                                    <!-- Callsign and Status (Right Aligned) -->
-                                                    <VerticalStackLayout Grid.Column="2" 
-                                                                         VerticalOptions="Start"
-                                                                         HorizontalOptions="End"
-                                                                         Spacing="2">
-                                                        <HorizontalStackLayout Spacing="5" HorizontalOptions="End">
-                                                            <Label Text="&#xf303;" 
-                                                                   FontFamily="FontAwesome" 
-                                                                   FontSize="12" 
-                                                                   TextColor="White"
-                                                                   IsVisible="{Binding IsEditable}"
-                                                                   VerticalOptions="Center" />
-                                                            <Label Text="{Binding CallsignName}" 
-                                                                   TextColor="White" 
-                                                                   FontSize="14" 
-                                                                   FontAttributes="Bold" />
-                                                        </HorizontalStackLayout>
-                                                        
-                                                        <Label Text="{Binding Status}" 
-                                                               TextColor="White" 
-                                                               FontSize="12" 
-                                                               FontAttributes="Italic"
-                                                               HorizontalOptions="End" />
-                                                               
-                                                        <Label Text="Relief"
-                                                               TextColor="White"
-                                                               FontSize="11"
-                                                               FontAttributes="Bold"
-                                                               IsVisible="{Binding ReliefGuardId, Converter={StaticResource NotNullToBooleanConverter}}" 
-                                                               HorizontalOptions="End" />
-                                                    </VerticalStackLayout>
-                                                </Grid>
-                                            </Frame>
+                                                                        <!-- Line 4: Time and Duration -->
+                                                                        <HorizontalStackLayout Spacing="5" Margin="0,2,0,0">
+                                                                            <Label Text="{Binding StartTime}" TextColor="White" FontSize="13" />
+                                                                            <Label Text="-" TextColor="White" FontSize="13" />
+                                                                            <Label Text="{Binding EndTime}" TextColor="White" FontSize="13" />
+                                                                            <Label Text="{Binding DurationHours, StringFormat='({0}h)'}" 
+                                                                                   TextColor="White" 
+                                                                                   FontSize="13" 
+                                                                                   Opacity="0.9" />
+                                                                        </HorizontalStackLayout>
+                                                                    </VerticalStackLayout>
+
+                                                                    <!-- Callsign and Status (Right Aligned) -->
+                                                                    <VerticalStackLayout Grid.Column="2" 
+                                                                                         VerticalOptions="Start"
+                                                                                         HorizontalOptions="End"
+                                                                                         Spacing="2">
+                                                                        <HorizontalStackLayout Spacing="5" HorizontalOptions="End">
+                                                                            <Label Text="&#xf303;" 
+                                                                                   FontFamily="FontAwesome" 
+                                                                                   FontSize="12" 
+                                                                                   TextColor="White"
+                                                                                   IsVisible="{Binding IsEditable}"
+                                                                                   VerticalOptions="Center" />
+                                                                            <Label Text="{Binding CallsignName}" 
+                                                                                   TextColor="White" 
+                                                                                   FontSize="14" 
+                                                                                   FontAttributes="Bold" />
+                                                                        </HorizontalStackLayout>
+                                                                        
+                                                                        <Label Text="{Binding Status}" 
+                                                                               TextColor="White" 
+                                                                               FontSize="12" 
+                                                                               FontAttributes="Italic"
+                                                                               HorizontalOptions="End" />
+                                                                               
+                                                                        <Label Text="Relief"
+                                                                               TextColor="White"
+                                                                               FontSize="11"
+                                                                               FontAttributes="Bold"
+                                                                               IsVisible="{Binding ReliefGuardId, Converter={StaticResource NotNullToBooleanConverter}}" 
+                                                                               HorizontalOptions="End" />
+                                                                    </VerticalStackLayout>
+                                                                </Grid>
+                                                            </Frame>
+                                                        </DataTemplate>
+                                                    </BindableLayout.ItemTemplate>
+                                                </VerticalStackLayout>
+                                            </VerticalStackLayout>
                                         </DataTemplate>
                                     </BindableLayout.ItemTemplate>
                                 </VerticalStackLayout>

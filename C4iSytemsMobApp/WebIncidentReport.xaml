@@ -30,25 +30,16 @@
                            VerticalOptions="Center"
                            Grid.Column="0"
                            TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                    <!-- Blue circular Home Button -->
-                    <Frame Padding="0"
-                           HeightRequest="40"
-                           WidthRequest="40"
-                           CornerRadius="20"
-                           BackgroundColor="#007bff"
-                           HasShadow="False"
-                           HorizontalOptions="End"
-                           VerticalOptions="Center"
-                           Grid.Column="2">
-                        <!-- Home Button -->
-                        <ImageButton Source="home.png"
-                                     Clicked="OnHomeClicked"
-                                     HeightRequest="22"
-                                     WidthRequest="22"
-                                     BackgroundColor="Transparent"
-                                     HorizontalOptions="Center"
-                                     VerticalOptions="Center" />
-                    </Frame>
+
+                    <!-- Home Button -->
+                    <ImageButton Source="home.png"
+                                 Clicked="OnHomeClicked"
+                                 HeightRequest="50"
+                                 WidthRequest="50"
+                                 BackgroundColor="Transparent"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Grid.Column="2" />
                 </Grid>
                 <!-- Event Type Container with Border -->
                 <Frame CornerRadius="10"
@@ -650,6 +641,22 @@
                             </ScrollView>
                         </Frame>
 
+                        <!-- Integrity Declaration -->
+                        <Label Text="Integrity Declaration"
+                               FontSize="14"
+                               HorizontalOptions="Start" />
+                        <Frame BorderColor="Gray"
+                               CornerRadius="6"
+                               Padding="0"
+                               HasShadow="False">
+                            <Editor x:Name="aiDeclarationEditor"
+                                    FontSize="14"
+                                    BackgroundColor="White"
+                                    TextColor="Black"
+                                    AutoSize="TextChanges"
+                                    Margin="0" />
+                        </Frame>
+
 
                         <!-- Text Field instead of Dropdown -->
                         <Label Text="Supervisor or person you reported this to and/or will email:"
@@ -714,6 +721,7 @@
                        Padding="10"
                        BorderColor="LightGray">
                     <VerticalStackLayout Spacing="10">
+
 
                         <!-- Submit Button Only -->
                         <Button Text="Submit"

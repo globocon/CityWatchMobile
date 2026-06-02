@@ -714,7 +714,8 @@ public partial class LogActivity : ContentPage
             // Add files + types (same index order)
             foreach (var fileModel in SelectedFiles)
             {
-                var stream = await fileModel.File.OpenReadAsync();
+                // Antigravity: Added modular image compression and downsizing to dramatically reduce data usage
+                var stream = await Helpers.ImageCompressionHelper.CompressImageAsync(fileModel.File);
                 var fileContent = new StreamContent(stream);
                 fileContent.Headers.ContentType =
                     new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
@@ -1401,7 +1402,8 @@ public partial class LogActivity : ContentPage
                         // Save file to local storage with unique name
                         var extension = Path.GetExtension(fileModel.File.FileName);
                         var cacheFileName = $"{Guid.NewGuid():N}{extension}";
-                        var stream = await fileModel.File.OpenReadAsync();
+                        // Antigravity: Added modular image compression and downsizing to reduce offline storage and data usage on sync
+                        var stream = await Helpers.ImageCompressionHelper.CompressImageAsync(fileModel.File);
                         var path = await SaveFileOffline(stream, "ActivityLogbook", cacheFileName);
                         // Update details in local db
                         OfflineFilesRecords offlineFilesRecords = new OfflineFilesRecords()
@@ -1445,7 +1447,8 @@ public partial class LogActivity : ContentPage
                     // Add files + types (same index order)
                     foreach (var fileModel in SelectedFiles)
                     {
-                        var stream = await fileModel.File.OpenReadAsync();
+                        // Antigravity: Added modular image compression and downsizing to dramatically reduce data usage
+                        var stream = await Helpers.ImageCompressionHelper.CompressImageAsync(fileModel.File);
                         var fileContent = new StreamContent(stream);
                         fileContent.Headers.ContentType =
                             new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
@@ -1552,9 +1555,8 @@ public partial class LogActivity : ContentPage
             // Add files + their types (same index order)
             foreach (var fileModel in newFiles)
             {
-
-
-                var stream = await fileModel.File.OpenReadAsync();
+                // Antigravity: Added modular image compression and downsizing to dramatically reduce data usage
+                var stream = await Helpers.ImageCompressionHelper.CompressImageAsync(fileModel.File);
                 var fileContent = new StreamContent(stream);
                 fileContent.Headers.ContentType =
                     new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");

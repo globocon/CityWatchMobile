@@ -54,7 +54,7 @@ public partial class MenuSettingsPage : ContentPage
         // Your update check logic here
         if(!IsCheckForUpdatesEnabled)
         {
-            await DisplayAlert("Check for Updates", "This feature is not available on ios platform.", "OK");
+            await DisplayAlert("Check for Updates", "Please manually check the App Store to apply the latest update.", "OK");
             return;
         }
         await CheckForUpdatesAsync();
