@@ -392,31 +392,33 @@ namespace C4iSytemsMobApp
                                 //if (isPcar) return;
 
                                 //await Application.Current.MainPage.DisplayAlert("Missed Info", $"Missed value: {first.RemainingTags}", "OK");
-                                if (App.IsOnline)
-                                {
-                                    PopupOverlay.IsVisible = true;
-                                    //var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
-                                    //if (clientSiteId == null) return;
-                                    //_tagclientId
-                                    // Call API to get tag fields
-                                    // Call API to get tag fields for this client site
-                                    //var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
-                                    var fieldsFromApi = await GetTagFieldsFromApi(_tagclientId);
-                                    if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
+                                //if (App.IsOnline)
+                                //{
+                                //    PopupOverlay.IsVisible = true;
+                                //    //var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
+                                //    //if (clientSiteId == null) return;
+                                //    //_tagclientId
+                                //    // Call API to get tag fields
+                                //    // Call API to get tag fields for this client site
+                                //    //var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
+                                //    var fieldsFromApi = await GetTagFieldsFromApi(_tagclientId);
+                                //    if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
 
-                                    // Clear the existing collection
-                                    TagFields.Clear();
+                                //    // Clear the existing collection
+                                //    TagFields.Clear();
 
-                                    // Add fetched fields to the ObservableCollection
-                                    foreach (var field in fieldsFromApi)
-                                    {
-                                        TagFields.Add(field);
-                                    }
-                                }
-                                else
-                                {
-                                    await DisplayAlert("Offline", "Please check your internet connection.", "OK");
-                                }
+                                //    // Add fetched fields to the ObservableCollection
+                                //    foreach (var field in fieldsFromApi)
+                                //    {
+                                //        TagFields.Add(field);
+                                //    }
+                                //}
+                                //else
+                                //{
+                                //    await DisplayAlert("Offline", "Please check your internet connection.", "OK");
+                                //}
+
+                                await CallMissedFq();
                             })
                         });
 
@@ -2260,20 +2262,30 @@ namespace C4iSytemsMobApp
 
         private async Task CallMissedFq()
         {
+            if (!_clientSiteId.HasValue)
+            {
+                return;
+            }
+
+            // Clear the existing collection
+            TagFields.Clear();
+            missingTagSiteName.IsVisible = false;
+            missingTagSiteName.Text = "";
+
             if (App.IsOnline)
             {
                 PopupOverlay.IsVisible = true;
-                //var clientSiteId = await TryGetSecureId("SelectedClientSiteId", "Please select a valid Client Site.");
-                //if (clientSiteId == null) return;
-                //_tagclientId
-                // Call API to get tag fields
-                // Call API to get tag fields for this client site
-                //var fieldsFromApi = await GetTagFieldsFromApi(clientSiteId.Value);
-                var fieldsFromApi = await GetTagFieldsFromApi(_clientSiteId);
-                if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
+                int _tagclientId = _clientSiteId.Value;
 
-                // Clear the existing collection
-                TagFields.Clear();
+                if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+                {
+                    _tagclientId = App.PcarInspLastScannedSiteId.HasValue ? App.PcarInspLastScannedSiteId.Value : _clientSiteId.Value;
+                    var _siteName = await _scannerControlServices.GetClientSiteNameFromLocalDb(_tagclientId);
+                    missingTagSiteName.Text = _siteName;
+                    missingTagSiteName.IsVisible = true;
+                }
+                var fieldsFromApi = await GetTagFieldsFromApi(_tagclientId);
+                if (fieldsFromApi == null || !fieldsFromApi.Any()) return;
 
                 // Add fetched fields to the ObservableCollection
                 foreach (var field in fieldsFromApi)
