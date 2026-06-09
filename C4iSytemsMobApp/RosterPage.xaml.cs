@@ -256,7 +256,7 @@ namespace C4iSytemsMobApp
             else if (shift.StatusCode == (int)RosterShiftStatus.Accepted)
             {
                 // Predefined reasons for cancellation
-                string action = await DisplayActionSheet("Reason for Relief\nPLEASE SELECT A REASON FOR CANCELLING THIS SHIFT:", "Cancel", null, "Sick", "AL", "RDO", "LWOP", "Other");
+                string action = await DisplayActionSheet("Reason for Relief\nPLEASE SELECT A REASON\nFOR CANCELLING THIS SHIFT:", "Cancel", null, "Sick", "AL", "RDO", "LWOP", "Other");
                 
                 if (action == "Cancel" || string.IsNullOrEmpty(action)) return;
 
