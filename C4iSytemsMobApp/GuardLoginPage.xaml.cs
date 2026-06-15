@@ -412,7 +412,7 @@ public partial class GuardLoginPage : ContentPage
                 pickerClientSite.IsVisible = true;
                 slPatrolCarToggle.IsVisible = true;
                 pickerPosition.IsVisible = true;
-                pickerCallsign.IsVisible = switchPatrolCar.IsToggled;
+                pickerCallsign.IsVisible = true;
                 SelectedClientSite = siteItem;
                 pickerClientSite.SelectedItem = siteItem;
             }
@@ -701,7 +701,7 @@ public partial class GuardLoginPage : ContentPage
                 pickerClientSite.IsVisible = true;
                 slPatrolCarToggle.IsVisible = true;
                 pickerPosition.IsVisible = true;
-                pickerCallsign.IsVisible = switchPatrolCar.IsToggled;
+                pickerCallsign.IsVisible = true;
                 btnEnterLogbook.IsVisible = true;
                 vslCalendarLiveEvents.IsVisible = true;
 
@@ -717,7 +717,7 @@ public partial class GuardLoginPage : ContentPage
                     pickerClientSite.IsVisible = true;
                     slPatrolCarToggle.IsVisible = true;
                     pickerPosition.IsVisible = true;
-                    pickerCallsign.IsVisible = switchPatrolCar.IsToggled;
+                    pickerCallsign.IsVisible = true;
                 }
 
             }
@@ -816,7 +816,7 @@ public partial class GuardLoginPage : ContentPage
     private async void OnPatrolCarToggled(object sender, ToggledEventArgs e)
     {
         bool isPatrolCar = e.Value;
-        pickerCallsign.IsVisible = isPatrolCar;
+        pickerCallsign.IsVisible = true;
         ToggleInstructionalTextVisibility();
         await LoadPositionsData(isPatrolCar);
     }

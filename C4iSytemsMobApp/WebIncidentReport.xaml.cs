@@ -1017,6 +1017,8 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             }
 
 
+            var isPatrolCar = Preferences.Get("IsPatrolCar", false);
+
             var Report = new IncidentRequest
             {
                 ReportReference = IrSession.ReportReference,
@@ -1055,12 +1057,12 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     Email = "username@example.com",
                     LicenseNumber = string.Empty,
                     LicenseState = string.Empty,
-                    CallSign = Preferences.Get("SelectedCallsign", ""),
+                    CallSign = isPatrolCar ? Preferences.Get("SelectedCallsign", "") : string.Empty,
                     GuardMonth = selectedGuardMonth,
                     NotifiedBy = selectedNotifiedBy,
                     Billing = string.Empty,
                 },
-                IsPositionPatrolCar = Preferences.Get("IsPatrolCar", false),
+                IsPositionPatrolCar = isPatrolCar,
                 DateLocation = new DateLocation
                 {
 
