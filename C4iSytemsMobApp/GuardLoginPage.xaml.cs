@@ -33,10 +33,12 @@ public partial class GuardLoginPage : ContentPage
     public ObservableCollection<DropdownItem> ClientTypes { get; set; } = new();
     public ObservableCollection<DropdownItem> ClientSites { get; set; } = new();
     public ObservableCollection<DropdownItem> Positions { get; set; } = new();
+    public ObservableCollection<DropdownItem> Callsigns { get; set; } = new();
 
     private DropdownItem _selectedClientType;
     private DropdownItem _selectedClientSite;
     private DropdownItem _selectedPosition;
+    private DropdownItem _selectedCallsignObj;
     private string _selectedCallsign;
     private bool _suppressSuggestions = false;
     public DropdownItem SelectedClientType
@@ -84,6 +86,27 @@ public partial class GuardLoginPage : ContentPage
             {
                 _selectedPosition = value;
                 OnPropertyChanged(nameof(SelectedPosition));
+            }
+        }
+    }
+
+    public DropdownItem SelectedCallsignObj
+    {
+        get => _selectedCallsignObj;
+        set
+        {
+            if (_selectedCallsignObj != value)
+            {
+                _selectedCallsignObj = value;
+                OnPropertyChanged(nameof(SelectedCallsignObj));
+                if (value != null && value.Name != "- Select -")
+                {
+                    SelectedCallsign = value.Name;
+                }
+                else
+                {
+                    SelectedCallsign = string.Empty;
+                }
             }
         }
     }
@@ -391,7 +414,12 @@ public partial class GuardLoginPage : ContentPage
         if (!string.IsNullOrEmpty(savedCallsign))
         {
             SelectedCallsign = savedCallsign;
-            pickerCallsign.SelectedItem = savedCallsign;
+            var match = Callsigns.FirstOrDefault(p => p.Name == savedCallsign);
+            if (match != null)
+            {
+                SelectedCallsignObj = match;
+                pickerCallsign.SelectedItem = match;
+            }
         }
 
         // Optionally restore ClientSite in a similar way
@@ -497,6 +525,7 @@ public partial class GuardLoginPage : ContentPage
             });
 
             await LoadPositionsData();
+            await LoadCallsignsData();
         }
         catch (Exception ex)
         {
@@ -539,6 +568,40 @@ public partial class GuardLoginPage : ContentPage
         }
     }
 
+    private async Task LoadCallsignsData()
+    {
+        try
+        {
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetCallsigns";
+            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(url);
+
+            if (response == null) return;
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                Callsigns.Clear();
+                Callsigns.Add(new DropdownItem { Id = -1, Name = "- Select -" });
+                foreach (var callsign in response.Where(p => p.Name != "Select" && p.Name != "- Select -").OrderBy(p => p.Name))
+                    Callsigns.Add(callsign);
+
+                // Auto-restore Callsign
+                var savedCallsign = Preferences.Get("SelectedCallsign", "");
+                if (!string.IsNullOrEmpty(savedCallsign))
+                {
+                    var match = Callsigns.FirstOrDefault(p => p.Name == savedCallsign);
+                    if (match != null)
+                    {
+                        SelectedCallsignObj = match;
+                        pickerCallsign.SelectedItem = match;
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            // Silently fail or log if needed
+        }
+    }
 
     private async void LoadClientSites(int clientTypeId)
     {
