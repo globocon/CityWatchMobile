@@ -1,4 +1,4 @@
-﻿
+
 using AutoMapper;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Data.Entity;
@@ -1051,11 +1051,11 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     LastName = string.Empty,
                     Gender = string.Empty,
                     Phone = string.Empty,
-                    Position = string.Empty,
+                    Position = Preferences.Get("SelectedPosition", ""),
                     Email = "username@example.com",
                     LicenseNumber = string.Empty,
                     LicenseState = string.Empty,
-                    CallSign = string.Empty,
+                    CallSign = Preferences.Get("SelectedCallsign", ""),
                     GuardMonth = selectedGuardMonth,
                     NotifiedBy = selectedNotifiedBy,
                     Billing = string.Empty,

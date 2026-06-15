@@ -32,9 +32,12 @@ public partial class GuardLoginPage : ContentPage
 
     public ObservableCollection<DropdownItem> ClientTypes { get; set; } = new();
     public ObservableCollection<DropdownItem> ClientSites { get; set; } = new();
+    public ObservableCollection<DropdownItem> Positions { get; set; } = new();
 
     private DropdownItem _selectedClientType;
     private DropdownItem _selectedClientSite;
+    private DropdownItem _selectedPosition;
+    private string _selectedCallsign;
     private bool _suppressSuggestions = false;
     public DropdownItem SelectedClientType
     {
@@ -68,6 +71,32 @@ public partial class GuardLoginPage : ContentPage
 
                 if (_selectedClientSite != null)
                     Preferences.Set("SelectedClientSiteId", _selectedClientSite.Id.ToString());
+            }
+        }
+    }
+
+    public DropdownItem SelectedPosition
+    {
+        get => _selectedPosition;
+        set
+        {
+            if (_selectedPosition != value)
+            {
+                _selectedPosition = value;
+                OnPropertyChanged(nameof(SelectedPosition));
+            }
+        }
+    }
+
+    public string SelectedCallsign
+    {
+        get => _selectedCallsign;
+        set
+        {
+            if (_selectedCallsign != value)
+            {
+                _selectedCallsign = value;
+                OnPropertyChanged(nameof(SelectedCallsign));
             }
         }
     }
@@ -370,6 +399,8 @@ public partial class GuardLoginPage : ContentPage
             if (siteItem != null)
             {
                 pickerClientSite.IsVisible = true;
+                pickerPosition.IsVisible = true;
+                pickerCallsign.IsVisible = true;
                 SelectedClientSite = siteItem;
                 pickerClientSite.SelectedItem = siteItem;
             }
@@ -452,12 +483,37 @@ public partial class GuardLoginPage : ContentPage
                     textBoxSelectedClientType.Text = SelectedClientType.Name;
                 }
             });
+
+            await LoadPositionsData();
         }
         catch (Exception ex)
         {
             await DisplayAlert("Error", "Failed to load client types: " + ex.Message, "OK");
         }
     }
+
+    private async Task LoadPositionsData()
+    {
+        try
+        {
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetOfficerPositions";
+            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(url);
+
+            if (response == null) return;
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                Positions.Clear();
+                foreach (var pos in response.Where(p => p.Name != "Select").OrderBy(p => p.Name))
+                    Positions.Add(pos);
+            });
+        }
+        catch (Exception ex)
+        {
+            // Silently fail or log if needed, as it's not absolutely critical to block login
+        }
+    }
+
 
     private async void LoadClientSites(int clientTypeId)
     {
@@ -619,6 +675,8 @@ public partial class GuardLoginPage : ContentPage
 
                 pickerClientType.IsVisible = true;
                 pickerClientSite.IsVisible = true;
+                pickerPosition.IsVisible = true;
+                pickerCallsign.IsVisible = true;
                 btnEnterLogbook.IsVisible = true;
                 vslCalendarLiveEvents.IsVisible = true;
 
@@ -630,7 +688,11 @@ public partial class GuardLoginPage : ContentPage
                 RestorePreviousSelection();
 
                 if (SelectedClientType != null)
+                {
                     pickerClientSite.IsVisible = true;
+                    pickerPosition.IsVisible = true;
+                    pickerCallsign.IsVisible = true;
+                }
 
             }
             else
@@ -647,6 +709,8 @@ public partial class GuardLoginPage : ContentPage
                 hrStatusLayout.IsVisible = false;
                 pickerClientType.IsVisible = false;
                 pickerClientSite.IsVisible = false;
+                pickerPosition.IsVisible = false;
+                pickerCallsign.IsVisible = false;
                 btnEnterLogbook.IsVisible = false;
                 btnRegister.IsEnabled = true;
                 btnRegister.IsVisible = true;
@@ -686,7 +750,7 @@ public partial class GuardLoginPage : ContentPage
     private void ToggleInstructionalTextVisibility()
     {
         // If ANY of these elements are visible, hide the instructional text
-        if (pickerClientType.IsVisible || pickerClientSite.IsVisible || btnEnterLogbook.IsVisible || textBoxSelectedClientType.IsVisible)
+        if (pickerClientType.IsVisible || pickerClientSite.IsVisible || btnEnterLogbook.IsVisible || textBoxSelectedClientType.IsVisible || pickerPosition.IsVisible || pickerCallsign.IsVisible)
         {
             instructionalFrame.IsVisible = false;
             instructionalTextContainer.IsVisible = false;
@@ -783,6 +847,17 @@ public partial class GuardLoginPage : ContentPage
                 await DisplayAlert("Validation Error", "Please select a valid Client Site.", "OK");
                 return;
             }
+
+            // Save Position and Callsign for later use in IR
+            if (SelectedPosition != null && SelectedPosition.Name != "Select")
+                Preferences.Set("SelectedPosition", SelectedPosition.Name);
+            else
+                Preferences.Set("SelectedPosition", "");
+
+            if (!string.IsNullOrEmpty(SelectedCallsign))
+                Preferences.Set("SelectedCallsign", SelectedCallsign);
+            else
+                Preferences.Set("SelectedCallsign", "");
 
             // Retrieve and validate User ID
             string userIdString = Preferences.Get("UserId", "");

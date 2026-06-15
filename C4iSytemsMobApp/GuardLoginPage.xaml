@@ -199,6 +199,31 @@
                     SelectedItem="{Binding SelectedClientSite, Mode=TwoWay}"
                     IsVisible="False" />
 
+            <!-- Position Dropdown -->
+            <Picker x:Name="pickerPosition"
+                    Title="Position"
+                    ItemsSource="{Binding Positions}"
+                    ItemDisplayBinding="{Binding Name}"
+                    SelectedItem="{Binding SelectedPosition, Mode=TwoWay}"
+                    IsVisible="False" />
+
+            <!-- Callsign Dropdown (R1-R6) -->
+            <Picker x:Name="pickerCallsign"
+                    Title="Callsign"
+                    SelectedItem="{Binding SelectedCallsign, Mode=TwoWay}"
+                    IsVisible="False">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>R1</x:String>
+                        <x:String>R2</x:String>
+                        <x:String>R3</x:String>
+                        <x:String>R4</x:String>
+                        <x:String>R5</x:String>
+                        <x:String>R6</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
             <!-- Enter Logbook Button (Initially Hidden) -->
             <Button x:Name="btnEnterLogbook"
                     Text="Access C4i System"
