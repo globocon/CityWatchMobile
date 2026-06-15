@@ -516,7 +516,8 @@ public partial class GuardLoginPage : ContentPage
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 Positions.Clear();
-                foreach (var pos in response.Where(p => p.Name != "Select").OrderBy(p => p.Name))
+                Positions.Add(new DropdownItem { Id = -1, Name = "- Select -" });
+                foreach (var pos in response.Where(p => p.Name != "Select" && p.Name != "- Select -").OrderBy(p => p.Name))
                     Positions.Add(pos);
 
                 // Auto-restore Position
@@ -886,12 +887,12 @@ public partial class GuardLoginPage : ContentPage
             // Save Position and Callsign for later use in IR
             Preferences.Set("IsPatrolCar", switchPatrolCar.IsToggled);
 
-            if (SelectedPosition != null && SelectedPosition.Name != "Select")
+            if (SelectedPosition != null && SelectedPosition.Name != "Select" && SelectedPosition.Name != "- Select -")
                 Preferences.Set("SelectedPosition", SelectedPosition.Name);
             else
                 Preferences.Set("SelectedPosition", "");
 
-            if (!string.IsNullOrEmpty(SelectedCallsign))
+            if (!string.IsNullOrEmpty(SelectedCallsign) && SelectedCallsign != "- Select -")
                 Preferences.Set("SelectedCallsign", SelectedCallsign);
             else
                 Preferences.Set("SelectedCallsign", "");
