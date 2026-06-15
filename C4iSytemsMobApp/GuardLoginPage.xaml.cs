@@ -399,8 +399,9 @@ public partial class GuardLoginPage : ContentPage
             if (siteItem != null)
             {
                 pickerClientSite.IsVisible = true;
+                slPatrolCarToggle.IsVisible = true;
                 pickerPosition.IsVisible = true;
-                pickerCallsign.IsVisible = true;
+                pickerCallsign.IsVisible = switchPatrolCar.IsToggled;
                 SelectedClientSite = siteItem;
                 pickerClientSite.SelectedItem = siteItem;
             }
@@ -492,11 +493,11 @@ public partial class GuardLoginPage : ContentPage
         }
     }
 
-    private async Task LoadPositionsData()
+    private async Task LoadPositionsData(bool isPatrolCar = false)
     {
         try
         {
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetOfficerPositions";
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetOfficerPositions?isPatrolCar={isPatrolCar}";
             var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(url);
 
             if (response == null) return;
@@ -675,8 +676,9 @@ public partial class GuardLoginPage : ContentPage
 
                 pickerClientType.IsVisible = true;
                 pickerClientSite.IsVisible = true;
+                slPatrolCarToggle.IsVisible = true;
                 pickerPosition.IsVisible = true;
-                pickerCallsign.IsVisible = true;
+                pickerCallsign.IsVisible = switchPatrolCar.IsToggled;
                 btnEnterLogbook.IsVisible = true;
                 vslCalendarLiveEvents.IsVisible = true;
 
@@ -690,8 +692,9 @@ public partial class GuardLoginPage : ContentPage
                 if (SelectedClientType != null)
                 {
                     pickerClientSite.IsVisible = true;
+                    slPatrolCarToggle.IsVisible = true;
                     pickerPosition.IsVisible = true;
-                    pickerCallsign.IsVisible = true;
+                    pickerCallsign.IsVisible = switchPatrolCar.IsToggled;
                 }
 
             }
@@ -709,6 +712,7 @@ public partial class GuardLoginPage : ContentPage
                 hrStatusLayout.IsVisible = false;
                 pickerClientType.IsVisible = false;
                 pickerClientSite.IsVisible = false;
+                slPatrolCarToggle.IsVisible = false;
                 pickerPosition.IsVisible = false;
                 pickerCallsign.IsVisible = false;
                 btnEnterLogbook.IsVisible = false;
@@ -750,7 +754,7 @@ public partial class GuardLoginPage : ContentPage
     private void ToggleInstructionalTextVisibility()
     {
         // If ANY of these elements are visible, hide the instructional text
-        if (pickerClientType.IsVisible || pickerClientSite.IsVisible || btnEnterLogbook.IsVisible || textBoxSelectedClientType.IsVisible || pickerPosition.IsVisible || pickerCallsign.IsVisible)
+        if (pickerClientType.IsVisible || pickerClientSite.IsVisible || btnEnterLogbook.IsVisible || textBoxSelectedClientType.IsVisible || pickerPosition.IsVisible || slPatrolCarToggle.IsVisible || pickerCallsign.IsVisible)
         {
             instructionalFrame.IsVisible = false;
             instructionalTextContainer.IsVisible = false;
@@ -784,6 +788,14 @@ public partial class GuardLoginPage : ContentPage
     private void OnCalendarEventTapped(object sender, TappedEventArgs e)
     {
 
+    }
+
+    private async void OnPatrolCarToggled(object sender, ToggledEventArgs e)
+    {
+        bool isPatrolCar = e.Value;
+        pickerCallsign.IsVisible = isPatrolCar;
+        ToggleInstructionalTextVisibility();
+        await LoadPositionsData(isPatrolCar);
     }
 
     private async void OnEnterLogbookClicked(object sender, EventArgs e)
@@ -849,6 +861,8 @@ public partial class GuardLoginPage : ContentPage
             }
 
             // Save Position and Callsign for later use in IR
+            Preferences.Set("IsPatrolCar", switchPatrolCar.IsToggled);
+
             if (SelectedPosition != null && SelectedPosition.Name != "Select")
                 Preferences.Set("SelectedPosition", SelectedPosition.Name);
             else
@@ -863,8 +877,17 @@ public partial class GuardLoginPage : ContentPage
             string userIdString = Preferences.Get("UserId", "");
             if (string.IsNullOrWhiteSpace(userIdString) || !int.TryParse(userIdString, out int userId) || userId <= 0)
             {
-                await DisplayAlert("Validation Error", "User ID is invalid. Please log in again.", "OK");
+                await DisplayAlert("Error", "Valid User ID is missing. Please select your name.", "OK");
                 return;
+            }
+
+            // Start login validation task
+            var validationTask = GuardLoginServices.ValidateGuardLoginAsync(userId, CodeEntry.Text);
+            
+            // Check if Patrol Car is selected but position is invalid
+            if (pickerPosition.IsVisible && (SelectedPosition == null || SelectedPosition.Name == "Select"))
+            {
+                // In Patrol Car mode, enforce Position selection if necessary, but client said we shouldn't force users.
             }
 
             string gpsCoordinates = Preferences.Get("GpsCoordinates", "");

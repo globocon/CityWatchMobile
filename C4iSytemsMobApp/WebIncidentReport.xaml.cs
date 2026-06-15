@@ -1060,7 +1060,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     NotifiedBy = selectedNotifiedBy,
                     Billing = string.Empty,
                 },
-                IsPositionPatrolCar = false,
+                IsPositionPatrolCar = Preferences.Get("IsPatrolCar", false),
                 DateLocation = new DateLocation
                 {
 
