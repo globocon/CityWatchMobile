@@ -904,14 +904,6 @@ public partial class GuardLoginPage : ContentPage
                 return;
             }
 
-            // Start login validation task
-            var validationTask = GuardLoginServices.ValidateGuardLoginAsync(userId, CodeEntry.Text);
-            
-            // Check if Patrol Car is selected but position is invalid
-            if (pickerPosition.IsVisible && (SelectedPosition == null || SelectedPosition.Name == "Select"))
-            {
-                // In Patrol Car mode, enforce Position selection if necessary, but client said we shouldn't force users.
-            }
 
             string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
