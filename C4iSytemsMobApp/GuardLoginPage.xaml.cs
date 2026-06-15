@@ -383,6 +383,17 @@ public partial class GuardLoginPage : ContentPage
             }
         }
 
+        // Restore Patrol Car Toggle
+        switchPatrolCar.IsToggled = Preferences.Get("IsPatrolCar", false);
+
+        // Restore Callsign
+        var savedCallsign = Preferences.Get("SelectedCallsign", string.Empty);
+        if (!string.IsNullOrEmpty(savedCallsign))
+        {
+            SelectedCallsign = savedCallsign;
+            pickerCallsign.SelectedItem = savedCallsign;
+        }
+
         // Optionally restore ClientSite in a similar way
 
     }
@@ -507,6 +518,18 @@ public partial class GuardLoginPage : ContentPage
                 Positions.Clear();
                 foreach (var pos in response.Where(p => p.Name != "Select").OrderBy(p => p.Name))
                     Positions.Add(pos);
+
+                // Auto-restore Position
+                var savedPosition = Preferences.Get("SelectedPosition", "");
+                if (!string.IsNullOrEmpty(savedPosition))
+                {
+                    var match = Positions.FirstOrDefault(p => p.Name == savedPosition);
+                    if (match != null)
+                    {
+                        SelectedPosition = match;
+                        pickerPosition.SelectedItem = match;
+                    }
+                }
             });
         }
         catch (Exception ex)
