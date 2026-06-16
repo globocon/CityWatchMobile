@@ -1,4 +1,4 @@
-﻿
+
 using AutoMapper;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Data.Entity;
@@ -1017,6 +1017,8 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             }
 
 
+            var isPatrolCar = Preferences.Get("IsPatrolCar", false);
+
             var Report = new IncidentRequest
             {
                 ReportReference = IrSession.ReportReference,
@@ -1051,16 +1053,16 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     LastName = string.Empty,
                     Gender = string.Empty,
                     Phone = string.Empty,
-                    Position = string.Empty,
+                    Position = Preferences.Get("SelectedPosition", ""),
                     Email = "username@example.com",
                     LicenseNumber = string.Empty,
                     LicenseState = string.Empty,
-                    CallSign = string.Empty,
+                    CallSign = isPatrolCar ? Preferences.Get("SelectedCallsign", "") : string.Empty,
                     GuardMonth = selectedGuardMonth,
                     NotifiedBy = selectedNotifiedBy,
                     Billing = string.Empty,
                 },
-                IsPositionPatrolCar = false,
+                IsPositionPatrolCar = isPatrolCar,
                 DateLocation = new DateLocation
                 {
 

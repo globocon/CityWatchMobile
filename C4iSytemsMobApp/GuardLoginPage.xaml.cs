@@ -32,9 +32,14 @@ public partial class GuardLoginPage : ContentPage
 
     public ObservableCollection<DropdownItem> ClientTypes { get; set; } = new();
     public ObservableCollection<DropdownItem> ClientSites { get; set; } = new();
+    public ObservableCollection<DropdownItem> Positions { get; set; } = new();
+    public ObservableCollection<DropdownItem> Callsigns { get; set; } = new();
 
     private DropdownItem _selectedClientType;
     private DropdownItem _selectedClientSite;
+    private DropdownItem _selectedPosition;
+    private DropdownItem _selectedCallsignObj;
+    private string _selectedCallsign;
     private bool _suppressSuggestions = false;
     public DropdownItem SelectedClientType
     {
@@ -68,6 +73,53 @@ public partial class GuardLoginPage : ContentPage
 
                 if (_selectedClientSite != null)
                     Preferences.Set("SelectedClientSiteId", _selectedClientSite.Id.ToString());
+            }
+        }
+    }
+
+    public DropdownItem SelectedPosition
+    {
+        get => _selectedPosition;
+        set
+        {
+            if (_selectedPosition != value)
+            {
+                _selectedPosition = value;
+                OnPropertyChanged(nameof(SelectedPosition));
+            }
+        }
+    }
+
+    public DropdownItem SelectedCallsignObj
+    {
+        get => _selectedCallsignObj;
+        set
+        {
+            if (_selectedCallsignObj != value)
+            {
+                _selectedCallsignObj = value;
+                OnPropertyChanged(nameof(SelectedCallsignObj));
+                if (value != null && value.Name != "- Select -")
+                {
+                    SelectedCallsign = value.Name;
+                }
+                else
+                {
+                    SelectedCallsign = string.Empty;
+                }
+            }
+        }
+    }
+
+    public string SelectedCallsign
+    {
+        get => _selectedCallsign;
+        set
+        {
+            if (_selectedCallsign != value)
+            {
+                _selectedCallsign = value;
+                OnPropertyChanged(nameof(SelectedCallsign));
             }
         }
     }
@@ -354,6 +406,22 @@ public partial class GuardLoginPage : ContentPage
             }
         }
 
+        // Restore Patrol Car Toggle
+        switchPatrolCar.IsToggled = Preferences.Get("IsPatrolCar", false);
+
+        // Restore Callsign
+        var savedCallsign = Preferences.Get("SelectedCallsign", string.Empty);
+        if (!string.IsNullOrEmpty(savedCallsign))
+        {
+            SelectedCallsign = savedCallsign;
+            var match = Callsigns.FirstOrDefault(p => p.Name == savedCallsign);
+            if (match != null)
+            {
+                SelectedCallsignObj = match;
+                pickerCallsign.SelectedItem = match;
+            }
+        }
+
         // Optionally restore ClientSite in a similar way
 
     }
@@ -370,6 +438,9 @@ public partial class GuardLoginPage : ContentPage
             if (siteItem != null)
             {
                 pickerClientSite.IsVisible = true;
+                slPatrolCarToggle.IsVisible = true;
+                pickerPosition.IsVisible = true;
+                pickerCallsign.IsVisible = true;
                 SelectedClientSite = siteItem;
                 pickerClientSite.SelectedItem = siteItem;
             }
@@ -452,10 +523,83 @@ public partial class GuardLoginPage : ContentPage
                     textBoxSelectedClientType.Text = SelectedClientType.Name;
                 }
             });
+
+            await LoadPositionsData();
+            await LoadCallsignsData();
         }
         catch (Exception ex)
         {
             await DisplayAlert("Error", "Failed to load client types: " + ex.Message, "OK");
+        }
+    }
+
+    private async Task LoadPositionsData(bool isPatrolCar = false)
+    {
+        try
+        {
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetOfficerPositions?isPatrolCar={isPatrolCar}";
+            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(url);
+
+            if (response == null) return;
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                Positions.Clear();
+                Positions.Add(new DropdownItem { Id = -1, Name = "- Select -" });
+                foreach (var pos in response.Where(p => p.Name != "Select" && p.Name != "- Select -").OrderBy(p => p.Name))
+                    Positions.Add(pos);
+
+                // Auto-restore Position
+                var savedPosition = Preferences.Get("SelectedPosition", "");
+                if (!string.IsNullOrEmpty(savedPosition))
+                {
+                    var match = Positions.FirstOrDefault(p => p.Name == savedPosition);
+                    if (match != null)
+                    {
+                        SelectedPosition = match;
+                        pickerPosition.SelectedItem = match;
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            // Silently fail or log if needed, as it's not absolutely critical to block login
+        }
+    }
+
+    private async Task LoadCallsignsData()
+    {
+        try
+        {
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetCallsigns";
+            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(url);
+
+            if (response == null) return;
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                Callsigns.Clear();
+                Callsigns.Add(new DropdownItem { Id = -1, Name = "- Select -" });
+                foreach (var callsign in response.Where(p => p.Name != "Select" && p.Name != "- Select -").OrderBy(p => p.Name))
+                    Callsigns.Add(callsign);
+
+                // Auto-restore Callsign
+                var savedCallsign = Preferences.Get("SelectedCallsign", "");
+                if (!string.IsNullOrEmpty(savedCallsign))
+                {
+                    var match = Callsigns.FirstOrDefault(p => p.Name == savedCallsign);
+                    if (match != null)
+                    {
+                        SelectedCallsignObj = match;
+                        pickerCallsign.SelectedItem = match;
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            // Silently fail or log if needed
         }
     }
 
@@ -619,6 +763,9 @@ public partial class GuardLoginPage : ContentPage
 
                 pickerClientType.IsVisible = true;
                 pickerClientSite.IsVisible = true;
+                slPatrolCarToggle.IsVisible = true;
+                pickerPosition.IsVisible = true;
+                pickerCallsign.IsVisible = true;
                 btnEnterLogbook.IsVisible = true;
                 vslCalendarLiveEvents.IsVisible = true;
 
@@ -630,7 +777,12 @@ public partial class GuardLoginPage : ContentPage
                 RestorePreviousSelection();
 
                 if (SelectedClientType != null)
+                {
                     pickerClientSite.IsVisible = true;
+                    slPatrolCarToggle.IsVisible = true;
+                    pickerPosition.IsVisible = true;
+                    pickerCallsign.IsVisible = true;
+                }
 
             }
             else
@@ -647,6 +799,9 @@ public partial class GuardLoginPage : ContentPage
                 hrStatusLayout.IsVisible = false;
                 pickerClientType.IsVisible = false;
                 pickerClientSite.IsVisible = false;
+                slPatrolCarToggle.IsVisible = false;
+                pickerPosition.IsVisible = false;
+                pickerCallsign.IsVisible = false;
                 btnEnterLogbook.IsVisible = false;
                 btnRegister.IsEnabled = true;
                 btnRegister.IsVisible = true;
@@ -686,7 +841,7 @@ public partial class GuardLoginPage : ContentPage
     private void ToggleInstructionalTextVisibility()
     {
         // If ANY of these elements are visible, hide the instructional text
-        if (pickerClientType.IsVisible || pickerClientSite.IsVisible || btnEnterLogbook.IsVisible || textBoxSelectedClientType.IsVisible)
+        if (pickerClientType.IsVisible || pickerClientSite.IsVisible || btnEnterLogbook.IsVisible || textBoxSelectedClientType.IsVisible || pickerPosition.IsVisible || slPatrolCarToggle.IsVisible || pickerCallsign.IsVisible)
         {
             instructionalFrame.IsVisible = false;
             instructionalTextContainer.IsVisible = false;
@@ -720,6 +875,14 @@ public partial class GuardLoginPage : ContentPage
     private void OnCalendarEventTapped(object sender, TappedEventArgs e)
     {
 
+    }
+
+    private async void OnPatrolCarToggled(object sender, ToggledEventArgs e)
+    {
+        bool isPatrolCar = e.Value;
+        pickerCallsign.IsVisible = true;
+        ToggleInstructionalTextVisibility();
+        await LoadPositionsData(isPatrolCar);
     }
 
     private async void OnEnterLogbookClicked(object sender, EventArgs e)
@@ -784,13 +947,27 @@ public partial class GuardLoginPage : ContentPage
                 return;
             }
 
+            // Save Position and Callsign for later use in IR
+            Preferences.Set("IsPatrolCar", switchPatrolCar.IsToggled);
+
+            if (SelectedPosition != null && SelectedPosition.Name != "Select" && SelectedPosition.Name != "- Select -")
+                Preferences.Set("SelectedPosition", SelectedPosition.Name);
+            else
+                Preferences.Set("SelectedPosition", "");
+
+            if (!string.IsNullOrEmpty(SelectedCallsign) && SelectedCallsign != "- Select -")
+                Preferences.Set("SelectedCallsign", SelectedCallsign);
+            else
+                Preferences.Set("SelectedCallsign", "");
+
             // Retrieve and validate User ID
             string userIdString = Preferences.Get("UserId", "");
             if (string.IsNullOrWhiteSpace(userIdString) || !int.TryParse(userIdString, out int userId) || userId <= 0)
             {
-                await DisplayAlert("Validation Error", "User ID is invalid. Please log in again.", "OK");
+                await DisplayAlert("Error", "Valid User ID is missing. Please select your name.", "OK");
                 return;
             }
+
 
             string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
