@@ -21,6 +21,10 @@ namespace C4iSytemsMobApp.Models
         public DateTime EventMobileUtcDateTime { get; set; }
         public bool IsNewGuard { get; set; } = false;
         public int TagScanHitLogRefId { get; set; } = 0;
+        public int? LogbookclientsiteId { get; set; }
+        public bool IsEntryByPCAR { get; set; } = false;
+        public int? CallSignId { get; set; } 
+        public int? PositionId { get; set; }
 
     }
 }

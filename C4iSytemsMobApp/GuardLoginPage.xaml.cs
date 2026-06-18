@@ -950,15 +950,26 @@ public partial class GuardLoginPage : ContentPage
             // Save Position and Callsign for later use in IR
             Preferences.Set("IsPatrolCar", switchPatrolCar.IsToggled);
 
-            if (SelectedPosition != null && SelectedPosition.Name != "Select" && SelectedPosition.Name != "- Select -")
+            if (SelectedPosition != null && SelectedPosition.Name != "Select" && SelectedPosition.Name != "- Select -") {
                 Preferences.Set("SelectedPosition", SelectedPosition.Name);
-            else
+                App.PcarPostionId = SelectedPosition.Id;
+                
+            }
+            else {
                 Preferences.Set("SelectedPosition", "");
+                App.PcarPostionId = null;
+            }
 
             if (!string.IsNullOrEmpty(SelectedCallsign) && SelectedCallsign != "- Select -")
+            {
                 Preferences.Set("SelectedCallsign", SelectedCallsign);
+                App.PcarCallSignId = SelectedCallsignObj.Id;
+            }
             else
+            {
                 Preferences.Set("SelectedCallsign", "");
+                App.PcarCallSignId = null ;
+            }
 
             // Retrieve and validate User ID
             string userIdString = Preferences.Get("UserId", "");
@@ -976,16 +987,7 @@ public partial class GuardLoginPage : ContentPage
                 await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
                 return;
             }
-
-            // API URL
-            //var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin" +
-            //             $"?guardId={guardId}" +
-            //             $"&clientsiteId={clientSiteId}" +
-            //             $"&userId={userId}" +
-            //             $"&gps={Uri.EscapeDataString(gpsCoordinates)}";
-
-            //string apiUrl = $"https://cws-ir.com/api/GuardSecurityNumber/EnterGuardLogin?guardId={guardId}&clientsiteId={clientSiteId}&userId={userId}";
-
+            
             PostActivityRequest request = new PostActivityRequest()
             {
                 guardId = guardId,
@@ -1006,7 +1008,7 @@ public partial class GuardLoginPage : ContentPage
             };
 
             lblloadinginfo.Text = "Authenticating...Please wait...";
-            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin";
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLoginNew";
             using (HttpClient client = new HttpClient())
             {
                 // var response = await client.GetAsync(apiUrl);

@@ -2117,7 +2117,7 @@ namespace C4iSytemsMobApp
 
         private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
         {
-            var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
+            var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, null, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
             if (isSuccess)
             {
                 if (scanningType == (int)ScanningType.NFC)

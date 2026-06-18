@@ -1,5 +1,7 @@
 using AutoMapper;
 using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Enums;
+using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using CommunityToolkit.Maui.Views;
 using Plugin.Maui.Audio;
@@ -262,11 +264,27 @@ public partial class MultiMedia : ContentPage
                 content.Add(new StringContent(fileModel.FileType), "types");
             }
 
+            //If PCAR then change local client site to latest scanned site
+            var _localClientSiteId = clientSiteId;
+            if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+            {
+                _localClientSiteId = App.PcarInspLastScannedSiteId.HasValue ? (App.PcarInspLastScannedSiteId.Value > 0 ? App.PcarInspLastScannedSiteId.Value : clientSiteId) : clientSiteId;
+            }
+
             // Add other form data
             content.Add(new StringContent(guardId.ToString()), "guardId");
             content.Add(new StringContent(clientSiteId.ToString()), "clientsiteId");
             content.Add(new StringContent(userId.ToString()), "userId");
             content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTime().ToString("o")), "eventDateTimeLocal");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset().ToString("o")), "eventDateTimeLocalWithOffset");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZone()), "eventDateTimeZone");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneShortName()), "eventDateTimeZoneShort");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneOffsetMinute().ToString()), "eventDateTimeUtcOffsetMinute");
+            content.Add(new StringContent(_localClientSiteId.ToString()), "logbookclientsiteId");
+            content.Add(new StringContent((App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP).ToString()), "isEntryByPCAR");
+            content.Add(new StringContent((App.PcarCallSignId.HasValue ? App.PcarCallSignId.ToString() : "")), "callSignId");
+            content.Add(new StringContent((App.PcarPostionId.HasValue ? App.PcarPostionId.ToString() : "")), "positionId");
 
             // Send request
             var uploadResponse = await client.PostAsync(
@@ -418,11 +436,27 @@ public partial class MultiMedia : ContentPage
                 content.Add(new StringContent(fileModel.FileType), "types");
             }
 
+            //If PCAR then change local client site to latest scanned site
+            var _localClientSiteId = clientSiteId;
+            if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+            {
+                _localClientSiteId = App.PcarInspLastScannedSiteId.HasValue ? (App.PcarInspLastScannedSiteId.Value > 0 ? App.PcarInspLastScannedSiteId.Value : clientSiteId) : clientSiteId;
+            }
+
             // Add other form data
             content.Add(new StringContent(guardId.ToString()), "guardId");
             content.Add(new StringContent(clientSiteId.ToString()), "clientsiteId");
             content.Add(new StringContent(userId.ToString()), "userId");
             content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTime().ToString("o")), "eventDateTimeLocal");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset().ToString("o")), "eventDateTimeLocalWithOffset");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZone()), "eventDateTimeZone");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneShortName()), "eventDateTimeZoneShort");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneOffsetMinute().ToString()), "eventDateTimeUtcOffsetMinute");
+            content.Add(new StringContent(_localClientSiteId.ToString()), "logbookclientsiteId");
+            content.Add(new StringContent((App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP).ToString()), "isEntryByPCAR");
+            content.Add(new StringContent((App.PcarCallSignId.HasValue ? App.PcarCallSignId.ToString() : "")), "callSignId");
+            content.Add(new StringContent((App.PcarPostionId.HasValue ? App.PcarPostionId.ToString() : "")), "positionId");
 
             // Send request
             var uploadResponse = await client.PostAsync(

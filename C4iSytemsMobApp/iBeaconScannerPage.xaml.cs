@@ -165,7 +165,7 @@ public partial class iBeaconScannerPage : ContentPage
     private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA")
     {
 
-        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid);
+        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription,null, scanningType, _taguid);
         if (isSuccess)
         {
             DisplayLog($"{msg}");

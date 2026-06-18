@@ -24,6 +24,7 @@ public partial class LogActivity : ContentPage
     private HubConnection _hubConnection;
     private HubConnection _hubConnectionRC;
     private int? _clientSiteId;
+    private int? _localClientSiteId;
     private int? _userId;
     private int? _guardId;
     private int _badgeNo = 0;
@@ -102,7 +103,7 @@ public partial class LogActivity : ContentPage
         await StartNFC();
         _isLogsLoading = false;
         await SetupHubConnection(); // LoadLogs(); is Called when the SignalRHub connection is established
-        await SetupRCHubConnection();        
+        await SetupRCHubConnection();
     }
 
 
@@ -135,7 +136,7 @@ public partial class LogActivity : ContentPage
             if (App.IsOnline)
             {
                 //ButtonContainer.Children.Clear(); // Clear previous items if reloading
-                var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivities?type=2&siteid={_clientSiteId}";
+                var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivities?type=2&siteid={_localClientSiteId}";
 
                 HttpResponseMessage response = await _httpClient.GetAsync(url);
                 if (!response.IsSuccessStatusCode)
@@ -149,7 +150,7 @@ public partial class LogActivity : ContentPage
             }
             else
             {
-                activities = await _scanDataDbService.GetPrePopulatedActivitesButtonList();
+                activities = await _scanDataDbService.GetPrePopulatedActivitesButtonList(_localClientSiteId ?? _clientSiteId ?? 0);
             }
 
             if (activities == null || activities.Count < 1) return;
@@ -174,8 +175,9 @@ public partial class LogActivity : ContentPage
         if (sender is Button button)
         {
             string activityName = button.Text;
+            GetLocalSiteForPCAR();
             if (App.IsOnline)
-                await LogActivityTask(activityName, 0, "NA");
+                await LogActivityTask(activityName, _localClientSiteId, 0, "NA");
             else
                 await LogActivityToCache(activityName, 0, "NA");
         }
@@ -201,10 +203,11 @@ public partial class LogActivity : ContentPage
 
         try
         {
-            if (_guardId <= 0 || _clientSiteId <= 0 || _userId <= 0)
+            if (_guardId <= 0 || _localClientSiteId <= 0 || _userId <= 0)
                 return;
 
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={_clientSiteId}";
+            GetLocalSiteForPCAR();
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={_localClientSiteId}";
             var response = await _httpClient.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
@@ -656,7 +659,7 @@ public partial class LogActivity : ContentPage
                 string fileType = chkRearFullPage.IsChecked ? "rear" : "twentyfive";
 
                 foreach (var file in results)
-                {                    
+                {
                     var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
                     if (!allowedExtensions.Contains(extension))
                     {
@@ -676,7 +679,7 @@ public partial class LogActivity : ContentPage
             // Show the file list only if it has items
             FilesCollection.IsVisible = SelectedFiles.Any();
 
-            if (FilePickedCount>0) { ShowPopup(); }
+            if (FilePickedCount > 0) { ShowPopup(); }
 
         }
         catch (Exception ex)
@@ -712,7 +715,7 @@ public partial class LogActivity : ContentPage
 
             // Add other form data
             content.Add(new StringContent(_guardId.ToString()), "guardId");
-            content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
+            content.Add(new StringContent(_localClientSiteId.ToString()), "clientsiteId");
             content.Add(new StringContent(_userId.ToString()), "userId");
             content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
 
@@ -960,7 +963,7 @@ public partial class LogActivity : ContentPage
         {
             var content = new MultipartFormDataContent();
             content.Add(new StringContent(_guardId.ToString()), "guardId");
-            content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
+            content.Add(new StringContent(_localClientSiteId.ToString()), "clientsiteId");
             content.Add(new StringContent(_userId.ToString()), "userId");
             content.Add(new StringContent(messageToSend ?? ""), "notifications");
             content.Add(new StringContent(rcPushMessageId.ToString()), "rcPushMessageId");
@@ -987,10 +990,10 @@ public partial class LogActivity : ContentPage
     }
 
 
-    private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
+    private async Task LogActivityTask(string activityDescription, int? local_ClientSiteId, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
     {
 
-        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
+        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, local_ClientSiteId, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
         if (isSuccess)
         {
             if (scanningType == (int)ScanningType.NFC)
@@ -1080,8 +1083,9 @@ public partial class LogActivity : ContentPage
 
         try
         {
+            GetLocalSiteForPCAR();
             if (App.IsOnline)
-                await LogActivityTask(log.Trim(), 0, "NA", false);
+                await LogActivityTask(log.Trim(), _localClientSiteId, 0, "NA", false);
             else
                 await LogActivityToCache(log.Trim(), 0, "NA", false);
 
@@ -1236,7 +1240,7 @@ public partial class LogActivity : ContentPage
                 chkEditWithinField.IsChecked = true;
         }
     }
-        
+
     private async void OnEditPickFileClicked(object sender, EventArgs e)
     {
         try
@@ -1393,7 +1397,11 @@ public partial class LogActivity : ContentPage
                             gps = gpsCoordinates ?? "",
                             FileGroupId = _fileGroupId,
                             DeviceId = deviceid,
-                            DeviceName = devicename
+                            DeviceName = devicename,
+                            CallSignId = App.PcarCallSignId,
+                            PositionId = App.PcarPostionId,
+                            IsEntryByPCAR = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP,
+                            LogbookclientsiteId = _localClientSiteId
                         };
 
                         var r = await _scanDataDbService.SaveLogActivityDocumentsCacheData(offlineFilesRecords);
@@ -1430,12 +1438,19 @@ public partial class LogActivity : ContentPage
                     content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
                     content.Add(new StringContent(_userId.ToString()), "userId");
                     content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+                    content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTime().ToString("o")), "eventDateTimeLocal");
+                    content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset().ToString("o")), "eventDateTimeLocalWithOffset");
+                    content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZone()), "eventDateTimeZone");
+                    content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneShortName()), "eventDateTimeZoneShort");
+                    content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneOffsetMinute().ToString()), "eventDateTimeUtcOffsetMinute");
+                    content.Add(new StringContent(_localClientSiteId.HasValue ? _localClientSiteId.Value.ToString() : ""), "logbookclientsiteId");
+                    content.Add(new StringContent((App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP).ToString()), "isEntryByPCAR");
+                    content.Add(new StringContent((App.PcarCallSignId.HasValue ? App.PcarCallSignId.ToString() : "")), "callSignId");
+                    content.Add(new StringContent((App.PcarPostionId.HasValue ? App.PcarPostionId.ToString() : "")), "positionId");
+
 
                     // Send request
-                    var uploadResponse = await client.PostAsync(
-                        $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
-                        content
-                    );
+                    var uploadResponse = await client.PostAsync($"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple", content);
 
                     if (!uploadResponse.IsSuccessStatusCode)
                     {
@@ -1480,10 +1495,10 @@ public partial class LogActivity : ContentPage
             finally
             {
                 FileUploadLoadingOverlay.IsVisible = false;
-                btn.IsEnabled = true;                
+                btn.IsEnabled = true;
             }
         }
-        
+
     }
 
     private void UpdateCacheRecordCount(int _ChaceCount)
@@ -1608,11 +1623,22 @@ public partial class LogActivity : ContentPage
         string savedBadgeKeyName = $"{_clientSiteId}_{_guardId}_GuardSelectedBadgeNumber";
         string savedBadgeNumber = Preferences.Get(savedBadgeKeyName, "0");
         _badgeNo = int.TryParse(savedBadgeNumber, out int badgeNum) ? badgeNum : 0;
+        GetLocalSiteForPCAR();
+    }
+
+    private void GetLocalSiteForPCAR()
+    {
+        //If PCAR then change local client site to latest scanned site
+        _localClientSiteId = _clientSiteId;
+        if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+        {
+            _localClientSiteId = App.PcarInspLastScannedSiteId.HasValue ? (App.PcarInspLastScannedSiteId.Value > 0 ? App.PcarInspLastScannedSiteId.Value : _clientSiteId) : _clientSiteId;
+        }
     }
     private async Task SetupHubConnection()
     {
 
-        if (_clientSiteId == null) return;
+        if (_localClientSiteId == null) return;
         try
         {
             string hubUrl = $"{AppConfig.MobileSignalRBaseUrl}/MobileAppSignalRHub";
@@ -1621,29 +1647,15 @@ public partial class LogActivity : ContentPage
                 .WithAutomaticReconnect()
                 .Build();
 
-            //_hubConnection.Closed += async (error) =>
-            //{
-            //    Debug.WriteLine($"Connection closed. Reason: {error?.Message}");
-            //    // Optionally attempt reconnect
-            //    await Task.Delay(3000);
-            //    await _hubConnection.StartAsync();
-            //};
-
-            //_hubConnection.Reconnecting += error =>
-            //{
-            //    Debug.WriteLine($"Reconnecting due to: {error?.Message}");
-            //    return Task.CompletedTask;
-            //};
-
-
             _hubConnection.Reconnected += connectionId =>
             {
                 Debug.WriteLine($"Reconnected with connectionId: {connectionId}");
                 if (_hubConnection.State == HubConnectionState.Connected)
                 {
+                    GetLocalSiteForPCAR();
                     MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                     {
-                        ClientSiteId = (int)_clientSiteId,
+                        ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
                         GuardId = (int)_guardId,
                         UserId = (int)_userId,
                         BadgeNo = _badgeNo,
@@ -1674,9 +1686,10 @@ public partial class LogActivity : ContentPage
 
             if (_hubConnection.State == HubConnectionState.Connected)
             {
+                GetLocalSiteForPCAR();
                 MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                 {
-                    ClientSiteId = (int)_clientSiteId,
+                    ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
                     GuardId = (int)_guardId,
                     UserId = (int)_userId,
                     BadgeNo = _badgeNo,
@@ -1701,7 +1714,7 @@ public partial class LogActivity : ContentPage
     private async Task SetupRCHubConnection()
     {
 
-        if (_clientSiteId == null) return;
+        if (_localClientSiteId == null) return;
         try
         {
             string hubUrl = $"{AppConfig.MobileSignalRRCBaseUrl}/MobileAppSignalRHub";
@@ -1710,29 +1723,15 @@ public partial class LogActivity : ContentPage
                 .WithAutomaticReconnect()
                 .Build();
 
-            //_hubConnectionRC.Closed += async (error) =>
-            //{
-            //    Debug.WriteLine($"RC Connection closed. Reason: {error?.Message}");
-            //    // Optionally attempt reconnect
-            //    await Task.Delay(3000);
-            //    await _hubConnectionRC.StartAsync();
-            //};
-
-            //_hubConnectionRC.Reconnecting += error =>
-            //{
-            //    Debug.WriteLine($"RC Reconnecting due to: {error?.Message}");
-            //    return Task.CompletedTask;
-            //};
-
-
             _hubConnectionRC.Reconnected += connectionId =>
             {
                 Debug.WriteLine($"RC Reconnected with connectionId: {connectionId}");
                 if (_hubConnectionRC.State == HubConnectionState.Connected)
                 {
+                    GetLocalSiteForPCAR();
                     MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                     {
-                        ClientSiteId = (int)_clientSiteId,
+                        ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
                         GuardId = (int)_guardId,
                         UserId = (int)_userId,
                         BadgeNo = _badgeNo,
@@ -1755,9 +1754,10 @@ public partial class LogActivity : ContentPage
 
             if (_hubConnectionRC.State == HubConnectionState.Connected)
             {
+                GetLocalSiteForPCAR();
                 MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                 {
-                    ClientSiteId = (int)_clientSiteId,
+                    ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
                     GuardId = (int)_guardId,
                     UserId = (int)_userId,
                     BadgeNo = _badgeNo,
@@ -1810,7 +1810,7 @@ public partial class LogActivity : ContentPage
             await DisplayAlert($"Error", "User Id or Client Site Id or Guard Id is invalid.", "OK");
             return;
         }
-
+        GetLocalSiteForPCAR();
         PostActivityRequestLocalCache request = new PostActivityRequestLocalCache()
         {
             guardId = _guardId.Value,
@@ -1832,6 +1832,10 @@ public partial class LogActivity : ContentPage
             DeviceId = deviceid,
             DeviceName = devicename,
             EventMobileUtcDateTime = TimeZoneHelper.GetCurrentUtcDateTime(),
+            IsEntryByPCAR = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP,
+            CallSignId = App.PcarCallSignId,
+            PositionId = App.PcarPostionId,
+            LogbookclientsiteId = _localClientSiteId
         };
 
         var isSuccess = await _scanDataDbService.SaveLogActivityCacheData(request);
@@ -1857,7 +1861,7 @@ public partial class LogActivity : ContentPage
         await ShowToastMessage($"[{ALERT_TITLE}] Tag scanned. Logging activity to Cache...");
         var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
         if (isSuccess)
-        {            
+        {
             UpdateCacheRecordCount(_ChaceCount);
             //await ShowToastMessage(msg);
             await ShowToastMessage($"[{ALERT_TITLE}] {msg}");
@@ -1872,10 +1876,10 @@ public partial class LogActivity : ContentPage
     {
         // Get the app data directory path
         var appDataDir = Path.Combine(FileSystem.AppDataDirectory, foldername);
-        if(!Directory.Exists(appDataDir))
+        if (!Directory.Exists(appDataDir))
             Directory.CreateDirectory(appDataDir);
         // Create a unique file path
-        var filePath = Path.Combine(appDataDir,fileName);
+        var filePath = Path.Combine(appDataDir, fileName);
 
         // Save the stream to the file path        
         using var destinationStream = File.Create(filePath);
@@ -2008,7 +2012,7 @@ public partial class LogActivity : ContentPage
                     var _taguid = serialNumber;
                     if (!scannerSettings.tagFound) { _taguid = "NA"; }
                     int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
-                    LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer);
+                    await LogActivityTask(scannerSettings.tagInfoLabel, null, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer);
                 }
                 else
                 {

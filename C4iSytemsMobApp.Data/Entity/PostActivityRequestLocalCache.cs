@@ -28,6 +28,10 @@ namespace C4iSytemsMobApp.Data.Entity
         public string DeviceId { get; set; }
         public string DeviceName { get; set; }
         public DateTime EventMobileUtcDateTime { get; set; } = DateTime.UtcNow;
+        public int? LogbookclientsiteId { get; set; }
+        public bool IsEntryByPCAR { get; set; } = false;
+        public int? CallSignId { get; set; }
+        public int? PositionId { get; set; }
 
     }
 }
