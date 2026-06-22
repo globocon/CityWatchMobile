@@ -20,16 +20,16 @@ namespace C4iSytemsMobApp.Services
     }
     public class SyncApiService : ISyncApiService
     {
-        string gpsCoordinates;
+        //string gpsCoordinates;
         int guardId;
         int clientSiteId;
         int userId;
         bool isError;
-        string msg;
+        //string msg;
         public SyncApiService()
         {
             GetSecureStorageValues();
-            gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+           // gpsCoordinates = await PermissionService.GetGpsLocationWithOutCheckingPermissionAsync();
         }
 
         public async Task<List<ClientSiteSmartWandTagsHitLogCache>> PushSmartWandTagsHitLogCacheAsync(List<ClientSiteSmartWandTagsHitLogCache> records)
@@ -45,6 +45,7 @@ namespace C4iSytemsMobApp.Services
                 using (HttpClient _http = new HttpClient())
                 {
                     await Task.Delay(3000);
+                    _http.Timeout = TimeSpan.FromMinutes(8); // increase wait time
                     HttpResponseMessage response = await _http.PostAsJsonAsync(apiUrl, records);
                     if (response.IsSuccessStatusCode)
                     {
@@ -78,6 +79,7 @@ namespace C4iSytemsMobApp.Services
                 using (HttpClient _http = new HttpClient())
                 {
                     await Task.Delay(3000);
+                    _http.Timeout = TimeSpan.FromMinutes(8); // increase wait time
                     HttpResponseMessage response = await _http.PostAsJsonAsync(apiUrl, records);
                     if (response.IsSuccessStatusCode)
                     {
@@ -110,6 +112,7 @@ namespace C4iSytemsMobApp.Services
                 using (HttpClient _http = new HttpClient())
                 {
                     await Task.Delay(3000);
+                    _http.Timeout = TimeSpan.FromMinutes(10); // increase wait time
                     var content = new MultipartFormDataContent();
                     foreach (var fileModel in records)
                     {
@@ -162,6 +165,7 @@ namespace C4iSytemsMobApp.Services
                 using (HttpClient _http = new HttpClient())
                 {
                     await Task.Delay(3000);
+                    _http.Timeout = TimeSpan.FromMinutes(8); // increase wait time
                     HttpResponseMessage response = await _http.PostAsJsonAsync(apiUrl, records);
                     if (response.IsSuccessStatusCode)
                     {
@@ -194,6 +198,7 @@ namespace C4iSytemsMobApp.Services
                 using (HttpClient _http = new HttpClient())
                 {
                     await Task.Delay(3000);
+                    _http.Timeout = TimeSpan.FromMinutes(8); // increase wait time
                     HttpResponseMessage response = await _http.PostAsJsonAsync(apiUrl, records);
                     if (response.IsSuccessStatusCode)
                     {
@@ -242,24 +247,6 @@ namespace C4iSytemsMobApp.Services
                             content.Add(fileContent, "files", fileModel.FileNameCache);
                         }
                     }
-
-                    
-
-
-
-                    //foreach (var fileModel in attchRecords)
-                    //{
-
-                    //    if (File.Exists(fileModel.FileNameWithPathCache))
-                    //    {
-                    //        var stream = await OpenFileReadAsync(fileModel.FileNameWithPathCache);
-                    //        var fileContent = new StreamContent(stream);
-                    //        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-
-                    //        // Add file
-                    //        content.Add(fileContent, "files", fileModel.FileNameCache);
-                    //    }
-                    //}
 
                     string DeviceType = "android";
 #if IOS

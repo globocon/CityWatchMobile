@@ -42,7 +42,21 @@ namespace C4iSytemsMobApp.Services
         public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, int? _localClientSiteId,
             int scanningType = 0, string tagUID = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
         {
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
+            {                 
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return (false, "GPS coordinates not available. Please ensure location services are enabled");
+                else
+                    gpsCoordinates = _gpsLocation;
+            }
 
             if (string.IsNullOrWhiteSpace(gpsCoordinates))
             {

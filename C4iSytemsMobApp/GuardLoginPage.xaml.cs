@@ -980,14 +980,23 @@ public partial class GuardLoginPage : ContentPage
             }
 
 
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
-
-            if (string.IsNullOrWhiteSpace(gpsCoordinates))
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
             {
                 await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
-                return;
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return;
+                else
+                    gpsCoordinates = _gpsLocation;
             }
-            
+
             PostActivityRequest request = new PostActivityRequest()
             {
                 guardId = guardId,

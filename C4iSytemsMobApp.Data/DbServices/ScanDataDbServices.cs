@@ -53,6 +53,7 @@ namespace C4iSytemsMobApp.Data.DbServices
         public Task<ClientSitesLocal> GetIrClientSitesLocalListByName(string sitename);
 
         public Task<string> GetClientSitesNameLocalById(int clientSiteId);
+        public string GetClientSitesNameLocalByIdNonAsync(int clientSiteId);
 
         public Task ClearIrFeedbackTemplateLocalList();
         public Task RefreshIrFeedbackTemplateLocalList(List<IrFeedbackTemplateViewModelLocal> irFeedbackTemplates);
@@ -474,6 +475,16 @@ namespace C4iSytemsMobApp.Data.DbServices
         {
             using var _db = _dbFactory();
             var r = await _db.ClientSitesLocal.Where(x => x.Id == clientSiteId).AsNoTracking().FirstOrDefaultAsync();
+            if (r != null)
+                return r.Name;
+            else
+                return string.Empty;
+        }
+
+        public string GetClientSitesNameLocalByIdNonAsync(int clientSiteId)
+        {
+            using var _db = _dbFactory();
+            var r = _db.ClientSitesLocal.Where(x => x.Id == clientSiteId).AsNoTracking().FirstOrDefault();
             if (r != null)
                 return r.Name;
             else

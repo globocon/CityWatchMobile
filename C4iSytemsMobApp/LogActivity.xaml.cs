@@ -4,6 +4,7 @@ using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
+using C4iSytemsMobApp.Services;
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
@@ -84,6 +85,10 @@ public partial class LogActivity : ContentPage
 
         LoadActivities();
         FilesCollection.ItemsSource = SelectedFiles;
+        VslLogBookSite.IsVisible = false;
+        logbkSiteName.Text = "";
+        logbkSiteName.IsVisible = false;
+
     }
     private void PopupOverlay_SizeChanged(object sender, EventArgs e)
     {
@@ -104,9 +109,26 @@ public partial class LogActivity : ContentPage
         _isLogsLoading = false;
         await SetupHubConnection(); // LoadLogs(); is Called when the SignalRHub connection is established
         await SetupRCHubConnection();
+
+        GetLocalSiteName();
     }
 
 
+    private void GetLocalSiteName()
+    {
+        VslLogBookSite.IsVisible = false;
+        logbkSiteName.Text = "";
+        logbkSiteName.IsVisible = false;
+
+        if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+        {
+            VslLogBookSite.IsVisible = true;
+            logbkSiteName.IsVisible = true;
+            var _siteid = _localClientSiteId.HasValue ? _localClientSiteId.Value : 0;
+            var _siteName = _scannerControlServices.GetClientSiteNameFromLocalDbNonAsync(_siteid);
+            logbkSiteName.Text = $"LogBook: {_siteName}";
+        }
+    }
 
     protected override async void OnDisappearing()
     {
@@ -176,6 +198,7 @@ public partial class LogActivity : ContentPage
         {
             string activityName = button.Text;
             GetLocalSiteForPCAR();
+            GetLocalSiteName();
             if (App.IsOnline)
                 await LogActivityTask(activityName, _localClientSiteId, 0, "NA");
             else
@@ -207,6 +230,7 @@ public partial class LogActivity : ContentPage
                 return;
 
             GetLocalSiteForPCAR();
+            GetLocalSiteName();
             var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={_localClientSiteId}";
             var response = await _httpClient.GetAsync(url);
 
@@ -642,6 +666,16 @@ public partial class LogActivity : ContentPage
         {
             _isLogsLoading = false;
         }
+
+        try
+        {
+            GetLocalSiteName();
+        }
+        catch (Exception)
+        {
+
+           // throw;
+        }
     }
 
     private async void OnPickFileClicked(object sender, EventArgs e)
@@ -692,7 +726,22 @@ public partial class LogActivity : ContentPage
     {
         try
         {
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return;
+                else
+                    gpsCoordinates = _gpsLocation;
+            }
 
             using var client = new HttpClient();
             var content = new MultipartFormDataContent();
@@ -1074,16 +1123,28 @@ public partial class LogActivity : ContentPage
             return;
         }
 
-        string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
-        if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        string gpsCoordinates = "";
+        var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+        if (_hasGpsLocationPermission)
+        {
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            gpsCoordinates = _gpsLocation;
+        }
+        else
         {
             await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
-            return;
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            if (string.IsNullOrEmpty(_gpsLocation))
+                return;
+            else
+                gpsCoordinates = _gpsLocation;
         }
+
 
         try
         {
             GetLocalSiteForPCAR();
+            GetLocalSiteName();
             if (App.IsOnline)
                 await LogActivityTask(log.Trim(), _localClientSiteId, 0, "NA", false);
             else
@@ -1361,7 +1422,22 @@ public partial class LogActivity : ContentPage
             try
             {
                 if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
-                string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+                string gpsCoordinates = "";
+                var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+                if (_hasGpsLocationPermission)
+                {
+                    var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                    gpsCoordinates = _gpsLocation;
+                }
+                else
+                {
+                    await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                    var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                    if (string.IsNullOrEmpty(_gpsLocation))
+                        return;
+                    else
+                        gpsCoordinates = _gpsLocation;
+                }
 
                 if (!App.IsOnline)
                 {
@@ -1513,7 +1589,22 @@ public partial class LogActivity : ContentPage
         try
         {
             var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return;
+                else
+                    gpsCoordinates = _gpsLocation;
+            }
 
             using var client = new HttpClient();
             var content = new MultipartFormDataContent();
@@ -1653,6 +1744,7 @@ public partial class LogActivity : ContentPage
                 if (_hubConnection.State == HubConnectionState.Connected)
                 {
                     GetLocalSiteForPCAR();
+                    GetLocalSiteName();
                     MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                     {
                         ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
@@ -1687,6 +1779,7 @@ public partial class LogActivity : ContentPage
             if (_hubConnection.State == HubConnectionState.Connected)
             {
                 GetLocalSiteForPCAR();
+                GetLocalSiteName();
                 MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                 {
                     ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
@@ -1729,6 +1822,7 @@ public partial class LogActivity : ContentPage
                 if (_hubConnectionRC.State == HubConnectionState.Connected)
                 {
                     GetLocalSiteForPCAR();
+                    GetLocalSiteName();
                     MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                     {
                         ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
@@ -1755,6 +1849,7 @@ public partial class LogActivity : ContentPage
             if (_hubConnectionRC.State == HubConnectionState.Connected)
             {
                 GetLocalSiteForPCAR();
+                GetLocalSiteName();
                 MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                 {
                     ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
@@ -1797,12 +1892,21 @@ public partial class LogActivity : ContentPage
     {
         // await ShowToastMessage($"Logging activity to Cache...");
 
-        string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
-
-        if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        string gpsCoordinates = "";
+        var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+        if (_hasGpsLocationPermission)
         {
-            await DisplayAlert($"Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
-            return;
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            gpsCoordinates = _gpsLocation;
+        }
+        else
+        {
+            await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            if (string.IsNullOrEmpty(_gpsLocation))
+                return;
+            else
+                gpsCoordinates = _gpsLocation;
         }
 
         if (!_guardId.HasValue || !_clientSiteId.HasValue || !_userId.HasValue || _guardId.Value <= 0 || _clientSiteId.Value <= 0 || _userId.Value <= 0)
@@ -1811,6 +1915,7 @@ public partial class LogActivity : ContentPage
             return;
         }
         GetLocalSiteForPCAR();
+        GetLocalSiteName();
         PostActivityRequestLocalCache request = new PostActivityRequestLocalCache()
         {
             guardId = _guardId.Value,

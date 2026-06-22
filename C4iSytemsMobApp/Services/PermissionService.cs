@@ -38,5 +38,83 @@ namespace C4iSytemsMobApp.Services
 #endif
             return true;
         }
+
+
+        public static async Task<string> CheckAndGetGpsLocationAsync()
+        {
+            var _LocationString = "";
+            var _CheckPermission = await CheckIfHasLocationPermission();
+            if (_CheckPermission)
+            {
+                var location = await Geolocation.GetLocationAsync(new GeolocationRequest
+                {
+                    DesiredAccuracy = GeolocationAccuracy.Medium,
+                    Timeout = TimeSpan.FromSeconds(10)
+                });
+
+                if (location != null)
+                {
+                    Preferences.Set("GpsCoordinates", location.Latitude.ToString() + ',' + location.Longitude.ToString());
+                    _LocationString = $"{location.Latitude.ToString()},{location.Longitude.ToString()}";
+                }                
+                return _LocationString;
+            }
+
+            return _LocationString;
+        }
+
+
+        public static async Task<string> GetGpsLocationWithOutCheckingPermissionAsync()
+        {
+            var _LocationString = Preferences.Get("GpsCoordinates", "");
+            var _CheckPermission = await CheckLocationPermission();
+            if (_CheckPermission)
+            {
+                var location = await Geolocation.GetLocationAsync(new GeolocationRequest
+                {
+                    DesiredAccuracy = GeolocationAccuracy.Medium,
+                    Timeout = TimeSpan.FromSeconds(10)
+                });
+
+                if (location != null)
+                {
+                    Preferences.Set("GpsCoordinates", location.Latitude.ToString() + ',' + location.Longitude.ToString());
+                    _LocationString = $"{location.Latitude.ToString()},{location.Longitude.ToString()}";
+                }
+                return _LocationString;
+            }
+
+            return _LocationString;
+        }
+
+        public static async Task<bool> CheckIfHasLocationPermission()
+        {
+            var statusLocation = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            if (statusLocation != PermissionStatus.Granted)
+            {
+                statusLocation = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                if (statusLocation != PermissionStatus.Granted)
+                    return false;
+                else return true;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        public static async Task<bool> CheckLocationPermission()
+        {
+            var statusLocation = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            if (statusLocation != PermissionStatus.Granted)
+            {
+              return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
     }
 }

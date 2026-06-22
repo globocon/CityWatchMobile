@@ -49,7 +49,12 @@ public partial class LoginPage : ContentPage
 
     private async void OnPageLoaded(object sender, EventArgs e)
     {
+#if ANDROID
         await GetAndShowLocationAsync();
+#elif IOS
+
+#endif
+
     }
     private async void LoadSavedCredentials()
     {
