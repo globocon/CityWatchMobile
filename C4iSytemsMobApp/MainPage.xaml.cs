@@ -2054,15 +2054,15 @@ namespace C4iSytemsMobApp
                 // Check if mac address is in the local db
                 if (_taginfoLocal == null || _taginfoLocal?.ClientSiteId <= 0)
                 {
-                    App.PcarInspLastScannedSiteId = null;// Reset if tag not found or invalid
+                    //App.PcarInspLastScannedSiteId = null;// Reset if tag not found or invalid
                     return;
                 }
 
-                if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
-                {
-                    App.PcarInspLastScannedSiteId = _taginfoLocal?.ClientSiteId;
-                    App.PcarInspLastScannedTime = DateTime.Now;
-                }
+                //if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+                //{
+                //    App.PcarInspLastScannedSiteId = _taginfoLocal?.ClientSiteId;
+                //    App.PcarInspLastScannedTime = DateTime.Now;
+                //}
 
 
                 if (!App.IsOnline)

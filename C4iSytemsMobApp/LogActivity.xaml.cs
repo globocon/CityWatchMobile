@@ -1987,8 +1987,13 @@ public partial class LogActivity : ContentPage
         var filePath = Path.Combine(appDataDir, fileName);
 
         // Save the stream to the file path        
-        using var destinationStream = File.Create(filePath);
+        await using var destinationStream = File.Create(filePath);
+
+        if (stream.CanSeek)
+            stream.Position = 0;
+
         await stream.CopyToAsync(destinationStream);
+        await destinationStream.FlushAsync();
 
         return filePath;
     }

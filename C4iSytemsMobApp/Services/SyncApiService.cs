@@ -114,23 +114,27 @@ namespace C4iSytemsMobApp.Services
                     await Task.Delay(3000);
                     _http.Timeout = TimeSpan.FromMinutes(10); // increase wait time
                     var content = new MultipartFormDataContent();
+                    var uploadedRecords = new List<OfflineFilesRecords>();
+
                     foreach (var fileModel in records)
                     {
-
-                        if (File.Exists(fileModel.FileNameWithPathCache))
+                        if (File.Exists(fileModel.FileNameWithPathCache) && new FileInfo(fileModel.FileNameWithPathCache).Length > 0)
                         {
                             var stream = await OpenFileReadAsync(fileModel.FileNameWithPathCache);
+                            if (stream.CanSeek)
+                            {
+                                stream.Position = 0;
+                            }
                             var fileContent = new StreamContent(stream);
                             fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-
-                            // Add file
                             content.Add(fileContent, "files", fileModel.FileNameCache);
+                            uploadedRecords.Add(fileModel);
                         }
                     }
 
                     // Add other form data
                     // 1. Add metadata as JSON
-                    var json = JsonSerializer.Serialize(records);
+                    var json = JsonSerializer.Serialize(uploadedRecords);
                     var jsonContent = new StringContent(json, Encoding.UTF8, "application/json");
                     content.Add(jsonContent, "offlineFilesRecordJsonString");
                     
