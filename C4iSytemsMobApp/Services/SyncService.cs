@@ -15,7 +15,7 @@ namespace C4iSytemsMobApp.Services
     {
         private readonly Func<AppDbContext> _dbFactory;
         private readonly ISyncApiService _api;
-
+        private static readonly SemaphoreSlim _syncLock = new(1, 1);
 
         public SyncService(Func<AppDbContext> dbFactory, ISyncApiService api)
         {
@@ -25,15 +25,25 @@ namespace C4iSytemsMobApp.Services
 
         public async Task SyncAsync()
         {
-            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            if (!await _syncLock.WaitAsync(0))
                 return;
 
-            await SyncSmartWandTagsHitLogCache();
-            await SyncLogbookCache();
-            await SyncLogbookDocumentsCache();
-            await SyncPatrolCarLogsCache();
-            await SyncCustomFieldLogsCache();
-            await SyncIrRequestsLogsCache();
+            try
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                    return;
+
+                await SyncSmartWandTagsHitLogCache();
+                await SyncLogbookCache();
+                await SyncLogbookDocumentsCache();
+                await SyncPatrolCarLogsCache();
+                await SyncCustomFieldLogsCache();
+                await SyncIrRequestsLogsCache();
+            }
+            finally
+            {
+                _syncLock.Release();
+            }
 
         }
 

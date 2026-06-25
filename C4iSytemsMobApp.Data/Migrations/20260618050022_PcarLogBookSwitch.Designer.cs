@@ -3,6 +3,7 @@ using System;
 using C4iSytemsMobApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace C4iSytemsMobApp.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260618050022_PcarLogBookSwitch")]
+    partial class PcarLogBookSwitch
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.22");
@@ -31,7 +34,7 @@ namespace C4iSytemsMobApp.Data.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Id", "ClienSiteId");
+                    b.HasKey("Id");
 
                     b.ToTable("ActivityModel");
                 });
@@ -433,9 +436,6 @@ namespace C4iSytemsMobApp.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("CallSignId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("DeviceId")
                         .HasColumnType("TEXT");
 
@@ -472,9 +472,6 @@ namespace C4iSytemsMobApp.Data.Migrations
                     b.Property<string>("FileType")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsEntryByPCAR")
-                        .HasColumnType("INTEGER");
-
                     b.Property<bool>("IsNew")
                         .HasColumnType("INTEGER");
 
@@ -482,12 +479,6 @@ namespace C4iSytemsMobApp.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("LogBookId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("LogbookclientsiteId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("PositionId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("RecordLabel")

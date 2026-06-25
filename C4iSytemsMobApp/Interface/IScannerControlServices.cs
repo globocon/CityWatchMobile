@@ -18,5 +18,6 @@ namespace C4iSytemsMobApp.Interface
         Task<bool> CheckIfTagExistsForSiteInLocalDb(string _TagUid);
         Task<ClientSiteSmartWandTagsLocal> GetTagDetailsFromLocalDbAsync(string _TagUid);
         Task<string> GetClientSiteNameFromLocalDb(int clientSiteId);
+        public string GetClientSiteNameFromLocalDbNonAsync(int clientSiteId);
     }
 }

@@ -15,6 +15,8 @@ namespace C4iSytemsMobApp
         public static event Action<bool>? ConnectivityChangedEvent;
         public static string CurrentAppVersion { get; private set; }
         public static int? PcarInspLastScannedSiteId { get; set; } = null;
+        public static int? PcarCallSignId { get; set; } = null;
+        public static int? PcarPostionId { get; set; } = null;
 
         private static DateTime? _pcarInspLastScannedTime;
         public static DateTime? PcarInspLastScannedTime

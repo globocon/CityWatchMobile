@@ -799,10 +799,22 @@ namespace C4iSytemsMobApp
 
         private async Task ActivateDuress()
         {
-
-
-
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return;
+                else
+                    gpsCoordinates = _gpsLocation;
+            }
 
 
             // Validate Guard ID
@@ -2042,15 +2054,15 @@ namespace C4iSytemsMobApp
                 // Check if mac address is in the local db
                 if (_taginfoLocal == null || _taginfoLocal?.ClientSiteId <= 0)
                 {
-                    App.PcarInspLastScannedSiteId = null;// Reset if tag not found or invalid
+                    //App.PcarInspLastScannedSiteId = null;// Reset if tag not found or invalid
                     return;
                 }
 
-                if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
-                {
-                    App.PcarInspLastScannedSiteId = _taginfoLocal?.ClientSiteId;
-                    App.PcarInspLastScannedTime = DateTime.Now;
-                }
+                //if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+                //{
+                //    App.PcarInspLastScannedSiteId = _taginfoLocal?.ClientSiteId;
+                //    App.PcarInspLastScannedTime = DateTime.Now;
+                //}
 
 
                 if (!App.IsOnline)
@@ -2117,7 +2129,7 @@ namespace C4iSytemsMobApp
 
         private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
         {
-            var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
+            var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, null, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
             if (isSuccess)
             {
                 if (scanningType == (int)ScanningType.NFC)

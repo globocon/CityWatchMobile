@@ -1,4 +1,5 @@
 ﻿using C4iSytemsMobApp.Interface;
+using C4iSytemsMobApp.Services;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using Plugin.BLE.Abstractions;
@@ -172,7 +173,7 @@ public partial class PcarRute : ContentPage
                 _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0)
                 return;
 
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = await PermissionService.GetGpsLocationWithOutCheckingPermissionAsync();
 
             _selectedVisit.TimeOnSite = TimeOnSitePicker.Time;
             _selectedVisit.TimeOffSite = TimeOffSitePicker.Time;

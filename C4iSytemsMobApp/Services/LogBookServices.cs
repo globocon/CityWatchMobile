@@ -1,4 +1,5 @@
-﻿using C4iSytemsMobApp.Helpers;
+﻿using C4iSytemsMobApp.Enums;
+using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using System;
@@ -38,10 +39,24 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
-        public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, 
+        public async Task<(bool isSuccess, string errorMessage)> LogActivityTask(string activityDescription, int? _localClientSiteId,
             int scanningType = 0, string tagUID = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
         {
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
+            {                 
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return (false, "GPS coordinates not available. Please ensure location services are enabled");
+                else
+                    gpsCoordinates = _gpsLocation;
+            }
 
             if (string.IsNullOrWhiteSpace(gpsCoordinates))
             {
@@ -75,13 +90,17 @@ namespace C4iSytemsMobApp.Services
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
                 EventMobileUtcDateTime = TimeZoneHelper.GetCurrentUtcDateTime(),
                 IsNewGuard = false,
-                TagScanHitLogRefId = RowIdInServer
+                TagScanHitLogRefId = RowIdInServer,
+                CallSignId =  App.PcarCallSignId,
+                PositionId = App.PcarPostionId,
+                IsEntryByPCAR = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP,
+                LogbookclientsiteId = _localClientSiteId
             };
                         
             HttpClient _httpClient = new HttpClient();
             try
             {
-                var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivity";
+                var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/PostActivityNew";
 
                 HttpResponseMessage response = await _httpClient.PostAsJsonAsync(apiUrl, request);
 

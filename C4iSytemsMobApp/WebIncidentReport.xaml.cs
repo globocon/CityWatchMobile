@@ -1458,54 +1458,77 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
     private async Task GetCurrentGpsLocation()
     {
-        string savedgps = Preferences.Get("GpsCoordinates", "");
-        selectedGPS = savedgps;
+        
 
-        var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
-        if (status != PermissionStatus.Granted)
+        string gpsCoordinates = "";
+        var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+        if (_hasGpsLocationPermission)
         {
-            // Inform the user why the permission is needed
-            bool answer = await DisplayAlert("Permission Required", "This app needs your location to continue. Please allow location access.", "OK", "Cancel");
-
-            if (!answer)
-            {
-                //Location permission denied by user.";
-                return;
-            }
-
-            status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-        }
-
-        if (status != PermissionStatus.Granted)
-        {
-            if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost") || AppConfig.ApiBaseUrl.Contains("192.168.1."))
-            {
-                Preferences.Set("GpsCoordinates", "40.748440,-73.984559");
-
-            }
-            return;
-        }
-
-
-        string currentgps = "";
-
-        var location = await Geolocation.GetLocationAsync(new GeolocationRequest
-        {
-            DesiredAccuracy = GeolocationAccuracy.Medium,
-            Timeout = TimeSpan.FromSeconds(10)
-        });
-
-        if (location != null)
-        {
-            currentgps = location.Latitude.ToString() + ',' + location.Longitude.ToString();
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            gpsCoordinates = _gpsLocation;
         }
         else
         {
-            currentgps = savedgps;
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            if (string.IsNullOrEmpty(_gpsLocation))
+                return;
+            else
+                gpsCoordinates = _gpsLocation;
         }
-        selectedGPS = currentgps;
+
+        string savedgps = Preferences.Get("GpsCoordinates", "");
+        selectedGPS = gpsCoordinates;
 
         return;
+
+        //string savedgps = Preferences.Get("GpsCoordinates", "");
+        //selectedGPS = savedgps;
+
+        //var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+        //if (status != PermissionStatus.Granted)
+        //{
+        //    // Inform the user why the permission is needed
+        //    bool answer = await DisplayAlert("Permission Required", "This app needs your location to continue. Please allow location access.", "OK", "Cancel");
+
+        //    if (!answer)
+        //    {
+        //        //Location permission denied by user.";
+        //        return;
+        //    }
+
+        //    status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+        //}
+
+        //if (status != PermissionStatus.Granted)
+        //{
+        //    if (AppConfig.ApiBaseUrl.Contains("test") || AppConfig.ApiBaseUrl.Contains("localhost") || AppConfig.ApiBaseUrl.Contains("192.168.1."))
+        //    {
+        //        Preferences.Set("GpsCoordinates", "40.748440,-73.984559");
+
+        //    }
+        //    return;
+        //}
+
+
+        //string currentgps = "";
+
+        //var location = await Geolocation.GetLocationAsync(new GeolocationRequest
+        //{
+        //    DesiredAccuracy = GeolocationAccuracy.Medium,
+        //    Timeout = TimeSpan.FromSeconds(10)
+        //});
+
+        //if (location != null)
+        //{
+        //    currentgps = location.Latitude.ToString() + ',' + location.Longitude.ToString();
+        //}
+        //else
+        //{
+        //    currentgps = savedgps;
+        //}
+        //selectedGPS = currentgps;
+
+        //return;
     }
 
 
@@ -1672,7 +1695,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     await offlinestream.CopyToAsync(offlineFilestream);
 
                     var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-                    string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+                    string gpsCoordinates = await PermissionService.GetGpsLocationWithOutCheckingPermissionAsync();
                     // Store in local list to upload later
                     var _fileName = Path.GetFileName(file.FileName);
                     irOfflineFilesAttachmentsCache _irOfflineFilesAttachmentsCache = new irOfflineFilesAttachmentsCache()

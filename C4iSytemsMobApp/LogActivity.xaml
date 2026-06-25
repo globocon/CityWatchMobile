@@ -22,6 +22,18 @@
             <!-- Header and Buttons -->
             <StackLayout Grid.Row="0"
                          Padding="5,10,5,10">
+                <VerticalStackLayout x:Name="VslLogBookSite"
+                                     Padding="0,0,0,5">
+
+                    <Label x:Name="logbkSiteName"
+                           Text=""
+                           FontAttributes="Bold"
+                           FontSize="10"
+                           HorizontalOptions="Center"
+                           TextColor="Blue"
+                           Margin="0,0,0,5" />
+                </VerticalStackLayout>
+
 
                 <ScrollView VerticalScrollBarVisibility="Always"
                             HeightRequest="235"

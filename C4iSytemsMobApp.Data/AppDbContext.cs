@@ -60,7 +60,10 @@ namespace C4iSytemsMobApp.Data
                 .WithOne(d => d.ClientSiteType)
                 .HasForeignKey(d => d.TypeId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
+
+            modelBuilder.Entity<ActivityModel>()
+                .HasKey(x => new { x.Id, x.ClienSiteId });
+
         }
     }
 }
