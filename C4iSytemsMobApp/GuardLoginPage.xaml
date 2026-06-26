@@ -9,7 +9,7 @@
           Padding="15,15,15,15">
 
         <!-- Main Content -->
-        <VerticalStackLayout Spacing="5"
+        <VerticalStackLayout Spacing="1"
                              Grid.Row="0">
 
             <!-- Logged-in User -->
@@ -198,9 +198,18 @@
                     ItemDisplayBinding="{Binding Name}"
                     SelectedItem="{Binding SelectedClientSite, Mode=TwoWay}"
                     IsVisible="False" />
-            <HorizontalStackLayout x:Name="slPatrolCarToggle" IsVisible="False" Spacing="10" Margin="0,10,0,0">
-                <Switch x:Name="switchPatrolCar" Toggled="OnPatrolCarToggled" VerticalOptions="Center" OnColor="#2196F3" />
-                <Label Text="Patrol Car" TextColor="White" VerticalOptions="Center" />
+
+            <HorizontalStackLayout x:Name="slPatrolCarToggle"
+                                   IsVisible="False"
+                                   Spacing="10"
+                                   Margin="0,10,0,0">
+                <Switch x:Name="switchPatrolCar"
+                        Toggled="OnPatrolCarToggled"
+                        VerticalOptions="Center"
+                        OnColor="#2196F3" />
+                <Label Text="Mobile Patrol Car"
+                       TextColor="White"
+                       VerticalOptions="Center" />
             </HorizontalStackLayout>
 
             <!-- Position Dropdown -->
@@ -209,7 +218,7 @@
                     ItemsSource="{Binding Positions}"
                     ItemDisplayBinding="{Binding Name}"
                     SelectedItem="{Binding SelectedPosition, Mode=TwoWay}"
-                    IsVisible="False" />
+                    IsVisible="False"/>
 
             <!-- Callsign Dropdown (From API) -->
             <Picker x:Name="pickerCallsign"

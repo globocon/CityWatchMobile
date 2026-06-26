@@ -1795,10 +1795,9 @@ namespace C4iSytemsMobApp
                     // Get site ID from scanned tag and store it in a global variable to be used across the app, especially for PCAR/INSP modules
                     var _taginfoLocal = await _scannerControlServices.GetTagDetailsFromLocalDbAsync(serialNumber);
                     if (_taginfoLocal != null && _taginfoLocal.ClientSiteId > 0)
-                        App.PcarInspLastScannedSiteId = _taginfoLocal.ClientSiteId;
+                        App.SetPcarLastScanned(_taginfoLocal.ClientSiteId, DateTime.Now);
                     else
-                        App.PcarInspLastScannedSiteId = null; // Reset if tag not found or invalid
-                    App.PcarInspLastScannedTime = DateTime.Now;
+                        App.SetPcarLastScanned(null, DateTime.Now); // Reset if tag not found or invalid
                 }
 
                 if (!App.IsOnline)
