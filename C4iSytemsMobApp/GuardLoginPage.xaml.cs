@@ -72,7 +72,10 @@ public partial class GuardLoginPage : ContentPage
                 OnPropertyChanged(nameof(SelectedClientSite));
 
                 if (_selectedClientSite != null)
+                {
                     Preferences.Set("SelectedClientSiteId", _selectedClientSite.Id.ToString());
+                    _ = CheckAndApplyRosterCallsign();
+                }
             }
         }
     }
@@ -636,6 +639,58 @@ public partial class GuardLoginPage : ContentPage
         }
     }
 
+
+    private async Task CheckAndApplyRosterCallsign()
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                pickerCallsign.IsEnabled = true;
+            });
+
+            string guardIdStr = Preferences.Get("GuardId", "");
+            if (string.IsNullOrEmpty(guardIdStr) || !int.TryParse(guardIdStr, out int guardId))
+                return;
+
+            if (_selectedClientSite == null) return;
+            int siteId = _selectedClientSite.Id;
+
+            string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetGuardSiteCallsign?guardId={guardId}&siteId={siteId}";
+
+            using HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            
+            HttpResponseMessage response = await client.GetAsync(apiUrl);
+            if (!response.IsSuccessStatusCode) return;
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("callsignName", out var callsignProp))
+            {
+                string callsignName = callsignProp.GetString();
+                if (!string.IsNullOrEmpty(callsignName) && callsignName != "- Select -")
+                {
+                    var match = Callsigns.FirstOrDefault(p => p.Name.Equals(callsignName, StringComparison.OrdinalIgnoreCase));
+                    if (match != null)
+                    {
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            SelectedCallsignObj = match;
+                            pickerCallsign.SelectedItem = match;
+                            pickerCallsign.IsEnabled = false; 
+                        });
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error in CheckAndApplyRosterCallsign: {ex.Message}");
+        }
+    }
 
     public event PropertyChangedEventHandler PropertyChanged;
     protected void OnPropertyChanged(string propertyName)
