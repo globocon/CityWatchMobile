@@ -668,22 +668,29 @@ public partial class GuardLoginPage : ContentPage
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            if (root.TryGetProperty("callsignName", out var callsignProp))
+            string callsignName = "";
+            if (root.TryGetProperty("callsignName", out var callsignProp) || 
+                root.TryGetProperty("CallsignName", out callsignProp))
             {
-                string callsignName = callsignProp.GetString();
-                if (!string.IsNullOrEmpty(callsignName) && callsignName != "- Select -")
+                callsignName = callsignProp.GetString();
+            }
+
+            if (!string.IsNullOrEmpty(callsignName) && callsignName != "- Select -")
+            {
+                var match = Callsigns.FirstOrDefault(p => p.Name.Equals(callsignName, StringComparison.OrdinalIgnoreCase));
+                
+                MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    var match = Callsigns.FirstOrDefault(p => p.Name.Equals(callsignName, StringComparison.OrdinalIgnoreCase));
-                    if (match != null)
+                    if (match == null)
                     {
-                        MainThread.BeginInvokeOnMainThread(() =>
-                        {
-                            SelectedCallsignObj = match;
-                            pickerCallsign.SelectedItem = match;
-                            pickerCallsign.IsEnabled = false; 
-                        });
+                        match = new DropdownItem { Id = -99, Name = callsignName };
+                        Callsigns.Add(match);
                     }
-                }
+                    
+                    SelectedCallsignObj = match;
+                    pickerCallsign.SelectedItem = match;
+                    pickerCallsign.IsEnabled = false; 
+                });
             }
         }
         catch (Exception ex)
