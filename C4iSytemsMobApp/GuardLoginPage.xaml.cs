@@ -73,7 +73,11 @@ public partial class GuardLoginPage : ContentPage
                 OnPropertyChanged(nameof(SelectedClientSite));
 
                 if (_selectedClientSite != null)
+                {
                     Preferences.Set("SelectedClientSiteId", _selectedClientSite.Id.ToString());
+                    _ = CheckAndApplyRosterCallsign();
+                }
+
                 CheckForPCAR();
             }
         }
@@ -643,6 +647,66 @@ public partial class GuardLoginPage : ContentPage
         }
     }
 
+
+    private async Task CheckAndApplyRosterCallsign()
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                pickerCallsign.IsEnabled = true;
+            });
+
+            string guardIdStr = Preferences.Get("GuardId", "");
+            if (string.IsNullOrEmpty(guardIdStr) || !int.TryParse(guardIdStr, out int guardId))
+                return;
+
+            if (_selectedClientSite == null) return;
+            int siteId = _selectedClientSite.Id;
+
+            string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetGuardSiteCallsign?guardId={guardId}&siteId={siteId}";
+
+            using HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            
+            HttpResponseMessage response = await client.GetAsync(apiUrl);
+            if (!response.IsSuccessStatusCode) return;
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            string callsignName = "";
+            if (root.TryGetProperty("callsignName", out var callsignProp) || 
+                root.TryGetProperty("CallsignName", out callsignProp))
+            {
+                callsignName = callsignProp.GetString();
+            }
+
+            if (!string.IsNullOrEmpty(callsignName) && callsignName != "- Select -")
+            {
+                var match = Callsigns.FirstOrDefault(p => p.Name.Equals(callsignName, StringComparison.OrdinalIgnoreCase));
+                
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    if (match == null)
+                    {
+                        match = new DropdownItem { Id = -99, Name = callsignName };
+                        Callsigns.Add(match);
+                    }
+                    
+                    SelectedCallsignObj = match;
+                    pickerCallsign.SelectedItem = match;
+                    pickerCallsign.IsEnabled = false; 
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error in CheckAndApplyRosterCallsign: {ex.Message}");
+        }
+    }
+    
     private bool CheckForPCAR()
     {
         if(_selectedClientSite != null)
