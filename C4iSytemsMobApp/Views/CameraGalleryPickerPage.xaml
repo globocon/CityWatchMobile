@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:camera="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui.Camera"
+             x:Class="C4iSytemsMobApp.Views.CameraGalleryPickerPage"
+             BackgroundColor="Black"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid RowDefinitions="*,Auto,Auto,Auto">
+
+        <!-- Live camera preview -->
+        <camera:CameraView x:Name="Camera"
+                           Grid.Row="0"
+                           MediaCaptured="OnMediaCaptured" />
+
+        <!-- Close (cancel) button overlaid on the preview -->
+        <Button Grid.Row="0"
+                Text="✕"
+                FontSize="18"
+                TextColor="White"
+                BackgroundColor="#66000000"
+                CornerRadius="20"
+                WidthRequest="40"
+                HeightRequest="40"
+                Padding="0"
+                Margin="12,12,0,0"
+                HorizontalOptions="Start"
+                VerticalOptions="Start"
+                Clicked="OnCloseClicked" />
+
+        <!-- Selected images strip (captured + picked), with per-item remove -->
+        <CollectionView x:Name="SelectedStrip"
+                        Grid.Row="1"
+                        HeightRequest="88"
+                        IsVisible="False"
+                        BackgroundColor="#111111">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Horizontal" ItemSpacing="4" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="4" WidthRequest="80" HeightRequest="80">
+                        <Frame Padding="0"
+                               CornerRadius="8"
+                               IsClippedToBounds="True"
+                               BorderColor="#28a745"
+                               BackgroundColor="#222222">
+                            <Image Source="{Binding Preview}" Aspect="AspectFill" />
+                        </Frame>
+                        <Button Text="✕"
+                                FontSize="10"
+                                TextColor="White"
+                                BackgroundColor="#CC000000"
+                                CornerRadius="10"
+                                WidthRequest="20"
+                                HeightRequest="20"
+                                Padding="0"
+                                HorizontalOptions="End"
+                                VerticalOptions="Start"
+                                Clicked="OnRemoveSelectedClicked" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Recent gallery thumbnails strip (WhatsApp style) -->
+        <CollectionView x:Name="GalleryStrip"
+                        Grid.Row="2"
+                        HeightRequest="96"
+                        IsVisible="False"
+                        BackgroundColor="Black">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Horizontal" ItemSpacing="2" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="2" WidthRequest="92" HeightRequest="92">
+                        <Image Source="{Binding Thumbnail}"
+                               Aspect="AspectFill">
+                            <Image.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnGalleryThumbTapped" />
+                            </Image.GestureRecognizers>
+                        </Image>
+                        <Grid IsVisible="{Binding IsSelected}"
+                              BackgroundColor="#7028a745"
+                              InputTransparent="True">
+                            <Label Text="✓"
+                                   TextColor="White"
+                                   FontSize="30"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Bottom bar: full gallery | shutter | done -->
+        <Grid Grid.Row="3"
+              ColumnDefinitions="*,Auto,*"
+              Padding="24,12,24,20"
+              BackgroundColor="Black">
+
+            <Button Grid.Column="0"
+                    Text="&#xf03e;"
+                    FontFamily="FontAwesome"
+                    FontSize="24"
+                    TextColor="White"
+                    BackgroundColor="#33FFFFFF"
+                    CornerRadius="24"
+                    WidthRequest="48"
+                    HeightRequest="48"
+                    Padding="0"
+                    HorizontalOptions="Start"
+                    VerticalOptions="Center"
+                    Clicked="OnOpenFullGalleryClicked" />
+
+            <Button x:Name="ShutterButton"
+                    Grid.Column="1"
+                    BackgroundColor="White"
+                    BorderColor="#BBBBBB"
+                    BorderWidth="4"
+                    CornerRadius="34"
+                    WidthRequest="68"
+                    HeightRequest="68"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Clicked="OnShutterClicked" />
+
+            <Button x:Name="DoneButton"
+                    Grid.Column="2"
+                    Text="✓"
+                    FontSize="18"
+                    FontAttributes="Bold"
+                    TextColor="White"
+                    BackgroundColor="#28a745"
+                    CornerRadius="24"
+                    HeightRequest="48"
+                    Padding="18,0"
+                    IsVisible="False"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center"
+                    Clicked="OnDoneClicked" />
+        </Grid>
+    </Grid>
+</ContentPage>
