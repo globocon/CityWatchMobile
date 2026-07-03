@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Services;
-using CommunityToolkit.Maui.Core;
+using CommunityToolkit.Maui.Views;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace C4iSytemsMobApp.Views;
