@@ -1697,11 +1697,16 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
                 var safeFileName = Path.GetFileName(file.FileName);
                 var localFilePath = Path.Combine(FileSystem.CacheDirectory, safeFileName);
-                await using var sourceStream = await file.OpenReadAsync();
-                await using var destinationStream = File.Create(localFilePath);
-                await sourceStream.CopyToAsync(destinationStream);
-                sourceStream.Dispose();
-                destinationStream.Dispose();
+
+                // Files from the camera/gallery picker already live in the cache directory;
+                // copying a file onto itself throws IO_SharingViolation, so only copy
+                // when the source is a different location.
+                if (!string.Equals(file.FullPath, localFilePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    await using var sourceStream = await file.OpenReadAsync();
+                    await using var destinationStream = File.Create(localFilePath);
+                    await sourceStream.CopyToAsync(destinationStream);
+                }
 
                 string reportReference = IrSession.ReportReference;
                 if (App.IsOnline)
