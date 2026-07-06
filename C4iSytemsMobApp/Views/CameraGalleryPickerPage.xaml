@@ -11,7 +11,34 @@
         <!-- Live camera preview -->
         <camera:CameraView x:Name="Camera"
                            Grid.Row="0"
-                           MediaCaptured="OnMediaCaptured" />
+                           MediaCaptured="OnMediaCaptured"
+                           MediaCaptureFailed="OnMediaCaptureFailed" />
+
+        <!-- Shutter flash effect -->
+        <BoxView x:Name="FlashOverlay"
+                 Grid.Row="0"
+                 BackgroundColor="White"
+                 Opacity="0"
+                 InputTransparent="True" />
+
+        <!-- Shown while the camera is starting up -->
+        <Grid x:Name="CameraLoadingOverlay"
+              Grid.Row="0"
+              BackgroundColor="Black"
+              InputTransparent="True">
+            <VerticalStackLayout HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="10">
+                <ActivityIndicator IsRunning="True"
+                                   Color="White"
+                                   WidthRequest="36"
+                                   HeightRequest="36" />
+                <Label Text="Starting camera…"
+                       TextColor="#CCCCCC"
+                       FontSize="13"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </Grid>
 
         <!-- Close (cancel) button overlaid on the preview -->
         <Button Grid.Row="0"
@@ -74,7 +101,7 @@
             </CollectionView.ItemsLayout>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Padding="2" WidthRequest="92" HeightRequest="92">
+                    <Grid Padding="2" WidthRequest="92" HeightRequest="92" BackgroundColor="#1E1E1E">
                         <Image Source="{Binding Thumbnail}"
                                Aspect="AspectFill">
                             <Image.GestureRecognizers>
@@ -102,19 +129,31 @@
               Padding="24,12,24,20"
               BackgroundColor="Black">
 
-            <Button Grid.Column="0"
-                    Text="&#xf03e;"
-                    FontFamily="FontAwesome"
-                    FontSize="24"
-                    TextColor="White"
+            <!-- WhatsApp-style gallery button: shows the latest photo as its thumbnail -->
+            <Border Grid.Column="0"
+                    StrokeShape="RoundRectangle 12"
+                    Stroke="White"
+                    StrokeThickness="2"
                     BackgroundColor="#33FFFFFF"
-                    CornerRadius="24"
                     WidthRequest="48"
                     HeightRequest="48"
-                    Padding="0"
                     HorizontalOptions="Start"
-                    VerticalOptions="Center"
-                    Clicked="OnOpenFullGalleryClicked" />
+                    VerticalOptions="Center">
+                <Grid>
+                    <Label Text="&#xf03e;"
+                           FontFamily="FontAwesome"
+                           FontSize="20"
+                           TextColor="White"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+                    <Image x:Name="GalleryButtonImage"
+                           Aspect="AspectFill"
+                           IsVisible="False" />
+                </Grid>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnOpenFullGalleryClicked" />
+                </Border.GestureRecognizers>
+            </Border>
 
             <Button x:Name="ShutterButton"
                     Grid.Column="1"

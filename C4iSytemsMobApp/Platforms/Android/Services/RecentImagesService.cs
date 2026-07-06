@@ -35,6 +35,7 @@ namespace C4iSytemsMobApp.Platforms.Android.Services
                     int idCol = cursor.GetColumnIndexOrThrow(MediaStore.Images.Media.InterfaceConsts.Id);
                     int nameCol = cursor.GetColumnIndexOrThrow(MediaStore.Images.Media.InterfaceConsts.DisplayName);
 
+                    // Metadata only — thumbnails load lazily so the picker opens instantly.
                     while (cursor.MoveToNext() && results.Count < count)
                     {
                         ct.ThrowIfCancellationRequested();
@@ -42,15 +43,10 @@ namespace C4iSytemsMobApp.Platforms.Android.Services
                         long id = cursor.GetLong(idCol);
                         string name = cursor.GetString(nameCol) ?? $"image_{id}.jpg";
 
-                        var thumbBytes = LoadThumbnailBytes(resolver, id);
-                        if (thumbBytes == null)
-                            continue;
-
                         results.Add(new RecentImage
                         {
                             MediaStoreId = id,
-                            DisplayName = name,
-                            Thumbnail = ImageSource.FromStream(() => new MemoryStream(thumbBytes))
+                            DisplayName = name
                         });
                     }
                 }
@@ -60,6 +56,24 @@ namespace C4iSytemsMobApp.Platforms.Android.Services
                 }
                 return (IReadOnlyList<RecentImage>)results;
             }, ct);
+        }
+
+        public async Task<bool> LoadThumbnailAsync(RecentImage image, CancellationToken ct = default)
+        {
+            if (image.Thumbnail != null)
+                return true;
+
+            var resolver = Platform.AppContext.ContentResolver;
+            if (resolver == null)
+                return false;
+
+            var bytes = await Task.Run(() => LoadThumbnailBytes(resolver, image.MediaStoreId), ct);
+            if (bytes == null)
+                return false;
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+                image.Thumbnail = ImageSource.FromStream(() => new MemoryStream(bytes)));
+            return true;
         }
 
         public async Task<string?> CopyToCacheAsync(RecentImage image, CancellationToken ct = default)

@@ -19,9 +19,11 @@ public partial class CameraGalleryPickerPage : ContentPage
         new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private readonly ObservableCollection<SelectedImageItem> _selected = new();
+    private readonly ObservableCollection<RecentImage> _recentImages = new();
     private IRecentImagesService? _recentImagesService;
     private bool _completed;
     private bool _recentLoaded;
+    private bool _previewStartedOnce;
     private int _captureCounter;
 
     /// <summary>Pushes the picker modally and returns the selected files; null = user cancelled.</summary>
@@ -39,16 +41,40 @@ public partial class CameraGalleryPickerPage : ContentPage
         _selected.CollectionChanged += (_, _) => UpdateSelectionUi();
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
-        try { await Camera.StartCameraPreview(CancellationToken.None); }
-        catch { /* preview may already be running */ }
 
+        // Start the camera and load the gallery strip in parallel so neither
+        // waits on the other — the strip must be visible as soon as the page opens.
+        _ = StartPreviewAsync();
         if (!_recentLoaded)
         {
             _recentLoaded = true;
-            await LoadRecentImagesAsync();
+            _ = LoadRecentImagesAsync();
+        }
+    }
+
+    private async Task StartPreviewAsync()
+    {
+        try
+        {
+            if (!_previewStartedOnce)
+                CameraLoadingOverlay.IsVisible = true;
+
+            await Camera.StartCameraPreview(CancellationToken.None);
+            _previewStartedOnce = true;
+        }
+        catch { /* preview may already be running */ }
+        finally
+        {
+            try
+            {
+                await CameraLoadingOverlay.FadeTo(0, 250);
+                CameraLoadingOverlay.IsVisible = false;
+                CameraLoadingOverlay.Opacity = 1;
+            }
+            catch { }
         }
     }
 
@@ -82,13 +108,59 @@ public partial class CameraGalleryPickerPage : ContentPage
                 return;
             }
 
+            // Fast metadata-only query: show the strip immediately with placeholders,
+            // then stream the thumbnails in as they load.
             var images = await _recentImagesService.GetRecentImagesAsync(30);
-            GalleryStrip.ItemsSource = images;
-            GalleryStrip.IsVisible = images.Count > 0;
+            if (images.Count == 0)
+            {
+                GalleryStrip.IsVisible = false;
+                return;
+            }
+
+            foreach (var image in images)
+                _recentImages.Add(image);
+            GalleryStrip.ItemsSource = _recentImages;
+            GalleryStrip.IsVisible = true;
+
+            _ = LoadThumbnailsAsync();
         }
         catch
         {
             GalleryStrip.IsVisible = false;
+        }
+    }
+
+    private async Task LoadThumbnailsAsync()
+    {
+        if (_recentImagesService == null)
+            return;
+
+        bool galleryButtonSet = false;
+        foreach (var image in _recentImages.ToList())
+        {
+            if (_completed)
+                return;
+
+            bool ok = false;
+            try { ok = await _recentImagesService.LoadThumbnailAsync(image); }
+            catch { }
+
+            if (!ok)
+            {
+                MainThread.BeginInvokeOnMainThread(() => _recentImages.Remove(image));
+                continue;
+            }
+
+            // WhatsApp-style: the gallery button shows the latest photo as its thumbnail
+            if (!galleryButtonSet)
+            {
+                galleryButtonSet = true;
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    GalleryButtonImage.Source = image.Thumbnail;
+                    GalleryButtonImage.IsVisible = true;
+                });
+            }
         }
     }
 
@@ -97,6 +169,7 @@ public partial class CameraGalleryPickerPage : ContentPage
         try
         {
             ShutterButton.IsEnabled = false;
+            TriggerFlashEffect();
             await Camera.CaptureImage(CancellationToken.None);
         }
         catch (Exception ex)
@@ -109,6 +182,25 @@ public partial class CameraGalleryPickerPage : ContentPage
             await Task.Delay(250);
             ShutterButton.IsEnabled = true;
         }
+    }
+
+    private void TriggerFlashEffect()
+    {
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            try
+            {
+                FlashOverlay.Opacity = 0.7;
+                await FlashOverlay.FadeTo(0, 200);
+            }
+            catch { }
+        });
+    }
+
+    private void OnMediaCaptureFailed(object? sender, MediaCaptureFailedEventArgs e)
+    {
+        MainThread.BeginInvokeOnMainThread(async () =>
+            await DisplayAlert("Camera", $"Capture failed: {e.FailureReason}", "OK"));
     }
 
     // Fires on a background thread; e.Media is only valid inside this handler.
@@ -175,7 +267,7 @@ public partial class CameraGalleryPickerPage : ContentPage
         });
     }
 
-    private async void OnOpenFullGalleryClicked(object sender, EventArgs e)
+    private async void OnOpenFullGalleryClicked(object sender, TappedEventArgs e)
     {
         try
         {

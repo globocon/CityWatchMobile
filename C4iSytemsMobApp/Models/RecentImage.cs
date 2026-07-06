@@ -9,12 +9,23 @@ namespace C4iSytemsMobApp.Models
     public class RecentImage : INotifyPropertyChanged
     {
         private bool _isSelected;
+        private ImageSource? _thumbnail;
 
         public long MediaStoreId { get; set; }
 
         public string DisplayName { get; set; } = string.Empty;
 
-        public ImageSource? Thumbnail { get; set; }
+        /// <summary>Loaded lazily after the strip is shown, so the picker opens instantly.</summary>
+        public ImageSource? Thumbnail
+        {
+            get => _thumbnail;
+            set
+            {
+                if (_thumbnail == value) return;
+                _thumbnail = value;
+                OnPropertyChanged();
+            }
+        }
 
         public bool IsSelected
         {
