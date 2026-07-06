@@ -1089,6 +1089,7 @@ public partial class LogActivity : ContentPage
     private void HideCustomLogPopup()
     {
         CustomLogPopupOverlay.IsVisible = false;
+        CustomLogSaveButton.IsEnabled = true;
     }
 
     private void OnCustomLogCancelClicked(object sender, EventArgs e)
@@ -1112,7 +1113,20 @@ public partial class LogActivity : ContentPage
             return;
         }
 
-        await SaveCustomLog(text);
+        try
+        {
+            CustomLogSaveButton.IsEnabled = false;
+            await SaveCustomLog(text);
+        }
+        catch (Exception)
+        {
+
+           // throw;
+        }
+        finally
+        {
+            CustomLogSaveButton.IsEnabled = true;
+        }
     }
 
     private async Task SaveCustomLog(string log)
