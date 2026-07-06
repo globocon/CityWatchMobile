@@ -21,10 +21,11 @@
                  Opacity="0"
                  InputTransparent="True" />
 
-        <!-- Shown while the camera is starting up -->
+        <!-- Shown while the camera is starting up. Transparent so it never hides
+             a preview that has already started underneath. -->
         <Grid x:Name="CameraLoadingOverlay"
               Grid.Row="0"
-              BackgroundColor="Black"
+              BackgroundColor="Transparent"
               InputTransparent="True">
             <VerticalStackLayout HorizontalOptions="Center"
                                  VerticalOptions="Center"

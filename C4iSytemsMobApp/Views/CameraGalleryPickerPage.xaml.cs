@@ -62,10 +62,14 @@ public partial class CameraGalleryPickerPage : ContentPage
             if (!_previewStartedOnce)
                 CameraLoadingOverlay.IsVisible = true;
 
-            await Camera.StartCameraPreview(CancellationToken.None);
+            // The CameraView auto-starts its preview when its platform view attaches,
+            // so this manual start mainly covers re-appearing after StopCameraPreview.
+            // On some devices the call lingers even though the preview is already live,
+            // so never keep the spinner up longer than 2 seconds.
+            await Task.WhenAny(StartCameraPreviewSafeAsync(), Task.Delay(2000));
             _previewStartedOnce = true;
         }
-        catch { /* preview may already be running */ }
+        catch { }
         finally
         {
             try
@@ -76,6 +80,12 @@ public partial class CameraGalleryPickerPage : ContentPage
             }
             catch { }
         }
+    }
+
+    private async Task StartCameraPreviewSafeAsync()
+    {
+        try { await Camera.StartCameraPreview(CancellationToken.None); }
+        catch { /* preview may already be running */ }
     }
 
     protected override void OnDisappearing()
