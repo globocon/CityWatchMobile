@@ -347,9 +347,18 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
 
 
+    private bool _appearingInitialized;
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        // OnAppearing fires again when a modal page (e.g. the camera/gallery picker)
+        // closes. Run the form initialization only once per page instance so an open
+        // half-filled report is not reloaded/overwritten after attaching files.
+        if (_appearingInitialized)
+            return;
+        _appearingInitialized = true;
 
         // Initialize Integrity Declaration text
         if (string.IsNullOrWhiteSpace(aiDeclarationEditor.Text))
