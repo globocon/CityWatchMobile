@@ -26,6 +26,7 @@ public static class MauiProgram
             // Initialize the .NET MAUI Community Toolkit by adding the below line of code
             .UseMauiCommunityToolkit()   // 👈 Add this
             .UseMauiCommunityToolkitMediaElement()      // 👈 Required
+            .UseMauiCommunityToolkitCamera()            // 👈 In-app camera preview (logbook image picker)
                                                         // Initialize the .NET MAUI Community Toolkit MediaElement by adding the below line of code
                                                         //.UseMauiCommunityToolkitMediaElement()
             .UseBarcodeReader() // Register ZXing Barcode Scanner
@@ -75,6 +76,7 @@ public static class MauiProgram
 #if ANDROID
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.Android.Services.VolumeButtonService>();
         builder.Services.AddSingleton<IDeviceInfoService, Platforms.Android.Services.DeviceInfoService>();
+        builder.Services.AddSingleton<IRecentImagesService, Platforms.Android.Services.RecentImagesService>();
 #elif IOS
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.iOS.Services.VolumeButtonService>();
         builder.Services.AddSingleton<IDeviceInfoService, Platforms.iOS.Services.DeviceInfoService>();
