@@ -427,7 +427,8 @@ TextColor="White"/>-->
                     <HorizontalStackLayout Spacing="12"
                                            HorizontalOptions="Center">
 
-                        <Button Text="Save"
+                        <Button x:Name="CustomLogSaveButton" 
+                                Text="Save"
                                 Clicked="OnCustomLogSaveClicked"
                                 BackgroundColor="#28a745"
                                 TextColor="White"
