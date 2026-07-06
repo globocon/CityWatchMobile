@@ -1635,7 +1635,29 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     {
         try
         {
-            var results = await FilePicker.PickMultipleAsync();
+            IEnumerable<FileResult> results = null;
+            bool customPickerShown = false;
+
+            // Android: WhatsApp-style picker (in-app camera + recent gallery strip).
+            // Browse button offers all file types; the allowedExtensions filter below still applies.
+            if (DeviceInfo.Platform == DevicePlatform.Android)
+            {
+                var camStatus = await Permissions.CheckStatusAsync<Permissions.Camera>();
+                if (camStatus != PermissionStatus.Granted)
+                    camStatus = await Permissions.RequestAsync<Permissions.Camera>();
+
+                if (camStatus == PermissionStatus.Granted)
+                {
+                    customPickerShown = true;
+                    var picked = await Views.CameraGalleryPickerPage.ShowAsync(Navigation, imagesOnly: false);
+                    if (picked == null) return; // user cancelled — do not fall back to gallery
+                    results = picked;
+                }
+            }
+
+            if (!customPickerShown)
+                results = await FilePicker.PickMultipleAsync(); // unchanged fallback
+
             if (results == null) return;
 
             var filesToSave = results
