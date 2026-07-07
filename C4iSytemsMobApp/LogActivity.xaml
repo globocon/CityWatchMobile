@@ -409,25 +409,86 @@ TextColor="White"/>-->
                    MaximumWidthRequest="480"
                    HeightRequest="400">
 
-                <VerticalStackLayout Spacing="10">
+                <!-- Grid rows: title / editor (fills) / attached image list / buttons.
+                     Editor takes all free space, so layout is unchanged while no images are attached. -->
+                <Grid RowDefinitions="Auto,*,Auto,Auto"
+                      RowSpacing="10">
 
-                    <Label Text="Add Custom Log Entry"
+                    <Label Grid.Row="0"
+                           Text="Add Custom Log Entry"
                            FontSize="18"
                            TextColor="Black"
                            FontAttributes="Bold"
                            HorizontalOptions="Center" />
 
-                    <Editor x:Name="CustomLogPopupEntry"
+                    <Editor Grid.Row="1"
+                            x:Name="CustomLogPopupEntry"
                             Placeholder="Enter custom log..."
                             AutoSize="TextChanges"
-                            HeightRequest="275"
                             TextColor="Black"
                             FontSize="16" />
 
-                    <HorizontalStackLayout Spacing="12"
+                    <!-- Images attached to this custom log entry (always saved as 25% of page) -->
+                    <ScrollView Grid.Row="2"
+                                x:Name="CustomLogFilesScroll"
+                                IsVisible="False"
+                                MaximumHeightRequest="90"
+                                VerticalOptions="Start">
+                        <CollectionView x:Name="CustomLogFilesCollection"
+                                        ItemSizingStrategy="MeasureAllItems"
+                                        VerticalOptions="Start">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="0"
+                                          ColumnDefinitions="*,Auto"
+                                          HeightRequest="30"
+                                          VerticalOptions="Center">
+
+                                        <!-- File Name -->
+                                        <Label Text="{Binding FileName}"
+                                               VerticalOptions="Center"
+                                               Grid.Column="0"
+                                               LineBreakMode="TailTruncation"
+                                               MaxLines="1"
+                                               TextColor="Black"
+                                               FontSize="9"
+                                               Margin="2,0" />
+
+                                        <!-- Delete Button -->
+                                        <Button Clicked="OnCustomLogDeleteFileClicked"
+                                                WidthRequest="20"
+                                                HeightRequest="20"
+                                                BackgroundColor="Transparent"
+                                                Padding="0"
+                                                Margin="0"
+                                                Grid.Column="1"
+                                                VerticalOptions="Center">
+                                            <Button.ImageSource>
+                                                <FileImageSource File="delete_icon_s.png" />
+                                            </Button.ImageSource>
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </ScrollView>
+
+                    <HorizontalStackLayout Grid.Row="3"
+                                           Spacing="12"
                                            HorizontalOptions="Center">
 
-                        <Button x:Name="CustomLogSaveButton" 
+                        <ImageButton x:Name="CustomLogAddImageButton"
+                                     Source="images.png"
+                                     Clicked="OnCustomLogPickImageClicked"
+                                     BackgroundColor="#28a745"
+                                     HeightRequest="40"
+                                     WidthRequest="55"
+                                     CornerRadius="6"
+                                     Padding="8"
+                                     Aspect="AspectFit"
+                                     VerticalOptions="Center" />
+
+                        <Button x:Name="CustomLogSaveButton"
                                 Text="Save"
                                 Clicked="OnCustomLogSaveClicked"
                                 BackgroundColor="#28a745"
@@ -444,7 +505,30 @@ TextColor="White"/>-->
 
                     </HorizontalStackLayout>
 
-                </VerticalStackLayout>
+                    <!-- Upload progress overlay (only shown while saving a custom log with images) -->
+                    <Grid x:Name="CustomLogUploadLoadingOverlay"
+                          Grid.RowSpan="4"
+                          BackgroundColor="#80FFFFFF"
+                          IsVisible="False"
+                          ZIndex="10">
+
+                        <VerticalStackLayout HorizontalOptions="Center"
+                                             VerticalOptions="Center"
+                                             Spacing="8">
+
+                            <ActivityIndicator IsRunning="True"
+                                               Color="Green"
+                                               WidthRequest="40"
+                                               HeightRequest="40" />
+
+                            <Label Text="Saving..."
+                                   FontSize="12"
+                                   TextColor="Black"
+                                   HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                </Grid>
 
             </Frame>
         </Grid>
