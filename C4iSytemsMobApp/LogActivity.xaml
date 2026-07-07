@@ -477,17 +477,20 @@ TextColor="White"/>-->
                                            Spacing="12"
                                            HorizontalOptions="Center">
 
-                        <!-- All three buttons share the same explicit height so they always align -->
-                        <ImageButton x:Name="CustomLogAddImageButton"
-                                     Source="camera.png"
-                                     Clicked="OnCustomLogPickImageClicked"
-                                     BackgroundColor="#28a745"
-                                     HeightRequest="55"
-                                     WidthRequest="90"
-                                     CornerRadius="6"
-                                     Padding="12"
-                                     Aspect="AspectFit"
-                                     VerticalOptions="Center" />
+                        <!-- Same control type (Button) as Save/Cancel so all three render identically -->
+                        <Button x:Name="CustomLogAddImageButton"
+                                Clicked="OnCustomLogPickImageClicked"
+                                BackgroundColor="#28a745"
+                                HeightRequest="55"
+                                WidthRequest="90"
+                                CornerRadius="6"
+                                Padding="0"
+                                ContentLayout="Left, 0"
+                                VerticalOptions="Center">
+                            <Button.ImageSource>
+                                <FileImageSource File="camera.png" />
+                            </Button.ImageSource>
+                        </Button>
 
                         <Button x:Name="CustomLogSaveButton"
                                 Text="Save"
