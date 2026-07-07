@@ -33,6 +33,9 @@ namespace C4iSytemsMobApp.Data.Entity
         public bool IsEntryByPCAR { get; set; } = false;
         public int? CallSignId { get; set; }
         public int? PositionId { get; set; }
+        // Guard-typed notes for custom log entries saved with images while offline.
+        // Null/empty for plain image uploads so the server keeps its default notes text.
+        public string Notes { get; set; }
 
     }
 }

@@ -409,25 +409,87 @@ TextColor="White"/>-->
                    MaximumWidthRequest="480"
                    HeightRequest="400">
 
-                <VerticalStackLayout Spacing="10">
+                <!-- Grid rows: title / editor (fills) / attached image list / buttons.
+                     Editor takes all free space, so layout is unchanged while no images are attached. -->
+                <Grid RowDefinitions="Auto,*,Auto,Auto"
+                      RowSpacing="10">
 
-                    <Label Text="Add Custom Log Entry"
+                    <Label Grid.Row="0"
+                           Text="Add Custom Log Entry"
                            FontSize="18"
                            TextColor="Black"
                            FontAttributes="Bold"
                            HorizontalOptions="Center" />
 
-                    <Editor x:Name="CustomLogPopupEntry"
+                    <Editor Grid.Row="1"
+                            x:Name="CustomLogPopupEntry"
                             Placeholder="Enter custom log..."
                             AutoSize="TextChanges"
-                            HeightRequest="275"
                             TextColor="Black"
                             FontSize="16" />
 
-                    <HorizontalStackLayout Spacing="12"
+                    <!-- Images attached to this custom log entry (always saved as 25% of page) -->
+                    <ScrollView Grid.Row="2"
+                                x:Name="CustomLogFilesScroll"
+                                IsVisible="False"
+                                MaximumHeightRequest="90"
+                                VerticalOptions="Start">
+                        <CollectionView x:Name="CustomLogFilesCollection"
+                                        ItemSizingStrategy="MeasureAllItems"
+                                        VerticalOptions="Start">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="0"
+                                          ColumnDefinitions="*,Auto"
+                                          HeightRequest="30"
+                                          VerticalOptions="Center">
+
+                                        <!-- File Name -->
+                                        <Label Text="{Binding FileName}"
+                                               VerticalOptions="Center"
+                                               Grid.Column="0"
+                                               LineBreakMode="TailTruncation"
+                                               MaxLines="1"
+                                               TextColor="Black"
+                                               FontSize="9"
+                                               Margin="2,0" />
+
+                                        <!-- Delete Button -->
+                                        <Button Clicked="OnCustomLogDeleteFileClicked"
+                                                WidthRequest="20"
+                                                HeightRequest="20"
+                                                BackgroundColor="Transparent"
+                                                Padding="0"
+                                                Margin="0"
+                                                Grid.Column="1"
+                                                VerticalOptions="Center">
+                                            <Button.ImageSource>
+                                                <FileImageSource File="delete_icon_s.png" />
+                                            </Button.ImageSource>
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </ScrollView>
+
+                    <HorizontalStackLayout Grid.Row="3"
+                                           Spacing="12"
                                            HorizontalOptions="Center">
 
-                        <Button x:Name="CustomLogSaveButton" 
+                        <!-- Same camera icon and style as the existing image-only upload button -->
+                        <ImageButton x:Name="CustomLogAddImageButton"
+                                     Source="camera.png"
+                                     Clicked="OnCustomLogPickImageClicked"
+                                     BackgroundColor="#28a745"
+                                     HeightRequest="50"
+                                     WidthRequest="70"
+                                     CornerRadius="10"
+                                     Padding="10"
+                                     Aspect="AspectFit"
+                                     VerticalOptions="Center" />
+
+                        <Button x:Name="CustomLogSaveButton"
                                 Text="Save"
                                 Clicked="OnCustomLogSaveClicked"
                                 BackgroundColor="#28a745"
@@ -444,7 +506,30 @@ TextColor="White"/>-->
 
                     </HorizontalStackLayout>
 
-                </VerticalStackLayout>
+                    <!-- Upload progress overlay (only shown while saving a custom log with images) -->
+                    <Grid x:Name="CustomLogUploadLoadingOverlay"
+                          Grid.RowSpan="4"
+                          BackgroundColor="#80FFFFFF"
+                          IsVisible="False"
+                          ZIndex="10">
+
+                        <VerticalStackLayout HorizontalOptions="Center"
+                                             VerticalOptions="Center"
+                                             Spacing="8">
+
+                            <ActivityIndicator IsRunning="True"
+                                               Color="Green"
+                                               WidthRequest="40"
+                                               HeightRequest="40" />
+
+                            <Label Text="Saving..."
+                                   FontSize="12"
+                                   TextColor="Black"
+                                   HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                </Grid>
 
             </Frame>
         </Grid>
@@ -528,7 +613,7 @@ TextColor="White"/>-->
                    HorizontalOptions="Center"
                    MaximumWidthRequest="480">
 
-                <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
 
                     <!-- Popup Header -->
                     <Label Grid.Row="0"
@@ -539,8 +624,20 @@ TextColor="White"/>-->
                            HorizontalOptions="Center"
                            Margin="0,0,0,8" />
 
+                    <!-- Notes editor: only visible for entries with guard-typed text.
+                         Plain image uploads ("Mob app image upload") stay image-only. -->
+                    <Editor Grid.Row="1"
+                            x:Name="EditImageNotesEditor"
+                            Placeholder="Update your log..."
+                            AutoSize="TextChanges"
+                            HeightRequest="90"
+                            FontSize="13"
+                            TextColor="Black"
+                            IsVisible="False"
+                            Margin="0,0,0,6" />
+
                     <!-- Checkboxes -->
-                    <VerticalStackLayout Grid.Row="1"
+                    <VerticalStackLayout Grid.Row="2"
                                          Spacing="2">
                         <HorizontalStackLayout Spacing="6"
                                                VerticalOptions="Center">
@@ -568,7 +665,7 @@ TextColor="White"/>-->
                     </VerticalStackLayout>
 
                     <!-- Add Image Button -->
-                    <Button Grid.Row="2"
+                    <Button Grid.Row="3"
                             Text="+ Add Image"
                             Clicked="OnEditPickFileClicked"
                             BackgroundColor="DodgerBlue"
@@ -579,7 +676,7 @@ TextColor="White"/>-->
                             Margin="0,6,0,0" />
 
                     <!-- File List -->
-                    <ScrollView Grid.Row="3"
+                    <ScrollView Grid.Row="4"
                                 IsVisible="{Binding IsFilesVisible}"
                                 MaximumHeightRequest="150"
                                 VerticalOptions="Start">
@@ -624,7 +721,7 @@ TextColor="White"/>-->
                     </ScrollView>
 
                     <!-- Footer Buttons -->
-                    <HorizontalStackLayout Grid.Row="4"
+                    <HorizontalStackLayout Grid.Row="5"
                                            Spacing="10"
                                            HorizontalOptions="Center"
                                            Margin="0,10,0,0">

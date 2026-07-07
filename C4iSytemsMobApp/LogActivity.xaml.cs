@@ -36,6 +36,11 @@ public partial class LogActivity : ContentPage
     public ObservableCollection<MyFileModel> SelectedFiles { get; set; }
      = new ObservableCollection<MyFileModel>();
 
+    // Images attached from within the Add Custom Log Entry popup.
+    // Kept separate from SelectedFiles so the existing camera-button upload flow is not affected.
+    public ObservableCollection<MyFileModel> CustomLogSelectedFiles { get; set; }
+     = new ObservableCollection<MyFileModel>();
+
     public const string ALERT_TITLE = "NFC";
     bool _eventsAlreadySubscribed = false;
     private readonly IScannerControlServices _scannerControlServices;
@@ -85,6 +90,7 @@ public partial class LogActivity : ContentPage
 
         LoadActivities();
         FilesCollection.ItemsSource = SelectedFiles;
+        CustomLogFilesCollection.ItemsSource = CustomLogSelectedFiles;
         VslLogBookSite.IsVisible = false;
         logbkSiteName.Text = "";
         logbkSiteName.IsVisible = false;
@@ -825,6 +831,14 @@ public partial class LogActivity : ContentPage
         _selectedLogForEdit = log;
         EditLogPopupEntry.Text = log.Notes;
 
+        // Show the notes editor only for entries with guard-typed text.
+        // Plain image uploads ("Mob app image upload") stay image-only, as before.
+        var notesText = log.Notes?.Trim() ?? "";
+        bool hasGuardText = !string.IsNullOrWhiteSpace(notesText)
+            && !string.Equals(notesText, "Mob app image upload", StringComparison.OrdinalIgnoreCase);
+        EditImageNotesEditor.Text = hasGuardText ? log.Notes : string.Empty;
+        EditImageNotesEditor.IsVisible = hasGuardText;
+
         SelectedFiles.Clear();
 
         // Load 25% images
@@ -1104,6 +1118,10 @@ public partial class LogActivity : ContentPage
     private void ShowCustomLogPopup()
     {
         CustomLogPopupEntry.Text = string.Empty; // Ensure fresh input
+        CustomLogSelectedFiles.Clear();          // Discard any images left from a previous popup session
+        UpdateCustomLogFilesVisibility();
+        CustomLogAddImageButton.IsEnabled = true;
+        CustomLogUploadLoadingOverlay.IsVisible = false;
         CustomLogPopupOverlay.IsVisible = true;
     }
 
@@ -1137,7 +1155,12 @@ public partial class LogActivity : ContentPage
         try
         {
             CustomLogSaveButton.IsEnabled = false;
-            await SaveCustomLog(text);
+            CustomLogAddImageButton.IsEnabled = false;
+
+            if (CustomLogSelectedFiles.Any())
+                await SaveCustomLogWithImages(text); // Notes + attached images saved as one logbook entry
+            else
+                await SaveCustomLog(text);           // Existing text-only flow, unchanged
         }
         catch (Exception)
         {
@@ -1147,6 +1170,7 @@ public partial class LogActivity : ContentPage
         finally
         {
             CustomLogSaveButton.IsEnabled = true;
+            CustomLogAddImageButton.IsEnabled = true;
         }
     }
 
@@ -1190,6 +1214,248 @@ public partial class LogActivity : ContentPage
         {
             // Log silently or toast error
             // await ShowToastMessage($"Error: {ex.Message}");
+        }
+    }
+
+    // ----- Custom Log Entry: attach images (always saved as 25% within field) -----
+
+    private async void OnCustomLogPickImageClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            IEnumerable<FileResult> results = null;
+            bool customPickerShown = false;
+
+            // Android: WhatsApp-style picker (in-app camera + recent gallery strip), same as the camera button
+            if (DeviceInfo.Platform == DevicePlatform.Android)
+            {
+                var camStatus = await Permissions.CheckStatusAsync<Permissions.Camera>();
+                if (camStatus != PermissionStatus.Granted)
+                    camStatus = await Permissions.RequestAsync<Permissions.Camera>();
+
+                if (camStatus == PermissionStatus.Granted)
+                {
+                    customPickerShown = true;
+                    var picked = await Views.CameraGalleryPickerPage.ShowAsync(Navigation);
+                    if (picked == null) return; // user cancelled — do not fall back to gallery
+                    results = picked;
+                }
+            }
+
+            if (!customPickerShown)
+                results = await FilePicker.PickMultipleAsync(); // Multiple files
+
+            if (results != null && results.Any())
+            {
+                // Allowed file extensions
+                string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+
+                foreach (var file in results)
+                {
+                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
+                        continue; // Skip this file
+                    }
+
+                    CustomLogSelectedFiles.Add(new MyFileModel
+                    {
+                        File = file,
+                        FileType = "twentyfive", // Always 25% within field — no rear/25% popup for custom log images
+                        IsNew = true
+                    });
+                }
+            }
+
+            UpdateCustomLogFilesVisibility();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
+        }
+    }
+
+    private void OnCustomLogDeleteFileClicked(object sender, EventArgs e)
+    {
+        if (sender is Button btn && btn.BindingContext is MyFileModel file)
+        {
+            CustomLogSelectedFiles.Remove(file);
+            UpdateCustomLogFilesVisibility();
+        }
+    }
+
+    private void UpdateCustomLogFilesVisibility()
+    {
+        var hasFiles = CustomLogSelectedFiles.Any();
+        CustomLogFilesScroll.IsVisible = hasFiles;
+        CustomLogFilesCollection.IsVisible = hasFiles;
+    }
+
+    // Saves the custom log notes together with the attached images as a single logbook entry.
+    // Online: UploadMultiple with the extra "notes" form field (server uses it instead of "Mob app image upload").
+    // Offline: cached through the existing LBACTIVITYNEW file records with Notes carried along for sync.
+    private async Task SaveCustomLogWithImages(string log)
+    {
+        if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0)
+        {
+            await DisplayAlert("Error", "User Id or Client Site Id or Guard Id is invalid.", "OK");
+            return;
+        }
+
+        string gpsCoordinates = "";
+        var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+        if (_hasGpsLocationPermission)
+        {
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            gpsCoordinates = _gpsLocation;
+        }
+        else
+        {
+            await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            if (string.IsNullOrEmpty(_gpsLocation))
+                return;
+            else
+                gpsCoordinates = _gpsLocation;
+        }
+
+        CustomLogUploadLoadingOverlay.IsVisible = true;
+        try
+        {
+            GetLocalSiteForPCAR();
+            GetLocalSiteName();
+
+            if (!App.IsOnline)
+            {
+                var _fileGroupId = Guid.NewGuid();
+                foreach (var fileModel in CustomLogSelectedFiles)
+                {
+                    // Save file to local storage with unique name
+                    var extension = Path.GetExtension(fileModel.File.FileName);
+                    var cacheFileName = $"{Guid.NewGuid():N}{extension}";
+                    var stream = await Helpers.ImageCompressionHelper.CompressImageAsync(fileModel.File);
+                    var path = await SaveFileOffline(stream, "ActivityLogbook", cacheFileName);
+
+                    OfflineFilesRecords offlineFilesRecords = new OfflineFilesRecords()
+                    {
+                        RecordLabel = "LBACTIVITYNEW",
+                        FileNameActual = fileModel.File.FileName,
+                        FileNameCache = cacheFileName,
+                        FileNameWithPathCache = path,
+                        EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+                        EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+                        EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+                        EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+                        EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                        IsSynced = false,
+                        UniqueRecordId = Guid.NewGuid(),
+                        FileType = fileModel.FileType,
+                        IsNew = true,
+                        LogBookId = null,
+                        guardId = _guardId.Value,
+                        clientsiteId = _clientSiteId.Value,
+                        userId = _userId.Value,
+                        gps = gpsCoordinates ?? "",
+                        FileGroupId = _fileGroupId,
+                        DeviceId = deviceid,
+                        DeviceName = devicename,
+                        CallSignId = App.PcarCallSignId,
+                        PositionId = App.PcarPostionId,
+                        IsEntryByPCAR = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP,
+                        LogbookclientsiteId = _localClientSiteId,
+                        Notes = log // Guard's custom notes — used by the server instead of "Mob app image upload"
+                    };
+
+                    var r = await _scanDataDbService.SaveLogActivityDocumentsCacheData(offlineFilesRecords);
+                }
+
+                var _ChaceCount = _scanDataDbService.GetCacheRecordsCount();
+                UpdateCacheRecordCount(_ChaceCount);
+
+                CustomLogSelectedFiles.Clear();
+                UpdateCustomLogFilesVisibility();
+                await ShowToastMessage("Log entry with images saved to cache and will be uploaded when online.");
+                HideCustomLogPopup();
+            }
+            else
+            {
+                using var client = new HttpClient();
+                var content = new MultipartFormDataContent();
+
+                // Add files + types (same index order)
+                foreach (var fileModel in CustomLogSelectedFiles)
+                {
+                    var stream = await Helpers.ImageCompressionHelper.CompressImageAsync(fileModel.File);
+                    var fileContent = new StreamContent(stream);
+                    fileContent.Headers.ContentType =
+                        new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+                    content.Add(fileContent, "files", fileModel.File.FileName);
+                    content.Add(new StringContent(fileModel.FileType), "types");
+                }
+
+                // Add other form data (same as the existing image upload flow)
+                content.Add(new StringContent(_guardId.ToString()), "guardId");
+                content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
+                content.Add(new StringContent(_userId.ToString()), "userId");
+                content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+                content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTime().ToString("o")), "eventDateTimeLocal");
+                content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset().ToString("o")), "eventDateTimeLocalWithOffset");
+                content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZone()), "eventDateTimeZone");
+                content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneShortName()), "eventDateTimeZoneShort");
+                content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneOffsetMinute().ToString()), "eventDateTimeUtcOffsetMinute");
+                content.Add(new StringContent(_localClientSiteId.HasValue ? _localClientSiteId.Value.ToString() : ""), "logbookclientsiteId");
+                content.Add(new StringContent((App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP).ToString()), "isEntryByPCAR");
+                content.Add(new StringContent((App.PcarCallSignId.HasValue ? App.PcarCallSignId.ToString() : "")), "callSignId");
+                content.Add(new StringContent((App.PcarPostionId.HasValue ? App.PcarPostionId.ToString() : "")), "positionId");
+
+                // Guard's custom notes — server stores these on the logbook entry instead of "Mob app image upload"
+                content.Add(new StringContent(log), "notes");
+
+                var uploadResponse = await client.PostAsync($"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple", content);
+
+                // UploadMultiple returns HTTP 200 even when it fails internally, so also check the "success" flag in the body
+                bool serverSuccess = uploadResponse.IsSuccessStatusCode;
+                if (serverSuccess)
+                {
+                    try
+                    {
+                        var responseText = await uploadResponse.Content.ReadAsStringAsync();
+                        using var responseJson = JsonDocument.Parse(responseText);
+                        if (responseJson.RootElement.TryGetProperty("success", out var successFlag))
+                            serverSuccess = successFlag.GetBoolean();
+                    }
+                    catch (Exception)
+                    {
+                        // Body not parseable — fall back to the HTTP status alone
+                    }
+                }
+
+                if (!serverSuccess)
+                {
+                    // Keep the popup open so the guard's notes and images are not lost
+                    await DisplayAlert("Error", "Failed to save the log entry with images. Please try again.", "OK");
+                    return;
+                }
+
+                CustomLogSelectedFiles.Clear();
+                UpdateCustomLogFilesVisibility();
+                await ShowToastMessage("Log entry added successfully.");
+                HideCustomLogPopup();
+
+                // Same navigation as the text-only custom log save
+                var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+                Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to save log entry with images: {ex.Message}", "OK");
+        }
+        finally
+        {
+            CustomLogUploadLoadingOverlay.IsVisible = false;
         }
     }
 
@@ -1341,7 +1607,28 @@ public partial class LogActivity : ContentPage
     {
         try
         {
-            var results = await FilePicker.PickMultipleAsync(); // Allow multiple file selection
+            IEnumerable<FileResult> results = null;
+            bool customPickerShown = false;
+
+            // Android: WhatsApp-style picker (in-app camera + recent gallery strip), same as the other image buttons
+            if (DeviceInfo.Platform == DevicePlatform.Android)
+            {
+                var camStatus = await Permissions.CheckStatusAsync<Permissions.Camera>();
+                if (camStatus != PermissionStatus.Granted)
+                    camStatus = await Permissions.RequestAsync<Permissions.Camera>();
+
+                if (camStatus == PermissionStatus.Granted)
+                {
+                    customPickerShown = true;
+                    var picked = await Views.CameraGalleryPickerPage.ShowAsync(Navigation);
+                    if (picked == null) return; // user cancelled — do not fall back to gallery
+                    results = picked;
+                }
+            }
+
+            if (!customPickerShown)
+                results = await FilePicker.PickMultipleAsync(); // Allow multiple file selection
+
             if (results != null && results.Any())
             {
                 // Allowed image formats
@@ -1648,6 +1935,35 @@ public partial class LogActivity : ContentPage
             {
                 await DisplayAlert("Error", "No log selected for editing.", "OK");
                 return;
+            }
+
+            // Update the entry's notes first when the editor is shown (entries with guard-typed text)
+            if (EditImageNotesEditor.IsVisible)
+            {
+                var newNotes = EditImageNotesEditor.Text?.Trim();
+                if (string.IsNullOrWhiteSpace(newNotes))
+                {
+                    await DisplayAlert("Validation", "Please enter a note.", "OK");
+                    return;
+                }
+
+                if (!string.Equals(newNotes, _selectedLogForEdit.Notes?.Trim() ?? "", StringComparison.Ordinal))
+                {
+                    var notesApiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UpdateGuardLogNotes" +
+                                      $"?id={_selectedLogForEdit.Id}" +
+                                      $"&notes={Uri.EscapeDataString(newNotes)}";
+
+                    var notesResponse = await _httpClient.GetAsync(notesApiUrl);
+                    if (!notesResponse.IsSuccessStatusCode)
+                    {
+                        string errorMessage = await notesResponse.Content.ReadAsStringAsync();
+                        await ShowToastMessage($"Failed to update note: {errorMessage}");
+                        return; // keep popup open so the edited text is not lost
+                    }
+
+                    _selectedLogForEdit.Notes = newNotes;
+                    await ShowToastMessage("Log updated successfully.");
+                }
             }
 
             // Filter only new files to upload
