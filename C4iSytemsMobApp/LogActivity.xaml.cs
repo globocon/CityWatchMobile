@@ -831,6 +831,14 @@ public partial class LogActivity : ContentPage
         _selectedLogForEdit = log;
         EditLogPopupEntry.Text = log.Notes;
 
+        // Show the notes editor only for entries with guard-typed text.
+        // Plain image uploads ("Mob app image upload") stay image-only, as before.
+        var notesText = log.Notes?.Trim() ?? "";
+        bool hasGuardText = !string.IsNullOrWhiteSpace(notesText)
+            && !string.Equals(notesText, "Mob app image upload", StringComparison.OrdinalIgnoreCase);
+        EditImageNotesEditor.Text = hasGuardText ? log.Notes : string.Empty;
+        EditImageNotesEditor.IsVisible = hasGuardText;
+
         SelectedFiles.Clear();
 
         // Load 25% images
@@ -1906,6 +1914,35 @@ public partial class LogActivity : ContentPage
             {
                 await DisplayAlert("Error", "No log selected for editing.", "OK");
                 return;
+            }
+
+            // Update the entry's notes first when the editor is shown (entries with guard-typed text)
+            if (EditImageNotesEditor.IsVisible)
+            {
+                var newNotes = EditImageNotesEditor.Text?.Trim();
+                if (string.IsNullOrWhiteSpace(newNotes))
+                {
+                    await DisplayAlert("Validation", "Please enter a note.", "OK");
+                    return;
+                }
+
+                if (!string.Equals(newNotes, _selectedLogForEdit.Notes?.Trim() ?? "", StringComparison.Ordinal))
+                {
+                    var notesApiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UpdateGuardLogNotes" +
+                                      $"?id={_selectedLogForEdit.Id}" +
+                                      $"&notes={Uri.EscapeDataString(newNotes)}";
+
+                    var notesResponse = await _httpClient.GetAsync(notesApiUrl);
+                    if (!notesResponse.IsSuccessStatusCode)
+                    {
+                        string errorMessage = await notesResponse.Content.ReadAsStringAsync();
+                        await ShowToastMessage($"Failed to update note: {errorMessage}");
+                        return; // keep popup open so the edited text is not lost
+                    }
+
+                    _selectedLogForEdit.Notes = newNotes;
+                    await ShowToastMessage("Log updated successfully.");
+                }
             }
 
             // Filter only new files to upload

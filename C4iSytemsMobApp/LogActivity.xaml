@@ -612,7 +612,7 @@ TextColor="White"/>-->
                    HorizontalOptions="Center"
                    MaximumWidthRequest="480">
 
-                <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
 
                     <!-- Popup Header -->
                     <Label Grid.Row="0"
@@ -623,8 +623,20 @@ TextColor="White"/>-->
                            HorizontalOptions="Center"
                            Margin="0,0,0,8" />
 
+                    <!-- Notes editor: only visible for entries with guard-typed text.
+                         Plain image uploads ("Mob app image upload") stay image-only. -->
+                    <Editor Grid.Row="1"
+                            x:Name="EditImageNotesEditor"
+                            Placeholder="Update your log..."
+                            AutoSize="TextChanges"
+                            HeightRequest="90"
+                            FontSize="13"
+                            TextColor="Black"
+                            IsVisible="False"
+                            Margin="0,0,0,6" />
+
                     <!-- Checkboxes -->
-                    <VerticalStackLayout Grid.Row="1"
+                    <VerticalStackLayout Grid.Row="2"
                                          Spacing="2">
                         <HorizontalStackLayout Spacing="6"
                                                VerticalOptions="Center">
@@ -652,7 +664,7 @@ TextColor="White"/>-->
                     </VerticalStackLayout>
 
                     <!-- Add Image Button -->
-                    <Button Grid.Row="2"
+                    <Button Grid.Row="3"
                             Text="+ Add Image"
                             Clicked="OnEditPickFileClicked"
                             BackgroundColor="DodgerBlue"
@@ -663,7 +675,7 @@ TextColor="White"/>-->
                             Margin="0,6,0,0" />
 
                     <!-- File List -->
-                    <ScrollView Grid.Row="3"
+                    <ScrollView Grid.Row="4"
                                 IsVisible="{Binding IsFilesVisible}"
                                 MaximumHeightRequest="150"
                                 VerticalOptions="Start">
@@ -708,7 +720,7 @@ TextColor="White"/>-->
                     </ScrollView>
 
                     <!-- Footer Buttons -->
-                    <HorizontalStackLayout Grid.Row="4"
+                    <HorizontalStackLayout Grid.Row="5"
                                            Spacing="10"
                                            HorizontalOptions="Center"
                                            Margin="0,10,0,0">
