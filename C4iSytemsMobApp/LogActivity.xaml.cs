@@ -1607,7 +1607,28 @@ public partial class LogActivity : ContentPage
     {
         try
         {
-            var results = await FilePicker.PickMultipleAsync(); // Allow multiple file selection
+            IEnumerable<FileResult> results = null;
+            bool customPickerShown = false;
+
+            // Android: WhatsApp-style picker (in-app camera + recent gallery strip), same as the other image buttons
+            if (DeviceInfo.Platform == DevicePlatform.Android)
+            {
+                var camStatus = await Permissions.CheckStatusAsync<Permissions.Camera>();
+                if (camStatus != PermissionStatus.Granted)
+                    camStatus = await Permissions.RequestAsync<Permissions.Camera>();
+
+                if (camStatus == PermissionStatus.Granted)
+                {
+                    customPickerShown = true;
+                    var picked = await Views.CameraGalleryPickerPage.ShowAsync(Navigation);
+                    if (picked == null) return; // user cancelled — do not fall back to gallery
+                    results = picked;
+                }
+            }
+
+            if (!customPickerShown)
+                results = await FilePicker.PickMultipleAsync(); // Allow multiple file selection
+
             if (results != null && results.Any())
             {
                 // Allowed image formats

@@ -477,14 +477,15 @@ TextColor="White"/>-->
                                            Spacing="12"
                                            HorizontalOptions="Center">
 
+                        <!-- Same camera icon and style as the existing image-only upload button -->
                         <ImageButton x:Name="CustomLogAddImageButton"
-                                     Source="images.png"
+                                     Source="camera.png"
                                      Clicked="OnCustomLogPickImageClicked"
                                      BackgroundColor="#28a745"
-                                     HeightRequest="40"
-                                     WidthRequest="55"
-                                     CornerRadius="6"
-                                     Padding="8"
+                                     HeightRequest="50"
+                                     WidthRequest="70"
+                                     CornerRadius="10"
+                                     Padding="10"
                                      Aspect="AspectFit"
                                      VerticalOptions="Center" />
 
