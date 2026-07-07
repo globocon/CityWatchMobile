@@ -347,9 +347,18 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
 
 
+    private bool _appearingInitialized;
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        // OnAppearing fires again when a modal page (e.g. the camera/gallery picker)
+        // closes. Run the form initialization only once per page instance so an open
+        // half-filled report is not reloaded/overwritten after attaching files.
+        if (_appearingInitialized)
+            return;
+        _appearingInitialized = true;
 
         // Initialize Integrity Declaration text
         if (string.IsNullOrWhiteSpace(aiDeclarationEditor.Text))
@@ -1635,7 +1644,29 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     {
         try
         {
-            var results = await FilePicker.PickMultipleAsync();
+            IEnumerable<FileResult> results = null;
+            bool customPickerShown = false;
+
+            // Android: WhatsApp-style picker (in-app camera + recent gallery strip).
+            // Browse button offers all file types; the allowedExtensions filter below still applies.
+            if (DeviceInfo.Platform == DevicePlatform.Android)
+            {
+                var camStatus = await Permissions.CheckStatusAsync<Permissions.Camera>();
+                if (camStatus != PermissionStatus.Granted)
+                    camStatus = await Permissions.RequestAsync<Permissions.Camera>();
+
+                if (camStatus == PermissionStatus.Granted)
+                {
+                    customPickerShown = true;
+                    var picked = await Views.CameraGalleryPickerPage.ShowAsync(Navigation, imagesOnly: false);
+                    if (picked == null) return; // user cancelled — do not fall back to gallery
+                    results = picked;
+                }
+            }
+
+            if (!customPickerShown)
+                results = await FilePicker.PickMultipleAsync(); // unchanged fallback
+
             if (results == null) return;
 
             var filesToSave = results
@@ -1666,11 +1697,16 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
                 var safeFileName = Path.GetFileName(file.FileName);
                 var localFilePath = Path.Combine(FileSystem.CacheDirectory, safeFileName);
-                await using var sourceStream = await file.OpenReadAsync();
-                await using var destinationStream = File.Create(localFilePath);
-                await sourceStream.CopyToAsync(destinationStream);
-                sourceStream.Dispose();
-                destinationStream.Dispose();
+
+                // Files from the camera/gallery picker already live in the cache directory;
+                // copying a file onto itself throws IO_SharingViolation, so only copy
+                // when the source is a different location.
+                if (!string.Equals(file.FullPath, localFilePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    await using var sourceStream = await file.OpenReadAsync();
+                    await using var destinationStream = File.Create(localFilePath);
+                    await sourceStream.CopyToAsync(destinationStream);
+                }
 
                 string reportReference = IrSession.ReportReference;
                 if (App.IsOnline)

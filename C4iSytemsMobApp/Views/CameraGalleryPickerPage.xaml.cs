@@ -18,18 +18,27 @@ public partial class CameraGalleryPickerPage : ContentPage
     private readonly TaskCompletionSource<List<FileResult>?> _tcs =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+    private static readonly string[] ImagePreviewExtensions =
+        { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".heic", ".webp" };
+
     private readonly ObservableCollection<SelectedImageItem> _selected = new();
     private readonly ObservableCollection<RecentImage> _recentImages = new();
     private IRecentImagesService? _recentImagesService;
     private bool _completed;
     private bool _recentLoaded;
     private bool _previewStartedOnce;
+    private bool _imagesOnly = true;
     private int _captureCounter;
 
-    /// <summary>Pushes the picker modally and returns the selected files; null = user cancelled.</summary>
-    public static async Task<List<FileResult>?> ShowAsync(INavigation navigation)
+    /// <summary>
+    /// Pushes the picker modally and returns the selected files; null = user cancelled.
+    /// imagesOnly=true (logbook): the browse button offers images only.
+    /// imagesOnly=false (incident report): the browse button offers all file types;
+    /// the caller applies its own extension filter afterwards.
+    /// </summary>
+    public static async Task<List<FileResult>?> ShowAsync(INavigation navigation, bool imagesOnly = true)
     {
-        var page = new CameraGalleryPickerPage();
+        var page = new CameraGalleryPickerPage { _imagesOnly = imagesOnly };
         await navigation.PushModalAsync(page, animated: true);
         return await page._tcs.Task;
     }
@@ -281,7 +290,10 @@ public partial class CameraGalleryPickerPage : ContentPage
     {
         try
         {
-            var picked = await FilePicker.PickMultipleAsync();
+            var options = _imagesOnly
+                ? new PickOptions { FileTypes = FilePickerFileType.Images }
+                : null;
+            var picked = await FilePicker.PickMultipleAsync(options);
             if (picked == null)
                 return;
 
@@ -290,10 +302,13 @@ public partial class CameraGalleryPickerPage : ContentPage
                 if (_selected.Any(s => s.File.FullPath == file.FullPath))
                     continue;
 
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                bool isImage = ImagePreviewExtensions.Contains(ext);
                 _selected.Add(new SelectedImageItem
                 {
                     File = file,
-                    Preview = ImageSource.FromFile(file.FullPath)
+                    Preview = isImage ? ImageSource.FromFile(file.FullPath) : null,
+                    FileLabel = isImage ? "" : ext.TrimStart('.').ToUpperInvariant()
                 });
             }
         }
@@ -426,5 +441,8 @@ public partial class CameraGalleryPickerPage : ContentPage
         public ImageSource? Preview { get; set; }
         public string? CachePath { get; set; }
         public RecentImage? GalleryItem { get; set; }
+
+        /// <summary>Extension badge (e.g. "PDF") shown when the file has no image preview.</summary>
+        public string FileLabel { get; set; } = "";
     }
 }
