@@ -477,17 +477,17 @@ TextColor="White"/>-->
                                            Spacing="12"
                                            HorizontalOptions="Center">
 
-                        <!-- Same camera icon and style as the existing image-only upload button -->
+                        <!-- Same camera icon as the existing image-only upload button.
+                             VerticalOptions=Fill stretches it to the same height as Save/Cancel. -->
                         <ImageButton x:Name="CustomLogAddImageButton"
                                      Source="camera.png"
                                      Clicked="OnCustomLogPickImageClicked"
                                      BackgroundColor="#28a745"
-                                     HeightRequest="50"
-                                     WidthRequest="70"
-                                     CornerRadius="10"
+                                     WidthRequest="90"
+                                     CornerRadius="6"
                                      Padding="10"
                                      Aspect="AspectFit"
-                                     VerticalOptions="Center" />
+                                     VerticalOptions="Fill" />
 
                         <Button x:Name="CustomLogSaveButton"
                                 Text="Save"
