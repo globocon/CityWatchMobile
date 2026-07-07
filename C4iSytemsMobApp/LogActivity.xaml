@@ -477,17 +477,17 @@ TextColor="White"/>-->
                                            Spacing="12"
                                            HorizontalOptions="Center">
 
-                        <!-- Same camera icon as the existing image-only upload button.
-                             VerticalOptions=Fill stretches it to the same height as Save/Cancel. -->
+                        <!-- All three buttons share the same explicit height so they always align -->
                         <ImageButton x:Name="CustomLogAddImageButton"
                                      Source="camera.png"
                                      Clicked="OnCustomLogPickImageClicked"
                                      BackgroundColor="#28a745"
+                                     HeightRequest="55"
                                      WidthRequest="90"
                                      CornerRadius="6"
-                                     Padding="10"
+                                     Padding="12"
                                      Aspect="AspectFit"
-                                     VerticalOptions="Fill" />
+                                     VerticalOptions="Center" />
 
                         <Button x:Name="CustomLogSaveButton"
                                 Text="Save"
@@ -495,14 +495,18 @@ TextColor="White"/>-->
                                 BackgroundColor="#28a745"
                                 TextColor="White"
                                 FontSize="14"
-                                CornerRadius="6" />
+                                HeightRequest="55"
+                                CornerRadius="6"
+                                VerticalOptions="Center" />
 
                         <Button Text="Cancel"
                                 Clicked="OnCustomLogCancelClicked"
                                 BackgroundColor="Gray"
                                 TextColor="White"
                                 FontSize="14"
-                                CornerRadius="6" />
+                                HeightRequest="55"
+                                CornerRadius="6"
+                                VerticalOptions="Center" />
 
                     </HorizontalStackLayout>
 
