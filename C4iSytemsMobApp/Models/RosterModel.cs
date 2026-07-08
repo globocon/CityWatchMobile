@@ -296,4 +296,11 @@ namespace C4iSytemsMobApp.Models
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
+
+    public class GuardSiteRoster
+    {
+        public int SiteId { get; set; }
+        public string SiteName { get; set; }
+        public WeeklyRoster Roster { get; set; }
+    }
 }

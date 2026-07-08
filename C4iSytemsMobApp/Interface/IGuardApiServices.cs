@@ -24,6 +24,7 @@ namespace C4iSytemsMobApp.Interface
         // Roster Management
         Task<LinkedSitesResponse?> GetLinkedSitesAsync(int siteId);
         Task<WeeklyRoster?> GetGuardRosterAsync(DateTime startDate, DateTime endDate, int? specificSiteId = null);
+        Task<List<GuardSiteRoster>?> GetGuardRosterAcrossSitesAsync(DateTime startDate);
         Task<(bool isSuccess, string message)> UpdateShiftStatusAsync(RosterStatusUpdateModel model);
     }
 }

@@ -867,6 +867,7 @@ public partial class GuardLoginPage : ContentPage
                 pickerPosition.IsVisible = true;
                 pickerCallsign.IsVisible = true;
                 btnEnterLogbook.IsVisible = true;
+                btnHrRosterOnly.IsVisible = true;
                 vslCalendarLiveEvents.IsVisible = true;
 
                 ToggleInstructionalTextVisibility();
@@ -903,6 +904,7 @@ public partial class GuardLoginPage : ContentPage
                 pickerPosition.IsVisible = false;
                 pickerCallsign.IsVisible = false;
                 btnEnterLogbook.IsVisible = false;
+                btnHrRosterOnly.IsVisible = false;
                 btnRegister.IsEnabled = true;
                 btnRegister.IsVisible = true;
                 vslCalendarLiveEvents.IsVisible = false;
@@ -915,6 +917,82 @@ public partial class GuardLoginPage : ContentPage
         }
     }
        
+    private async void OnHrRosterOnlyClicked(object sender, EventArgs e)
+    {
+        btnHrRosterOnly.IsEnabled = false;
+        try
+        {
+            if (!int.TryParse(Preferences.Get("GuardId", "0"), out int guardId) || guardId <= 0)
+            {
+                await DisplayAlert("Error", "Guard ID not found. Please validate the License Number first.", "OK");
+                return;
+            }
+
+            if (await VerifyGuardHrPinAsync())
+            {
+                Preferences.Set("HrRosterOnlyMode", "true");
+                Application.Current.MainPage = new GuardHrRosterMenuPage();
+            }
+        }
+        finally
+        {
+            btnHrRosterOnly.IsEnabled = true;
+        }
+    }
+
+    private async Task<bool> VerifyGuardHrPinAsync()
+    {
+        var _guardApiServices = IPlatformApplication.Current.Services.GetService<IGuardApiServices>();
+
+        // 1. Check if PIN is set (AccessPermission = true indicates setup mode)
+        (bool AccessPermission, string message) = await _guardApiServices.CheckIfPINSetForTheGuard();
+
+        if (AccessPermission == true)
+        {
+            // PIN is NOT set - first time setup
+            var setPopup = new SetGuardPinPopup();
+            var setPopupResult = await this.ShowPopupAsync(setPopup);
+
+            if (setPopupResult is string newPin && newPin != "Cancel")
+            {
+                var (isSuccess, saveMessage) = await _guardApiServices.SaveNewPINSetForTheGuard(newPin);
+                if (isSuccess)
+                {
+                    return true;
+                }
+                await DisplayAlert("Error", saveMessage, "OK");
+            }
+            return false;
+        }
+
+        // PIN is already set, validate it using CheckGuardPinPopup
+        var checkPopup = new CheckGuardPinPopup();
+        var checkPopupResult = await this.ShowPopupAsync(checkPopup);
+
+        if (checkPopupResult is string action)
+        {
+            switch (action)
+            {
+                case "OK":
+                    return true;
+                case "ForgotPassword":
+                    bool confirm = await DisplayAlert(
+                        "Reset PIN",
+                        "Are you sure you want to reset your PIN? An email will be sent to your registered email address.",
+                        "Yes", "No");
+                    if (confirm)
+                    {
+                        var (isResetSuccess, resetMessage) = await _guardApiServices.ResetGaurdHrPin("Mobile App - HR & Roster Access");
+                        await DisplayAlert(isResetSuccess ? "Success" : "Error", resetMessage, "OK");
+                    }
+                    break;
+                case "Cancel":
+                    break;
+            }
+        }
+        return false;
+    }
+
     private void SetLedColor(BoxView led, string status)
     {
         switch (status?.Trim().ToLower())
@@ -995,7 +1073,8 @@ public partial class GuardLoginPage : ContentPage
         lblloadinginfo.IsVisible = true;
         try
         {
-
+            // Normal logbook session must never carry the HR/Roster-only mode flag
+            Preferences.Remove("HrRosterOnlyMode");
 
             // Retrieve GuardId securely
             string guardIdString = Preferences.Get("GuardId", "");
