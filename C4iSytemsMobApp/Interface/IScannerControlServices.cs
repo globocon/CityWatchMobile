@@ -19,5 +19,6 @@ namespace C4iSytemsMobApp.Interface
         Task<ClientSiteSmartWandTagsLocal> GetTagDetailsFromLocalDbAsync(string _TagUid);
         Task<string> GetClientSiteNameFromLocalDb(int clientSiteId);
         public string GetClientSiteNameFromLocalDbNonAsync(int clientSiteId);
+        public Task<int> GetSmartWandByDeviceIdAsync();
     }
 }
