@@ -476,7 +476,7 @@ public class PcarRouteViewModel : INotifyPropertyChanged
             if (site == null || site.Visits == null || site.Visits.Count == 0) return;
 
             //bool hasCancelled = site.Visits.Any(v => v.Status == PcarVisitStatusEnum.CancelledOrDelegated);
-            bool hasPending = site.Visits.Any(v => v.Status == null);
+            bool hasPending = site.Visits.Any(v => v.Status == PcarVisitStatusEnum.Assigned);
 
             if (hasPending)
             {
