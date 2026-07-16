@@ -34,6 +34,7 @@ namespace C4iSytemsMobApp
         private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
         private readonly IVolumeButtonService _volumeButtonService;
         private readonly ILogBookServices _logBookServices;
+        private readonly IDeviceInfoService infoService;
         private readonly SyncService _syncService;
         private int _pcounter = 0;
         private int _CurrentCounter = 0;
@@ -165,9 +166,16 @@ namespace C4iSytemsMobApp
             }
             catch (Exception ex)
             {
-
                 Console.WriteLine($"Error initializing scanner: {ex.Message}");
             }
+
+            infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
+            App.DeviceName = infoService?.GetDeviceName();
+            App.DeviceId = infoService?.GetDeviceId();
+#if WINDOWS
+    App.DeviceId = "8cd577b0416592cd";
+    App.DeviceName = "Windows PC";
+#endif
 
             App.ConnectivityChangedEvent += OnConnectivityChanged;
             OnConnectivityChanged(App.IsOnline);

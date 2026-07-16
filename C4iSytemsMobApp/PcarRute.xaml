@@ -93,6 +93,10 @@
                                     Padding="12"
                                     Margin="4,2"
                                     HasShadow="True">
+                                 <Frame.GestureRecognizers>
+                                     <TapGestureRecognizer Command="{Binding BindingContext.CardTappedCommand, Source={x:Reference SiteListView}}"
+                                                           CommandParameter="{Binding .}" />
+                                 </Frame.GestureRecognizers>
 
                                  <Grid ColumnDefinitions="*, Auto">
                                      
@@ -200,46 +204,33 @@
                             TextColor="{AppThemeBinding Light=Black, Dark=White}"
                             HorizontalOptions="Center" />
 
-                     <!-- Push Task option styled inside a circular button with White/Black background according to app theme -->
-                     <Grid x:Name="PushTaskIconLayout" ColumnDefinitions="*, Auto" Margin="0,5">
-                         <Label Text="Push Task to Another PCAR"
-                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                                FontSize="14"
-                                VerticalOptions="Center" />
-
-                         <Frame Grid.Column="1"
-                                x:Name="PushTaskFrame"
-                                HeightRequest="50"
-                                WidthRequest="50"
-                                CornerRadius="25"
-                                Padding="0"
-                                HasShadow="True"
-                                BackgroundColor="#90EE90"
-                                BorderColor="Blue">
-                             <Frame.GestureRecognizers>
-                                 <TapGestureRecognizer Tapped="OnPushTaskIconClicked" />
-                             </Frame.GestureRecognizers>
-                             <Image Source="pushtask.png"
-                                    HeightRequest="30"
-                                    WidthRequest="30"
-                                    Aspect="AspectFit"
-                                    HorizontalOptions="Center"
-                                    VerticalOptions="Center" />
-                         </Frame>
-                     </Grid>
-
-                     <!-- Target PCAR Selection -->
-                     <VerticalStackLayout x:Name="TargetPcarLayout" Spacing="8" IsVisible="False">
-                         <Label Text="Select Designated PCAR (Romeo)"
-                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                                FontSize="14" />
-                         
-                         <Picker x:Name="TargetPcarPicker"
-                                 Title="Select PCAR"
+                      <!-- Cancel Visit option styled inside a circular button with White/Black background according to app theme -->
+                      <Grid x:Name="CancelVisitIconLayout" ColumnDefinitions="*, Auto" Margin="0,5">
+                          <Label Text="Cancel Visit and Delegate"
                                  TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                                 BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#2E2E2E}"
-                                 ItemDisplayBinding="{Binding Pcarroutename}" />
-                     </VerticalStackLayout>
+                                 FontSize="14"
+                                 VerticalOptions="Center" />
+
+                          <Frame Grid.Column="1"
+                                 x:Name="CancelVisitFrame"
+                                 HeightRequest="30"
+                                 WidthRequest="30"
+                                 CornerRadius="25"
+                                 Padding="0"
+                                 HasShadow="True"
+                                 BackgroundColor="#FFCDD2"
+                                 BorderColor="Blue">
+                              <Frame.GestureRecognizers>
+                                  <TapGestureRecognizer Tapped="OnCancelVisitTapped" />
+                              </Frame.GestureRecognizers>
+                            <Label Text="🗙"
+                                     TextColor="Red"
+                                     FontSize="20"
+                                     FontAttributes="Bold"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center" />
+                          </Frame>
+                      </Grid>
 
                      <!-- Time On Site Layout -->
                      <Grid x:Name="TimeOnSiteLayout" ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto" Margin="0,2">

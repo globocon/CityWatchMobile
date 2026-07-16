@@ -840,6 +840,7 @@ public partial class GuardLoginPage : ContentPage
                 Preferences.Set("GuardId", guardData.GuardId.ToString());
                 Preferences.Set("GuardName", guardData.Name);
                 Preferences.Set("LicenseNumber", licenseNumber);
+                Preferences.Set("IsNewGuard", _isNewGuard);
 
 
                 isLoggedIn = true;
