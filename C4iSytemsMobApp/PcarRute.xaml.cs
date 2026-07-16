@@ -164,82 +164,100 @@ public partial class PcarRute : ContentPage
     public void OpenTimePopup(VisitModel visit)
     {
         _selectedVisit = visit;
-        _isPushingTask = false;
-
-        // Reset visibility layouts to initial time-entry state
-        TimeOnSiteLayout.IsVisible = true;
-        TimeOffSiteLayout.IsVisible = true;
-        TargetPcarLayout.IsVisible = false;
-        TargetPcarPicker.SelectedItem = null;
-        PushTaskIconLayout.IsVisible = true;
-
-        TimeOnSiteCheckBox.IsEnabled = true;
-        TimeOffSiteCheckBox.IsEnabled = true;
-        TimeOnSitePicker.IsEnabled = false;
-        TimeOffSitePicker.IsEnabled = false;
-        SaveTimeButton.IsEnabled = true;
 
         // Default current time
         TimeSpan now = DateTime.Now.TimeOfDay;
         TimeOnSitePicker.Time = now;
         TimeOffSitePicker.Time = now;
 
-        if (visit.Status == PcarVisitStatusEnum.InProgress)
+        if (_selectedDate.Date == DateTime.Today.AddDays(1))
         {
+            // Tomorrow: only allow push to PCAR
+            _isPushingTask = true;
+            TimeOnSiteLayout.IsVisible = false;
+            TimeOffSiteLayout.IsVisible = false;
+            TargetPcarLayout.IsVisible = true;
+            TargetPcarPicker.SelectedItem = null;
             PushTaskIconLayout.IsVisible = false;
-
-            if (!string.IsNullOrEmpty(visit.SavedTimeOnSite))
-            {
-                TimeOnSiteCheckBox.IsChecked = true;
-                TimeOnSiteCheckBox.IsEnabled = false; // Cannot uncheck start time
-                TimeOnSitePicker.Time = TimeSpan.Parse(visit.SavedTimeOnSite);
-                TimeOnSitePicker.IsEnabled = false;
-            }
-
-            TimeOffSiteCheckBox.IsChecked = false;
-            TimeOffSiteCheckBox.IsEnabled = true;
-            TimeOffSitePicker.IsEnabled = false;
-            SaveTimeButton.IsEnabled = true;
-        }
-        else if (visit.Status == PcarVisitStatusEnum.Completed || visit.Status == PcarVisitStatusEnum.PushedToPcar)
-        {
-            if (visit.Status == PcarVisitStatusEnum.PushedToPcar)
-            {
-                // Task was pushed out
-                PushTaskIconLayout.IsVisible = false;
-                TimeOnSiteLayout.IsVisible = false;
-                TimeOffSiteLayout.IsVisible = false;
-            }
-            else
-            {
-                if (!string.IsNullOrEmpty(visit.SavedTimeOnSite))
-                {
-                    TimeOnSiteCheckBox.IsChecked = true;
-                    TimeOnSitePicker.Time = TimeSpan.Parse(visit.SavedTimeOnSite);
-                }
-                if (!string.IsNullOrEmpty(visit.SavedTimeOffSite))
-                {
-                    TimeOffSiteCheckBox.IsChecked = true;
-                    TimeOffSitePicker.Time = TimeSpan.Parse(visit.SavedTimeOffSite);
-                }
-                PushTaskIconLayout.IsVisible = false;
-            }
-
-            // Disable editing for saved visits
-            TimeOnSiteCheckBox.IsEnabled = false;
-            TimeOffSiteCheckBox.IsEnabled = false;
-            TimeOnSitePicker.IsEnabled = false;
-            TimeOffSitePicker.IsEnabled = false;
-            SaveTimeButton.IsEnabled = false;
-        }
-        else
-        {
-            TimeOnSiteCheckBox.IsChecked = true;
-            TimeOffSiteCheckBox.IsChecked = false;
             SaveTimeButton.IsEnabled = true;
 
             // Load list of target PCARs asynchronously
             _ = LoadPcarRoutesList();
+        }
+        else
+        {
+            _isPushingTask = false;
+
+            // Reset visibility layouts to initial time-entry state
+            TimeOnSiteLayout.IsVisible = true;
+            TimeOffSiteLayout.IsVisible = true;
+            TargetPcarLayout.IsVisible = false;
+            TargetPcarPicker.SelectedItem = null;
+            PushTaskIconLayout.IsVisible = true;
+
+            TimeOnSiteCheckBox.IsEnabled = true;
+            TimeOffSiteCheckBox.IsEnabled = true;
+            TimeOnSitePicker.IsEnabled = false;
+            TimeOffSitePicker.IsEnabled = false;
+            SaveTimeButton.IsEnabled = true;
+
+            if (visit.Status == PcarVisitStatusEnum.InProgress)
+            {
+                PushTaskIconLayout.IsVisible = false;
+
+                if (!string.IsNullOrEmpty(visit.SavedTimeOnSite))
+                {
+                    TimeOnSiteCheckBox.IsChecked = true;
+                    TimeOnSiteCheckBox.IsEnabled = false; // Cannot uncheck start time
+                    TimeOnSitePicker.Time = TimeSpan.Parse(visit.SavedTimeOnSite);
+                    TimeOnSitePicker.IsEnabled = false;
+                }
+
+                TimeOffSiteCheckBox.IsChecked = false;
+                TimeOffSiteCheckBox.IsEnabled = true;
+                TimeOffSitePicker.IsEnabled = false;
+                SaveTimeButton.IsEnabled = true;
+            }
+            else if (visit.Status == PcarVisitStatusEnum.Completed || visit.Status == PcarVisitStatusEnum.PushedToPcar)
+            {
+                if (visit.Status == PcarVisitStatusEnum.PushedToPcar)
+                {
+                    // Task was pushed out
+                    PushTaskIconLayout.IsVisible = false;
+                    TimeOnSiteLayout.IsVisible = false;
+                    TimeOffSiteLayout.IsVisible = false;
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(visit.SavedTimeOnSite))
+                    {
+                        TimeOnSiteCheckBox.IsChecked = true;
+                        TimeOnSitePicker.Time = TimeSpan.Parse(visit.SavedTimeOnSite);
+                    }
+                    if (!string.IsNullOrEmpty(visit.SavedTimeOffSite))
+                    {
+                        TimeOffSiteCheckBox.IsChecked = true;
+                        TimeOffSitePicker.Time = TimeSpan.Parse(visit.SavedTimeOffSite);
+                    }
+                    PushTaskIconLayout.IsVisible = false;
+                }
+
+                // Disable editing for saved visits
+                TimeOnSiteCheckBox.IsEnabled = false;
+                TimeOffSiteCheckBox.IsEnabled = false;
+                TimeOnSitePicker.IsEnabled = false;
+                TimeOffSitePicker.IsEnabled = false;
+                SaveTimeButton.IsEnabled = false;
+            }
+            else
+            {
+                TimeOnSiteCheckBox.IsChecked = true;
+                TimeOffSiteCheckBox.IsChecked = false;
+                SaveTimeButton.IsEnabled = true;
+
+                // Load list of target PCARs asynchronously
+                _ = LoadPcarRoutesList();
+            }
         }
 
         EditTimePopupOverlay.IsVisible = true;
@@ -295,6 +313,13 @@ public partial class PcarRute : ContentPage
 
     private void OnCancelPushClicked(object sender, EventArgs e)
     {
+        if (_selectedDate.Date == DateTime.Today.AddDays(1))
+        {
+            EditTimePopupOverlay.IsVisible = false;
+            _selectedVisit.RevertCheckState();
+            return;
+        }
+
         _isPushingTask = false;
         TargetPcarLayout.IsVisible = false;
         TimeOnSiteLayout.IsVisible = true;
@@ -423,7 +448,8 @@ public partial class PcarRute : ContentPage
                     TimeOn = timeOn,
                     TimeOff = timeOff,
                     Status = status,
-                    PushedTo = targetPcarId
+                    PushedTo = targetPcarId,
+                    TargetDate = _selectedDate
                 };
 
                 var response = await http.PostAsJsonAsync(url, payload);
@@ -607,6 +633,26 @@ public class PcarRouteViewModel : INotifyPropertyChanged
         if (sender is VisitModel visit)
         {
             _currentVisit = visit;
+
+            if (visit.Status == PcarVisitStatusEnum.Completed)
+            {
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    visit.RevertCheckState();
+                    await Application.Current.MainPage.DisplayAlert("Task Completed", "Task already completed", "OK");
+                });
+                return;
+            }
+
+            if (visit.Status == PcarVisitStatusEnum.PushedToPcar)
+            {
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    visit.RevertCheckState();
+                    await Application.Current.MainPage.DisplayAlert("Task Pushed", "Task already pushed to PCAR", "OK");
+                });
+                return;
+            }
 
             MainThread.BeginInvokeOnMainThread(() =>
             {
