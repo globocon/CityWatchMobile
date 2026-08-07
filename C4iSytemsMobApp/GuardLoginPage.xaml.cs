@@ -841,6 +841,9 @@ public partial class GuardLoginPage : ContentPage
                 Preferences.Set("GuardName", guardData.Name);
                 Preferences.Set("LicenseNumber", licenseNumber);
 
+                /* Tracking feature pack: fire-and-forget; silently does nothing when the unit
+                   is not enrolled, consent is missing, or the server has tracking disabled. */
+                _ = Services.Tracking.TrackingService.Instance.StartIfEligibleAsync();
 
                 isLoggedIn = true;
                 btnLogin.Text = "Go Back"; // Change button text

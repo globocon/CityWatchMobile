@@ -988,6 +988,7 @@ namespace C4iSytemsMobApp
                     {
                         //  throw;
                     }
+                    await Services.Tracking.TrackingService.Instance.StopAsync(); // tracking hard stop
                     Preferences.Clear(); // Clear SecureStorage (logout)
                     System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the app
                 }
@@ -1660,6 +1661,9 @@ namespace C4iSytemsMobApp
                     if (response.IsSuccessStatusCode)
                     {
                         string content = await response.Content.ReadAsStringAsync();
+                        /* Tracking hard stop. The server also closes the session on its own:
+                           UpdateOffDuty publishes OfficerLoggedOut on the event bus. */
+                        await Services.Tracking.TrackingService.Instance.StopAsync();
                         Preferences.Clear(); // Clear SecureStorage (logout)
                         System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the appI
                     }

@@ -4,6 +4,28 @@ namespace C4iSytemsMobApp.Services
 {
     public static class PermissionService
     {
+        /// <summary>
+        /// Tracking feature pack (ADD s6.1): background location. Android 11+ REQUIRES this
+        /// to be a separate second request after foreground is granted — asking for both in
+        /// one prompt gets declined. Callers must show an in-app rationale first. Existing
+        /// methods below are untouched.
+        /// </summary>
+        public static async Task<bool> RequestBackgroundLocationAsync()
+        {
+            var foreground = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            if (foreground != PermissionStatus.Granted)
+            {
+                foreground = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                if (foreground != PermissionStatus.Granted)
+                    return false;
+            }
+
+            var always = await Permissions.CheckStatusAsync<Permissions.LocationAlways>();
+            if (always != PermissionStatus.Granted)
+                always = await Permissions.RequestAsync<Permissions.LocationAlways>();
+            return always == PermissionStatus.Granted;
+        }
+
         public static async Task<bool> CheckAndRequestPermissionsAsync()
         {
 #if ANDROID

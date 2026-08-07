@@ -201,6 +201,7 @@ public partial class LoginPage : ContentPage
 
             if (isConfirmed)
             {
+                await Services.Tracking.TrackingService.Instance.StopAsync(); // tracking hard stop before the process dies
                 Preferences.Clear(); // Clear preferences (logout)
                 System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the app
             }
