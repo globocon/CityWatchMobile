@@ -66,19 +66,16 @@ namespace C4iSytemsMobApp.Services.Tracking
             var positionName = Preferences.Get("SelectedPosition", string.Empty);
             var positionId = App.PcarPostionId;
 
-            /* Unit identity. The CAR is what is tracked, and the car is the Position; the
-               wand is only a fallback for a guard on foot. Patrol officers routinely log in
-               with no wand selected, so the wand can never be required.
-               Key spaces are kept apart by an offset (see TrackingUnitKey on the server):
-                   >= 2,000,000  a Position (car)
-                   <  2,000,000  a SmartWand device                                     */
+            /* Unit identity. The DEVICE is never the unit — a "SmartWand" record is just a
+               registered phone. What is tracked is a car or a person:
+                   patrol car -> the Position picked at login
+                   foot guard -> the guard themselves
+               Offsets keep the two apart and must match TrackingUnitKey on the server. */
             const int PositionUnitOffset = 2_000_000;
-            var wandId = Preferences.Get($"{siteId}_SavedSmartWandId", 0);
+            const int GuardUnitOffset = 1_000_000;
             var unitId = (isPatrolCar && positionId.HasValue && positionId.Value > 0)
                 ? PositionUnitOffset + positionId.Value
-                : wandId;
-            if (unitId <= 0)
-                return;   // neither a car nor a wand — nothing identifiable to track
+                : GuardUnitOffset + guardId;
 
             var session = await _api.StartSessionAsync(unitId, guardId, siteId, isPatrolCar, callsign,
                 positionId, positionName);
