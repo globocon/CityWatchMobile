@@ -63,7 +63,15 @@ namespace C4iSytemsMobApp.Services.Tracking
                     new { unitId, guardId, clientSiteId, pcarRouteId = (int?)null, isPatrolCar, callsign,
                           positionId, positionName });
                 if (!response.IsSuccessStatusCode)
-                    return null;   // 403 = not enrolled / no consent; 404 = tracking disabled
+                {
+                    /* 403 = this unit is not enrolled / has no consent recorded — a settled
+                       answer, not a hiccup. 404 = tracking is switched off server-side.
+                       Either way the app behaves identically for the officer: it simply does
+                       not track, silently. Logged so a field problem is diagnosable. */
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[Tracking] session/start refused: {(int)response.StatusCode} {response.ReasonPhrase}");
+                    return null;
+                }
                 return await response.Content.ReadFromJsonAsync<TrackingSessionStartResponse>();
             }
             catch
