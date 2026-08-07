@@ -65,7 +65,17 @@ namespace C4iSytemsMobApp.Services.Tracking
             if (unitId <= 0)
                 return;
 
-            var session = await _api.StartSessionAsync(unitId, guardId, siteId);
+            /* The guard's own login declarations: the "Mobile Patrol Car" toggle and the
+               Callsign picker. These beat any server-side guess about what the unit is —
+               the same wand may be in a car today and on foot tomorrow. */
+            var isPatrolCar = Preferences.Get("IsPatrolCar", false);
+            var callsign = Preferences.Get("SelectedCallsign", string.Empty);
+            /* Position IS the car — "Mobile Patrols (Car) M1". Saved by the login page. */
+            var positionName = Preferences.Get("SelectedPosition", string.Empty);
+            var positionId = App.PcarPostionId;
+
+            var session = await _api.StartSessionAsync(unitId, guardId, siteId, isPatrolCar, callsign,
+                positionId, positionName);
             if (session == null)
                 return;   // not enrolled / no consent / tracking off — by design, silent
 

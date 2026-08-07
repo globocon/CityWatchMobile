@@ -49,12 +49,19 @@ namespace C4iSytemsMobApp.Services.Tracking
 
         private static string Url(string path) => $"{AppConfig.ApiBaseUrl}tracking/{path}";
 
-        public async Task<TrackingSessionStartResponse?> StartSessionAsync(int unitId, int guardId, int clientSiteId)
+        public async Task<TrackingSessionStartResponse?> StartSessionAsync(
+            int unitId, int guardId, int clientSiteId, bool isPatrolCar, string? callsign,
+            int? positionId, string? positionName)
         {
             try
             {
+                /* All from the guard's own login screen. Position is THE CAR ("Mobile Patrols
+                   (Car) M1") and is the tracked unit's identity — several cars of one fleet
+                   roam the same sites at once and all scan the same site tags, so the car is
+                   what tells them apart. Callsign is its radio label. */
                 var response = await Client.PostAsJsonAsync(Url("session/start"),
-                    new { unitId, guardId, clientSiteId, pcarRouteId = (int?)null });
+                    new { unitId, guardId, clientSiteId, pcarRouteId = (int?)null, isPatrolCar, callsign,
+                          positionId, positionName });
                 if (!response.IsSuccessStatusCode)
                     return null;   // 403 = not enrolled / no consent; 404 = tracking disabled
                 return await response.Content.ReadFromJsonAsync<TrackingSessionStartResponse>();
