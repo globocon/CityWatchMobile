@@ -53,13 +53,17 @@ namespace C4iSytemsMobApp.Services.Tracking
             if (IsTracking || _dbFactory == null)
                 return;
 
-            var unitId = Preferences.Get("savedSmartWandId", 0);
-            if (unitId <= 0)
-                unitId = Preferences.Get("SmartWandId", 0);
             var guardId = int.TryParse(Preferences.Get("GuardId", ""), out var g) ? g : 0;
             var siteId = int.TryParse(Preferences.Get("SelectedClientSiteId", ""), out var s) ? s : 0;
-            if (unitId <= 0 || guardId <= 0 || siteId <= 0)
-                return;   // not a patrol-car login; nothing to track
+            if (guardId <= 0 || siteId <= 0)
+                return;
+
+            /* The wand id is stored PER SITE, matching SelectSmartWand/ScannerControlServices:
+               "{clientSiteId}_SavedSmartWandId". No wand selected ⇒ no tracking unit ⇒
+               nothing to track, which is the correct outcome, not an error. */
+            var unitId = Preferences.Get($"{siteId}_SavedSmartWandId", 0);
+            if (unitId <= 0)
+                return;
 
             var session = await _api.StartSessionAsync(unitId, guardId, siteId);
             if (session == null)
