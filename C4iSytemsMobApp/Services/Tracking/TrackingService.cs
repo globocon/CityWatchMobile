@@ -58,21 +58,27 @@ namespace C4iSytemsMobApp.Services.Tracking
             if (guardId <= 0 || siteId <= 0)
                 return;
 
-            /* The wand id is stored PER SITE, matching SelectSmartWand/ScannerControlServices:
-               "{clientSiteId}_SavedSmartWandId". No wand selected ⇒ no tracking unit ⇒
-               nothing to track, which is the correct outcome, not an error. */
-            var unitId = Preferences.Get($"{siteId}_SavedSmartWandId", 0);
-            if (unitId <= 0)
-                return;
-
             /* The guard's own login declarations: the "Mobile Patrol Car" toggle and the
                Callsign picker. These beat any server-side guess about what the unit is —
                the same wand may be in a car today and on foot tomorrow. */
             var isPatrolCar = Preferences.Get("IsPatrolCar", false);
             var callsign = Preferences.Get("SelectedCallsign", string.Empty);
-            /* Position IS the car — "Mobile Patrols (Car) M1". Saved by the login page. */
             var positionName = Preferences.Get("SelectedPosition", string.Empty);
             var positionId = App.PcarPostionId;
+
+            /* Unit identity. The CAR is what is tracked, and the car is the Position; the
+               wand is only a fallback for a guard on foot. Patrol officers routinely log in
+               with no wand selected, so the wand can never be required.
+               Key spaces are kept apart by an offset (see TrackingUnitKey on the server):
+                   >= 2,000,000  a Position (car)
+                   <  2,000,000  a SmartWand device                                     */
+            const int PositionUnitOffset = 2_000_000;
+            var wandId = Preferences.Get($"{siteId}_SavedSmartWandId", 0);
+            var unitId = (isPatrolCar && positionId.HasValue && positionId.Value > 0)
+                ? PositionUnitOffset + positionId.Value
+                : wandId;
+            if (unitId <= 0)
+                return;   // neither a car nor a wand — nothing identifiable to track
 
             var session = await _api.StartSessionAsync(unitId, guardId, siteId, isPatrolCar, callsign,
                 positionId, positionName);
