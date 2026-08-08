@@ -40,6 +40,13 @@ namespace C4iSytemsMobApp.Services.Tracking
         private DateTime _lastUploadUtc;
         private int _stationaryStreak;
 
+        /* Direct-send buffer: if the local SQLite cache is unusable on a device (e.g. a
+           legacy app database the migrations cannot upgrade), points queue here and upload
+           straight to the API — the same live-first approach the logbook has always used.
+           Bounded; oldest sacrificed first. */
+        private readonly object _memLock = new();
+        private readonly List<TrackingPointCache> _memBuffer = new();
+
         public bool IsTracking => _loop is { IsCancellationRequested: false };
         public byte CurrentMode => _mode;
 
@@ -89,7 +96,10 @@ namespace C4iSytemsMobApp.Services.Tracking
             _sessionId = session.SessionId;
             _unitId = unitId;
             _policy = session.Policy ?? new TrackingPolicyDto();
-            _seq = 0;
+            /* The server reuses an Active session on re-login, and (unit, session, seq) is a
+               dedupe key — restarting seq at 0 would make every new point a silent duplicate.
+               Resume the counter where this session left off. */
+            _seq = Preferences.Get($"TrackSeq_{session.SessionId}", 0);
             _commandSeqSeen = 0;
             _mode = 2;                                     // a fresh session starts in Transit
             _lastKept = null;
@@ -304,8 +314,7 @@ namespace C4iSytemsMobApp.Services.Tracking
             _lastKept = location;
             _lastKeptAtUtc = DateTime.UtcNow;
 
-            using var db = _dbFactory();
-            db.TrackingPointCache.Add(new TrackingPointCache
+            var point = new TrackingPointCache
             {
                 UnitId = _unitId,
                 SessionId = _sessionId,
@@ -319,16 +328,35 @@ namespace C4iSytemsMobApp.Services.Tracking
                 BatteryPct = (byte?)Math.Clamp(Battery.Default.ChargeLevel * 100, 0, 100),
                 IsMock = location.IsFromMockProvider,
                 Source = source
-            });
+            };
+            Preferences.Set($"TrackSeq_{_sessionId}", _seq);
 
-            /* Ring buffer: the oldest points are the ones sacrificed, never the app. */
-            var overflow = await db.TrackingPointCache.CountAsync() - RingBufferCap;
-            if (overflow > 0)
+            try
             {
-                var oldest = await db.TrackingPointCache.OrderBy(p => p.Id).Take(overflow).ToListAsync();
-                db.TrackingPointCache.RemoveRange(oldest);
+                using var db = _dbFactory();
+                db.TrackingPointCache.Add(point);
+
+                /* Ring buffer: the oldest points are the ones sacrificed, never the app. */
+                var overflow = await db.TrackingPointCache.CountAsync() - RingBufferCap;
+                if (overflow > 0)
+                {
+                    var oldest = await db.TrackingPointCache.OrderBy(p => p.Id).Take(overflow).ToListAsync();
+                    db.TrackingPointCache.RemoveRange(oldest);
+                }
+                await db.SaveChangesAsync();
             }
-            await db.SaveChangesAsync();
+            catch (Exception ex)
+            {
+                /* The cache is a means, not the mission (logbook precedent): queue in
+                   memory and send direct rather than lose the point. */
+                Console.WriteLine($"[Tracking] local cache failed ({ex.GetType().Name}: {ex.Message}); using direct-send buffer");
+                lock (_memLock)
+                {
+                    _memBuffer.Add(point);
+                    if (_memBuffer.Count > 1000)
+                        _memBuffer.RemoveAt(0);
+                }
+            }
         }
 
         /// <summary>Uploads pending points oldest-first and applies the response's
@@ -343,48 +371,79 @@ namespace C4iSytemsMobApp.Services.Tracking
                 return;
             }
 
-            using var db = _dbFactory();
-            var batch = await db.TrackingPointCache
-                .Where(p => p.SessionId == _sessionId)
-                .OrderBy(p => p.Id)
-                .Take(MaxBatch)
-                .ToListAsync();
-            if (batch.Count == 0)
+            /* The cache is read tolerantly: a device whose local DB cannot be upgraded
+               still uploads from the direct-send buffer (logbook precedent). */
+            List<TrackingPointCache> dbBatch = new();
+            AppDbContext? db = null;
+            try
             {
+                db = _dbFactory();
+                dbBatch = await db.TrackingPointCache
+                    .Where(p => p.SessionId == _sessionId)
+                    .OrderBy(p => p.Id)
+                    .Take(MaxBatch)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Tracking] local cache read failed ({ex.GetType().Name}); sending from memory buffer only");
+                db?.Dispose();
+                db = null;
+            }
+
+            List<TrackingPointCache> memBatch;
+            lock (_memLock)
+                memBatch = _memBuffer.Where(p => p.SessionId == _sessionId).Take(MaxBatch).ToList();
+
+            try
+            {
+                var batch = dbBatch.Concat(memBatch).OrderBy(p => p.Seq).Take(MaxBatch).ToList();
+                if (batch.Count == 0)
+                {
+                    _lastUploadUtc = DateTime.UtcNow;
+                    return;
+                }
+
+                var response = await _api.PostBatchAsync(_unitId, _sessionId, _commandSeqSeen, batch);
+                if (response == null)
+                {
+                    Console.WriteLine($"[Tracking] upload of {batch.Count} point(s) failed; kept for retry");
+                    return;   // offline / disabled: points stay buffered; SyncService retries
+                }
+                Console.WriteLine($"[Tracking] uploaded {batch.Count}, accepted {response.Accepted}, rejected {response.Rejected}");
+
                 _lastUploadUtc = DateTime.UtcNow;
-                return;
-            }
 
-            var response = await _api.PostBatchAsync(_unitId, _sessionId, _commandSeqSeen, batch);
-            if (response == null)
-            {
-                Console.WriteLine($"[Tracking] upload of {batch.Count} point(s) failed; kept for retry");
-                return;   // offline / disabled: points stay buffered; SyncService retries
-            }
-            Console.WriteLine($"[Tracking] uploaded {batch.Count}, accepted {response.Accepted}, rejected {response.Rejected}");
-
-            _lastUploadUtc = DateTime.UtcNow;
-
-            /* Delete only on confirmed acknowledgement — the offline-cache contract. */
-            db.TrackingPointCache.RemoveRange(batch);
-            await db.SaveChangesAsync();
-
-            /* Authoritative mode delivery (D5). Duress set locally is never downgraded by
-               a stale server view — cancellation must come as a newer command. */
-            if (response.CommandSeq > _commandSeqSeen || response.DesiredMode != _mode)
-            {
-                if (_mode == 4 && response.CommandSeq <= _commandSeqSeen)
+                /* Delete only on confirmed acknowledgement — the offline-cache contract. */
+                if (db != null && dbBatch.Count > 0)
                 {
-                    // keep local duress until the server speaks with a newer command
+                    db.TrackingPointCache.RemoveRange(dbBatch);
+                    await db.SaveChangesAsync();
                 }
-                else
+                lock (_memLock)
+                    _memBuffer.RemoveAll(p => memBatch.Contains(p));
+
+                /* Authoritative mode delivery (D5). Duress set locally is never downgraded by
+                   a stale server view — cancellation must come as a newer command. */
+                if (response.CommandSeq > _commandSeqSeen || response.DesiredMode != _mode)
                 {
-                    _mode = response.DesiredMode;
-                    _commandSeqSeen = Math.Max(_commandSeqSeen, response.CommandSeq);
+                    if (_mode == 4 && response.CommandSeq <= _commandSeqSeen)
+                    {
+                        // keep local duress until the server speaks with a newer command
+                    }
+                    else
+                    {
+                        _mode = response.DesiredMode;
+                        _commandSeqSeen = Math.Max(_commandSeqSeen, response.CommandSeq);
+                    }
                 }
+                if (response.Policy != null)
+                    _policy = response.Policy;
             }
-            if (response.Policy != null)
-                _policy = response.Policy;
+            finally
+            {
+                db?.Dispose();
+            }
         }
 
         /// <summary>Backfill hook for SyncService: marks stale points as backfill and pushes
@@ -393,15 +452,22 @@ namespace C4iSytemsMobApp.Services.Tracking
         {
             if (_dbFactory == null)
                 return;
-            using var db = _dbFactory();
-
-            var stale = await db.TrackingPointCache
-                .Where(p => !p.IsBackfill && p.RecordedUtc < DateTime.UtcNow.AddMinutes(-5))
-                .ToListAsync();
-            if (stale.Count > 0)
+            try
             {
-                stale.ForEach(p => p.IsBackfill = true);
-                await db.SaveChangesAsync();
+                using var db = _dbFactory();
+
+                var stale = await db.TrackingPointCache
+                    .Where(p => !p.IsBackfill && p.RecordedUtc < DateTime.UtcNow.AddMinutes(-5))
+                    .ToListAsync();
+                if (stale.Count > 0)
+                {
+                    stale.ForEach(p => p.IsBackfill = true);
+                    await db.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Tracking] backlog sweep skipped: {ex.GetType().Name}");
             }
 
             if (_sessionId != Guid.Empty)
