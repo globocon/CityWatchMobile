@@ -68,7 +68,7 @@ namespace C4iSytemsMobApp.Services.Tracking
                        answer, not a hiccup. 404 = tracking is switched off server-side.
                        Either way the app behaves identically for the officer: it simply does
                        not track, silently. Logged so a field problem is diagnosable. */
-                    System.Diagnostics.Debug.WriteLine(
+                    Console.WriteLine(
                         $"[Tracking] session/start refused: {(int)response.StatusCode} {response.ReasonPhrase}");
                     return null;
                 }

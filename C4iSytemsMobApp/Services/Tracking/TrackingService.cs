@@ -81,10 +81,10 @@ namespace C4iSytemsMobApp.Services.Tracking
                 positionId, positionName);
             if (session == null)
             {
-                System.Diagnostics.Debug.WriteLine($"[Tracking] start refused/unreachable for unit {unitId}");
+                Console.WriteLine($"[Tracking] start refused/unreachable for unit {unitId}");
                 return;   // not enrolled / no consent / tracking off — by design, silent
             }
-            System.Diagnostics.Debug.WriteLine($"[Tracking] session {session.SessionId} started, unit {unitId}");
+            Console.WriteLine($"[Tracking] session {session.SessionId} started, unit {unitId}");
 
             _sessionId = session.SessionId;
             _unitId = unitId;
@@ -153,7 +153,7 @@ namespace C4iSytemsMobApp.Services.Tracking
                 catch (Exception ex)
                 {
                     /* A sampler fault must never crash the app; wait a beat and continue. */
-                    System.Diagnostics.Debug.WriteLine($"[Tracking] loop fault: {ex.GetType().Name} {ex.Message}");
+                    Console.WriteLine($"[Tracking] loop fault: {ex.GetType().Name} {ex.Message}");
                     try { await Task.Delay(5000, ct); } catch { break; }
                 }
             }
@@ -216,11 +216,20 @@ namespace C4iSytemsMobApp.Services.Tracking
         {
             try
             {
-                var fix = await Geolocation.GetLocationAsync(new GeolocationRequest
+                Location? fix;
+                try
                 {
-                    DesiredAccuracy = GeolocationAccuracy.High,
-                    Timeout = TimeSpan.FromSeconds(10)
-                }, ct);
+                    fix = await Geolocation.GetLocationAsync(new GeolocationRequest
+                    {
+                        DesiredAccuracy = GeolocationAccuracy.High,
+                        Timeout = TimeSpan.FromSeconds(10)
+                    }, ct);
+                }
+                catch (Exception exHigh)
+                {
+                    Console.WriteLine($"[Tracking] high-accuracy fix failed: {exHigh.GetType().Name} {exHigh.Message}");
+                    fix = null;
+                }
 
                 /* Indoors / urban canyon a High fix may never lock. Degrade the same way the
                    logbook path does (PermissionService): Medium first, then the platform's
@@ -235,20 +244,37 @@ namespace C4iSytemsMobApp.Services.Tracking
                 if (fix == null)
                 {
                     var cached = await Geolocation.GetLastKnownLocationAsync();
-                    if (cached != null && (DateTimeOffset.UtcNow - cached.Timestamp) < TimeSpan.FromMinutes(2))
+                    if (cached != null && (DateTimeOffset.UtcNow - cached.Timestamp) < TimeSpan.FromMinutes(10))
                     {
-                        System.Diagnostics.Debug.WriteLine("[Tracking] fix: using last-known (fresh GPS unavailable)");
+                        Console.WriteLine("[Tracking] fix: using last-known (fresh GPS unavailable)");
                         fix = cached;
                     }
                 }
 
+                /* Final resort — the LOGBOOK's own source: the last coordinate any part of the
+                   app stored. This is exactly what makes logbook pins "always work", so the
+                   tracker must never do worse. These points carry no Accuracy value, which is
+                   how the server can tell them from real fixes. */
                 if (fix == null)
-                    System.Diagnostics.Debug.WriteLine("[Tracking] fix: null after High+Medium+last-known");
+                {
+                    var pref = Preferences.Get("GpsCoordinates", "");
+                    var parts = pref.Split(',');
+                    if (parts.Length == 2
+                        && decimal.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var plat)
+                        && decimal.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var plon))
+                    {
+                        Console.WriteLine("[Tracking] fix: using logbook cached coordinate");
+                        fix = new Location((double)plat, (double)plon) { Timestamp = DateTimeOffset.UtcNow };
+                    }
+                }
+
+                if (fix == null)
+                    Console.WriteLine("[Tracking] fix: null after High+Medium+last-known+cached");
                 return fix;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Tracking] fix failed: {ex.GetType().Name} {ex.Message}");
+                Console.WriteLine($"[Tracking] fix failed: {ex.GetType().Name} {ex.Message}");
                 return null;   // no permission / no fix: the gap is honest
             }
         }
@@ -295,7 +321,10 @@ namespace C4iSytemsMobApp.Services.Tracking
             if (_dbFactory == null || _sessionId == Guid.Empty)
                 return;
             if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            {
+                Console.WriteLine($"[Tracking] upload skipped: connectivity = {Connectivity.Current.NetworkAccess}");
                 return;
+            }
 
             using var db = _dbFactory();
             var batch = await db.TrackingPointCache
@@ -312,10 +341,10 @@ namespace C4iSytemsMobApp.Services.Tracking
             var response = await _api.PostBatchAsync(_unitId, _sessionId, _commandSeqSeen, batch);
             if (response == null)
             {
-                System.Diagnostics.Debug.WriteLine($"[Tracking] upload of {batch.Count} point(s) failed; kept for retry");
+                Console.WriteLine($"[Tracking] upload of {batch.Count} point(s) failed; kept for retry");
                 return;   // offline / disabled: points stay buffered; SyncService retries
             }
-            System.Diagnostics.Debug.WriteLine($"[Tracking] uploaded {batch.Count}, accepted {response.Accepted}, rejected {response.Rejected}");
+            Console.WriteLine($"[Tracking] uploaded {batch.Count}, accepted {response.Accepted}, rejected {response.Rejected}");
 
             _lastUploadUtc = DateTime.UtcNow;
 
