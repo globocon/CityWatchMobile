@@ -314,6 +314,14 @@ namespace C4iSytemsMobApp.Services.Tracking
             _lastKept = location;
             _lastKeptAtUtc = DateTime.UtcNow;
 
+            /* Battery level is nice-to-have telemetry, never a reason to lose a point:
+               on some devices (Samsung A12 in the field) reading it throws
+               PermissionException demanding android.permission.BATTERY_STATS — which
+               killed EVERY point at creation until 9 Aug 2026. Best-effort only. */
+            byte? batteryPct = null;
+            try { batteryPct = (byte?)Math.Clamp(Battery.Default.ChargeLevel * 100, 0, 100); }
+            catch { /* leave null — the server treats it as unknown */ }
+
             var point = new TrackingPointCache
             {
                 UnitId = _unitId,
@@ -325,7 +333,7 @@ namespace C4iSytemsMobApp.Services.Tracking
                 AccuracyM = location.Accuracy,
                 SpeedKph = location.Speed is { } sp ? sp * 3.6 : null,
                 HeadingDeg = location.Course,
-                BatteryPct = (byte?)Math.Clamp(Battery.Default.ChargeLevel * 100, 0, 100),
+                BatteryPct = batteryPct,
                 IsMock = location.IsFromMockProvider,
                 Source = source
             };
