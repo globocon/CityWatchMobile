@@ -80,7 +80,11 @@ namespace C4iSytemsMobApp.Services.Tracking
             var session = await _api.StartSessionAsync(unitId, guardId, siteId, isPatrolCar, callsign,
                 positionId, positionName);
             if (session == null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Tracking] start refused/unreachable for unit {unitId}");
                 return;   // not enrolled / no consent / tracking off — by design, silent
+            }
+            System.Diagnostics.Debug.WriteLine($"[Tracking] session {session.SessionId} started, unit {unitId}");
 
             _sessionId = session.SessionId;
             _unitId = unitId;
@@ -146,9 +150,10 @@ namespace C4iSytemsMobApp.Services.Tracking
                 {
                     break;
                 }
-                catch
+                catch (Exception ex)
                 {
                     /* A sampler fault must never crash the app; wait a beat and continue. */
+                    System.Diagnostics.Debug.WriteLine($"[Tracking] loop fault: {ex.GetType().Name} {ex.Message}");
                     try { await Task.Delay(5000, ct); } catch { break; }
                 }
             }
@@ -211,14 +216,39 @@ namespace C4iSytemsMobApp.Services.Tracking
         {
             try
             {
-                return await Geolocation.GetLocationAsync(new GeolocationRequest
+                var fix = await Geolocation.GetLocationAsync(new GeolocationRequest
                 {
                     DesiredAccuracy = GeolocationAccuracy.High,
                     Timeout = TimeSpan.FromSeconds(10)
                 }, ct);
+
+                /* Indoors / urban canyon a High fix may never lock. Degrade the same way the
+                   logbook path does (PermissionService): Medium first, then the platform's
+                   cached last-known fix — coarser data beats silence. Accuracy rides along,
+                   so the server can still flag what it doesn't trust. */
+                fix ??= await Geolocation.GetLocationAsync(new GeolocationRequest
+                {
+                    DesiredAccuracy = GeolocationAccuracy.Medium,
+                    Timeout = TimeSpan.FromSeconds(8)
+                }, ct);
+
+                if (fix == null)
+                {
+                    var cached = await Geolocation.GetLastKnownLocationAsync();
+                    if (cached != null && (DateTimeOffset.UtcNow - cached.Timestamp) < TimeSpan.FromMinutes(2))
+                    {
+                        System.Diagnostics.Debug.WriteLine("[Tracking] fix: using last-known (fresh GPS unavailable)");
+                        fix = cached;
+                    }
+                }
+
+                if (fix == null)
+                    System.Diagnostics.Debug.WriteLine("[Tracking] fix: null after High+Medium+last-known");
+                return fix;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[Tracking] fix failed: {ex.GetType().Name} {ex.Message}");
                 return null;   // no permission / no fix: the gap is honest
             }
         }
@@ -281,7 +311,11 @@ namespace C4iSytemsMobApp.Services.Tracking
 
             var response = await _api.PostBatchAsync(_unitId, _sessionId, _commandSeqSeen, batch);
             if (response == null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Tracking] upload of {batch.Count} point(s) failed; kept for retry");
                 return;   // offline / disabled: points stay buffered; SyncService retries
+            }
+            System.Diagnostics.Debug.WriteLine($"[Tracking] uploaded {batch.Count}, accepted {response.Accepted}, rejected {response.Rejected}");
 
             _lastUploadUtc = DateTime.UtcNow;
 
