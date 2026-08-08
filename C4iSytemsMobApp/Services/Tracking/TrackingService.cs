@@ -102,6 +102,23 @@ namespace C4iSytemsMobApp.Services.Tracking
 #if ANDROID
             Platforms.TrackingForegroundServiceHelper.Start();
 #endif
+
+            /* ---- FIELD SELF-TEST (temporary, 8 Aug 2026): proves the app->API positions
+               pipe with NO GPS involved. One fixed synthetic point (9.6700, 76.8100 — Poonjar
+               test marker), cached and uploaded immediately. If this row reaches TrackPoint,
+               the upload path is healthy and only fix acquisition can be at fault.
+               REMOVE once the field issue is closed. */
+            try
+            {
+                Console.WriteLine("[Tracking] self-test: sending synthetic point");
+                await KeepAsync(new Location(9.6700, 76.8100) { Timestamp = DateTimeOffset.UtcNow }, "transit");
+                await UploadPendingAsync();
+                Console.WriteLine("[Tracking] self-test: done (check TrackPoint for 9.67/76.81)");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Tracking] self-test FAILED: {ex.GetType().Name} {ex.Message}");
+            }
         }
 
         /// <summary>The hard stop (§13.5): called on logout. Flushes what it can, ends the
