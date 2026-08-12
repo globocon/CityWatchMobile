@@ -93,6 +93,38 @@ namespace C4iSytemsMobApp.Services.Tracking
             }
         }
 
+        /// <summary>Registers this phone's FCM token as the server's nudge address for the
+        /// unit. The server refuses unless (unitId, sessionId) names the ACTIVE session —
+        /// a device can only register for the unit it is signed into.</summary>
+        public async Task<bool> RegisterDeviceTokenAsync(int unitId, Guid sessionId, string token, string platform)
+        {
+            try
+            {
+                var response = await Client.PostAsJsonAsync(Url("device-token"),
+                    new { unitId, sessionId, token, platform });
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;   // offline / tracking off: the next login registers again
+            }
+        }
+
+        /// <summary>Logout: deactivates the nudge address. Best-effort — a failed release
+        /// never blocks logout, and a dead token is also retired server-side when FCM
+        /// reports it unregistered.</summary>
+        public async Task ReleaseDeviceTokenAsync(string token)
+        {
+            try
+            {
+                await Client.PostAsJsonAsync(Url("device-token/release"), new { token });
+            }
+            catch
+            {
+                /* logout continues regardless */
+            }
+        }
+
         public async Task<IngestResponseDto?> PostBatchAsync(int unitId, Guid sessionId, int commandSeqSeen,
             List<TrackingPointCache> points)
         {

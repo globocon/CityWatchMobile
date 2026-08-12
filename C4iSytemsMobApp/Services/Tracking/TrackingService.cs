@@ -47,6 +47,11 @@ namespace C4iSytemsMobApp.Services.Tracking
         private readonly object _memLock = new();
         private readonly List<TrackingPointCache> _memBuffer = new();
 
+        /// <summary>The FCM token last registered with the server — the server's nudge
+        /// address for this unit. Null when push is unavailable (no google-services.json,
+        /// no Play services): tracking works identically, it just cannot be nudged.</summary>
+        private string? _fcmToken;
+
         public bool IsTracking => _loop is { IsCancellationRequested: false };
         public byte CurrentMode => _mode;
 
@@ -111,6 +116,7 @@ namespace C4iSytemsMobApp.Services.Tracking
 
 #if ANDROID
             Platforms.TrackingForegroundServiceHelper.Start();
+            _ = RegisterFcmTokenAsync();     // nudge address; best-effort, never blocks login
 #endif
 
             /* ---- FIELD SELF-TEST (temporary, 8 Aug 2026): proves the app->API positions
@@ -143,6 +149,14 @@ namespace C4iSytemsMobApp.Services.Tracking
             Platforms.TrackingForegroundServiceHelper.Stop();
 #endif
 
+            if (_fcmToken is { } token)
+            {
+                /* The nudge address dies with the shift: a logged-out phone must not be
+                   wakeable. Best-effort — FCM also retires dead tokens on the server. */
+                try { await _api.ReleaseDeviceTokenAsync(token); } catch { /* best-effort */ }
+                _fcmToken = null;
+            }
+
             if (_sessionId != Guid.Empty)
             {
                 try { await UploadPendingAsync(); } catch { /* backfill covers it */ }
@@ -150,6 +164,121 @@ namespace C4iSytemsMobApp.Services.Tracking
                 _sessionId = Guid.Empty;
             }
             _mode = 1;
+        }
+
+        /* ------------------------- FCM nudge (§Push) -------------------------
+           FCM is the accelerator; the ingest response is the guarantee. A nudge is only
+           "successful" when a fresh position lands on the server through the SAME upload
+           path everything else uses — nothing below is a second tracking engine. */
+
+#if ANDROID
+        /// <summary>Registers this phone's FCM token for the current unit. Runs after the
+        /// session opens; silent no-op when push is unavailable on this device.</summary>
+        private async Task RegisterFcmTokenAsync()
+        {
+            try
+            {
+                var token = await Platforms.FcmTokenHelper.GetTokenAsync();
+                if (string.IsNullOrWhiteSpace(token) || _sessionId == Guid.Empty)
+                    return;
+                _fcmToken = token;
+                var ok = await _api.RegisterDeviceTokenAsync(_unitId, _sessionId, token, "android");
+                Console.WriteLine($"[Tracking] FCM token registration {(ok ? "ok" : "refused")} for unit {_unitId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Tracking] FCM token registration failed: {ex.GetType().Name} {ex.Message}");
+            }
+        }
+#endif
+
+        /// <summary>Firebase rotated the token mid-session (FcmService.OnNewToken): the old
+        /// address is dead the moment this fires, so re-register immediately.</summary>
+        public async Task OnFcmTokenRefreshedAsync(string token)
+        {
+            try
+            {
+                _fcmToken = token;
+                if (_sessionId == Guid.Empty)
+                    return;                    // no session: the next login registers it
+                await _api.RegisterDeviceTokenAsync(_unitId, _sessionId, token, "android");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Tracking] FCM token refresh registration failed: {ex.GetType().Name} {ex.Message}");
+            }
+        }
+
+        /// <summary>Remote nudge: the control room asked for a FRESH position, right now.
+        /// A nudge point must be a genuinely NEW fix — the cached/logbook fallbacks that
+        /// keep normal tracking honest-but-available would defeat the entire purpose here
+        /// (a stale coordinate uploaded as "fresh" is exactly the failure a nudge exists to
+        /// expose), so this path takes live GPS or reports nothing at all.</summary>
+        public async Task NudgeAsync(string? unitId, string? reason, string? requestId)
+        {
+            try
+            {
+                if (_sessionId == Guid.Empty)
+                {
+                    Console.WriteLine($"[Tracking] nudge {requestId}: ignored — no active session on this device");
+                    return;
+                }
+                if (int.TryParse(unitId, out var uid) && uid > 0 && uid != _unitId)
+                {
+                    Console.WriteLine($"[Tracking] nudge {requestId}: addressed to unit {uid}, we are {_unitId} — ignored");
+                    return;
+                }
+
+                var fix = await GetFreshFixAsync();
+                if (fix == null)
+                {
+                    Console.WriteLine($"[Tracking] nudge {requestId}: no fresh fix obtainable — nothing uploaded (honest gap)");
+                    return;
+                }
+
+                await KeepAsync(fix, _mode == 4 ? "duress" : _mode == 3 ? "live" : "transit");
+                await UploadPendingAsync();    // the response also re-applies the authoritative mode
+                Console.WriteLine($"[Tracking] TrackingNudgeCompleted request {requestId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Tracking] nudge {requestId} failed: {ex.GetType().Name} {ex.Message}");
+            }
+        }
+
+        /// <summary>A genuinely NEW fix or null. High then Medium with tight timeouts — the
+        /// Doze execution window after a high-priority push is roughly ten seconds, and the
+        /// upload needs some of it. Deliberately NO last-known / logbook-cache fallback
+        /// (see NudgeAsync); normal tracking's GetFixAsync is untouched.</summary>
+        private static async Task<Location?> GetFreshFixAsync()
+        {
+            try
+            {
+                Location? fix = null;
+                try
+                {
+                    fix = await Geolocation.GetLocationAsync(new GeolocationRequest
+                    {
+                        DesiredAccuracy = GeolocationAccuracy.High,
+                        Timeout = TimeSpan.FromSeconds(6)
+                    });
+                }
+                catch (Exception exHigh)
+                {
+                    Console.WriteLine($"[Tracking] fresh fix (high) failed: {exHigh.GetType().Name}");
+                }
+                fix ??= await Geolocation.GetLocationAsync(new GeolocationRequest
+                {
+                    DesiredAccuracy = GeolocationAccuracy.Medium,
+                    Timeout = TimeSpan.FromSeconds(4)
+                });
+                return fix;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Tracking] fresh fix failed: {ex.GetType().Name} {ex.Message}");
+                return null;
+            }
         }
 
         /// <summary>Duress raised on this device: highest priority, effective immediately,

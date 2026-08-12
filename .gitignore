@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Firebase client config is per-environment and stays out of source control (tracking FCM nudge)
+google-services.json

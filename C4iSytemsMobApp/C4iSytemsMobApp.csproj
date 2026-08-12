@@ -92,8 +92,21 @@
 		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.4.0" />
 	</ItemGroup>
 
+	<!-- FCM remote nudge (tracking §Push). Android only. Version verified against nuget.org
+	     12 Aug 2026: Xamarin.Firebase.Messaging 123.4.1.2 targets net8.0-android34.0 — this
+	     app's TFM and target SDK — with the AndroidX 1.7-era dependency set that coexists
+	     with MAUI 8.0.100 + CommunityToolkit.Maui.Camera 1.0.5 (the newer 124.x line pulls
+	     AndroidX.Collection 1.5, which Camera pins below 1.4.1 — NU1107).
+	     google-services.json is the per-environment Firebase client config: included only
+	     when present so any checkout still builds without it, and it stays OUT of source
+	     control (.gitignore). -->
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<PackageReference Include="Xamarin.Firebase.Messaging" Version="123.4.1.2" />
+		<GoogleServicesJson Include="Platforms\Android\google-services.json" Condition="Exists('Platforms\Android\google-services.json')" />
+	</ItemGroup>
+
 	<ItemGroup>
-	  <ProjectReference Include="..\C4iSytemsMobApp.Data\C4iSytemsMobApp.Data.csproj" />	  
+	  <ProjectReference Include="..\C4iSytemsMobApp.Data\C4iSytemsMobApp.Data.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
