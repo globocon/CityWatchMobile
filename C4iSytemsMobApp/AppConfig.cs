@@ -22,8 +22,13 @@ namespace C4iSytemsMobApp
 
         //#### Added for local testing by Binoy
         //
-        public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.36:92";
-        public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.36:91";
+        //public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.36:92";
+        //public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.36:91";
+        //public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
+
+        // ### TEST SERVER (test.c4i-system.com) — active for tracking feature-pack field testing ###
+        public static string MobileSignalRRCBaseUrl { get; set; } = "https://test-rc.c4i-system.com";
+        public static string MobileSignalRBaseUrl { get; set; } = "https://test.c4i-system.com";
         public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
 
 
