@@ -117,6 +117,10 @@ namespace C4iSytemsMobApp.Services.Tracking
 #if ANDROID
             Platforms.TrackingForegroundServiceHelper.Start();
             _ = RegisterFcmTokenAsync();     // nudge address; best-effort, never blocks login
+            /* Android 13+: notification display (operator messages AND the tracking
+               notification) needs POST_NOTIFICATIONS granted at runtime. Best-effort
+               prompt on the UI thread — never part of the login critical path. */
+            _ = MainThread.InvokeOnMainThreadAsync(PermissionService.RequestPostNotificationsAsync);
 #endif
 
             /* ---- FIELD SELF-TEST (temporary, 8 Aug 2026): proves the app->API positions

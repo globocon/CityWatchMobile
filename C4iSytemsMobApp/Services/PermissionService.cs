@@ -26,6 +26,22 @@ namespace C4iSytemsMobApp.Services
             return always == PermissionStatus.Granted;
         }
 
+        /// <summary>
+        /// Operator messages (tracking feature pack): notification display needs a runtime
+        /// grant on Android 13+ only — earlier versions grant it at install. Android itself
+        /// stops re-prompting after repeated denials, so no once-only bookkeeping here.
+        /// </summary>
+        public static async Task<bool> RequestPostNotificationsAsync()
+        {
+            if (!OperatingSystem.IsAndroidVersionAtLeast(33))
+                return true;
+
+            var status = await Permissions.CheckStatusAsync<Permissions.PostNotifications>();
+            if (status != PermissionStatus.Granted)
+                status = await Permissions.RequestAsync<Permissions.PostNotifications>();
+            return status == PermissionStatus.Granted;
+        }
+
         public static async Task<bool> CheckAndRequestPermissionsAsync()
         {
 #if ANDROID
