@@ -38,16 +38,18 @@
 		<string>This app needs your location to continue. Please allow location access.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>This app requires continuous location access to function properly.</string>
+		<!-- Tracking feature pack (ADD s6.1): the two duplicate UIBackgroundModes keys were
+		     merged - a plist keeps only the LAST duplicate, so the original 'audio' entry was
+		     silently dead. One array now carries all modes, including 'location'. -->
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>audio</string>
-		</array>
-		<key>UIBackgroundModes</key>
-		<array>
 			<!--for connecting to devices (client)-->
 			<string>bluetooth-central</string>
 			<!--for server configurations if needed-->
 			<string>bluetooth-peripheral</string>
+			<!--patrol tracking while the app is backgrounded-->
+			<string>location</string>
 		</array>
 
 		<!--Description of the Bluetooth request message (required on iOS 10, deprecated)-->

@@ -99,6 +99,11 @@ public static class MauiProgram
         // Start connectivity watcher
         var connListener = app.Services.GetService<ConnectivityListener>();
 
+        // Tracking feature pack: hand the singleton its context factory. Tracking itself
+        // starts only when a patrol session opens (server-gated on enrolment + consent).
+        Services.Tracking.TrackingService.Instance.Configure(
+            () => app.Services.GetRequiredService<AppDbContext>());
+
         return app;
     }
 }

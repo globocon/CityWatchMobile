@@ -842,6 +842,10 @@ public partial class GuardLoginPage : ContentPage
                 Preferences.Set("LicenseNumber", licenseNumber);
                 Preferences.Set("IsNewGuard", _isNewGuard);
 
+                /* Tracking is NOT started here: this is only the "verify your details" step.
+                   The car (Position), callsign and patrol-car toggle are not chosen until the
+                   officer taps "Access C4i System". Tracking starts there, after login
+                   succeeds (see StartIfEligibleAsync call in the auth-success block). */
 
                 isLoggedIn = true;
                 btnLogin.Text = "Go Back"; // Change button text
@@ -1145,6 +1149,13 @@ public partial class GuardLoginPage : ContentPage
                     if(App.TourMode != PatrolTouringMode.STND)
                         App.LoadPcarPreferences();
                     Preferences.Set("IsPcarSite", (tourMode == 1).ToString().ToLower());
+
+                    /* Tracking feature pack: login has now SUCCEEDED and every declaration is
+                       set — GuardId, SelectedClientSiteId, IsPatrolCar, SelectedPosition and
+                       App.PcarPostionId (chosen above via CheckForPCAR). Fire-and-forget;
+                       silently does nothing if the unit is not enrolled, consent is missing,
+                       or the server has tracking disabled. */
+                    _ = Services.Tracking.TrackingService.Instance.StartIfEligibleAsync();
 
                     try
                     {

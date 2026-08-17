@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace C4iSytemsMobApp.Services
 {
-    public class SyncService
+    public partial class SyncService // partial: tracking sync lives in SyncService.Tracking.cs
     {
         private readonly Func<AppDbContext> _dbFactory;
         private readonly ISyncApiService _api;
@@ -39,6 +39,7 @@ namespace C4iSytemsMobApp.Services
                 await SyncPatrolCarLogsCache();
                 await SyncCustomFieldLogsCache();
                 await SyncIrRequestsLogsCache();
+                await SyncTrackingPointsCache(); // tracking feature pack; last + exception-isolated (RT7)
             }
             finally
             {
