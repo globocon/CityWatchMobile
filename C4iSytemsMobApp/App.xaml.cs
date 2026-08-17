@@ -31,6 +31,8 @@ namespace C4iSytemsMobApp
         }
         public static int? PcarCallSignId { get; set; } = null;
         public static int? PcarPostionId { get; set; } = null;
+        public static string? DeviceId { get; set; } = null;
+        public static string? DeviceName { get; set; } = null;
 
         private static DateTime? _pcarInspLastScannedTime;
         public static DateTime? PcarInspLastScannedTime

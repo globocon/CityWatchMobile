@@ -16,19 +16,13 @@ using System.Text.Json;
 namespace C4iSytemsMobApp.Services
 {
     public class ScannerControlServices : IScannerControlServices
-    {
-        private readonly IDeviceInfoService infoService;
+    {        
         private readonly IScanDataDbServices _scanDataDbServices;
-        private string devicename;
-        private string deviceid;
         private string deviceType = "Unknown";
         public ScannerControlServices()
         {
             // Constructor logic if needed
-            infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
             _scanDataDbServices = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
-            devicename = infoService?.GetDeviceName();
-            deviceid = infoService?.GetDeviceId();
 
 #if ANDROID
             deviceType = "Android";
@@ -225,6 +219,36 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
+        public async Task<int> GetSmartWandByDeviceIdAsync()
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetSmartWandByDeviceId";
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            try
+            {
+                HttpResponseMessage response = await client.PostAsJsonAsync(apiUrl, App.DeviceId);
+                if (response.IsSuccessStatusCode)
+                {
+                    var taginfo = await response.Content.ReadFromJsonAsync<int>();
+                    return taginfo;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Optionally log error or handle it
+                Console.WriteLine($"Error: {ex.Message}");
+                return 0;
+            }
+            finally
+            {
+                client.Dispose();
+            }
+        }
+
         public async Task CheckIfSmartWandIsDeRegisteredAsync(string _clientSiteId)
         {
             string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/CheckIfSmartWandIsDeRegisteredAsync";
@@ -234,7 +258,7 @@ namespace C4iSytemsMobApp.Services
             {
                 //var json = JsonSerializer.Serialize(deviceid);
                 //var content = new StringContent(json, Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await client.PostAsJsonAsync(apiUrl, deviceid);  //client.PostAsync(apiUrl, content);
+                HttpResponseMessage response = await client.PostAsJsonAsync(apiUrl, App.DeviceId);  //client.PostAsync(apiUrl, content);
                 if (response.IsSuccessStatusCode)
                 {
                     var taginfo = await response.Content.ReadFromJsonAsync<bool>();
@@ -391,8 +415,8 @@ namespace C4iSytemsMobApp.Services
                 EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
                 EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
-                DeviceId = deviceid,
-                DeviceName = devicename,
+                DeviceId = App.DeviceId,
+                DeviceName = App.DeviceName,
                 IsScanFromLinkedSite = _scannedfromlinkedSite
             };
 

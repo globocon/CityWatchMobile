@@ -840,6 +840,7 @@ public partial class GuardLoginPage : ContentPage
                 Preferences.Set("GuardId", guardData.GuardId.ToString());
                 Preferences.Set("GuardName", guardData.Name);
                 Preferences.Set("LicenseNumber", licenseNumber);
+                Preferences.Set("IsNewGuard", _isNewGuard);
 
                 /* Tracking is NOT started here: this is only the "verify your details" step.
                    The car (Position), callsign and patrol-car toggle are not chosen until the
