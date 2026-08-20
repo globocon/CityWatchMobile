@@ -24,9 +24,13 @@ namespace C4iSytemsMobApp.Services.Tracking.Platforms
         {
             CreateChannel();
 
+            /* #153 Part 6: Android will not run a location foreground service without a
+               visible notification, so this cannot be removed — but the wording is the
+               client's (R&D diary): duress accuracy and lost-device recovery are WHY the
+               location is shared, and consent was already given at login. */
             var notification = new NotificationCompat.Builder(this, ChannelId)
-                .SetContentTitle("CityWatch patrol tracking active")
-                .SetContentText("Your patrol location is being shared with the control room.")
+                .SetContentTitle("CityWatch duress & safety active")
+                .SetContentText("Shared with control room for duress accuracy or lost device.")
                 .SetSmallIcon(Resource.Mipmap.appicon)
                 .SetOngoing(true)
                 .SetForegroundServiceBehavior(NotificationCompat.ForegroundServiceImmediate)
