@@ -990,6 +990,27 @@ public partial class GuardLoginPage : ContentPage
         await LoadPositionsData(isPatrolCar);
     }
 
+    /* #153: report this build's version once per successful login. Telemetry only —
+       every failure path ends here, so it can never trouble the login itself. */
+    private static async Task ReportAppVersionAsync(int guardId)
+    {
+        try
+        {
+            var device = $"{DeviceInfo.Current.Manufacturer} {DeviceInfo.Current.Model}, {DeviceInfo.Current.Platform} {DeviceInfo.Current.VersionString}";
+            var url = $"{AppConfig.ApiBaseUrl}Login/ReportAppVersion" +
+                      $"?guardId={guardId}" +
+                      $"&version={Uri.EscapeDataString(AppInfo.Current.VersionString)}" +
+                      $"&platform={DeviceInfo.Current.Platform.ToString().ToLowerInvariant()}" +
+                      $"&deviceInfo={Uri.EscapeDataString(device)}";
+            using var client = new HttpClient();
+            await client.GetAsync(url);
+        }
+        catch
+        {
+            // never bounce a login over telemetry
+        }
+    }
+
     private async void OnEnterLogbookClicked(object sender, EventArgs e)
     {
         btnEnterLogbook.BackgroundColor = Colors.Gray;
@@ -1114,6 +1135,17 @@ public partial class GuardLoginPage : ContentPage
                     gpsCoordinates = _gpsLocation;
             }
 
+            /* #153 P7: approximate-only permission (~2 km deliberate fuzz) must never pass
+               silently as a patrol position. Login continues — the server flags the coarse
+               fixes and the control-room map refuses to draw them — but the officer is
+               told how to fix it at the source. */
+            if (_hasGpsLocationPermission && !PermissionService.HasPreciseLocation())
+            {
+                await DisplayAlert("Precise Location required",
+                    "Precise location is required for patrol tracking. Please enable Precise Location for CityWatch in Settings > Apps > CityWatch > Permissions > Location.",
+                    "OK");
+            }
+
             PostActivityRequest request = new PostActivityRequest()
             {
                 guardId = guardId,
@@ -1156,6 +1188,12 @@ public partial class GuardLoginPage : ContentPage
                        silently does nothing if the unit is not enrolled, consent is missing,
                        or the server has tracking disabled. */
                     _ = Services.Tracking.TrackingService.Instance.StartIfEligibleAsync();
+
+                    /* #153: tell the server what build this phone runs — same fire-and-forget
+                       shape as the tracking start above. Old builds never make this call,
+                       which is itself the office's signal: a guard with no version on file is
+                       on a pre-reporting APK. Must never affect the login. */
+                    _ = ReportAppVersionAsync(guardId);
 
                     try
                     {
