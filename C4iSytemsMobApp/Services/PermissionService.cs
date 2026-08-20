@@ -27,6 +27,22 @@ namespace C4iSytemsMobApp.Services
         }
 
         /// <summary>
+        /// #153 P7: Android 12+ lets the user grant only APPROXIMATE location (~2 km fuzz).
+        /// LocationWhenInUse reports Granted either way, so this is the only honest check.
+        /// A patrol tracker must never mistake approximate for a patrol position — callers
+        /// show the "enable Precise Location" message when this returns false.
+        /// </summary>
+        public static bool HasPreciseLocation()
+        {
+#if ANDROID
+            return Android.App.Application.Context.CheckSelfPermission(Android.Manifest.Permission.AccessFineLocation)
+                   == Android.Content.PM.Permission.Granted;
+#else
+            return true;
+#endif
+        }
+
+        /// <summary>
         /// Operator messages (tracking feature pack): notification display needs a runtime
         /// grant on Android 13+ only — earlier versions grant it at install. Android itself
         /// stops re-prompting after repeated denials, so no once-only bookkeeping here.

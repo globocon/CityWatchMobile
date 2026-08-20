@@ -1135,6 +1135,17 @@ public partial class GuardLoginPage : ContentPage
                     gpsCoordinates = _gpsLocation;
             }
 
+            /* #153 P7: approximate-only permission (~2 km deliberate fuzz) must never pass
+               silently as a patrol position. Login continues — the server flags the coarse
+               fixes and the control-room map refuses to draw them — but the officer is
+               told how to fix it at the source. */
+            if (_hasGpsLocationPermission && !PermissionService.HasPreciseLocation())
+            {
+                await DisplayAlert("Precise Location required",
+                    "Precise location is required for patrol tracking. Please enable Precise Location for CityWatch in Settings > Apps > CityWatch > Permissions > Location.",
+                    "OK");
+            }
+
             PostActivityRequest request = new PostActivityRequest()
             {
                 guardId = guardId,
