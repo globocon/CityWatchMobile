@@ -1696,7 +1696,9 @@ namespace C4iSytemsMobApp
 
         private async Task LogScannedDataToCache(string _TagUid, ScanningType _scannerType)
         {
-            await ShowToastMessage($"[{ALERT_TITLE}] Tag scanned. Logging activity to Cache...");
+            /* P4#153: offline scan gets the same popup, amber - no server reply means no
+               site name, so the guard is told it saved and will sync. */
+            var offlinePopup = ScanFeedback.Show(this, "Saved to phone", null, "No connection - will sync when online", ScanFeedbackKind.Offline);
             var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
             if (isSuccess)
             {
@@ -1704,11 +1706,11 @@ namespace C4iSytemsMobApp
                 {
                     SyncState.SyncedCount = _ChaceCount;
                 });
-                await ShowToastMessage($"{msg}");
+                offlinePopup.Complete(true, msg ?? "Saved - will sync when online");
             }
             else
             {
-                await DisplayAlert("Error", msg ?? "Failed to save tag scan", "OK");
+                offlinePopup.Complete(false, msg ?? "Failed to save tag scan", 3000);
             }
         }
 
@@ -1828,25 +1830,31 @@ namespace C4iSytemsMobApp
                 {
                     if (scannerSettings.IsSuccess)
                     {
-                        var SnackbarMessage = scannerSettings.tagInfoLabel.Length > 35 ? $"{(scannerSettings.tagInfoLabel.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : scannerSettings.tagInfoLabel.Replace("\"", "").Replace("'", "");
-                        await ShowToastMessage($"[{ALERT_TITLE}] {SnackbarMessage} scanned. Logging activity...");
+                        /* P4#153: the popup replaces the 35-char toast. The site the tag
+                           belongs to is the headline - the whole point of PCAR is that the
+                           guard can read where they are. */
+                        var headline = !string.IsNullOrWhiteSpace(scannerSettings.TagSiteName)
+                            ? scannerSettings.TagSiteName
+                            : (scannerSettings.tagFound ? "Tag scanned" : "Unknown tag");
+                        var detail = ScanFeedback.DetailWithoutSitePrefix(scannerSettings.tagInfoLabel, scannerSettings.TagSiteName);
+                        var scanPopup = ScanFeedback.Show(this, headline, detail, "Logging activity...", ScanFeedbackKind.Success);
 
                         // Valid tag - log activity
                         int _scannerType = (int)ScanningType.NFC;
                         var _taguid = serialNumber;
                         if (!scannerSettings.tagFound) { _taguid = "NA"; }
                         int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
-                        await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer);
+                        await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer, scanPopup);
                     }
                     else
                     {
-                        await DisplayAlert(ALERT_TITLE, scannerSettings?.message ?? "Unknown error", "OK");
+                        ScanFeedback.Show(this, "Scan failed", scannerSettings?.message ?? "Unknown error", string.Empty, ScanFeedbackKind.Error, 3000);
                         return;
                     }
                 }
                 else
                 {
-                    await DisplayAlert(ALERT_TITLE, scannerSettings?.message ?? "Unknown error", "OK");
+                    ScanFeedback.Show(this, "Scan failed", "Unknown error", string.Empty, ScanFeedbackKind.Error, 3000);
                     return;
                 }
 
@@ -2082,7 +2090,6 @@ namespace C4iSytemsMobApp
                     await LogBLEScannedDataToCache(serialNumber, deviceName, ScanningType.BLUETOOTH);
                     return;
                 }
-                await ShowToastMessage($"[{BLE_ALERT_TITLE}] Device Found:{deviceName}. Logging activity...");
                 var scannerSettings = await _scannerControlServices.FetchTagInfoDetailsAsync(_clientSiteId.ToString(), serialNumber, _guardId.ToString(), _userId.ToString(), ScanningType.BLUETOOTH);
                 if (scannerSettings != null)
                 {
@@ -2093,8 +2100,14 @@ namespace C4iSytemsMobApp
                         var _taguid = serialNumber;
                         if (scannerSettings.tagFound)
                         {
+                            /* P4#153: popup instead of the toast, same as NFC. BLE failure
+                               paths stay on toasts - continuous scanning trips the 60s
+                               duplicate check routinely and popups would spam the guard. */
+                            var headline = !string.IsNullOrWhiteSpace(scannerSettings.TagSiteName) ? scannerSettings.TagSiteName : "Device found";
+                            var detail = ScanFeedback.DetailWithoutSitePrefix(scannerSettings.tagInfoLabel, scannerSettings.TagSiteName);
+                            var scanPopup = ScanFeedback.Show(this, headline, detail, "Logging activity...", ScanFeedbackKind.Success);
                             int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
-                            LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer);
+                            LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer, scanPopup);
                         }
 
                     }
@@ -2118,7 +2131,7 @@ namespace C4iSytemsMobApp
 
         private async Task LogBLEScannedDataToCache(string _TagUid, string _deviceName, ScanningType _scannerType)
         {
-            await ShowToastMessage($"[{BLE_ALERT_TITLE}] Device Found:{_deviceName}. Logging activity to Cache.");
+            var offlinePopup = ScanFeedback.Show(this, "Saved to phone", $"Device: {_deviceName}", "No connection - will sync when online", ScanFeedbackKind.Offline);
             var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
             if (isSuccess)
             {
@@ -2126,38 +2139,49 @@ namespace C4iSytemsMobApp
                 {
                     SyncState.SyncedCount = _ChaceCount;
                 });
-                //await ShowToastMessage($"{msg}");
-                await ShowToastMessage($"{msg}");
+                offlinePopup.Complete(true, msg ?? "Saved - will sync when online");
             }
             else
             {
-                var newmsg = msg ?? "Failed to save tag scan.";
-                await ShowToastMessage($"{newmsg}");
+                offlinePopup.Complete(false, msg ?? "Failed to save tag scan", 3000);
             }
         }
 
         #endregion "BLE Methods"
 
-        private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
+        private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0, ScanFeedbackPopup scanPopup = null)
         {
             var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, null, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
             if (isSuccess)
             {
                 if (scanningType == (int)ScanningType.NFC)
                 {
-                    var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
-                    await ShowToastMessage($"[{ALERT_TITLE}] {SnackbarMessage.Replace("[NFC]", "")} log entry added.");
+                    if (scanPopup != null) { scanPopup.Complete(true, "Log entry added"); }
+                    else
+                    {
+                        var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
+                        await ShowToastMessage($"[{ALERT_TITLE}] {SnackbarMessage.Replace("[NFC]", "")} log entry added.");
+                    }
                 }
                 else if (scanningType == (int)ScanningType.BLUETOOTH)
                 {
-                    var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
-                    await ShowToastMessage($"[{BLE_ALERT_TITLE}] {SnackbarMessage.Replace("[BLE]", "")} log entry added.");
+                    if (scanPopup != null) { scanPopup.Complete(true, "Log entry added"); }
+                    else
+                    {
+                        var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
+                        await ShowToastMessage($"[{BLE_ALERT_TITLE}] {SnackbarMessage.Replace("[BLE]", "")} log entry added.");
+                    }
                 }
                 else
                     await ShowToastMessage(msg);
             }
             else
             {
+                if (scanPopup != null)
+                {
+                    scanPopup.Complete(false, msg ?? "Failed to log activity", 3000);
+                    return;
+                }
                 var alertHead = "Error";
                 if (scanningType == (int)ScanningType.NFC)
                 {

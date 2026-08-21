@@ -33,6 +33,8 @@
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 	<uses-permission android:name="android.permission.NFC" />
+	<!-- P4#153 scan feedback popup: short vibration paired with the scan beep. -->
+	<uses-permission android:name="android.permission.VIBRATE" />
 	<uses-feature android:name="android.hardware.nfc" android:required="false" />
 	<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
