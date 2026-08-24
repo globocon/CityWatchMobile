@@ -62,7 +62,7 @@ namespace C4iSytemsMobApp.Services.Tracking
         /// tracking disabled — the officer's workflow is identical either way.</summary>
         public async Task StartIfEligibleAsync()
         {
-            if (IsTracking || _dbFactory == null)
+            if (_dbFactory == null)
                 return;
 
             var guardId = int.TryParse(Preferences.Get("GuardId", ""), out var g) ? g : 0;
@@ -89,11 +89,40 @@ namespace C4iSytemsMobApp.Services.Tracking
                 ? PositionUnitOffset + positionId.Value
                 : GuardUnitOffset + guardId;
 
+            /* A running loop is NOT proof of a live session. A session ended server-side by
+               takeover ('SupersededByNewSession') or the reaper never tells the phone, so the
+               sampler keeps running as a zombie — and until 24 Aug 2026 an IsTracking
+               early-return here silently skipped every later login, leaving the unit off the
+               map until the app was killed (the Romeo 6-cars-showing-3 incident). A login is
+               the moment to re-sync with the server's truth: stop the local loop and ask
+               session/start again. Same guard + same unit gets its Active session back
+               (seq resumes from Preferences), so nothing is lost on a healthy re-login. */
+            if (IsTracking)
+            {
+                var stale = _loop;
+                _loop = null;
+                stale?.Cancel();
+
+                if (_sessionId != Guid.Empty && _unitId != unitId)
+                {
+                    /* The guard changed cars/units: close the old unit's session properly so
+                       its marker leaves the map now instead of lingering until the reaper. */
+                    try { await UploadPendingAsync(); } catch { /* backfill covers it */ }
+                    try { await _api.EndSessionAsync(_sessionId); } catch { /* best-effort */ }
+                }
+                _sessionId = Guid.Empty;
+            }
+
             var session = await _api.StartSessionAsync(unitId, guardId, siteId, isPatrolCar, callsign,
                 positionId, positionName);
             if (session == null)
             {
                 Console.WriteLine($"[Tracking] start refused/unreachable for unit {unitId}");
+#if ANDROID
+                /* If a zombie loop was just cancelled, its foreground service must not
+                   outlive it. Stopping an un-started service is a harmless no-op. */
+                Platforms.TrackingForegroundServiceHelper.Stop();
+#endif
                 return;   // not enrolled / no consent / tracking off — by design, silent
             }
             Console.WriteLine($"[Tracking] session {session.SessionId} started, unit {unitId}");
@@ -123,22 +152,6 @@ namespace C4iSytemsMobApp.Services.Tracking
             _ = MainThread.InvokeOnMainThreadAsync(PermissionService.RequestPostNotificationsAsync);
 #endif
 
-            /* ---- FIELD SELF-TEST (temporary, 8 Aug 2026): proves the app->API positions
-               pipe with NO GPS involved. One fixed synthetic point (9.6700, 76.8100 — Poonjar
-               test marker), cached and uploaded immediately. If this row reaches TrackPoint,
-               the upload path is healthy and only fix acquisition can be at fault.
-               REMOVE once the field issue is closed. */
-            try
-            {
-                Console.WriteLine("[Tracking] self-test: sending synthetic point");
-                await KeepAsync(new Location(9.6700, 76.8100) { Timestamp = DateTimeOffset.UtcNow }, "transit");
-                await UploadPendingAsync();
-                Console.WriteLine("[Tracking] self-test: done (check TrackPoint for 9.67/76.81)");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[Tracking] self-test FAILED: {ex.GetType().Name} {ex.Message}");
-            }
         }
 
         /// <summary>The hard stop (§13.5): called on logout. Flushes what it can, ends the

@@ -1075,6 +1075,25 @@ public partial class GuardLoginPage : ContentPage
 
             if (CheckForPCAR())
             {
+                /* A patrol-car login MUST say which car it is. The Position is the tracked
+                   unit's identity and the Callsign its radio label — without them the session
+                   silently keys to the guard instead of the car, which is how six Romeo cars
+                   collapsed to three on the live map (24 Aug 2026). */
+                if (switchPatrolCar.IsToggled)
+                {
+                    if (SelectedPosition == null || SelectedPosition.Id <= 0
+                        || SelectedPosition.Name == "Select" || SelectedPosition.Name == "- Select -")
+                    {
+                        await DisplayAlert("Validation Error", "Mobile Patrol Car is ON: please select your car under Position.", "OK");
+                        return;
+                    }
+                    if (string.IsNullOrEmpty(SelectedCallsign) || SelectedCallsign == "- Select -" || SelectedCallsignObj == null)
+                    {
+                        await DisplayAlert("Validation Error", "Mobile Patrol Car is ON: please select your Callsign.", "OK");
+                        return;
+                    }
+                }
+
                 // Save Position and Callsign for later use in IR
                 Preferences.Set("IsPatrolCar", switchPatrolCar.IsToggled);
 
