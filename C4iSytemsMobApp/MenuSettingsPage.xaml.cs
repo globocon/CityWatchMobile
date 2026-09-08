@@ -1,4 +1,5 @@
 using C4iSytemsMobApp.Interface;
+using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
 using C4iSytemsMobApp.Views;
 
@@ -64,9 +65,9 @@ public partial class MenuSettingsPage : ContentPage
         //DisplayAlert("Add Tags", "New feature coming soon...", "OK");
 
         var popup = new AddDevicePopup();
-        var result = await this.ShowPopupAsync(popup);
+        var popupResult = await this.ShowPopupAsync<string>(popup);
 
-        if (result is string action)
+        if (popupResult.Result is string action)
         {
             //if (!(Application.Current.MainPage is NavigationPage))
             //    Application.Current.MainPage = new NavigationPage(Application.Current.MainPage);

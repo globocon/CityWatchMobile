@@ -3,7 +3,7 @@ using CommunityToolkit.Maui.Views;
 
 namespace C4iSytemsMobApp.Views;
 
-public partial class EditLogPopup : Popup
+public partial class EditLogPopup : Popup<DictionaryWrapper>
 {
     private readonly DictionaryWrapper _item;
     private readonly Dictionary<string, Entry> _editEntries = new();
@@ -51,12 +51,12 @@ public partial class EditLogPopup : Popup
         }
     }
 
-    private void OnCancelClicked(object sender, EventArgs e)
+    private async void OnCancelClicked(object sender, EventArgs e)
     {
-        Close(); // Just close without returning anything
+        await CloseAsync(); // Just close without returning anything
     }
 
-    private void OnSaveClicked(object sender, EventArgs e)
+    private async void OnSaveClicked(object sender, EventArgs e)
     {
         // Update KeyValues with edited values
         foreach (var key in _editEntries.Keys)
@@ -69,6 +69,6 @@ public partial class EditLogPopup : Popup
             }
         }
 
-        Close(_item); // Return updated data to caller
+        await CloseAsync(_item); // Return updated data to caller
     }
 }

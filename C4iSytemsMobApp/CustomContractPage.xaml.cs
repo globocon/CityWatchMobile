@@ -2,6 +2,7 @@ using AutoMapper;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Views;
+using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -84,9 +85,9 @@ public partial class CustomContractPage : ContentPage
     private async void OnEditClicked(DictionaryWrapper item)
     {
         var popup = new EditLogPopup(item);
-        var result = await this.ShowPopupAsync(popup);
+        var popupResult = await this.ShowPopupAsync<DictionaryWrapper>(popup);
 
-        if (result is DictionaryWrapper updated)
+        if (popupResult.Result is DictionaryWrapper updated)
         {
             // Reflect the updated values in the CollectionView
             //int index = Logs.IndexOf(item);

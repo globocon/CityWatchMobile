@@ -36,7 +36,10 @@
 	<!-- P4#153 scan feedback popup: short vibration paired with the scan beep. -->
 	<uses-permission android:name="android.permission.VIBRATE" />
 	<uses-feature android:name="android.hardware.nfc" android:required="false" />
-	<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+	<!-- REQUEST_INSTALL_PACKAGES (sideload self-update) is NOT declared here: Google Play
+	     rejects it for apps that aren't installers. Sideload builds get it back through
+	     Platforms/Android/SideloadManifestOverlay.xml (any build without
+	     -p:PlayStoreBuild=true), pairing with the PLAYSTORE gate in AppUpdateService. -->
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
@@ -46,6 +49,8 @@
 	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 	<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 	<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-	<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+	<!-- Google Play requires target API 36 (Android 16) for app updates since Aug 2026;
+	     min 24 is the floor .NET 10's Android support builds against. -->
+	<uses-sdk android:minSdkVersion="24" android:targetSdkVersion="36" />
 	<uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
 </manifest>

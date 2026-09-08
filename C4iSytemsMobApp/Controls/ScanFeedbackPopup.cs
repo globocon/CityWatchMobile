@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls.Shapes;
 
@@ -30,9 +31,8 @@ namespace C4iSytemsMobApp.Controls
 
         public ScanFeedbackPopup(string headline, string detail, string status, ScanFeedbackKind kind)
         {
-            Color = Colors.Transparent;
-            CanBeDismissedByTappingOutsideOfPopup = true;
-
+            // Toolkit v15 popups: surface transparency and tap-outside dismissal are
+            // defaults / PopupOptions concerns now, not popup properties.
             _iconGlyph = new Label
             {
                 Text = kind == ScanFeedbackKind.Error ? "✕" : "✓",
@@ -155,7 +155,7 @@ namespace C4iSytemsMobApp.Controls
             _closed = true;
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                try { Close(); } catch { }
+                try { _ = CloseAsync(); } catch { }
             });
         }
     }

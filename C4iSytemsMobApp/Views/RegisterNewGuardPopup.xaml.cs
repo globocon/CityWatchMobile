@@ -10,7 +10,7 @@ using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-public partial class RegisterNewGuardPopup : Popup
+public partial class RegisterNewGuardPopup : Popup<string>
 {
     public ObservableCollection<DropdownItem> Genders { get; set; } = new();
     public ObservableCollection<DropdownItem> States { get; set; } = new();
@@ -92,7 +92,7 @@ public partial class RegisterNewGuardPopup : Popup
         else {             
             await Application.Current.MainPage.DisplayAlert("Success", errorMessage, "OK");
             _guardSecurityNumber = newGuard.SecurityNo;
-            Close(_guardSecurityNumber);
+            await CloseAsync(_guardSecurityNumber);
         }       
     }
 
@@ -215,9 +215,9 @@ public partial class RegisterNewGuardPopup : Popup
     }
 
 
-    private void OnCancelClicked(object sender, EventArgs e)
+    private async void OnCancelClicked(object sender, EventArgs e)
     {
-        Close("Cancel");
+        await CloseAsync("Cancel");
     }
 
     private void OnFullNameTextChanged(object sender, TextChangedEventArgs e)

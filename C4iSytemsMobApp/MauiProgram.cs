@@ -25,7 +25,7 @@ public static class MauiProgram
             .UseMauiApp<App>()
             // Initialize the .NET MAUI Community Toolkit by adding the below line of code
             .UseMauiCommunityToolkit()   // 👈 Add this
-            .UseMauiCommunityToolkitMediaElement()      // 👈 Required
+            .UseMauiCommunityToolkitMediaElement(isAndroidForegroundServiceEnabled: false)      // 👈 Required; no background playback, so no media foreground service (keeps the Play manifest lean)
             .UseMauiCommunityToolkitCamera()            // 👈 In-app camera preview (logbook image picker)
                                                         // Initialize the .NET MAUI Community Toolkit MediaElement by adding the below line of code
                                                         //.UseMauiCommunityToolkitMediaElement()

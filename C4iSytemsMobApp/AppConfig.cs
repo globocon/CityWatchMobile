@@ -8,10 +8,19 @@ namespace C4iSytemsMobApp
         ////public static string MobileSignalRBaseUrl { get; set; } = "https://cws-ir.com";
         ////public static string MobileSignalRRCBaseUrl { get; set; } = "https://rc.cws-ir.com";
 
+#if PLAYSTORE
+        // The store variant (-p:PlayStoreBuild=true) ALWAYS talks to live — a Play build
+        // pointing at the internal test server would be dead on arrival, and the manual
+        // URL flip used for sideload publishes is exactly the step this removes.
+        public static string MobileSignalRRCBaseUrl { get; set; } = "https://rc.cws-ir.com";
+        public static string MobileSignalRBaseUrl { get; set; } = "https://cws-ir.com";
+        public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
+#else
         // ### Test Url ####
         public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.36:92";
         public static string MobileSignalRBaseUrl { get; set; } = "http://test.c4i-system.com";
         public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
+#endif
 
 
 

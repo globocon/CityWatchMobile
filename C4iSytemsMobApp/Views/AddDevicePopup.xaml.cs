@@ -3,25 +3,25 @@ using CommunityToolkit.Maui.Views;
 
 namespace C4iSytemsMobApp.Views;
 
-public partial class AddDevicePopup : Popup
+public partial class AddDevicePopup : Popup<string>
 {
     public AddDevicePopup()
     {
         InitializeComponent();
     }
 
-    private void OnAddNfcClicked(object sender, EventArgs e)
+    private async void OnAddNfcClicked(object sender, EventArgs e)
     {
-        Close("NFC");
+        await CloseAsync("NFC");
     }
 
-    private void OnAddIBeaconClicked(object sender, EventArgs e)
+    private async void OnAddIBeaconClicked(object sender, EventArgs e)
     {
-        Close("IBeacon");
+        await CloseAsync("IBeacon");
     }
 
-    private void OnCancelClicked(object sender, EventArgs e)
+    private async void OnCancelClicked(object sender, EventArgs e)
     {
-        Close("Cancel");
+        await CloseAsync("Cancel");
     }
 }

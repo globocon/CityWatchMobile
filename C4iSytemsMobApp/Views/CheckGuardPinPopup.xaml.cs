@@ -4,7 +4,7 @@ using CommunityToolkit.Maui.Views;
 
 namespace C4iSytemsMobApp.Views;
 
-public partial class CheckGuardPinPopup : Popup
+public partial class CheckGuardPinPopup : Popup<string>
 {
     private readonly IGuardApiServices _guardApiServices;
     public CheckGuardPinPopup()
@@ -14,9 +14,9 @@ public partial class CheckGuardPinPopup : Popup
     }
 
 
-    private void OnCancelClicked(object sender, EventArgs e)
+    private async void OnCancelClicked(object sender, EventArgs e)
     {
-        Close("Cancel");
+        await CloseAsync("Cancel");
     }
 
     private async void OnOkClicked(object sender, EventArgs e)
@@ -37,11 +37,11 @@ public partial class CheckGuardPinPopup : Popup
             return;
         }
 
-        Close("OK");
+        await CloseAsync("OK");
     }
 
-    private void OnForgotPasswordClicked(object sender, EventArgs e)
+    private async void OnForgotPasswordClicked(object sender, EventArgs e)
     {
-        Close("ForgotPassword");
+        await CloseAsync("ForgotPassword");
     }
 }

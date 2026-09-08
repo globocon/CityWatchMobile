@@ -7,6 +7,8 @@ using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Services;
 using C4iSytemsMobApp.Views;
+using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls;
 using System;
@@ -1693,9 +1695,10 @@ public partial class GuardLoginPage : ContentPage
         _isPopupOpen = true;
 
         var popup = new RegisterNewGuardPopup();
-        var result = await this.ShowPopupAsync(popup);
+        var popupResult = await this.ShowPopupAsync<string>(popup,
+            new PopupOptions { CanBeDismissedByTappingOutsideOfPopup = false });
 
-        if (result is string action)
+        if (popupResult.Result is string action)
         {
             if (!string.IsNullOrEmpty(action))
             {

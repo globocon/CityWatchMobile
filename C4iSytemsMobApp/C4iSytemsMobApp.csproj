@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
-		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
+		<TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net8.0-tizen</TargetFrameworks> -->
 
@@ -21,6 +21,10 @@
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<!-- NU1605 = the deliberate Resizetizer 10.0.101 -> 10.0.90 downgrade (see the pinned
+		     PackageReference below); build-task-only package, so the downgrade never reaches
+		     the shipped app. -->
+		<NoWarn>$(NoWarn);NU1605</NoWarn>
 
 		<!-- Display name -->
 		<ApplicationTitle>C4i System</ApplicationTitle>
@@ -28,13 +32,15 @@
 		<!-- App Identifier -->
 		<ApplicationId>com.C4isystem.c4isystemsmobapp</ApplicationId>
 
-		<!-- Versions -->
-		<ApplicationDisplayVersion>1.53.3</ApplicationDisplayVersion>
-		<ApplicationVersion>1</ApplicationVersion>
+		<!-- Versions. ApplicationVersion is Android's versionCode: Google Play requires every
+		     upload to carry a higher value than the last accepted bundle, so bump BOTH lines
+		     for each store release (convention: 1.56.0 -> versionCode 156). -->
+		<ApplicationDisplayVersion>1.56.0</ApplicationDisplayVersion>
+		<ApplicationVersion>156</ApplicationVersion>
 
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
@@ -68,9 +74,9 @@
 
 	<ItemGroup>
 		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
-		<PackageReference Include="CommunityToolkit.Maui" Version="8.0.1" />
-		<PackageReference Include="CommunityToolkit.Maui.Camera" Version="1.0.5" />
-		<PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="4.0.0" />
+		<PackageReference Include="CommunityToolkit.Maui" Version="15.0.1" />
+		<PackageReference Include="CommunityToolkit.Maui.Camera" Version="6.1.0" />
+		<PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="10.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.16" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.22">
 		  <PrivateAssets>all</PrivateAssets>
@@ -81,38 +87,61 @@
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.100" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.101" />
+		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.101" />
+		<!-- Pinned BELOW MauiVersion on purpose: 10.0.101's Resizetizer throws
+		     MissingMethodException (SkiaSharp/Svg.Skia pair mismatch) on any SVG that
+		     uses text or filter effects. Remove the pin when a fixed MAUI ships. -->
+		<PackageReference Include="Microsoft.Maui.Resizetizer" Version="10.0.90" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.11" />
 		<PackageReference Include="Plugin.BLE" Version="3.2.0" />
 		<PackageReference Include="Plugin.Maui.Audio" Version="3.0.1" />
 		<PackageReference Include="Plugin.MediaManager" Version="1.2.2" />
 		<PackageReference Include="Plugin.NFC" Version="0.1.26" />
-		<PackageReference Include="ZXing.Net.Maui" Version="0.4.0" />
-		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.4.0" />
+		<PackageReference Include="ZXing.Net.Maui" Version="0.10.4" />
+		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.10.4" />
 	</ItemGroup>
 
-	<!-- FCM remote nudge (tracking §Push). Android only. Version verified against nuget.org
-	     12 Aug 2026: Xamarin.Firebase.Messaging 123.4.1.2 targets net8.0-android34.0 — this
-	     app's TFM and target SDK — with the AndroidX 1.7-era dependency set that coexists
-	     with MAUI 8.0.100 + CommunityToolkit.Maui.Camera 1.0.5 (the newer 124.x line pulls
-	     AndroidX.Collection 1.5, which Camera pins below 1.4.1 — NU1107).
+	<!-- FCM remote nudge (tracking §Push). Android only. 125.1.1.1 pairs with the AndroidX
+	     generation MAUI 10 itself pulls (the old 123.x pin and its .Ktx shims existed only
+	     to coexist with MAUI 8 + Camera 1.0.5 — both gone with the API-36 migration).
 	     google-services.json is the per-environment Firebase client config: included only
 	     when present so any checkout still builds without it, and it stays OUT of source
 	     control (.gitignore). -->
 	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-		<PackageReference Include="Xamarin.Firebase.Messaging" Version="123.4.1.2" />
+		<PackageReference Include="Xamarin.Firebase.Messaging" Version="125.1.1.1" />
 		<GoogleServicesJson Include="Platforms\Android\google-services.json" Condition="Exists('Platforms\Android\google-services.json')" />
-		<!-- AndroidX .Ktx shims pinned to their base packages' resolved versions. Without
-		     these, Firebase's transitive graph leaves e.g. Activity.Ktx at 1.7 while
-		     Activity resolves 1.9 — and androidx 1.8+ merged the ktx classes into the base
-		     jar, so the old separate ktx jar defines the same classes twice and D8 fails
-		     ("Type androidx.activity.ActivityViewModelLazyKt$viewModels$1 is defined
-		     multiple times"). At these versions the .Ktx packages are empty pass-throughs. -->
-		<PackageReference Include="Xamarin.AndroidX.Activity.Ktx" Version="1.9.0.3" />
-		<PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.7.0.2" />
-		<PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Ktx" Version="2.7.0.4" />
-		<PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Ktx" Version="2.7.0.4" />
+		<!-- AndroidX .Ktx shims pinned LEVEL with their base packages (same story as the
+		     old MAUI-8 pins): androidx merged the ktx classes into the base jars, so a
+		     .Ktx package older than its base ships the same classes twice and D8 fails
+		     ("androidx/fragment/app/FragmentKt.class"). At matching versions the .Ktx
+		     packages are empty pass-throughs. Versions = the bases MAUI 10.0.101 +
+		     Firebase 125.1.1.1 resolve; re-level after any bump of either. -->
+		<PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.9.0" />
+		<PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.6.0.1" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.11.0.1" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core.Ktx" Version="2.11.0.1" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.Process" Version="2.11.0.1" />
+		<PackageReference Include="Xamarin.AndroidX.Tracing.Tracing.Ktx" Version="2.0.0" />
+	</ItemGroup>
+
+	<!-- Google Play build: `-p:PlayStoreBuild=true` produces the store variant. Play policy
+	     forbids REQUEST_INSTALL_PACKAGES for apps that are not installers, and a store app
+	     must update THROUGH the store — so the main manifest omits the permission, the
+	     PLAYSTORE constant compiles the sideload self-update flow out (AppUpdateService)
+	     and points AppConfig at live. A plain build merges the sideload overlay back in,
+	     keeping today's sideload behaviour unchanged. (Additive overlay on purpose: the
+	     legacy merger ignores tools:node="remove", so subtracting is not reliable.) -->
+	<PropertyGroup Condition="'$(PlayStoreBuild)' == 'true'">
+		<DefineConstants>$(DefineConstants);PLAYSTORE</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup>
+		<!-- Overlay merging needs the real (Gradle-style) manifest merger on both variants,
+		     so the two builds differ only by the overlay itself. -->
+		<AndroidManifestMerger>manifestmerger.jar</AndroidManifestMerger>
+	</PropertyGroup>
+	<ItemGroup Condition="'$(PlayStoreBuild)' != 'true' AND $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<AndroidManifestOverlay Include="Platforms\Android\SideloadManifestOverlay.xml" />
 	</ItemGroup>
 
 	<ItemGroup>
