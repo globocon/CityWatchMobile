@@ -312,12 +312,12 @@ public partial class PcarRute : ContentPage
 
             if (hasOn)
             {
-                timeOn = TimeOnSitePicker.Time.ToString(@"hh\:mm");
+                timeOn = (TimeOnSitePicker.Time ?? TimeSpan.Zero).ToString(@"hh\:mm");
             }
 
             if (hasOff)
             {
-                timeOff = TimeOffSitePicker.Time.ToString(@"hh\:mm");
+                timeOff = (TimeOffSitePicker.Time ?? TimeSpan.Zero).ToString(@"hh\:mm");
 
                 if (hasOn && TimeOnSitePicker.Time >= TimeOffSitePicker.Time)
                 {

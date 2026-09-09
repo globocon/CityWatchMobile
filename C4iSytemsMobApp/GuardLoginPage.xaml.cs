@@ -7,6 +7,8 @@ using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Services;
 using C4iSytemsMobApp.Views;
+using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls;
 using System;
@@ -108,12 +110,37 @@ public partial class GuardLoginPage : ContentPage
                 if (value != null && value.Name != "- Select -")
                 {
                     SelectedCallsign = value.Name;
+                    SnapPositionToCallsign();
                 }
                 else
                 {
                     SelectedCallsign = string.Empty;
                 }
             }
+        }
+    }
+
+    /* The callsign IS the car — crews think "R4", never "position 41". When the chosen
+       callsign names a patrol-car Position ("Mobile Patrols (Car) R4"), that Position
+       wins over whatever the auto-restore pre-filled. This is what un-sticks a phone
+       still remembering the shared M1 from before the fleet got its own positions
+       (25 Aug 2026: twelve Romeo logins, one tracking unit, one car on the map). */
+    private void SnapPositionToCallsign()
+    {
+        try
+        {
+            if (switchPatrolCar == null || !switchPatrolCar.IsToggled) return;
+            if (Positions == null || string.IsNullOrEmpty(SelectedCallsign) || SelectedCallsign == "- Select -") return;
+            var match = Positions.FirstOrDefault(p => p.Id > 0 && p.Name != null &&
+                p.Name.TrimEnd().EndsWith(") " + SelectedCallsign, StringComparison.OrdinalIgnoreCase));
+            if (match == null) return;                    // callsign names no car: keep the officer's choice
+            if (SelectedPosition != null && SelectedPosition.Id == match.Id) return;
+            SelectedPosition = match;
+            if (pickerPosition != null) pickerPosition.SelectedItem = match;
+        }
+        catch
+        {
+            /* never let a convenience snap break the login flow */
         }
     }
 
@@ -1081,6 +1108,11 @@ public partial class GuardLoginPage : ContentPage
                    collapsed to three on the live map (24 Aug 2026). */
                 if (switchPatrolCar.IsToggled)
                 {
+                    /* Safety net for the stale-preference trap: the auto-restored Position
+                       may still be the old shared car; the callsign chosen for THIS shift
+                       decides, right before anything is validated or saved. */
+                    SnapPositionToCallsign();
+
                     if (SelectedPosition == null || SelectedPosition.Id <= 0
                         || SelectedPosition.Name == "Select" || SelectedPosition.Name == "- Select -")
                     {
@@ -1663,9 +1695,10 @@ public partial class GuardLoginPage : ContentPage
         _isPopupOpen = true;
 
         var popup = new RegisterNewGuardPopup();
-        var result = await this.ShowPopupAsync(popup);
+        var popupResult = await this.ShowPopupAsync<string>(popup,
+            new PopupOptions { CanBeDismissedByTappingOutsideOfPopup = false });
 
-        if (result is string action)
+        if (popupResult.Result is string action)
         {
             if (!string.IsNullOrEmpty(action))
             {

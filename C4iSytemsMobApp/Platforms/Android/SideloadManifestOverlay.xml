@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Merged on top of AndroidManifest.xml for every build EXCEPT -p:PlayStoreBuild=true.
+     Sideload builds self-update by downloading and installing an APK from the CityWatch
+     server, which needs this permission; Google Play prohibits it, so the store variant
+     never carries it. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+	<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+</manifest>

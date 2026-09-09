@@ -5,6 +5,7 @@ using C4iSytemsMobApp.Data.Entity;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Views;
+using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -89,9 +90,9 @@ public partial class PatrolCarPage : ContentPage
     private async void OnEditClicked(PatrolCarLog item)
     {
         var popup = new EditPatrolCarLogPopup(item);
-        var result = await this.ShowPopupAsync(popup);
+        var popupResult = await this.ShowPopupAsync<Models.PatrolCarLog>(popup);
 
-        if (result is PatrolCarLog updated)
+        if (popupResult.Result is PatrolCarLog updated)
         {
             // Reflect the updated values in the CollectionView
             //int index = Logs.IndexOf(item);

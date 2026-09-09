@@ -26,7 +26,13 @@ namespace C4iSytemsMobApp.Services
 
         public async Task<bool> CheckForUpdateAsync()
         {
-#if ANDROID
+#if PLAYSTORE
+            // Store builds update through Google Play; the sideload flow (download APK,
+            // fire the install intent) is compiled out — the permission it needs is
+            // stripped from the store manifest and Play policy forbids it anyway.
+            await Task.CompletedTask;
+            return false;
+#elif ANDROID
         try
         {
             var currentVersion = Version.Parse(AppInfo.Current.VersionString);
@@ -86,7 +92,10 @@ namespace C4iSytemsMobApp.Services
 
         public async Task<bool> CheckForUpdateInBackgroundAsync()
         {
-#if ANDROID
+#if PLAYSTORE
+            await Task.CompletedTask;
+            return false;
+#elif ANDROID
             try
             {
                 var currentVersion = Version.Parse(AppInfo.Current.VersionString);
@@ -134,7 +143,7 @@ namespace C4iSytemsMobApp.Services
             return false;
         }
 
-#if ANDROID
+#if ANDROID && !PLAYSTORE
     private async Task DownloadAndInstallApkAsync(string apkUrl)
     {
         var context = Android.App.Application.Context;

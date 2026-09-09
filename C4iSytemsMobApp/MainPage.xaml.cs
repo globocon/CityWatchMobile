@@ -8,6 +8,8 @@ using C4iSytemsMobApp.Views;
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
+using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Maui.Devices.Sensors;
@@ -1590,9 +1592,10 @@ namespace C4iSytemsMobApp
             {
                 // This means the PIN is NOT set (AccessPermission = true indicates setup mode)
                 var setPopup = new SetGuardPinPopup();
-                var setPopupResult = await this.ShowPopupAsync(setPopup);
+                var setPopupResult = await this.ShowPopupAsync<string>(setPopup,
+                    new PopupOptions { CanBeDismissedByTappingOutsideOfPopup = false });
 
-                if (setPopupResult is string newPin && newPin != "Cancel")
+                if (setPopupResult.Result is string newPin && newPin != "Cancel")
                 {
                     var (isSuccess, saveMessage) = await _guardApiServices.SaveNewPINSetForTheGuard(newPin);
                     if (isSuccess)
@@ -1610,9 +1613,10 @@ namespace C4iSytemsMobApp
             {
                 // PIN is already set, validate it using CheckGuardPinPopup
                 var checkPopup = new CheckGuardPinPopup();
-                var checkPopupResult = await this.ShowPopupAsync(checkPopup);
+                var checkPopupResult = await this.ShowPopupAsync<string>(checkPopup,
+                    new PopupOptions { CanBeDismissedByTappingOutsideOfPopup = false });
 
-                if (checkPopupResult is string action)
+                if (checkPopupResult.Result is string action)
                 {
                     switch (action)
                     {

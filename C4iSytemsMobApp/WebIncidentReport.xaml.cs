@@ -969,12 +969,15 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
 
 
+            // MAUI 10: picker values are nullable; fall back to the pickers' old defaults.
+            var offsiteDate = reportDatePickerOffsite.Date ?? DateTime.Today;
+            var offsiteTime = reportTimePickerOffsite.Time ?? TimeSpan.Zero;
             reportDateTime = new DateTime(
-                reportDatePickerOffsite.Date.Year,
-                reportDatePickerOffsite.Date.Month,
-                reportDatePickerOffsite.Date.Day,
-                reportTimePickerOffsite.Time.Hours,
-                reportTimePickerOffsite.Time.Minutes,
+                offsiteDate.Year,
+                offsiteDate.Month,
+                offsiteDate.Day,
+                offsiteTime.Hours,
+                offsiteTime.Minutes,
                 0
             );
 
@@ -1077,11 +1080,11 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
                     IncidentDate = enableDateTimeCheckBox?.IsChecked == true
     ? new DateTime(
-        incidentDatePicker.Date.Year,
-        incidentDatePicker.Date.Month,
-        incidentDatePicker.Date.Day,
-        incidentTimePicker.Time.Hours,
-        incidentTimePicker.Time.Minutes,
+        (incidentDatePicker.Date ?? DateTime.Today).Year,
+        (incidentDatePicker.Date ?? DateTime.Today).Month,
+        (incidentDatePicker.Date ?? DateTime.Today).Day,
+        (incidentTimePicker.Time ?? TimeSpan.Zero).Hours,
+        (incidentTimePicker.Time ?? TimeSpan.Zero).Minutes,
         0)
     : (DateTime?)null,
                     //IncidentDate = new DateTime(

@@ -4,7 +4,7 @@ using CommunityToolkit.Maui.Views;
 
 namespace C4iSytemsMobApp.Views;
 
-public partial class EditPatrolCarLogPopup : Popup
+public partial class EditPatrolCarLogPopup : Popup<PatrolCarLog>
 {
     //private readonly PatrolCarLog _item;
     //private readonly Dictionary<string, Entry> _editEntries = new();
@@ -30,12 +30,12 @@ public partial class EditPatrolCarLogPopup : Popup
         BindingContext = this;
     }
 
-    private void OnCancelClicked(object sender, EventArgs e)
+    private async void OnCancelClicked(object sender, EventArgs e)
     {
-        Close(null); // return null to indicate cancelled
+        await CloseAsync(); // no result = cancelled
     }
 
-    private void OnSaveClicked(object sender, EventArgs e)
+    private async void OnSaveClicked(object sender, EventArgs e)
     {
 
         if (!decimal.TryParse(MileageEntry.Text, out var mileage))
@@ -48,6 +48,6 @@ public partial class EditPatrolCarLogPopup : Popup
         mileage = Math.Round(mileage, 0);
         Log.Mileage = mileage;
         Log.MileageText = mileage.ToString("N0");  // keep text in sync
-        Close(Log);        
+        await CloseAsync(Log);
     }
 }

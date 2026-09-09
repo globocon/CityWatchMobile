@@ -2,16 +2,16 @@ using CommunityToolkit.Maui.Views;
 
 namespace C4iSytemsMobApp.Views;
 
-public partial class SetGuardPinPopup : Popup
+public partial class SetGuardPinPopup : Popup<string>
 {
     public SetGuardPinPopup()
     {
         InitializeComponent();
     }
 
-    private void OnCancelClicked(object sender, EventArgs e)
+    private async void OnCancelClicked(object sender, EventArgs e)
     {
-        Close("Cancel");
+        await CloseAsync("Cancel");
     }
 
     private async void OnSaveClicked(object sender, EventArgs e)
@@ -36,6 +36,6 @@ public partial class SetGuardPinPopup : Popup
             return;
         }
 
-        Close(newPin);
+        await CloseAsync(newPin);
     }
 }
