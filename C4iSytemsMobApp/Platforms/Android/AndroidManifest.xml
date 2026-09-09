@@ -26,9 +26,11 @@
 	<uses-permission android:name="android.permission.FLASHLIGHT" />
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-	<!-- Tracking feature pack (ADD s6.1): background location requires a separate runtime
-	     grant on Android 11+; the foreground service is what makes it lawful on target 34. -->
-	<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+	<!-- ACCESS_BACKGROUND_LOCATION is intentionally NOT declared: shift tracking runs through
+	     the location foreground service with a while-in-use grant, which Android treats as
+	     in-use access for the whole shift. Declaring the permission triggers Play's background
+	     location declaration (prominent disclosure + review video) for a grant no code requests
+	     (PermissionService.RequestBackgroundLocationAsync has no callers). -->
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -42,8 +44,13 @@
 	     -p:PlayStoreBuild=true), pairing with the PLAYSTORE gate in AppUpdateService. -->
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-	<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-	<uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+	<!-- READ_MEDIA_IMAGES / READ_MEDIA_VISUAL_USER_SELECTED are intentionally NOT declared:
+	     Play's photo/video policy rejects them for attach-a-photo use cases (must use the
+	     system picker). Attachments go through FilePicker (no permission needed); the only
+	     casualty is CameraGalleryPickerPage's recent-images strip, which hides itself when
+	     the permission is missing (LoadRecentImagesAsync catches the MAUI EnsureDeclared
+	     throw and sets GalleryStrip.IsVisible = false). -->
+
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.BLUETOOTH" />
 	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />

@@ -35,8 +35,8 @@
 		<!-- Versions. ApplicationVersion is Android's versionCode: Google Play requires every
 		     upload to carry a higher value than the last accepted bundle, so bump BOTH lines
 		     for each store release (convention: 1.56.0 -> versionCode 156). -->
-		<ApplicationDisplayVersion>1.56.0</ApplicationDisplayVersion>
-		<ApplicationVersion>156</ApplicationVersion>
+		<ApplicationDisplayVersion>1.56.2</ApplicationDisplayVersion>
+		<ApplicationVersion>158</ApplicationVersion>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
