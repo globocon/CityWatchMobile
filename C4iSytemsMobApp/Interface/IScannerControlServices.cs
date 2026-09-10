@@ -17,5 +17,6 @@ namespace C4iSytemsMobApp.Interface
         Task<(bool isSuccess, string errorMessage, int cachecount)> SaveScanDataToLocalCache(string _TagUid, ScanningType _scannerType, int? LoggedInClientSiteId, int? LoggedInUserId, int? LoggedInGuardId);
         Task<bool> CheckIfTagExistsForSiteInLocalDb(string _TagUid);
         Task<ClientSiteSmartWandTagsLocal> GetTagDetailsFromLocalDbAsync(string _TagUid);
+        Task<string> GetClientSiteNameFromLocalDb(int clientSiteId);
     }
 }

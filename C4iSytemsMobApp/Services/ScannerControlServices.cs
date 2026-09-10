@@ -431,5 +431,10 @@ namespace C4iSytemsMobApp.Services
             return await  _scanDataDbServices.GetSmartWandTagDetailOfTagAsync(_TagUid);
         }
 
+        public async Task<string> GetClientSiteNameFromLocalDb(int clientSiteId)
+        {
+            return await _scanDataDbServices.GetClientSitesNameLocalById(clientSiteId);
+        }
+
     }
 }
