@@ -53,6 +53,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IGuardApiServices, GuardApiServices>();
         builder.Services.AddSingleton<IAppUpdateService, AppUpdateService>();
         builder.Services.AddSingleton<ICustomLogEntryServices, CustomLogEntryServices>();
+        builder.Services.AddSingleton<INotificationApiServices, NotificationApiServices>();
 
         builder.Services.AddSingleton<ConnectivityListener>();
         builder.Services.AddSingleton<ISyncApiService, SyncApiService>();
