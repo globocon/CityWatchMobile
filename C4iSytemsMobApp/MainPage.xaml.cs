@@ -318,6 +318,9 @@ namespace C4iSytemsMobApp
 
             duressCheckTimer.Start();
 
+            // Fire-and-forget: the badge must not delay the scanners coming up.
+            _ = LoadNotificationCountAsync();
+
             MainLayout.IsVisible = true;
         }
 
@@ -1560,10 +1563,29 @@ namespace C4iSytemsMobApp
 
         private void OnNotificationsClicked(object sender, TappedEventArgs e)
         {
-            // Your update check logic here
-            DisplayAlert("Notification", "New feature coming soon...", "OK");
-            //NotificationCount += 1;
-            //NotificationIcon.IsVisible = !NotificationIcon.IsVisible;
+            var notificationApiServices = IPlatformApplication.Current.Services.GetService<INotificationApiServices>();
+            Application.Current.MainPage = new NotificationsPage(notificationApiServices);
+        }
+
+        /// <summary>
+        /// Drives the bell badge. Best-effort and never awaited by the caller: the count is
+        /// decoration, and the home screen must not stall on it when the site has no signal.
+        /// </summary>
+        private async Task LoadNotificationCountAsync()
+        {
+            try
+            {
+                var notificationApiServices = IPlatformApplication.Current.Services.GetService<INotificationApiServices>();
+                if (notificationApiServices == null)
+                    return;
+
+                var count = await notificationApiServices.GetUnreadCountAsync();
+                MainThread.BeginInvokeOnMainThread(() => NotificationCount = count);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load notification count: {ex.Message}");
+            }
         }
         private async void OnSOPClicked(object sender, EventArgs e)
         {
