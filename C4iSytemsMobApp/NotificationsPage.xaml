@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:C4iSytemsMobApp.Models"
+             x:Class="C4iSytemsMobApp.NotificationsPage"
+             Title="Notifications">
+
+    <Grid RowDefinitions="Auto,Auto,*"
+          Padding="20"
+          RowSpacing="10">
+
+        <!-- Top bar: title + Home, matching the other secondary pages -->
+        <Grid ColumnDefinitions="Auto,*,Auto"
+              VerticalOptions="Center"
+              Grid.Row="0">
+
+            <Button Text="← Back"
+                    Clicked="OnBackClicked"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Start"
+                    Grid.Column="0" />
+
+            <Label Text="Notifications"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Grid.Column="1"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+            <ImageButton Source="home.png"
+                         Clicked="OnHomeClicked"
+                         HeightRequest="50"
+                         WidthRequest="50"
+                         BackgroundColor="Transparent"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Grid.Column="2" />
+        </Grid>
+
+        <!-- Summary + bulk actions. Hidden when there is nothing to act on, so an empty
+             tab is just the empty message rather than a row of dead buttons. -->
+        <Grid Grid.Row="1"
+              ColumnDefinitions="*,Auto,Auto"
+              ColumnSpacing="8"
+              IsVisible="{Binding HasNotifications}"
+              VerticalOptions="Center">
+
+            <Label Text="{Binding SummaryText}"
+                   FontSize="13"
+                   VerticalOptions="Center"
+                   Grid.Column="0"
+                   TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
+
+            <Button Text="Mark all read"
+                    Clicked="OnMarkAllReadClicked"
+                    IsVisible="{Binding HasUnread}"
+                    FontSize="12"
+                    Padding="12,0"
+                    HeightRequest="36"
+                    CornerRadius="8"
+                    Grid.Column="1"
+                    BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}"
+                    TextColor="{AppThemeBinding Light=White, Dark=Black}" />
+
+            <Button Text="Refresh"
+                    Clicked="OnRefreshClicked"
+                    FontSize="12"
+                    Padding="12,0"
+                    HeightRequest="36"
+                    CornerRadius="8"
+                    Grid.Column="2"
+                    BackgroundColor="Transparent"
+                    BorderWidth="1"
+                    BorderColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}"
+                    TextColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}" />
+        </Grid>
+
+        <!-- Cards -->
+        <RefreshView Grid.Row="2"
+                     IsRefreshing="{Binding IsLoading}"
+                     Refreshing="OnRefreshing">
+
+            <CollectionView ItemsSource="{Binding Notifications}"
+                            VerticalOptions="FillAndExpand">
+
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical"
+                                       ItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+
+                <!-- 3a: the tab used to say "coming soon" -->
+                <CollectionView.EmptyView>
+                    <Grid Padding="20">
+                        <VerticalStackLayout Spacing="12"
+                                             HorizontalOptions="Center"
+                                             VerticalOptions="Center">
+
+                            <Image Source="{FontImageSource Glyph=&#xf0a2;, FontFamily=FontAwesome, Size=44, Color=Gray}"
+                                   HorizontalOptions="Center" />
+
+                            <Label x:Name="EmptyMessageLabel"
+                                   Text="You have no current notifications"
+                                   FontSize="16"
+                                   HorizontalTextAlignment="Center"
+                                   HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </CollectionView.EmptyView>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:GuardNotification">
+
+                        <Frame HasShadow="False"
+                               CornerRadius="10"
+                               Padding="12"
+                               Margin="0,4"
+                               BorderColor="{AppThemeBinding Light=#E0E0E0, Dark=#3A3A3A}"
+                               BackgroundColor="{AppThemeBinding Light=#F7F6FD, Dark=#2A2A2A}">
+
+                            <Grid RowDefinitions="Auto,Auto"
+                                  RowSpacing="10">
+
+                                <!-- CARD HEADER: who the notification is addressed to.
+                                     Guard and site are colour-separated as well as labelled so
+                                     a guard scanning the list can tell at a glance which cards
+                                     are theirs alone and which the whole site can see. -->
+                                <Frame Grid.Row="0"
+                                       Padding="10,6"
+                                       CornerRadius="6"
+                                       HasShadow="False"
+                                       BorderColor="Transparent"
+                                       BackgroundColor="{AppThemeBinding Light=#ECECF4, Dark=#383838}">
+
+                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+                                          ColumnSpacing="8">
+
+                                        <!-- Unread marker -->
+                                        <Ellipse Grid.Column="0"
+                                                 WidthRequest="10"
+                                                 HeightRequest="10"
+                                                 Fill="#D32F2F"
+                                                 VerticalOptions="Center"
+                                                 IsVisible="{Binding IsUnread}" />
+
+                                        <!-- GUARD / SITE chip. Two chips rather than one with a
+                                             colour trigger: plain boolean visibility cannot be
+                                             mis-converted, a DataTrigger Value can. -->
+                                        <Grid Grid.Column="1"
+                                              VerticalOptions="Center">
+
+                                            <Frame Padding="8,2"
+                                                   CornerRadius="4"
+                                                   HasShadow="False"
+                                                   BorderColor="Transparent"
+                                                   IsVisible="{Binding IsGuardNotification}"
+                                                   BackgroundColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}">
+                                                <Label Text="GUARD"
+                                                       FontSize="10"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light=White, Dark=Black}" />
+                                            </Frame>
+
+                                            <Frame Padding="8,2"
+                                                   CornerRadius="4"
+                                                   HasShadow="False"
+                                                   BorderColor="Transparent"
+                                                   IsVisible="{Binding IsSiteNotification}"
+                                                   BackgroundColor="{AppThemeBinding Light=#00668B, Dark=#7FCBE8}">
+                                                <Label Text="SITE"
+                                                       FontSize="10"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light=White, Dark=Black}" />
+                                            </Frame>
+                                        </Grid>
+
+                                        <!-- Guard name or site name -->
+                                        <Label Grid.Column="2"
+                                               Text="{Binding TargetDisplayName}"
+                                               FontSize="13"
+                                               FontAttributes="Bold"
+                                               LineBreakMode="TailTruncation"
+                                               VerticalOptions="Center"
+                                               TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+                                        <Label Grid.Column="3"
+                                               Text="{Binding CreatedOnText}"
+                                               FontSize="11"
+                                               VerticalOptions="Center"
+                                               TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
+                                    </Grid>
+                                </Frame>
+
+                                <!-- CARD BODY: the message itself -->
+                                <Grid Grid.Row="1"
+                                      RowDefinitions="Auto,Auto,Auto"
+                                      RowSpacing="6">
+
+                                    <Label Grid.Row="0"
+                                           Text="{Binding Title}"
+                                           FontSize="15"
+                                           LineBreakMode="WordWrap"
+                                           TextColor="{AppThemeBinding Light=Black, Dark=White}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label"
+                                                         Binding="{Binding IsUnread}"
+                                                         Value="True">
+                                                <Setter Property="FontAttributes"
+                                                        Value="Bold" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+
+                                    <Label Grid.Row="1"
+                                           Text="{Binding Message}"
+                                           FontSize="14"
+                                           LineBreakMode="WordWrap"
+                                           TextColor="{AppThemeBinding Light=#333333, Dark=#E8E8E8}" />
+
+                                    <!-- Per-card read/unread toggle -->
+                                    <Button Grid.Row="2"
+                                            Text="{Binding ReadActionText}"
+                                            Clicked="OnToggleReadClicked"
+                                            CommandParameter="{Binding .}"
+                                            FontSize="12"
+                                            Padding="14,0"
+                                            HeightRequest="34"
+                                            CornerRadius="8"
+                                            HorizontalOptions="End"
+                                            BackgroundColor="Transparent"
+                                            BorderWidth="1"
+                                            BorderColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}"
+                                            TextColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}" />
+                                </Grid>
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

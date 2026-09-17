@@ -24,6 +24,16 @@ namespace C4iSytemsMobApp.Services
 
         public event EventHandler<PlaybackState> PlaybackStateChanged;
 
+        /// <summary>
+        /// Raised as each queued file actually begins, carrying that file's path.
+        ///
+        /// PlaybackStateChanged cannot answer "which file just started": it carries no file
+        /// identity, it fires once for the session before any file begins, and subscribers can
+        /// be attached more than once. Anything that needs per-file timing - the logbook's
+        /// "Played file ..." entry - listens here instead.
+        /// </summary>
+        public event EventHandler<string> FileStarted;
+
         public enum PlaybackState
         {
             Stopped,
@@ -33,6 +43,19 @@ namespace C4iSytemsMobApp.Services
         private void RaisePlaybackStateChanged(PlaybackState state)
         {
             PlaybackStateChanged?.Invoke(this, state);
+        }
+
+        /* A subscriber that throws must not kill playback, so this swallows. */
+        private void RaiseFileStarted(string filePath)
+        {
+            try
+            {
+                FileStarted?.Invoke(this, filePath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"FileStarted subscriber failed: {ex.Message}");
+            }
         }
 
         private AudioPlaybackService() { }
@@ -125,6 +148,7 @@ namespace C4iSytemsMobApp.Services
             _player.Play();
 
             RaisePlaybackStateChanged(PlaybackState.Playing);
+            RaiseFileStarted(url);
 
             await tcs.Task; // Wait for playback to finish
         }
@@ -154,6 +178,7 @@ namespace C4iSytemsMobApp.Services
 
             _player.Play();
             RaisePlaybackStateChanged(PlaybackState.Playing);
+            RaiseFileStarted(filePath);
 
             await tcs.Task; // Wait until playback completes
         }

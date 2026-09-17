@@ -1,8 +1,12 @@
 using AutoMapper;
 using C4iSytemsMobApp.Data.DbServices;
 using C4iSytemsMobApp.Data.Entity;
+using C4iSytemsMobApp.Enums;
+using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Services;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
 using Plugin.Maui.Audio;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -56,7 +60,246 @@ public partial class Audio : ContentPage
         LoadMp3List();
 
         AudioPlaybackService.Instance.PlaybackStateChanged += OnPlaybackStateChanged;
+
+        HookPlayedFileLogging();
     }
+
+    #region "Played file" logbook entries
+
+    /* One logbook entry per audio file, written as that file actually begins playing,
+       matching what the Activity buttons on the logbook page do: posted to the API when
+       online, cached for SyncService when not, with IsSystemEntry set.
+
+       Every playback path on this page - single play, play-checked, and the looping
+       silence mode - funnels through AudioPlaybackService, so one FileStarted subscription
+       covers all of them instead of each entry point remembering to log. */
+
+    private static readonly object _playLogLock = new();
+    private static bool _playLogHooked;
+
+    /* File path -> the label the guard saw in the list. Held statically because the handler
+       below outlives any one page instance. */
+    private static readonly Dictionary<string, string> _playLogLabels = new(StringComparer.OrdinalIgnoreCase);
+
+    /* Files already logged in the CURRENT playback session. The silence mode loops the same
+       queue indefinitely, and one entry per file per lap would bury the logbook - so a file
+       is logged once per session, and a session starts when a play button is pressed. */
+    private static readonly HashSet<string> _playLogSeen = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Subscribed once for the life of the app rather than per page instance. The queue keeps
+    /// playing after the guard leaves this page and those files still belong in the logbook,
+    /// so a subscription tied to the page would lose them. It also cannot be per-instance: a
+    /// new Audio page is constructed every time the guard opens the screen, so N subscriptions
+    /// would write N entries for the same file.
+    /// </summary>
+    private static void HookPlayedFileLogging()
+    {
+        lock (_playLogLock)
+        {
+            if (_playLogHooked)
+                return;
+
+            AudioPlaybackService.Instance.FileStarted += OnAudioFileStarted;
+            _playLogHooked = true;
+        }
+    }
+
+    /// <summary>
+    /// Called by the play buttons immediately before StartPlayback. Records what the guard
+    /// sees each file called, and opens a fresh session so a file played again later is
+    /// logged again.
+    /// </summary>
+    private static void BeginPlayedFileSession(IEnumerable<Mp3File> files)
+    {
+        lock (_playLogLock)
+        {
+            _playLogSeen.Clear();
+
+            foreach (var file in files ?? Enumerable.Empty<Mp3File>())
+            {
+                if (!string.IsNullOrWhiteSpace(file?.Url))
+                    _playLogLabels[file.Url] = file.Label;
+            }
+        }
+    }
+
+    private static void OnAudioFileStarted(object sender, string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            return;
+
+        string label;
+        lock (_playLogLock)
+        {
+            // Add returns false when the file has already been logged this session.
+            if (!_playLogSeen.Add(filePath))
+                return;
+
+            _playLogLabels.TryGetValue(filePath, out label);
+        }
+
+        /* Fire-and-forget: playback has already started and the guard pressed play to hear
+           something. A slow logbook, a missing GPS fix or a dead connection must not stall
+           the queue - StartPlayback is awaiting this file, so blocking here would delay the
+           next one. */
+        _ = LogPlayedFileAsync(label, filePath);
+    }
+
+    private static async Task LogPlayedFileAsync(string label, string filePath)
+    {
+        try
+        {
+            var activity = BuildPlayedFileActivity(label, filePath);
+
+            /* Same branch as OnActivityClicked on the logbook page: live when there is a
+               connection, local cache otherwise, and SyncService pushes the cache later. */
+            if (App.IsOnline)
+            {
+                var logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
+                if (logBookServices == null)
+                    return;
+
+                var (isSuccess, message) = await logBookServices.LogActivityTask(
+                    activity, ResolveLogbookClientSiteId(), 0, "NA", IsSystemEntry: true);
+
+                if (!isSuccess)
+                    await ShowPlayedFileLogFailureAsync(message);
+            }
+            else
+            {
+                var (isSuccess, message) = await LogPlayedFileToCacheAsync(activity);
+                if (!isSuccess)
+                    await ShowPlayedFileLogFailureAsync(message);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Never allowed to escape: this runs unawaited, so an exception here would be
+            // unhandled on a pool thread rather than caught anywhere.
+            await ShowPlayedFileLogFailureAsync(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// The logbook the entry belongs to. On a standard tour that is the guard's own site; on
+    /// a patrol car or inspection tour it is the site whose tag was last scanned, because the
+    /// car moves between sites within one login. Same rule as GetLocalSiteForPCAR on the
+    /// logbook page.
+    /// </summary>
+    private static int? ResolveLogbookClientSiteId()
+    {
+        int.TryParse(Preferences.Get("SelectedClientSiteId", "0"), out int clientSiteId);
+
+        if (App.TourMode != PatrolTouringMode.PCAR && App.TourMode != PatrolTouringMode.INSP)
+            return clientSiteId;
+
+        return App.PcarInspLastScannedSiteId.HasValue && App.PcarInspLastScannedSiteId.Value > 0
+            ? App.PcarInspLastScannedSiteId.Value
+            : clientSiteId;
+    }
+
+    /// <summary>
+    /// Offline path, mirroring LogActivityToCache on the logbook page: build the cache row and
+    /// hand it to the existing SaveLogActivityCacheData for SyncService to push later.
+    /// </summary>
+    private static async Task<(bool isSuccess, string message)> LogPlayedFileToCacheAsync(string activity)
+    {
+        var scanDataDbService = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
+        if (scanDataDbService == null)
+            return (false, "Local cache is unavailable on this device.");
+
+        /* An entry with no position is worth little to an investigation, so a missing fix
+           fails the write rather than storing a blank - same rule as the online path. No
+           DisplayAlert here: this runs off a playback callback, not a button press. */
+        string gpsCoordinates = "";
+        if (await PermissionService.CheckIfHasLocationPermission())
+            gpsCoordinates = await PermissionService.CheckAndGetGpsLocationAsync();
+        else
+            gpsCoordinates = await PermissionService.CheckAndGetGpsLocationAsync();
+
+        if (string.IsNullOrWhiteSpace(gpsCoordinates))
+            return (false, "GPS coordinates not available. Please ensure location services are enabled.");
+
+        int.TryParse(Preferences.Get("GuardId", "0"), out int guardId);
+        int.TryParse(Preferences.Get("SelectedClientSiteId", "0"), out int clientSiteId);
+        int.TryParse(Preferences.Get("UserId", "0"), out int userId);
+
+        if (guardId <= 0 || clientSiteId <= 0 || userId <= 0)
+            return (false, "Guard, site or user is not set. Please log in again.");
+
+        var infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
+
+        var request = new PostActivityRequestLocalCache()
+        {
+            guardId = guardId,
+            clientsiteId = clientSiteId,
+            userId = userId,
+            activityString = activity,
+            gps = gpsCoordinates,
+            systemEntry = true,
+            scanningType = 0,
+            tagUID = "NA",
+            EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+            EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+            EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+            EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+            EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+            EventMobileUtcDateTime = TimeZoneHelper.GetCurrentUtcDateTime(),
+            IsNewGuard = false,
+            IsSynced = false,
+            UniqueRecordId = Guid.NewGuid(),
+            DeviceId = infoService?.GetDeviceId(),
+            DeviceName = infoService?.GetDeviceName(),
+            IsEntryByPCAR = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP,
+            CallSignId = App.PcarCallSignId,
+            PositionId = App.PcarPostionId,
+            LogbookclientsiteId = ResolveLogbookClientSiteId()
+        };
+
+        var saved = await scanDataDbService.SaveLogActivityCacheData(request);
+
+        return saved
+            ? (true, "Log entry added successfully to cache.")
+            : (false, "Failed to add the log entry to cache.");
+    }
+
+    /// <summary>
+    /// "Played file &lt;name&gt;". Prefers the label the guard saw in the list, because that is
+    /// what they would describe if asked about the entry later; falls back to the file name.
+    /// Never throws - an unnamed file must still produce an entry.
+    /// </summary>
+    private static string BuildPlayedFileActivity(string label, string filePath)
+    {
+        var name = label?.Trim();
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            try { name = Path.GetFileName(filePath); }
+            catch { name = null; }
+        }
+
+        return $"Played file {(string.IsNullOrWhiteSpace(name) ? "Unknown file" : name)}";
+    }
+
+    private static async Task ShowPlayedFileLogFailureAsync(string message)
+    {
+        Console.WriteLine($"Failed to log played file: {message}");
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                await Toast.Make($"Played-file log entry not saved. {message}", ToastDuration.Long).Show();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to show played-file log toast: {ex.Message}");
+            }
+        });
+    }
+
+    #endregion
 
     private void OnPlaybackStateChanged(object sender, PlaybackState state)
     {
@@ -117,6 +360,9 @@ public partial class Audio : ContentPage
 
         // Subscribe to playback state change
         AudioPlaybackService.Instance.PlaybackStateChanged += OnPlaybackStateChanged;
+
+        // One "Played file ..." entry per file as it starts; looping replays are not re-logged.
+        BeginPlayedFileSession(Mp3Files.Where(f => f.IsChecked));
 
         await AudioPlaybackService.Instance.StartPlayback(_selectedSilenceMinutes);
     }
@@ -239,6 +485,10 @@ public partial class Audio : ContentPage
 
             var selectedFiles = Mp3Files.Where(f => f.IsChecked).Select(f => f.Url).ToList();
             AudioPlaybackService.Instance.EnqueueFiles(selectedFiles);
+
+            // One "Played file ..." entry per file as it starts.
+            BeginPlayedFileSession(Mp3Files.Where(f => f.IsChecked));
+
             await AudioPlaybackService.Instance.StartPlayback(_selectedSilenceMinutes);
         }
         catch (TaskCanceledException)
@@ -322,6 +572,10 @@ public partial class Audio : ContentPage
 
             await Task.Delay(100); // let UI render before starting playback
             AudioPlaybackService.Instance.EnqueueFiles(checkedFiles.ToList(), loop: false);
+
+            // One "Played file ..." entry, written when the file actually starts.
+            BeginPlayedFileSession(new[] { file });
+
             await AudioPlaybackService.Instance.StartPlayback(0);
 
 

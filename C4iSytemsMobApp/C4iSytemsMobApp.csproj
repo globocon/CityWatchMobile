@@ -168,6 +168,9 @@
 	  <Compile Update="MenuSettingsPage.xaml.cs">
 	    <DependentUpon>MenuSettingsPage.xaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="NotificationsPage.xaml.cs">
+	    <DependentUpon>NotificationsPage.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="DownloadsHome.xaml.cs">
 	    <DependentUpon>DownloadsHome.xaml</DependentUpon>
 	  </Compile>
@@ -235,6 +238,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="MenuSettingsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="NotificationsPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="DownloadsHome.xaml">
