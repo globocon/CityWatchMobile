@@ -13,6 +13,12 @@
 						android:name="android.support.FILE_PROVIDER_PATHS"
 						android:resource="@xml/file_paths" />
 		</provider>
+		<!-- Background FCM notification messages (operator custom messages) land in the named
+		     "Control room messages" channel instead of Firebase's generic fallback channel.
+		     The channel itself is created in MainActivity.OnCreate (MessageNotifier.EnsureChannel). -->
+		<meta-data
+			android:name="com.google.firebase.messaging.default_notification_channel_id"
+			android:value="citywatch_messages" />
 	</application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
@@ -20,11 +26,21 @@
 	<uses-permission android:name="android.permission.FLASHLIGHT" />
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	<!-- Tracking feature pack (ADD s6.1): background location requires a separate runtime
+	     grant on Android 11+; the foreground service is what makes it lawful on target 34. -->
+	<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 	<uses-permission android:name="android.permission.NFC" />
+	<!-- P4#153 scan feedback popup: short vibration paired with the scan beep. -->
+	<uses-permission android:name="android.permission.VIBRATE" />
 	<uses-feature android:name="android.hardware.nfc" android:required="false" />
 	<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+	<uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.BLUETOOTH" />
 	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />

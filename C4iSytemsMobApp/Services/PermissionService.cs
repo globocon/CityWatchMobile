@@ -5,6 +5,60 @@ namespace C4iSytemsMobApp.Services
 {
     public static class PermissionService
     {
+        /// <summary>
+        /// Tracking feature pack (ADD s6.1): background location. Android 11+ REQUIRES this
+        /// to be a separate second request after foreground is granted — asking for both in
+        /// one prompt gets declined. Callers must show an in-app rationale first. Existing
+        /// methods below are untouched.
+        /// </summary>
+        public static async Task<bool> RequestBackgroundLocationAsync()
+        {
+            var foreground = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            if (foreground != PermissionStatus.Granted)
+            {
+                foreground = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                if (foreground != PermissionStatus.Granted)
+                    return false;
+            }
+
+            var always = await Permissions.CheckStatusAsync<Permissions.LocationAlways>();
+            if (always != PermissionStatus.Granted)
+                always = await Permissions.RequestAsync<Permissions.LocationAlways>();
+            return always == PermissionStatus.Granted;
+        }
+
+        /// <summary>
+        /// #153 P7: Android 12+ lets the user grant only APPROXIMATE location (~2 km fuzz).
+        /// LocationWhenInUse reports Granted either way, so this is the only honest check.
+        /// A patrol tracker must never mistake approximate for a patrol position — callers
+        /// show the "enable Precise Location" message when this returns false.
+        /// </summary>
+        public static bool HasPreciseLocation()
+        {
+#if ANDROID
+            return Android.App.Application.Context.CheckSelfPermission(Android.Manifest.Permission.AccessFineLocation)
+                   == Android.Content.PM.Permission.Granted;
+#else
+            return true;
+#endif
+        }
+
+        /// <summary>
+        /// Operator messages (tracking feature pack): notification display needs a runtime
+        /// grant on Android 13+ only — earlier versions grant it at install. Android itself
+        /// stops re-prompting after repeated denials, so no once-only bookkeeping here.
+        /// </summary>
+        public static async Task<bool> RequestPostNotificationsAsync()
+        {
+            if (!OperatingSystem.IsAndroidVersionAtLeast(33))
+                return true;
+
+            var status = await Permissions.CheckStatusAsync<Permissions.PostNotifications>();
+            if (status != PermissionStatus.Granted)
+                status = await Permissions.RequestAsync<Permissions.PostNotifications>();
+            return status == PermissionStatus.Granted;
+        }
+
         public static async Task<bool> CheckAndRequestPermissionsAsync()
         {
 #if ANDROID
@@ -58,5 +112,83 @@ namespace C4iSytemsMobApp.Services
 #endif
             return true;
         }
+
+
+        public static async Task<string> CheckAndGetGpsLocationAsync()
+        {
+            var _LocationString = "";
+            var _CheckPermission = await CheckIfHasLocationPermission();
+            if (_CheckPermission)
+            {
+                var location = await Geolocation.GetLocationAsync(new GeolocationRequest
+                {
+                    DesiredAccuracy = GeolocationAccuracy.Medium,
+                    Timeout = TimeSpan.FromSeconds(10)
+                });
+
+                if (location != null)
+                {
+                    Preferences.Set("GpsCoordinates", location.Latitude.ToString() + ',' + location.Longitude.ToString());
+                    _LocationString = $"{location.Latitude.ToString()},{location.Longitude.ToString()}";
+                }                
+                return _LocationString;
+            }
+
+            return _LocationString;
+        }
+
+
+        public static async Task<string> GetGpsLocationWithOutCheckingPermissionAsync()
+        {
+            var _LocationString = Preferences.Get("GpsCoordinates", "");
+            var _CheckPermission = await CheckLocationPermission();
+            if (_CheckPermission)
+            {
+                var location = await Geolocation.GetLocationAsync(new GeolocationRequest
+                {
+                    DesiredAccuracy = GeolocationAccuracy.Medium,
+                    Timeout = TimeSpan.FromSeconds(10)
+                });
+
+                if (location != null)
+                {
+                    Preferences.Set("GpsCoordinates", location.Latitude.ToString() + ',' + location.Longitude.ToString());
+                    _LocationString = $"{location.Latitude.ToString()},{location.Longitude.ToString()}";
+                }
+                return _LocationString;
+            }
+
+            return _LocationString;
+        }
+
+        public static async Task<bool> CheckIfHasLocationPermission()
+        {
+            var statusLocation = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            if (statusLocation != PermissionStatus.Granted)
+            {
+                statusLocation = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                if (statusLocation != PermissionStatus.Granted)
+                    return false;
+                else return true;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        public static async Task<bool> CheckLocationPermission()
+        {
+            var statusLocation = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            if (statusLocation != PermissionStatus.Granted)
+            {
+              return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
     }
 }

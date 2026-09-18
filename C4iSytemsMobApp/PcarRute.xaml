@@ -1,244 +1,317 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="C4iSytemsMobApp.PcarRute">
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="C4iSytemsMobApp.PcarRute"
+             NavigationPage.HasNavigationBar="False"
+             Title="PCAR Route Status"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=Black}">
 
-    <AbsoluteLayout>
+     <AbsoluteLayout>
 
-        <ScrollView AbsoluteLayout.LayoutBounds="0,0,1,1"
-                    AbsoluteLayout.LayoutFlags="All">
+         <!-- Main Scrollable Content -->
+         <ScrollView AbsoluteLayout.LayoutBounds="0,0,1,1"
+                     AbsoluteLayout.LayoutFlags="All">
 
-            <VerticalStackLayout Padding="10"
-                                 Spacing="10">
+             <VerticalStackLayout Padding="10,5,10,10"
+                                  Spacing="10">
 
-                <!-- Header Row -->
-                <Grid ColumnDefinitions="*,Auto"
-                      Padding="0,5">
+                 <!-- Header Row -->
+                 <Grid ColumnDefinitions="*,Auto"
+                       Padding="5,5"
+                       Margin="0,0,0,5">
+                     
+                     <Label Text="PCAR Route Status"
+                            FontSize="24"
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                            VerticalOptions="Center" />
 
-                    <!-- Title Centered -->
-                    <Label Text="PCAR Route Status"
-                           Grid.Column="0"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center"
-                           FontSize="18"
-                           FontAttributes="Bold" />
-                    
-                    <!-- Home Button -->
-                    <ImageButton Source="home.png"
-                                 Clicked="OnHomeClicked"
-                                 HeightRequest="50"
-                                 WidthRequest="50"
+                     <!-- Home Button -->
+                     <ImageButton Source="home.png"
+                                  Clicked="OnHomeClicked"
+                                  HeightRequest="50"
+                                  WidthRequest="50"
+                                  BackgroundColor="Transparent"
+                                  HorizontalOptions="End"
+                                  VerticalOptions="Center"
+                                  Grid.Column="1" />
+                 </Grid>
+
+                 <!-- Date Navigation controls (matching Roster week bar styling) -->
+                 <Frame Padding="2" 
+                        CornerRadius="10" 
+                        HasShadow="False"
+                        BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#1E1E1E}"
+                        Margin="4,0">
+                     <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+                         <Button x:Name="PrevDayButton"
+                                 Grid.Column="0"
+                                 Text="&#xf053;"
+                                 FontFamily="FontAwesome"
+                                 Clicked="OnPreviousDayClicked"
                                  BackgroundColor="Transparent"
-                                 HorizontalOptions="Center"
-                                 VerticalOptions="Center"
-                                 Grid.Column="1" />
-                </Grid>
+                                 TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                 FontSize="14" />
 
+                         <Label Grid.Column="1"
+                                x:Name="DayNavigationLabel"
+                                Text="Loading day..."
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
-                <Label x:Name="CurrentDateLabel"
-                       FontSize="16"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Center"
-                       Margin="0,10,0,0" />
-                <!-- Dynamic Sites from API -->
-                <CollectionView x:Name="SiteListView"
-                                ItemsSource="{Binding SiteList}"
-                                Margin="0,5,0,5">
+                         <Button x:Name="NextDayButton"
+                                 Grid.Column="2"
+                                 Text="&#xf054;"
+                                 FontFamily="FontAwesome"
+                                 Clicked="OnNextDayClicked"
+                                 BackgroundColor="Transparent"
+                                 TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                 FontSize="14" />
+                     </Grid>
+                 </Frame>
 
-                    <CollectionView.ItemsLayout>
-                        <LinearItemsLayout Orientation="Vertical"
-                                           ItemSpacing="6" />
-                    </CollectionView.ItemsLayout>
+                 <!-- Dynamic Sites list -->
+                 <CollectionView x:Name="SiteListView"
+                                 ItemsSource="{Binding SiteList}"
+                                 Margin="0,5,0,5">
 
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
+                     <CollectionView.ItemsLayout>
+                         <LinearItemsLayout Orientation="Vertical"
+                                            ItemSpacing="10" />
+                     </CollectionView.ItemsLayout>
 
-                            <!-- Ultra-compact site card -->
-                            <Frame BorderColor="#D6C1A7"
-                                   BackgroundColor="#FFF8F1"
-                                   CornerRadius="10"
-                                   Padding="8"
-                                   Margin="8,2"
-                                   HasShadow="False">
+                     <CollectionView.ItemTemplate>
+                         <DataTemplate>
+                             <!-- Premium Site Card with dynamic Background gradient and BorderColor -->
+                             <Frame BorderColor="{Binding BorderColor}"
+                                    Background="{Binding CardBackground}"
+                                    CornerRadius="10"
+                                    Padding="12"
+                                    Margin="4,2"
+                                    HasShadow="True">
+                                 <Frame.GestureRecognizers>
+                                     <TapGestureRecognizer Command="{Binding BindingContext.CardTappedCommand, Source={x:Reference SiteListView}}"
+                                                           CommandParameter="{Binding .}" />
+                                 </Frame.GestureRecognizers>
 
-                                <VerticalStackLayout Spacing="4">
+                                 <Grid ColumnDefinitions="*, Auto">
+                                     
+                                     <!-- Left side content (Site info + Visits checklist) -->
+                                     <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                         <!-- Site Name -->
+                                         <Label Text="{Binding SiteName}"
+                                                FontSize="16"
+                                                FontAttributes="Bold"
+                                                TextColor="White" />
 
-                                    <!-- Location icon + Site name -->
-                                    <Grid ColumnDefinitions="Auto,*"
-                                          VerticalOptions="Center">
+                                         <!-- Address -->
+                                         <Label Text="{Binding Address}"
+                                                FontSize="12"
+                                                TextColor="White"
+                                                Opacity="0.8"
+                                                LineBreakMode="TailTruncation" />
 
-                                        <ImageButton Source="location.png"
-                                                     HeightRequest="14"
-                                                     WidthRequest="14"
-                                                     BackgroundColor="Transparent"
-                                                     Padding="0"
-                                                     Margin="0,0,5,0"
-                                                     Command="{Binding OpenMapsCommand}" />
+                                         <!-- Visits checkbox list -->
+                                         <Grid Margin="0,6,0,0" ColumnDefinitions="Auto, *">
+                                             <Label Text="# VISITS:"
+                                                    FontSize="12"
+                                                    TextColor="White"
+                                                    Opacity="0.9"
+                                                    FontAttributes="Bold"
+                                                    VerticalOptions="Center"
+                                                    Grid.Column="0"
+                                                    Margin="0,0,8,0" />
 
-                                        <Label Grid.Column="1"
-                                               Text="{Binding SiteName}"
-                                               FontSize="14"
-                                               FontAttributes="Bold"
-                                               TextColor="#333"
-                                               VerticalOptions="Center" />
-                                    </Grid>
+                                             <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center" BindableLayout.ItemsSource="{Binding Visits}">
+                                                 <BindableLayout.ItemTemplate>
+                                                     <DataTemplate>
+                                                         <!-- Custom checklist box matching Roster layout style -->
+                                                         <Frame HeightRequest="22"
+                                                                WidthRequest="22"
+                                                                CornerRadius="4"
+                                                                Padding="0"
+                                                                BorderColor="{Binding BoxBorderColor}"
+                                                                BackgroundColor="{Binding CheckboxBackground}">
 
+                                                             <Frame.GestureRecognizers>
+                                                                 <TapGestureRecognizer Command="{Binding ToggleCheckCommand}" />
+                                                             </Frame.GestureRecognizers>
 
-                                    <!-- Address -->
-                                    <Label Text="{Binding Address}"
-                                           FontSize="11"
-                                           TextColor="#555"
-                                           LineBreakMode="TailTruncation"
-                                           Margin="0,-2,0,0" />
+                                                             <Label Text="{Binding CheckboxText}"
+                                                                    TextColor="{Binding CheckboxTextColor}"
+                                                                    HorizontalOptions="Center"
+                                                                    VerticalOptions="Center"
+                                                                    FontAttributes="Bold"
+                                                                    FontSize="12" />
+                                                         </Frame>
+                                                     </DataTemplate>
+                                                 </BindableLayout.ItemTemplate>
+                                             </HorizontalStackLayout>
+                                         </Grid>
+                                     </VerticalStackLayout>
 
-                                    <!-- Grid for Visits -->
-                                    <Grid Margin="0,2,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <!-- For #Visits label -->
-                                            <ColumnDefinition Width="*" />
-                                            <!-- For checkboxes -->
-                                        </Grid.ColumnDefinitions>
+                                     <!-- Right side location pin icon with color tint behavior -->
+                                     <ImageButton Grid.Column="1"
+                                                  Source="location.png"
+                                                  HeightRequest="24"
+                                                  WidthRequest="24"
+                                                  BackgroundColor="Transparent"
+                                                  VerticalOptions="Center"
+                                                  HorizontalOptions="End"
+                                                  Margin="5,0,0,0"
+                                                  Command="{Binding OpenMapsCommand}">
+                                         <ImageButton.Behaviors>
+                                             <toolkit:IconTintColorBehavior TintColor="{Binding GpsIconColor}" />
+                                         </ImageButton.Behaviors>
+                                     </ImageButton>
+                                 </Grid>
+                             </Frame>
+                         </DataTemplate>
+                     </CollectionView.ItemTemplate>
+                 </CollectionView>
 
-                                        <!-- Static #Visits label -->
-                                        <Label Text="#Visits"
-                                               FontSize="11"
-                                               TextColor="#555"
-                                               VerticalOptions="Center"
-                                               Grid.Column="0"
-                                               Margin="0,0,4,0" />
+             </VerticalStackLayout>
+         </ScrollView>
 
-                                        <!-- Checkboxes -->
-                                        <StackLayout Orientation="Horizontal"
-                                                     Spacing="2"
-                                                     Grid.Column="1">
-                                            <BindableLayout.ItemsSource>
-                                                <Binding Path="Visits" />
-                                            </BindableLayout.ItemsSource>
-                                            <BindableLayout.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Frame HeightRequest="18"
-                                                           WidthRequest="18"
-                                                           CornerRadius="3"
-                                                           Padding="0"
-                                                           Margin="2,0,0,0"
-                                                           BorderColor="#C2C2C2"
-                                                           BackgroundColor="{Binding StatusColor}">
+         <!-- Custom dialog popup for Time On/Off site and Status selection -->
+         <Grid x:Name="EditTimePopupOverlay"
+               BackgroundColor="#80000000"
+               IsVisible="False"
+               ZIndex="999"
+               AbsoluteLayout.LayoutBounds="0,0,1,1"
+               AbsoluteLayout.LayoutFlags="All"
+               VerticalOptions="FillAndExpand"
+               HorizontalOptions="FillAndExpand">
 
-                                                        <Frame.GestureRecognizers>
-                                                            <TapGestureRecognizer Command="{Binding ToggleCheckCommand}" />
-                                                        </Frame.GestureRecognizers>
+             <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+                    CornerRadius="12"
+                    Padding="15"
+                    Margin="15"
+                    HasShadow="True"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center"
+                    MaximumWidthRequest="480">
 
-                                                        <Label Text="✔"
-                                                               HorizontalOptions="Center"
-                                                               VerticalOptions="Center"
-                                                               FontSize="10"
-                                                               IsVisible="{Binding IsChecked}" />
-                                                    </Frame>
-                                                </DataTemplate>
-                                            </BindableLayout.ItemTemplate>
-                                        </StackLayout>
+                 <VerticalStackLayout Spacing="15" WidthRequest="320">
 
-                                    </Grid>
+                     <Label Text="Patrol Visit Entry"
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                            HorizontalOptions="Center" />
 
+                      <!-- Cancel Visit option styled inside a circular button with White/Black background according to app theme -->
+                      <Grid x:Name="CancelVisitIconLayout" ColumnDefinitions="*, Auto" Margin="0,5">
+                          <Label Text="Cancel Visit and Delegate"
+                                 TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                 FontSize="14"
+                                 VerticalOptions="Center" />
 
+                          <Frame Grid.Column="1"
+                                 x:Name="CancelVisitFrame"
+                                 HeightRequest="30"
+                                 WidthRequest="30"
+                                 CornerRadius="25"
+                                 Padding="0"
+                                 HasShadow="True"
+                                 BackgroundColor="#FFCDD2"
+                                 BorderColor="Blue">
+                              <Frame.GestureRecognizers>
+                                  <TapGestureRecognizer Tapped="OnCancelVisitTapped" />
+                              </Frame.GestureRecognizers>
+                            <Label Text="🗙"
+                                     TextColor="Red"
+                                     FontSize="20"
+                                     FontAttributes="Bold"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center" />
+                          </Frame>
+                      </Grid>
 
-
-                                </VerticalStackLayout>
-
-                            </Frame>
-
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-
-                </CollectionView>
-
-
-
-
-
-            </VerticalStackLayout>
-
-        </ScrollView>
-
-        <Grid x:Name="EditTimePopupOverlay"
-              BackgroundColor="#80000000"
-              IsVisible="False"
-              ZIndex="999"
-              AbsoluteLayout.LayoutBounds="0,0,1,1"
-              AbsoluteLayout.LayoutFlags="All"
-              VerticalOptions="FillAndExpand"
-              HorizontalOptions="FillAndExpand">
-
-            <Frame BackgroundColor="White"
-                   CornerRadius="12"
-                   Padding="15"
-                   Margin="12"
-                   HasShadow="True"
-                   VerticalOptions="Center"
-                   HorizontalOptions="Center"
-                   MaximumWidthRequest="480"
-                   HeightRequest="300">
-
-                <VerticalStackLayout Spacing="15">
-
-                    <Label Text="Edit Time Entry"
-                           FontSize="18"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center" />
-
-                    <!-- Time On Site -->
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="Time On Site"
-                               TextColor="Black"
-                               FontSize="14" />
-                        <TimePicker x:Name="TimeOnSitePicker"
-                                    Format="HH:mm"
-                                    TextColor="Black"
-                                    BackgroundColor="White"
-                                    HeightRequest="45"
-                                    Margin="0,4" />
-                    </VerticalStackLayout>
-
-                    <!-- Time Off Site -->
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="Time Off Site"
-                               TextColor="Black"
-                               FontSize="14" />
-                        <TimePicker x:Name="TimeOffSitePicker"
-                                    Format="HH:mm"
-                                    TextColor="Black"
-                                    BackgroundColor="White"
-                                    HeightRequest="45"
-                                    Margin="0,4" />
-                    </VerticalStackLayout>
-
-                    <HorizontalStackLayout Spacing="12"
-                                           HorizontalOptions="Center">
-
-                        <Button x:Name="SaveTimeButton"
-                                Text="Save"
-                                Clicked="OnTimePopupSaveClicked"
-                                BackgroundColor="#007bff"
-                                TextColor="White"
+                     <!-- Time On Site Layout -->
+                     <Grid x:Name="TimeOnSiteLayout" ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto" Margin="0,2">
+                         <Label Text="Time On Site"
+                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
                                 FontSize="14"
-                                CornerRadius="6" />
+                                VerticalOptions="Center"
+                                Grid.Column="0"
+                                Grid.Row="0" />
+                         
+                         <CheckBox x:Name="TimeOnSiteCheckBox"
+                                   Color="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}"
+                                   VerticalOptions="Center"
+                                   Grid.Column="1"
+                                   Grid.Row="0"
+                                   CheckedChanged="OnTimeOnSiteCheckedChanged" />
 
-                        <Button Text="Cancel"
-                                Clicked="OnTimePopupCancelClicked"
-                                BackgroundColor="Gray"
-                                TextColor="White"
+                         <TimePicker x:Name="TimeOnSitePicker"
+                                     Format="HH:mm"
+                                     TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                     BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#2E2E2E}"
+                                     HeightRequest="45"
+                                     Grid.Column="0"
+                                     Grid.ColumnSpan="2"
+                                     Grid.Row="1"
+                                     Margin="0,4,0,0" />
+                     </Grid>
+
+                     <!-- Time Off Site Layout -->
+                     <Grid x:Name="TimeOffSiteLayout" ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto" Margin="0,2">
+                         <Label Text="Time Off Site"
+                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
                                 FontSize="14"
-                                CornerRadius="6" />
-                    </HorizontalStackLayout>
+                                VerticalOptions="Center"
+                                Grid.Column="0"
+                                Grid.Row="0" />
 
-                </VerticalStackLayout>
-            </Frame>
-        </Grid>
+                         <CheckBox x:Name="TimeOffSiteCheckBox"
+                                   Color="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}"
+                                   VerticalOptions="Center"
+                                   Grid.Column="1"
+                                   Grid.Row="0"
+                                   CheckedChanged="OnTimeOffSiteCheckedChanged" />
 
-    </AbsoluteLayout>
+                         <TimePicker x:Name="TimeOffSitePicker"
+                                     Format="HH:mm"
+                                     TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                     BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#2E2E2E}"
+                                     HeightRequest="45"
+                                     Grid.Column="0"
+                                     Grid.ColumnSpan="2"
+                                     Grid.Row="1"
+                                     Margin="0,4,0,0" />
+                     </Grid>
 
+                     <!-- Actions -->
+                     <HorizontalStackLayout Spacing="12"
+                                            HorizontalOptions="Center"
+                                            Margin="0,10,0,0">
 
+                         <Button x:Name="SaveTimeButton"
+                                 Text="Save"
+                                 Clicked="OnTimePopupSaveClicked"
+                                 BackgroundColor="#007bff"
+                                 TextColor="White"
+                                 FontSize="14"
+                                 WidthRequest="100"
+                                 CornerRadius="6" />
 
+                         <Button Text="Cancel"
+                                 Clicked="OnTimePopupCancelClicked"
+                                 BackgroundColor="Gray"
+                                 TextColor="White"
+                                 FontSize="14"
+                                 WidthRequest="100"
+                                 CornerRadius="6" />
+                     </HorizontalStackLayout>
 
+                 </VerticalStackLayout>
+             </Frame>
+         </Grid>
+
+     </AbsoluteLayout>
 </ContentPage>

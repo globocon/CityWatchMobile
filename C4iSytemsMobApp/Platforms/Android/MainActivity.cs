@@ -19,6 +19,10 @@ public class MainActivity : MauiAppCompatActivity
 
         base.OnCreate(savedInstanceState);
         //ZXing.Net.Maui.Controls.Platform.Init();
+
+        /* Operator-message channel must exist BEFORE the first background FCM notification
+           arrives (the manifest's default_notification_channel_id points at it). */
+        Services.Tracking.Platforms.MessageNotifier.EnsureChannel();
     }
     protected override void OnResume()
     {

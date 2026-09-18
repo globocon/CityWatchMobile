@@ -32,9 +32,15 @@ public partial class GuardLoginPage : ContentPage
 
     public ObservableCollection<DropdownItem> ClientTypes { get; set; } = new();
     public ObservableCollection<DropdownItem> ClientSites { get; set; } = new();
+    public ObservableCollection<DropdownItem> Positions { get; set; } = new();
+    public ObservableCollection<DropdownItem> Callsigns { get; set; } = new();
+    public List<ClientSiteLoginDto> clientSiteLoginDtos { get; set; } = new();
 
     private DropdownItem _selectedClientType;
     private DropdownItem _selectedClientSite;
+    private DropdownItem _selectedPosition;
+    private DropdownItem _selectedCallsignObj;
+    private string _selectedCallsign;
     private bool _suppressSuggestions = false;
     public DropdownItem SelectedClientType
     {
@@ -67,7 +73,59 @@ public partial class GuardLoginPage : ContentPage
                 OnPropertyChanged(nameof(SelectedClientSite));
 
                 if (_selectedClientSite != null)
+                {
                     Preferences.Set("SelectedClientSiteId", _selectedClientSite.Id.ToString());
+                    _ = CheckAndApplyRosterCallsign();
+                }
+
+                CheckForPCAR();
+            }
+        }
+    }
+
+    public DropdownItem SelectedPosition
+    {
+        get => _selectedPosition;
+        set
+        {
+            if (_selectedPosition != value)
+            {
+                _selectedPosition = value;
+                OnPropertyChanged(nameof(SelectedPosition));
+            }
+        }
+    }
+
+    public DropdownItem SelectedCallsignObj
+    {
+        get => _selectedCallsignObj;
+        set
+        {
+            if (_selectedCallsignObj != value)
+            {
+                _selectedCallsignObj = value;
+                OnPropertyChanged(nameof(SelectedCallsignObj));
+                if (value != null && value.Name != "- Select -")
+                {
+                    SelectedCallsign = value.Name;
+                }
+                else
+                {
+                    SelectedCallsign = string.Empty;
+                }
+            }
+        }
+    }
+
+    public string SelectedCallsign
+    {
+        get => _selectedCallsign;
+        set
+        {
+            if (_selectedCallsign != value)
+            {
+                _selectedCallsign = value;
+                OnPropertyChanged(nameof(SelectedCallsign));
             }
         }
     }
@@ -354,6 +412,22 @@ public partial class GuardLoginPage : ContentPage
             }
         }
 
+        // Restore Patrol Car Toggle
+        switchPatrolCar.IsToggled = Preferences.Get("IsPatrolCar", false);
+
+        // Restore Callsign
+        var savedCallsign = Preferences.Get("SelectedCallsign", string.Empty);
+        if (!string.IsNullOrEmpty(savedCallsign))
+        {
+            SelectedCallsign = savedCallsign;
+            var match = Callsigns.FirstOrDefault(p => p.Name == savedCallsign);
+            if (match != null)
+            {
+                SelectedCallsignObj = match;
+                pickerCallsign.SelectedItem = match;
+            }
+        }
+
         // Optionally restore ClientSite in a similar way
 
     }
@@ -370,17 +444,21 @@ public partial class GuardLoginPage : ContentPage
             if (siteItem != null)
             {
                 pickerClientSite.IsVisible = true;
+                //slPatrolCarToggle.IsVisible = true;
+                //pickerPosition.IsVisible = true;
+                //pickerCallsign.IsVisible = true;
                 SelectedClientSite = siteItem;
                 pickerClientSite.SelectedItem = siteItem;
+                CheckForPCAR();
             }
             else
             {
-
+                CheckForPCAR();
             }
         }
         else
         {
-
+            CheckForPCAR();
         }
     }
 
@@ -452,10 +530,83 @@ public partial class GuardLoginPage : ContentPage
                     textBoxSelectedClientType.Text = SelectedClientType.Name;
                 }
             });
+
+            await LoadPositionsData();
+            await LoadCallsignsData();
         }
         catch (Exception ex)
         {
             await DisplayAlert("Error", "Failed to load client types: " + ex.Message, "OK");
+        }
+    }
+
+    private async Task LoadPositionsData(bool isPatrolCar = false)
+    {
+        try
+        {
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetOfficerPositions?isPatrolCar={isPatrolCar}";
+            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(url);
+
+            if (response == null) return;
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                Positions.Clear();
+                Positions.Add(new DropdownItem { Id = -1, Name = "- Select -" });
+                foreach (var pos in response.Where(p => p.Name != "Select" && p.Name != "- Select -").OrderBy(p => p.Name))
+                    Positions.Add(pos);
+
+                // Auto-restore Position
+                var savedPosition = Preferences.Get("SelectedPosition", "");
+                if (!string.IsNullOrEmpty(savedPosition))
+                {
+                    var match = Positions.FirstOrDefault(p => p.Name == savedPosition);
+                    if (match != null)
+                    {
+                        SelectedPosition = match;
+                        pickerPosition.SelectedItem = match;
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            // Silently fail or log if needed, as it's not absolutely critical to block login
+        }
+    }
+
+    private async Task LoadCallsignsData()
+    {
+        try
+        {
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetCallsigns";
+            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(url);
+
+            if (response == null) return;
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                Callsigns.Clear();
+                Callsigns.Add(new DropdownItem { Id = -1, Name = "- Select -" });
+                foreach (var callsign in response.Where(p => p.Name != "Select" && p.Name != "- Select -").OrderBy(p => p.Name))
+                    Callsigns.Add(callsign);
+
+                // Auto-restore Callsign
+                var savedCallsign = Preferences.Get("SelectedCallsign", "");
+                if (!string.IsNullOrEmpty(savedCallsign))
+                {
+                    var match = Callsigns.FirstOrDefault(p => p.Name == savedCallsign);
+                    if (match != null)
+                    {
+                        SelectedCallsignObj = match;
+                        pickerCallsign.SelectedItem = match;
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            // Silently fail or log if needed
         }
     }
 
@@ -468,14 +619,18 @@ public partial class GuardLoginPage : ContentPage
             string userId = Preferences.Get("UserId", "");
             if (string.IsNullOrEmpty(userId)) return;
 
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSitesByClientType?userId={Uri.EscapeDataString(userId)}&clientTypeId={clientTypeId}";
-            var response = await _httpClient.GetFromJsonAsync<List<DropdownItem>>(url);
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetClientSitesByClientTypeNew?userId={Uri.EscapeDataString(userId)}&clientTypeId={clientTypeId}";
+            var response = await _httpClient.GetFromJsonAsync<List<ClientSiteLoginDto>>(url);
 
             ClientSites.Clear();
-            foreach (var site in response ?? new List<DropdownItem>())
+            clientSiteLoginDtos.Clear();
+            foreach (var site in response ?? new List<ClientSiteLoginDto>())
             {
                 if (site.Name != "Select")
-                    ClientSites.Add(site);
+                {
+                    clientSiteLoginDtos.Add(site);
+                    ClientSites.Add(new DropdownItem() { Id = site.Id, Name = site.Name });
+                }
             }
 
             Debug.WriteLine($"ClientSites loaded: {ClientSites.Count}");
@@ -490,6 +645,95 @@ public partial class GuardLoginPage : ContentPage
         {
             Debug.WriteLine($"Error loading client sites: {ex.Message}");
         }
+    }
+
+
+    private async Task CheckAndApplyRosterCallsign()
+    {
+        try
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                pickerCallsign.IsEnabled = true;
+            });
+
+            string guardIdStr = Preferences.Get("GuardId", "");
+            if (string.IsNullOrEmpty(guardIdStr) || !int.TryParse(guardIdStr, out int guardId))
+                return;
+
+            if (_selectedClientSite == null) return;
+            int siteId = _selectedClientSite.Id;
+
+            string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetGuardSiteCallsign?guardId={guardId}&siteId={siteId}";
+
+            using HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            
+            HttpResponseMessage response = await client.GetAsync(apiUrl);
+            if (!response.IsSuccessStatusCode) return;
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            string callsignName = "";
+            if (root.TryGetProperty("callsignName", out var callsignProp) || 
+                root.TryGetProperty("CallsignName", out callsignProp))
+            {
+                callsignName = callsignProp.GetString();
+            }
+
+            if (!string.IsNullOrEmpty(callsignName) && callsignName != "- Select -")
+            {
+                var match = Callsigns.FirstOrDefault(p => p.Name.Equals(callsignName, StringComparison.OrdinalIgnoreCase));
+                
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    if (match == null)
+                    {
+                        match = new DropdownItem { Id = -99, Name = callsignName };
+                        Callsigns.Add(match);
+                    }
+                    
+                    SelectedCallsignObj = match;
+                    pickerCallsign.SelectedItem = match;
+                    pickerCallsign.IsEnabled = false; 
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error in CheckAndApplyRosterCallsign: {ex.Message}");
+        }
+    }
+    
+    private bool CheckForPCAR()
+    {
+        if(_selectedClientSite != null)
+        {
+            var cs = clientSiteLoginDtos.Where(x => x.Id == _selectedClientSite.Id).FirstOrDefault();
+
+            if(cs!= null && cs.PatrolTourMode == PatrolTouringMode.PCAR || cs.PatrolTourMode == PatrolTouringMode.INSP)
+            {
+                slPatrolCarToggle.IsVisible = true;
+                pickerPosition.IsVisible = true;
+                pickerCallsign.IsVisible = true;
+                return true;
+            }
+            else
+            {
+                slPatrolCarToggle.IsVisible = false;
+                pickerPosition.IsVisible = false;
+                pickerCallsign.IsVisible = false;
+            }
+        }
+        else
+        {
+            slPatrolCarToggle.IsVisible = false;
+            pickerPosition.IsVisible = false;
+            pickerCallsign.IsVisible = false;
+        }
+        return false;
     }
 
 
@@ -596,7 +840,12 @@ public partial class GuardLoginPage : ContentPage
                 Preferences.Set("GuardId", guardData.GuardId.ToString());
                 Preferences.Set("GuardName", guardData.Name);
                 Preferences.Set("LicenseNumber", licenseNumber);
+                Preferences.Set("IsNewGuard", _isNewGuard);
 
+                /* Tracking is NOT started here: this is only the "verify your details" step.
+                   The car (Position), callsign and patrol-car toggle are not chosen until the
+                   officer taps "Access C4i System". Tracking starts there, after login
+                   succeeds (see StartIfEligibleAsync call in the auth-success block). */
 
                 isLoggedIn = true;
                 btnLogin.Text = "Go Back"; // Change button text
@@ -619,6 +868,9 @@ public partial class GuardLoginPage : ContentPage
 
                 pickerClientType.IsVisible = true;
                 pickerClientSite.IsVisible = true;
+                slPatrolCarToggle.IsVisible = true;
+                pickerPosition.IsVisible = true;
+                pickerCallsign.IsVisible = true;
                 btnEnterLogbook.IsVisible = true;
                 vslCalendarLiveEvents.IsVisible = true;
 
@@ -630,7 +882,12 @@ public partial class GuardLoginPage : ContentPage
                 RestorePreviousSelection();
 
                 if (SelectedClientType != null)
+                {
                     pickerClientSite.IsVisible = true;
+                    slPatrolCarToggle.IsVisible = true;
+                    pickerPosition.IsVisible = true;
+                    pickerCallsign.IsVisible = true;
+                }
 
             }
             else
@@ -647,6 +904,9 @@ public partial class GuardLoginPage : ContentPage
                 hrStatusLayout.IsVisible = false;
                 pickerClientType.IsVisible = false;
                 pickerClientSite.IsVisible = false;
+                slPatrolCarToggle.IsVisible = false;
+                pickerPosition.IsVisible = false;
+                pickerCallsign.IsVisible = false;
                 btnEnterLogbook.IsVisible = false;
                 btnRegister.IsEnabled = true;
                 btnRegister.IsVisible = true;
@@ -686,7 +946,7 @@ public partial class GuardLoginPage : ContentPage
     private void ToggleInstructionalTextVisibility()
     {
         // If ANY of these elements are visible, hide the instructional text
-        if (pickerClientType.IsVisible || pickerClientSite.IsVisible || btnEnterLogbook.IsVisible || textBoxSelectedClientType.IsVisible)
+        if (pickerClientType.IsVisible || pickerClientSite.IsVisible || btnEnterLogbook.IsVisible || textBoxSelectedClientType.IsVisible || pickerPosition.IsVisible || slPatrolCarToggle.IsVisible || pickerCallsign.IsVisible)
         {
             instructionalFrame.IsVisible = false;
             instructionalTextContainer.IsVisible = false;
@@ -720,6 +980,35 @@ public partial class GuardLoginPage : ContentPage
     private void OnCalendarEventTapped(object sender, TappedEventArgs e)
     {
 
+    }
+
+    private async void OnPatrolCarToggled(object sender, ToggledEventArgs e)
+    {
+        bool isPatrolCar = e.Value;
+        pickerCallsign.IsVisible = true;
+        ToggleInstructionalTextVisibility();
+        await LoadPositionsData(isPatrolCar);
+    }
+
+    /* #153: report this build's version once per successful login. Telemetry only —
+       every failure path ends here, so it can never trouble the login itself. */
+    private static async Task ReportAppVersionAsync(int guardId)
+    {
+        try
+        {
+            var device = $"{DeviceInfo.Current.Manufacturer} {DeviceInfo.Current.Model}, {DeviceInfo.Current.Platform} {DeviceInfo.Current.VersionString}";
+            var url = $"{AppConfig.ApiBaseUrl}Login/ReportAppVersion" +
+                      $"?guardId={guardId}" +
+                      $"&version={Uri.EscapeDataString(AppInfo.Current.VersionString)}" +
+                      $"&platform={DeviceInfo.Current.Platform.ToString().ToLowerInvariant()}" +
+                      $"&deviceInfo={Uri.EscapeDataString(device)}";
+            using var client = new HttpClient();
+            await client.GetAsync(url);
+        }
+        catch
+        {
+            // never bounce a login over telemetry
+        }
     }
 
     private async void OnEnterLogbookClicked(object sender, EventArgs e)
@@ -784,17 +1073,78 @@ public partial class GuardLoginPage : ContentPage
                 return;
             }
 
-            // Retrieve and validate User ID
-            string userIdString = Preferences.Get("UserId", "");
+            if (CheckForPCAR())
+            {
+                /* A patrol-car login MUST say which car it is. The Position is the tracked
+                   unit's identity and the Callsign its radio label — without them the session
+                   silently keys to the guard instead of the car, which is how six Romeo cars
+                   collapsed to three on the live map (24 Aug 2026). */
+                if (switchPatrolCar.IsToggled)
+                {
+                    if (SelectedPosition == null || SelectedPosition.Id <= 0
+                        || SelectedPosition.Name == "Select" || SelectedPosition.Name == "- Select -")
+                    {
+                        await DisplayAlert("Validation Error", "Mobile Patrol Car is ON: please select your car under Position.", "OK");
+                        return;
+                    }
+                    if (string.IsNullOrEmpty(SelectedCallsign) || SelectedCallsign == "- Select -" || SelectedCallsignObj == null)
+                    {
+                        await DisplayAlert("Validation Error", "Mobile Patrol Car is ON: please select your Callsign.", "OK");
+                        return;
+                    }
+                }
+
+                // Save Position and Callsign for later use in IR
+                Preferences.Set("IsPatrolCar", switchPatrolCar.IsToggled);
+
+                if (SelectedPosition != null && SelectedPosition.Name != "Select" && SelectedPosition.Name != "- Select -")
+                {
+                    Preferences.Set("SelectedPosition", SelectedPosition.Name);
+                    App.PcarPostionId = SelectedPosition.Id;
+
+                }
+                else
+                {
+                    Preferences.Set("SelectedPosition", "");
+                    App.PcarPostionId = null;
+                }
+
+                if (!string.IsNullOrEmpty(SelectedCallsign) && SelectedCallsign != "- Select -")
+                {
+                    Preferences.Set("SelectedCallsign", SelectedCallsign);
+                    App.PcarCallSignId = SelectedCallsignObj.Id;
+                }
+                else
+                {
+                    Preferences.Set("SelectedCallsign", "");
+                    App.PcarCallSignId = null;
+                }
+            }
+            else
+            {
+                Preferences.Set("IsPatrolCar", false);
+                Preferences.Set("SelectedPosition", "");
+                App.PcarPostionId = null;
+                Preferences.Set("SelectedCallsign", "");
+                App.PcarCallSignId = null;
+            }
+                // Retrieve and validate User ID
+                string userIdString = Preferences.Get("UserId", "");
             if (string.IsNullOrWhiteSpace(userIdString) || !int.TryParse(userIdString, out int userId) || userId <= 0)
             {
-                await DisplayAlert("Validation Error", "User ID is invalid. Please log in again.", "OK");
+                await DisplayAlert("Error", "Valid User ID is missing. Please select your name.", "OK");
                 return;
             }
 
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
 
-            if (string.IsNullOrWhiteSpace(gpsCoordinates))
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
             {
                 if (DeviceInfo.Platform == DevicePlatform.iOS)
                 {
@@ -831,6 +1181,17 @@ public partial class GuardLoginPage : ContentPage
                 }
             }
 
+            /* #153 P7: approximate-only permission (~2 km deliberate fuzz) must never pass
+               silently as a patrol position. Login continues — the server flags the coarse
+               fixes and the control-room map refuses to draw them — but the officer is
+               told how to fix it at the source. */
+            if (_hasGpsLocationPermission && !PermissionService.HasPreciseLocation())
+            {
+                await DisplayAlert("Precise Location required",
+                    "Precise location is required for patrol tracking. Please enable Precise Location for CityWatch in Settings > Apps > CityWatch > Permissions > Location.",
+                    "OK");
+            }
+
             PostActivityRequest request = new PostActivityRequest()
             {
                 guardId = guardId,
@@ -851,7 +1212,7 @@ public partial class GuardLoginPage : ContentPage
             };
 
             lblloadinginfo.Text = "Authenticating...Please wait...";
-            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLogin";
+            var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/EnterGuardLoginNew";
             using (HttpClient client = new HttpClient())
             {
                 // var response = await client.GetAsync(apiUrl);
@@ -861,9 +1222,24 @@ public partial class GuardLoginPage : ContentPage
                     UpdateInfoLabel("Processing Offline Data...Please wait...");
                     string contentData = await response.Content.ReadAsStringAsync();
                     var responseJson = JsonSerializer.Deserialize<JsonElement>(contentData);
-                    int tourMode = responseJson.GetProperty("tourMode").GetInt32();
-                    App.TourMode = (PatrolTouringMode)tourMode;
+                     int tourMode = responseJson.GetProperty("tourMode").GetInt32();
+                     App.TourMode = (PatrolTouringMode)tourMode;
+                    if(App.TourMode != PatrolTouringMode.STND)
+                        App.LoadPcarPreferences();
                     Preferences.Set("IsPcarSite", (tourMode == 1).ToString().ToLower());
+
+                    /* Tracking feature pack: login has now SUCCEEDED and every declaration is
+                       set — GuardId, SelectedClientSiteId, IsPatrolCar, SelectedPosition and
+                       App.PcarPostionId (chosen above via CheckForPCAR). Fire-and-forget;
+                       silently does nothing if the unit is not enrolled, consent is missing,
+                       or the server has tracking disabled. */
+                    _ = Services.Tracking.TrackingService.Instance.StartIfEligibleAsync();
+
+                    /* #153: tell the server what build this phone runs — same fire-and-forget
+                       shape as the tracking start above. Old builds never make this call,
+                       which is itself the office's signal: a guard with no version on file is
+                       on a pre-reporting APK. Must never affect the login. */
+                    _ = ReportAppVersionAsync(guardId);
 
                     try
                     {
@@ -1517,4 +1893,14 @@ public class BroadcastBannerLiveEvents
 {
     public string TextMessage { get; set; }
     public string LiveEventWebLink { get; set; }
+}
+
+public class ClientSiteLoginDto
+{
+    public int Id { get; set; }
+    public int TypeId { get; set; }
+    public string Name { get; set; }
+    public bool IsActive { get; set; }
+    public PatrolTouringMode PatrolTourMode { get; set; }
+
 }

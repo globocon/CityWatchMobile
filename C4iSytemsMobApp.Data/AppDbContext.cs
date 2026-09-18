@@ -26,6 +26,7 @@ namespace C4iSytemsMobApp.Data
         public DbSet<AudioAndMultimediaLocal> AudioAndMultimediaLocal { get; set; }
         public DbSet<irOfflineFilesAttachmentsCache> irOfflineFilesAttachmentsCache { get; set; }
         public DbSet<irOfflineCache> irOfflineCache { get; set; }
+        public DbSet<TrackingPointCache> TrackingPointCache { get; set; } // tracking feature pack
 
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
@@ -60,7 +61,10 @@ namespace C4iSytemsMobApp.Data
                 .WithOne(d => d.ClientSiteType)
                 .HasForeignKey(d => d.TypeId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
+
+            modelBuilder.Entity<ActivityModel>()
+                .HasKey(x => new { x.Id, x.ClienSiteId });
+
         }
     }
 }

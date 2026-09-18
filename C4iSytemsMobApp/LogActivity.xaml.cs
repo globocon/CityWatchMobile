@@ -9,6 +9,7 @@ using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
+using C4iSytemsMobApp.Services;
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
@@ -24,6 +25,7 @@ public partial class LogActivity : ContentPage
     private HubConnection _hubConnection;
     private HubConnection _hubConnectionRC;
     private int? _clientSiteId;
+    private int? _localClientSiteId;
     private int? _userId;
     private int? _guardId;
     private int _badgeNo = 0;
@@ -32,6 +34,11 @@ public partial class LogActivity : ContentPage
     private readonly IScanDataDbServices _scanDataDbService;
     private GuardLogDto _selectedLogForEdit;
     public ObservableCollection<MyFileModel> SelectedFiles { get; set; }
+     = new ObservableCollection<MyFileModel>();
+
+    // Images attached from within the Add Custom Log Entry popup.
+    // Kept separate from SelectedFiles so the existing camera-button upload flow is not affected.
+    public ObservableCollection<MyFileModel> CustomLogSelectedFiles { get; set; }
      = new ObservableCollection<MyFileModel>();
 
     public const string ALERT_TITLE = "NFC";
@@ -84,6 +91,11 @@ public partial class LogActivity : ContentPage
 
         LoadActivities();
         FilesCollection.ItemsSource = SelectedFiles;
+        CustomLogFilesCollection.ItemsSource = CustomLogSelectedFiles;
+        VslLogBookSite.IsVisible = false;
+        logbkSiteName.Text = "";
+        logbkSiteName.IsVisible = false;
+
     }
     private void PopupOverlay_SizeChanged(object sender, EventArgs e)
     {
@@ -104,9 +116,26 @@ public partial class LogActivity : ContentPage
         _isLogsLoading = false;
         await SetupHubConnection(); // LoadLogs(); is Called when the SignalRHub connection is established
         await SetupRCHubConnection();
+
+        GetLocalSiteName();
     }
 
 
+    private void GetLocalSiteName()
+    {
+        VslLogBookSite.IsVisible = false;
+        logbkSiteName.Text = "";
+        logbkSiteName.IsVisible = false;
+
+        if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+        {
+            VslLogBookSite.IsVisible = true;
+            logbkSiteName.IsVisible = true;
+            var _siteid = _localClientSiteId.HasValue ? _localClientSiteId.Value : 0;
+            var _siteName = _scannerControlServices.GetClientSiteNameFromLocalDbNonAsync(_siteid);
+            logbkSiteName.Text = $"LogBook: {_siteName}";
+        }
+    }
 
     protected override async void OnDisappearing()
     {
@@ -136,7 +165,7 @@ public partial class LogActivity : ContentPage
             if (App.IsOnline)
             {
                 //ButtonContainer.Children.Clear(); // Clear previous items if reloading
-                var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivities?type=2&siteid={_clientSiteId}";
+                var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetActivities?type=2&siteid={_localClientSiteId}";
 
                 HttpResponseMessage response = await _httpClient.GetAsync(url);
                 if (!response.IsSuccessStatusCode)
@@ -150,7 +179,7 @@ public partial class LogActivity : ContentPage
             }
             else
             {
-                activities = await _scanDataDbService.GetPrePopulatedActivitesButtonList();
+                activities = await _scanDataDbService.GetPrePopulatedActivitesButtonList(_localClientSiteId ?? _clientSiteId ?? 0);
             }
 
             if (activities == null || activities.Count < 1) return;
@@ -175,8 +204,10 @@ public partial class LogActivity : ContentPage
         if (sender is Button button)
         {
             string activityName = button.Text;
+            GetLocalSiteForPCAR();
+            GetLocalSiteName();
             if (App.IsOnline)
-                await LogActivityTask(activityName, 0, "NA");
+                await LogActivityTask(activityName, _localClientSiteId, 0, "NA");
             else
                 await LogActivityToCache(activityName, 0, "NA");
         }
@@ -202,10 +233,12 @@ public partial class LogActivity : ContentPage
 
         try
         {
-            if (_guardId <= 0 || _clientSiteId <= 0 || _userId <= 0)
+            if (_guardId <= 0 || _localClientSiteId <= 0 || _userId <= 0)
                 return;
 
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={_clientSiteId}";
+            GetLocalSiteForPCAR();
+            GetLocalSiteName();
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={_localClientSiteId}";
             var response = await _httpClient.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
@@ -640,6 +673,16 @@ public partial class LogActivity : ContentPage
         {
             _isLogsLoading = false;
         }
+
+        try
+        {
+            GetLocalSiteName();
+        }
+        catch (Exception)
+        {
+
+           // throw;
+        }
     }
 
     private async void OnPickFileClicked(object sender, EventArgs e)
@@ -706,7 +749,22 @@ public partial class LogActivity : ContentPage
     {
         try
         {
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return;
+                else
+                    gpsCoordinates = _gpsLocation;
+            }
 
             using var client = new HttpClient();
             var content = new MultipartFormDataContent();
@@ -729,7 +787,7 @@ public partial class LogActivity : ContentPage
 
             // Add other form data
             content.Add(new StringContent(_guardId.ToString()), "guardId");
-            content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
+            content.Add(new StringContent(_localClientSiteId.ToString()), "clientsiteId");
             content.Add(new StringContent(_userId.ToString()), "userId");
             content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
 
@@ -768,6 +826,14 @@ public partial class LogActivity : ContentPage
     {
         _selectedLogForEdit = log;
         EditLogPopupEntry.Text = log.Notes;
+
+        // Show the notes editor only for entries with guard-typed text.
+        // Plain image uploads ("Mob app image upload") stay image-only, as before.
+        var notesText = log.Notes?.Trim() ?? "";
+        bool hasGuardText = !string.IsNullOrWhiteSpace(notesText)
+            && !string.Equals(notesText, "Mob app image upload", StringComparison.OrdinalIgnoreCase);
+        EditImageNotesEditor.Text = hasGuardText ? log.Notes : string.Empty;
+        EditImageNotesEditor.IsVisible = hasGuardText;
 
         SelectedFiles.Clear();
 
@@ -977,7 +1043,7 @@ public partial class LogActivity : ContentPage
         {
             var content = new MultipartFormDataContent();
             content.Add(new StringContent(_guardId.ToString()), "guardId");
-            content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
+            content.Add(new StringContent(_localClientSiteId.ToString()), "clientsiteId");
             content.Add(new StringContent(_userId.ToString()), "userId");
             content.Add(new StringContent(messageToSend ?? ""), "notifications");
             content.Add(new StringContent(rcPushMessageId.ToString()), "rcPushMessageId");
@@ -1004,10 +1070,10 @@ public partial class LogActivity : ContentPage
     }
 
 
-    private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
+    private async Task LogActivityTask(string activityDescription, int? local_ClientSiteId, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
     {
 
-        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
+        var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, local_ClientSiteId, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
         if (isSuccess)
         {
             if (scanningType == (int)ScanningType.NFC)
@@ -1048,12 +1114,17 @@ public partial class LogActivity : ContentPage
     private void ShowCustomLogPopup()
     {
         CustomLogPopupEntry.Text = string.Empty; // Ensure fresh input
+        CustomLogSelectedFiles.Clear();          // Discard any images left from a previous popup session
+        UpdateCustomLogFilesVisibility();
+        CustomLogAddImageButton.IsEnabled = true;
+        CustomLogUploadLoadingOverlay.IsVisible = false;
         CustomLogPopupOverlay.IsVisible = true;
     }
 
     private void HideCustomLogPopup()
     {
         CustomLogPopupOverlay.IsVisible = false;
+        CustomLogSaveButton.IsEnabled = true;
     }
 
     private void OnCustomLogCancelClicked(object sender, EventArgs e)
@@ -1077,7 +1148,26 @@ public partial class LogActivity : ContentPage
             return;
         }
 
-        await SaveCustomLog(text);
+        try
+        {
+            CustomLogSaveButton.IsEnabled = false;
+            CustomLogAddImageButton.IsEnabled = false;
+
+            if (CustomLogSelectedFiles.Any())
+                await SaveCustomLogWithImages(text); // Notes + attached images saved as one logbook entry
+            else
+                await SaveCustomLog(text);           // Existing text-only flow, unchanged
+        }
+        catch (Exception)
+        {
+
+           // throw;
+        }
+        finally
+        {
+            CustomLogSaveButton.IsEnabled = true;
+            CustomLogAddImageButton.IsEnabled = true;
+        }
     }
 
     private async Task SaveCustomLog(string log)
@@ -1088,17 +1178,30 @@ public partial class LogActivity : ContentPage
             return;
         }
 
-        string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
-        if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        string gpsCoordinates = "";
+        var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+        if (_hasGpsLocationPermission)
+        {
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            gpsCoordinates = _gpsLocation;
+        }
+        else
         {
             await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
-            return;
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            if (string.IsNullOrEmpty(_gpsLocation))
+                return;
+            else
+                gpsCoordinates = _gpsLocation;
         }
+
 
         try
         {
+            GetLocalSiteForPCAR();
+            GetLocalSiteName();
             if (App.IsOnline)
-                await LogActivityTask(log.Trim(), 0, "NA", false);
+                await LogActivityTask(log.Trim(), _localClientSiteId, 0, "NA", false);
             else
                 await LogActivityToCache(log.Trim(), 0, "NA", false);
 
@@ -1107,6 +1210,248 @@ public partial class LogActivity : ContentPage
         {
             // Log silently or toast error
             // await ShowToastMessage($"Error: {ex.Message}");
+        }
+    }
+
+    // ----- Custom Log Entry: attach images (always saved as 25% within field) -----
+
+    private async void OnCustomLogPickImageClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            IEnumerable<FileResult> results = null;
+            bool customPickerShown = false;
+
+            // Android: WhatsApp-style picker (in-app camera + recent gallery strip), same as the camera button
+            if (DeviceInfo.Platform == DevicePlatform.Android)
+            {
+                var camStatus = await Permissions.CheckStatusAsync<Permissions.Camera>();
+                if (camStatus != PermissionStatus.Granted)
+                    camStatus = await Permissions.RequestAsync<Permissions.Camera>();
+
+                if (camStatus == PermissionStatus.Granted)
+                {
+                    customPickerShown = true;
+                    var picked = await Views.CameraGalleryPickerPage.ShowAsync(Navigation);
+                    if (picked == null) return; // user cancelled — do not fall back to gallery
+                    results = picked;
+                }
+            }
+
+            if (!customPickerShown)
+                results = await FilePicker.PickMultipleAsync(); // Multiple files
+
+            if (results != null && results.Any())
+            {
+                // Allowed file extensions
+                string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
+
+                foreach (var file in results)
+                {
+                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
+                        continue; // Skip this file
+                    }
+
+                    CustomLogSelectedFiles.Add(new MyFileModel
+                    {
+                        File = file,
+                        FileType = "twentyfive", // Always 25% within field — no rear/25% popup for custom log images
+                        IsNew = true
+                    });
+                }
+            }
+
+            UpdateCustomLogFilesVisibility();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"File picking failed: {ex.Message}", "OK");
+        }
+    }
+
+    private void OnCustomLogDeleteFileClicked(object sender, EventArgs e)
+    {
+        if (sender is Button btn && btn.BindingContext is MyFileModel file)
+        {
+            CustomLogSelectedFiles.Remove(file);
+            UpdateCustomLogFilesVisibility();
+        }
+    }
+
+    private void UpdateCustomLogFilesVisibility()
+    {
+        var hasFiles = CustomLogSelectedFiles.Any();
+        CustomLogFilesScroll.IsVisible = hasFiles;
+        CustomLogFilesCollection.IsVisible = hasFiles;
+    }
+
+    // Saves the custom log notes together with the attached images as a single logbook entry.
+    // Online: UploadMultiple with the extra "notes" form field (server uses it instead of "Mob app image upload").
+    // Offline: cached through the existing LBACTIVITYNEW file records with Notes carried along for sync.
+    private async Task SaveCustomLogWithImages(string log)
+    {
+        if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0)
+        {
+            await DisplayAlert("Error", "User Id or Client Site Id or Guard Id is invalid.", "OK");
+            return;
+        }
+
+        string gpsCoordinates = "";
+        var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+        if (_hasGpsLocationPermission)
+        {
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            gpsCoordinates = _gpsLocation;
+        }
+        else
+        {
+            await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            if (string.IsNullOrEmpty(_gpsLocation))
+                return;
+            else
+                gpsCoordinates = _gpsLocation;
+        }
+
+        CustomLogUploadLoadingOverlay.IsVisible = true;
+        try
+        {
+            GetLocalSiteForPCAR();
+            GetLocalSiteName();
+
+            if (!App.IsOnline)
+            {
+                var _fileGroupId = Guid.NewGuid();
+                foreach (var fileModel in CustomLogSelectedFiles)
+                {
+                    // Save file to local storage with unique name
+                    var extension = Path.GetExtension(fileModel.File.FileName);
+                    var cacheFileName = $"{Guid.NewGuid():N}{extension}";
+                    var stream = await Helpers.ImageCompressionHelper.CompressImageAsync(fileModel.File);
+                    var path = await SaveFileOffline(stream, "ActivityLogbook", cacheFileName);
+
+                    OfflineFilesRecords offlineFilesRecords = new OfflineFilesRecords()
+                    {
+                        RecordLabel = "LBACTIVITYNEW",
+                        FileNameActual = fileModel.File.FileName,
+                        FileNameCache = cacheFileName,
+                        FileNameWithPathCache = path,
+                        EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+                        EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+                        EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+                        EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+                        EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+                        IsSynced = false,
+                        UniqueRecordId = Guid.NewGuid(),
+                        FileType = fileModel.FileType,
+                        IsNew = true,
+                        LogBookId = null,
+                        guardId = _guardId.Value,
+                        clientsiteId = _clientSiteId.Value,
+                        userId = _userId.Value,
+                        gps = gpsCoordinates ?? "",
+                        FileGroupId = _fileGroupId,
+                        DeviceId = deviceid,
+                        DeviceName = devicename,
+                        CallSignId = App.PcarCallSignId,
+                        PositionId = App.PcarPostionId,
+                        IsEntryByPCAR = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP,
+                        LogbookclientsiteId = _localClientSiteId,
+                        Notes = log // Guard's custom notes — used by the server instead of "Mob app image upload"
+                    };
+
+                    var r = await _scanDataDbService.SaveLogActivityDocumentsCacheData(offlineFilesRecords);
+                }
+
+                var _ChaceCount = _scanDataDbService.GetCacheRecordsCount();
+                UpdateCacheRecordCount(_ChaceCount);
+
+                CustomLogSelectedFiles.Clear();
+                UpdateCustomLogFilesVisibility();
+                await ShowToastMessage("Log entry with images saved to cache and will be uploaded when online.");
+                HideCustomLogPopup();
+            }
+            else
+            {
+                using var client = new HttpClient();
+                var content = new MultipartFormDataContent();
+
+                // Add files + types (same index order)
+                foreach (var fileModel in CustomLogSelectedFiles)
+                {
+                    var stream = await Helpers.ImageCompressionHelper.CompressImageAsync(fileModel.File);
+                    var fileContent = new StreamContent(stream);
+                    fileContent.Headers.ContentType =
+                        new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+                    content.Add(fileContent, "files", fileModel.File.FileName);
+                    content.Add(new StringContent(fileModel.FileType), "types");
+                }
+
+                // Add other form data (same as the existing image upload flow)
+                content.Add(new StringContent(_guardId.ToString()), "guardId");
+                content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
+                content.Add(new StringContent(_userId.ToString()), "userId");
+                content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+                content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTime().ToString("o")), "eventDateTimeLocal");
+                content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset().ToString("o")), "eventDateTimeLocalWithOffset");
+                content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZone()), "eventDateTimeZone");
+                content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneShortName()), "eventDateTimeZoneShort");
+                content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneOffsetMinute().ToString()), "eventDateTimeUtcOffsetMinute");
+                content.Add(new StringContent(_localClientSiteId.HasValue ? _localClientSiteId.Value.ToString() : ""), "logbookclientsiteId");
+                content.Add(new StringContent((App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP).ToString()), "isEntryByPCAR");
+                content.Add(new StringContent((App.PcarCallSignId.HasValue ? App.PcarCallSignId.ToString() : "")), "callSignId");
+                content.Add(new StringContent((App.PcarPostionId.HasValue ? App.PcarPostionId.ToString() : "")), "positionId");
+
+                // Guard's custom notes — server stores these on the logbook entry instead of "Mob app image upload"
+                content.Add(new StringContent(log), "notes");
+
+                var uploadResponse = await client.PostAsync($"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple", content);
+
+                // UploadMultiple returns HTTP 200 even when it fails internally, so also check the "success" flag in the body
+                bool serverSuccess = uploadResponse.IsSuccessStatusCode;
+                if (serverSuccess)
+                {
+                    try
+                    {
+                        var responseText = await uploadResponse.Content.ReadAsStringAsync();
+                        using var responseJson = JsonDocument.Parse(responseText);
+                        if (responseJson.RootElement.TryGetProperty("success", out var successFlag))
+                            serverSuccess = successFlag.GetBoolean();
+                    }
+                    catch (Exception)
+                    {
+                        // Body not parseable — fall back to the HTTP status alone
+                    }
+                }
+
+                if (!serverSuccess)
+                {
+                    // Keep the popup open so the guard's notes and images are not lost
+                    await DisplayAlert("Error", "Failed to save the log entry with images. Please try again.", "OK");
+                    return;
+                }
+
+                CustomLogSelectedFiles.Clear();
+                UpdateCustomLogFilesVisibility();
+                await ShowToastMessage("Log entry added successfully.");
+                HideCustomLogPopup();
+
+                // Same navigation as the text-only custom log save
+                var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
+                Application.Current.MainPage = new NavigationPage(new MainPage(volumeButtonService));
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to save log entry with images: {ex.Message}", "OK");
+        }
+        finally
+        {
+            CustomLogUploadLoadingOverlay.IsVisible = false;
         }
     }
 
@@ -1392,7 +1737,22 @@ public partial class LogActivity : ContentPage
             try
             {
                 if (_guardId == null || _clientSiteId == null || _userId == null || _guardId <= 0 || _clientSiteId <= 0 || _userId <= 0) return;
-                string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+                string gpsCoordinates = "";
+                var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+                if (_hasGpsLocationPermission)
+                {
+                    var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                    gpsCoordinates = _gpsLocation;
+                }
+                else
+                {
+                    await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                    var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                    if (string.IsNullOrEmpty(_gpsLocation))
+                        return;
+                    else
+                        gpsCoordinates = _gpsLocation;
+                }
 
                 if (!App.IsOnline)
                 {
@@ -1428,7 +1788,11 @@ public partial class LogActivity : ContentPage
                             gps = gpsCoordinates ?? "",
                             FileGroupId = _fileGroupId,
                             DeviceId = deviceid,
-                            DeviceName = devicename
+                            DeviceName = devicename,
+                            CallSignId = App.PcarCallSignId,
+                            PositionId = App.PcarPostionId,
+                            IsEntryByPCAR = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP,
+                            LogbookclientsiteId = _localClientSiteId
                         };
 
                         var r = await _scanDataDbService.SaveLogActivityDocumentsCacheData(offlineFilesRecords);
@@ -1465,12 +1829,19 @@ public partial class LogActivity : ContentPage
                     content.Add(new StringContent(_clientSiteId.ToString()), "clientsiteId");
                     content.Add(new StringContent(_userId.ToString()), "userId");
                     content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+                    content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTime().ToString("o")), "eventDateTimeLocal");
+                    content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset().ToString("o")), "eventDateTimeLocalWithOffset");
+                    content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZone()), "eventDateTimeZone");
+                    content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneShortName()), "eventDateTimeZoneShort");
+                    content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneOffsetMinute().ToString()), "eventDateTimeUtcOffsetMinute");
+                    content.Add(new StringContent(_localClientSiteId.HasValue ? _localClientSiteId.Value.ToString() : ""), "logbookclientsiteId");
+                    content.Add(new StringContent((App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP).ToString()), "isEntryByPCAR");
+                    content.Add(new StringContent((App.PcarCallSignId.HasValue ? App.PcarCallSignId.ToString() : "")), "callSignId");
+                    content.Add(new StringContent((App.PcarPostionId.HasValue ? App.PcarPostionId.ToString() : "")), "positionId");
+
 
                     // Send request
-                    var uploadResponse = await client.PostAsync(
-                        $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple",
-                        content
-                    );
+                    var uploadResponse = await client.PostAsync($"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UploadMultiple", content);
 
                     if (!uploadResponse.IsSuccessStatusCode)
                     {
@@ -1532,7 +1903,22 @@ public partial class LogActivity : ContentPage
         try
         {
             var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return;
+                else
+                    gpsCoordinates = _gpsLocation;
+            }
 
             using var client = new HttpClient();
             var content = new MultipartFormDataContent();
@@ -1541,6 +1927,35 @@ public partial class LogActivity : ContentPage
             {
                 await DisplayAlert("Error", "No log selected for editing.", "OK");
                 return;
+            }
+
+            // Update the entry's notes first when the editor is shown (entries with guard-typed text)
+            if (EditImageNotesEditor.IsVisible)
+            {
+                var newNotes = EditImageNotesEditor.Text?.Trim();
+                if (string.IsNullOrWhiteSpace(newNotes))
+                {
+                    await DisplayAlert("Validation", "Please enter a note.", "OK");
+                    return;
+                }
+
+                if (!string.Equals(newNotes, _selectedLogForEdit.Notes?.Trim() ?? "", StringComparison.Ordinal))
+                {
+                    var notesApiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/UpdateGuardLogNotes" +
+                                      $"?id={_selectedLogForEdit.Id}" +
+                                      $"&notes={Uri.EscapeDataString(newNotes)}";
+
+                    var notesResponse = await _httpClient.GetAsync(notesApiUrl);
+                    if (!notesResponse.IsSuccessStatusCode)
+                    {
+                        string errorMessage = await notesResponse.Content.ReadAsStringAsync();
+                        await ShowToastMessage($"Failed to update note: {errorMessage}");
+                        return; // keep popup open so the edited text is not lost
+                    }
+
+                    _selectedLogForEdit.Notes = newNotes;
+                    await ShowToastMessage("Log updated successfully.");
+                }
             }
 
             // Filter only new files to upload
@@ -1642,11 +2057,22 @@ public partial class LogActivity : ContentPage
         string savedBadgeKeyName = $"{_clientSiteId}_{_guardId}_GuardSelectedBadgeNumber";
         string savedBadgeNumber = Preferences.Get(savedBadgeKeyName, "0");
         _badgeNo = int.TryParse(savedBadgeNumber, out int badgeNum) ? badgeNum : 0;
+        GetLocalSiteForPCAR();
+    }
+
+    private void GetLocalSiteForPCAR()
+    {
+        //If PCAR then change local client site to latest scanned site
+        _localClientSiteId = _clientSiteId;
+        if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+        {
+            _localClientSiteId = App.PcarInspLastScannedSiteId.HasValue ? (App.PcarInspLastScannedSiteId.Value > 0 ? App.PcarInspLastScannedSiteId.Value : _clientSiteId) : _clientSiteId;
+        }
     }
     private async Task SetupHubConnection()
     {
 
-        if (_clientSiteId == null) return;
+        if (_localClientSiteId == null) return;
         try
         {
             string hubUrl = $"{AppConfig.MobileSignalRBaseUrl}/MobileAppSignalRHub";
@@ -1655,29 +2081,16 @@ public partial class LogActivity : ContentPage
                 .WithAutomaticReconnect()
                 .Build();
 
-            //_hubConnection.Closed += async (error) =>
-            //{
-            //    Debug.WriteLine($"Connection closed. Reason: {error?.Message}");
-            //    // Optionally attempt reconnect
-            //    await Task.Delay(3000);
-            //    await _hubConnection.StartAsync();
-            //};
-
-            //_hubConnection.Reconnecting += error =>
-            //{
-            //    Debug.WriteLine($"Reconnecting due to: {error?.Message}");
-            //    return Task.CompletedTask;
-            //};
-
-
             _hubConnection.Reconnected += connectionId =>
             {
                 Debug.WriteLine($"Reconnected with connectionId: {connectionId}");
                 if (_hubConnection.State == HubConnectionState.Connected)
                 {
+                    GetLocalSiteForPCAR();
+                    GetLocalSiteName();
                     MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                     {
-                        ClientSiteId = (int)_clientSiteId,
+                        ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
                         GuardId = (int)_guardId,
                         UserId = (int)_userId,
                         BadgeNo = _badgeNo,
@@ -1708,9 +2121,11 @@ public partial class LogActivity : ContentPage
 
             if (_hubConnection.State == HubConnectionState.Connected)
             {
+                GetLocalSiteForPCAR();
+                GetLocalSiteName();
                 MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                 {
-                    ClientSiteId = (int)_clientSiteId,
+                    ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
                     GuardId = (int)_guardId,
                     UserId = (int)_userId,
                     BadgeNo = _badgeNo,
@@ -1735,7 +2150,7 @@ public partial class LogActivity : ContentPage
     private async Task SetupRCHubConnection()
     {
 
-        if (_clientSiteId == null) return;
+        if (_localClientSiteId == null) return;
         try
         {
             string hubUrl = $"{AppConfig.MobileSignalRRCBaseUrl}/MobileAppSignalRHub";
@@ -1744,29 +2159,16 @@ public partial class LogActivity : ContentPage
                 .WithAutomaticReconnect()
                 .Build();
 
-            //_hubConnectionRC.Closed += async (error) =>
-            //{
-            //    Debug.WriteLine($"RC Connection closed. Reason: {error?.Message}");
-            //    // Optionally attempt reconnect
-            //    await Task.Delay(3000);
-            //    await _hubConnectionRC.StartAsync();
-            //};
-
-            //_hubConnectionRC.Reconnecting += error =>
-            //{
-            //    Debug.WriteLine($"RC Reconnecting due to: {error?.Message}");
-            //    return Task.CompletedTask;
-            //};
-
-
             _hubConnectionRC.Reconnected += connectionId =>
             {
                 Debug.WriteLine($"RC Reconnected with connectionId: {connectionId}");
                 if (_hubConnectionRC.State == HubConnectionState.Connected)
                 {
+                    GetLocalSiteForPCAR();
+                    GetLocalSiteName();
                     MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                     {
-                        ClientSiteId = (int)_clientSiteId,
+                        ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
                         GuardId = (int)_guardId,
                         UserId = (int)_userId,
                         BadgeNo = _badgeNo,
@@ -1789,9 +2191,11 @@ public partial class LogActivity : ContentPage
 
             if (_hubConnectionRC.State == HubConnectionState.Connected)
             {
+                GetLocalSiteForPCAR();
+                GetLocalSiteName();
                 MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                 {
-                    ClientSiteId = (int)_clientSiteId,
+                    ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
                     GuardId = (int)_guardId,
                     UserId = (int)_userId,
                     BadgeNo = _badgeNo,
@@ -1844,12 +2248,21 @@ public partial class LogActivity : ContentPage
     {
         // await ShowToastMessage($"Logging activity to Cache...");
 
-        string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
-
-        if (string.IsNullOrWhiteSpace(gpsCoordinates))
+        string gpsCoordinates = "";
+        var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+        if (_hasGpsLocationPermission)
         {
-            await DisplayAlert($"Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
-            return;
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            gpsCoordinates = _gpsLocation;
+        }
+        else
+        {
+            await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+            var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+            if (string.IsNullOrEmpty(_gpsLocation))
+                return;
+            else
+                gpsCoordinates = _gpsLocation;
         }
 
         if (!_guardId.HasValue || !_clientSiteId.HasValue || !_userId.HasValue || _guardId.Value <= 0 || _clientSiteId.Value <= 0 || _userId.Value <= 0)
@@ -1857,7 +2270,8 @@ public partial class LogActivity : ContentPage
             await DisplayAlert($"Error", "User Id or Client Site Id or Guard Id is invalid.", "OK");
             return;
         }
-
+        GetLocalSiteForPCAR();
+        GetLocalSiteName();
         PostActivityRequestLocalCache request = new PostActivityRequestLocalCache()
         {
             guardId = _guardId.Value,
@@ -1879,6 +2293,10 @@ public partial class LogActivity : ContentPage
             DeviceId = deviceid,
             DeviceName = devicename,
             EventMobileUtcDateTime = TimeZoneHelper.GetCurrentUtcDateTime(),
+            IsEntryByPCAR = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP,
+            CallSignId = App.PcarCallSignId,
+            PositionId = App.PcarPostionId,
+            LogbookclientsiteId = _localClientSiteId
         };
 
         var isSuccess = await _scanDataDbService.SaveLogActivityCacheData(request);
@@ -1925,8 +2343,13 @@ public partial class LogActivity : ContentPage
         var filePath = Path.Combine(appDataDir, fileName);
 
         // Save the stream to the file path        
-        using var destinationStream = File.Create(filePath);
+        await using var destinationStream = File.Create(filePath);
+
+        if (stream.CanSeek)
+            stream.Position = 0;
+
         await stream.CopyToAsync(destinationStream);
+        await destinationStream.FlushAsync();
 
         return filePath;
     }
@@ -2029,10 +2452,9 @@ public partial class LogActivity : ContentPage
                 // Get site ID from scanned tag and store it in a global variable to be used across the app, especially for PCAR/INSP modules
                 var _taginfoLocal = await _scannerControlServices.GetTagDetailsFromLocalDbAsync(serialNumber);
                 if (_taginfoLocal != null && _taginfoLocal.ClientSiteId > 0)
-                    App.PcarInspLastScannedSiteId = _taginfoLocal.ClientSiteId;
+                    App.SetPcarLastScanned(_taginfoLocal.ClientSiteId, DateTime.Now);
                 else
-                    App.PcarInspLastScannedSiteId = null; // Reset if tag not found or invalid
-                App.PcarInspLastScannedTime = DateTime.Now;
+                    App.SetPcarLastScanned(null, DateTime.Now); // Reset if tag not found or invalid                
             }
 
             if (!App.IsOnline)
@@ -2056,7 +2478,7 @@ public partial class LogActivity : ContentPage
                     var _taguid = serialNumber;
                     if (!scannerSettings.tagFound) { _taguid = "NA"; }
                     int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
-                    LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer);
+                    await LogActivityTask(scannerSettings.tagInfoLabel, null, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer);
                 }
                 else
                 {

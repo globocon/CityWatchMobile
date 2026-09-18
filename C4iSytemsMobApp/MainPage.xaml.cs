@@ -32,6 +32,7 @@ namespace C4iSytemsMobApp
         private readonly System.Timers.Timer duressCheckTimer = new System.Timers.Timer(3000); // Check every 3 seconds
         private readonly IVolumeButtonService _volumeButtonService;
         private readonly ILogBookServices _logBookServices;
+        private readonly IDeviceInfoService infoService;
         private readonly SyncService _syncService;
         private int _pcounter = 0;
         private int _CurrentCounter = 0;
@@ -155,7 +156,24 @@ namespace C4iSytemsMobApp
 
         public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
-            InitializeComponent();            
+            InitializeComponent();
+            try
+            {
+                scanner = new();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing scanner: {ex.Message}");
+            }
+
+            infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
+            App.DeviceName = infoService?.GetDeviceName();
+            App.DeviceId = infoService?.GetDeviceId();
+#if WINDOWS
+    App.DeviceId = "8cd577b0416592cd";
+    App.DeviceName = "Windows PC";
+#endif
+
             App.ConnectivityChangedEvent += OnConnectivityChanged;
             OnConnectivityChanged(App.IsOnline);
             _syncService = IPlatformApplication.Current.Services.GetService<SyncService>();
@@ -296,6 +314,9 @@ namespace C4iSytemsMobApp
             await SetupHubConnection();  // Execution Order - 4
 
             duressCheckTimer.Start();
+
+            // Fire-and-forget: the badge must not delay the scanners coming up.
+            _ = LoadNotificationCountAsync();
 
             MainLayout.IsVisible = true;
         }
@@ -781,10 +802,22 @@ namespace C4iSytemsMobApp
 
         private async Task ActivateDuress()
         {
-
-
-
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return;
+                else
+                    gpsCoordinates = _gpsLocation;
+            }
 
 
             // Validate Guard ID
@@ -958,6 +991,7 @@ namespace C4iSytemsMobApp
                     {
                         //  throw;
                     }
+                    await Services.Tracking.TrackingService.Instance.StopAsync(); // tracking hard stop
                     Preferences.Clear(); // Clear SecureStorage (logout)
                     System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the app
                 }
@@ -1521,10 +1555,29 @@ namespace C4iSytemsMobApp
 
         private void OnNotificationsClicked(object sender, TappedEventArgs e)
         {
-            // Your update check logic here
-            DisplayAlert("Notification", "New feature coming soon...", "OK");
-            //NotificationCount += 1;
-            //NotificationIcon.IsVisible = !NotificationIcon.IsVisible;
+            var notificationApiServices = IPlatformApplication.Current.Services.GetService<INotificationApiServices>();
+            Application.Current.MainPage = new NotificationsPage(notificationApiServices);
+        }
+
+        /// <summary>
+        /// Drives the bell badge. Best-effort and never awaited by the caller: the count is
+        /// decoration, and the home screen must not stall on it when the site has no signal.
+        /// </summary>
+        private async Task LoadNotificationCountAsync()
+        {
+            try
+            {
+                var notificationApiServices = IPlatformApplication.Current.Services.GetService<INotificationApiServices>();
+                if (notificationApiServices == null)
+                    return;
+
+                var count = await notificationApiServices.GetUnreadCountAsync();
+                MainThread.BeginInvokeOnMainThread(() => NotificationCount = count);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load notification count: {ex.Message}");
+            }
         }
         private async void OnSOPClicked(object sender, EventArgs e)
         {
@@ -1630,6 +1683,9 @@ namespace C4iSytemsMobApp
                     if (response.IsSuccessStatusCode)
                     {
                         string content = await response.Content.ReadAsStringAsync();
+                        /* Tracking hard stop. The server also closes the session on its own:
+                           UpdateOffDuty publishes OfficerLoggedOut on the event bus. */
+                        await Services.Tracking.TrackingService.Instance.StopAsync();
                         Preferences.Clear(); // Clear SecureStorage (logout)
                         if(DeviceInfo.Platform == DevicePlatform.iOS)
                         {
@@ -1665,7 +1721,9 @@ namespace C4iSytemsMobApp
 
         private async Task LogScannedDataToCache(string _TagUid, ScanningType _scannerType)
         {
-            await ShowToastMessage($"[{ALERT_TITLE}] Tag scanned. Logging activity to Cache...");
+            /* P4#153: offline scan gets the same popup, amber - no server reply means no
+               site name, so the guard is told it saved and will sync. */
+            var offlinePopup = ScanFeedback.Show(this, "Saved to phone", null, "No connection - will sync when online", ScanFeedbackKind.Offline);
             var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
             if (isSuccess)
             {
@@ -1673,11 +1731,11 @@ namespace C4iSytemsMobApp
                 {
                     SyncState.SyncedCount = _ChaceCount;
                 });
-                await ShowToastMessage($"{msg}");
+                offlinePopup.Complete(true, msg ?? "Saved - will sync when online");
             }
             else
             {
-                await DisplayAlert("Error", msg ?? "Failed to save tag scan", "OK");
+                offlinePopup.Complete(false, msg ?? "Failed to save tag scan", 3000);
             }
         }
 
@@ -1776,10 +1834,9 @@ namespace C4iSytemsMobApp
                     // Get site ID from scanned tag and store it in a global variable to be used across the app, especially for PCAR/INSP modules
                     var _taginfoLocal = await _scannerControlServices.GetTagDetailsFromLocalDbAsync(serialNumber);
                     if (_taginfoLocal != null && _taginfoLocal.ClientSiteId > 0)
-                        App.PcarInspLastScannedSiteId = _taginfoLocal.ClientSiteId;
+                        App.SetPcarLastScanned(_taginfoLocal.ClientSiteId, DateTime.Now);
                     else
-                        App.PcarInspLastScannedSiteId = null; // Reset if tag not found or invalid
-                    App.PcarInspLastScannedTime = DateTime.Now;
+                        App.SetPcarLastScanned(null, DateTime.Now); // Reset if tag not found or invalid
                 }
 
                 if (!App.IsOnline)
@@ -1798,15 +1855,21 @@ namespace C4iSytemsMobApp
                 {
                     if (scannerSettings.IsSuccess)
                     {
-                        var SnackbarMessage = scannerSettings.tagInfoLabel.Length > 35 ? $"{(scannerSettings.tagInfoLabel.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : scannerSettings.tagInfoLabel.Replace("\"", "").Replace("'", "");
-                        await ShowToastMessage($"[{ALERT_TITLE}] {SnackbarMessage} scanned. Logging activity...");
+                        /* P4#153: the popup replaces the 35-char toast. The site the tag
+                           belongs to is the headline - the whole point of PCAR is that the
+                           guard can read where they are. */
+                        var headline = !string.IsNullOrWhiteSpace(scannerSettings.TagSiteName)
+                            ? scannerSettings.TagSiteName
+                            : (scannerSettings.tagFound ? "Tag scanned" : "Unknown tag");
+                        var detail = ScanFeedback.DetailWithoutSitePrefix(scannerSettings.tagInfoLabel, scannerSettings.TagSiteName);
+                        var scanPopup = ScanFeedback.Show(this, headline, detail, "Logging activity...", ScanFeedbackKind.Success);
 
                         // Valid tag - log activity
                         int _scannerType = (int)ScanningType.NFC;
                         var _taguid = serialNumber;
                         if (!scannerSettings.tagFound) { _taguid = "NA"; }
                         int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
-                        await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer);
+                        await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer, scanPopup);
                     }
                     else
                     {
@@ -1887,24 +1950,37 @@ namespace C4iSytemsMobApp
        
         private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
         {
-            var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
+            var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, null, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
             if (isSuccess)
             {
                 if (scanningType == (int)ScanningType.NFC)
                 {
-                    var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
-                    await ShowToastMessage($"[{ALERT_TITLE}] {SnackbarMessage.Replace("[NFC]", "")} log entry added.");
+                    if (scanPopup != null) { scanPopup.Complete(true, "Log entry added"); }
+                    else
+                    {
+                        var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
+                        await ShowToastMessage($"[{ALERT_TITLE}] {SnackbarMessage.Replace("[NFC]", "")} log entry added.");
+                    }
                 }
                 else if (scanningType == (int)ScanningType.BLUETOOTH)
                 {
-                    var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
-                    await ShowToastMessage($"[{BLE_ALERT_TITLE}] {SnackbarMessage.Replace("[BLE]", "")} log entry added.");
+                    if (scanPopup != null) { scanPopup.Complete(true, "Log entry added"); }
+                    else
+                    {
+                        var SnackbarMessage = activityDescription.Length > 35 ? $"{(activityDescription.Substring(0, 35).Replace("\"", "").Replace("'", ""))} ..." : activityDescription.Replace("\"", "").Replace("'", "");
+                        await ShowToastMessage($"[{BLE_ALERT_TITLE}] {SnackbarMessage.Replace("[BLE]", "")} log entry added.");
+                    }
                 }
                 else
                     await ShowToastMessage(msg);
             }
             else
             {
+                if (scanPopup != null)
+                {
+                    scanPopup.Complete(false, msg ?? "Failed to log activity", 3000);
+                    return;
+                }
                 var alertHead = "Error";
                 if (scanningType == (int)ScanningType.NFC)
                 {

@@ -27,8 +27,8 @@ public partial class SelectSmartWand : ContentPage
         _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
         pickerSmartWand.ItemsSource = ClientSiteSmartWands;
         infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
-        devicename = infoService?.GetDeviceName();
-        deviceid = infoService?.GetDeviceId();
+        devicename = App.DeviceName; //infoService?.GetDeviceName();
+        deviceid = App.DeviceId; // infoService?.GetDeviceId();
 
 #if ANDROID
         deviceType = "Android";

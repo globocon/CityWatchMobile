@@ -22,13 +22,16 @@ namespace C4iSytemsMobApp.Data.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("ClienSiteId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Label")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id", "ClienSiteId");
 
                     b.ToTable("ActivityModel");
                 });
@@ -430,6 +433,9 @@ namespace C4iSytemsMobApp.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("CallSignId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("DeviceId")
                         .HasColumnType("TEXT");
 
@@ -466,6 +472,9 @@ namespace C4iSytemsMobApp.Data.Migrations
                     b.Property<string>("FileType")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsEntryByPCAR")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsNew")
                         .HasColumnType("INTEGER");
 
@@ -473,6 +482,15 @@ namespace C4iSytemsMobApp.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("LogBookId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("LogbookclientsiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PositionId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("RecordLabel")
@@ -600,6 +618,9 @@ namespace C4iSytemsMobApp.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("CallSignId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("DeviceId")
                         .HasColumnType("TEXT");
 
@@ -624,10 +645,19 @@ namespace C4iSytemsMobApp.Data.Migrations
                     b.Property<DateTime>("EventMobileUtcDateTime")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsEntryByPCAR")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsNewGuard")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsSynced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("LogbookclientsiteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("PositionId")
                         .HasColumnType("INTEGER");
 
                     b.Property<Guid>("UniqueRecordId")
@@ -676,6 +706,56 @@ namespace C4iSytemsMobApp.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("RCLinkedDuressClientSitesCache");
+                });
+
+            modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.TrackingPointCache", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double?>("AccuracyM")
+                        .HasColumnType("REAL");
+
+                    b.Property<byte?>("BatteryPct")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double?>("HeadingDeg")
+                        .HasColumnType("REAL");
+
+                    b.Property<bool>("IsBackfill")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsMock")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Latitude")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Longitude")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("RecordedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Seq")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Source")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double?>("SpeedKph")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("UnitId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TrackingPointCache");
                 });
 
             modelBuilder.Entity("C4iSytemsMobApp.Data.Entity.irOfflineCache", b =>

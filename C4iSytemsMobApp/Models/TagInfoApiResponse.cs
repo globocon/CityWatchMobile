@@ -9,5 +9,7 @@ namespace C4iSytemsMobApp.Models
         public string tagInfoLabel { get; set; }
         public int ScannedFromLinkedSite { get; set; }
         public int RowIdInServer { get; set; }
+        public int TagSiteId { get; set; }
+        public string TagSiteName { get; set; }
     }
 }

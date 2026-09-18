@@ -26,6 +26,7 @@ public static class MauiProgram
             // Initialize the .NET MAUI Community Toolkit by adding the below line of code
             .UseMauiCommunityToolkit()   // 👈 Add this
             .UseMauiCommunityToolkitMediaElement()      // 👈 Required
+            .UseMauiCommunityToolkitCamera()            // 👈 In-app camera preview (logbook image picker)
                                                         // Initialize the .NET MAUI Community Toolkit MediaElement by adding the below line of code
                                                         //.UseMauiCommunityToolkitMediaElement()
             .UseBarcodeReader() // Register ZXing Barcode Scanner
@@ -52,6 +53,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IGuardApiServices, GuardApiServices>();
         builder.Services.AddSingleton<IAppUpdateService, AppUpdateService>();
         builder.Services.AddSingleton<ICustomLogEntryServices, CustomLogEntryServices>();
+        builder.Services.AddSingleton<INotificationApiServices, NotificationApiServices>();
 
         builder.Services.AddSingleton<ConnectivityListener>();
         builder.Services.AddSingleton<ISyncApiService, SyncApiService>();
@@ -75,6 +77,7 @@ public static class MauiProgram
 #if ANDROID
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.Android.Services.VolumeButtonService>();
         builder.Services.AddSingleton<IDeviceInfoService, Platforms.Android.Services.DeviceInfoService>();
+        builder.Services.AddSingleton<IRecentImagesService, Platforms.Android.Services.RecentImagesService>();
 #elif IOS
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.iOS.Services.VolumeButtonService>();
         builder.Services.AddSingleton<IDeviceInfoService, Platforms.iOS.Services.DeviceInfoService>();
@@ -96,6 +99,11 @@ public static class MauiProgram
 
         // Start connectivity watcher
         var connListener = app.Services.GetService<ConnectivityListener>();
+
+        // Tracking feature pack: hand the singleton its context factory. Tracking itself
+        // starts only when a patrol session opens (server-gated on enrolment + consent).
+        Services.Tracking.TrackingService.Instance.Configure(
+            () => app.Services.GetRequiredService<AppDbContext>());
 
         return app;
     }

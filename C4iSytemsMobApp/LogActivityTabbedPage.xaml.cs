@@ -22,14 +22,16 @@ public partial class LogActivityTabbedPage
         base.OnAppearing();
         await LoadTabsAsync();
 
-        // Conditionally add tabs       
+        // Conditionally add tabs. OnAppearing fires again whenever a modal page
+        // (e.g. the camera/gallery picker) closes, so only add a tab if it is
+        // not already present to avoid duplicating the tab bar.
         //if (showBLEiBeaconTab)
         //    Children.Add(new iBeaconScannerPage { Title = "iBeacon Scanner" });
 
-        if (showCustomLogs)
+        if (showCustomLogs && !Children.OfType<CustomContractPage>().Any())
             Children.Add(new CustomContractPage { Title = "Custom Logs" });
 
-        if (showPatrolCarLogs)
+        if (showPatrolCarLogs && !Children.OfType<PatrolCarPage>().Any())
             Children.Add(new PatrolCarPage { Title = "Patrol Car Logs" });
     }
 

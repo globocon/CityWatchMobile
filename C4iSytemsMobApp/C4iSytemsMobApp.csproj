@@ -79,6 +79,7 @@
 	<ItemGroup>
 		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
 		<PackageReference Include="CommunityToolkit.Maui" Version="8.0.1" />
+		<PackageReference Include="CommunityToolkit.Maui.Camera" Version="1.0.5" />
 		<PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="4.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.16" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.22">
@@ -100,8 +101,31 @@
 		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.4.0" />
 	</ItemGroup>
 
+	<!-- FCM remote nudge (tracking §Push). Android only. Version verified against nuget.org
+	     12 Aug 2026: Xamarin.Firebase.Messaging 123.4.1.2 targets net8.0-android34.0 — this
+	     app's TFM and target SDK — with the AndroidX 1.7-era dependency set that coexists
+	     with MAUI 8.0.100 + CommunityToolkit.Maui.Camera 1.0.5 (the newer 124.x line pulls
+	     AndroidX.Collection 1.5, which Camera pins below 1.4.1 — NU1107).
+	     google-services.json is the per-environment Firebase client config: included only
+	     when present so any checkout still builds without it, and it stays OUT of source
+	     control (.gitignore). -->
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<PackageReference Include="Xamarin.Firebase.Messaging" Version="123.4.1.2" />
+		<GoogleServicesJson Include="Platforms\Android\google-services.json" Condition="Exists('Platforms\Android\google-services.json')" />
+		<!-- AndroidX .Ktx shims pinned to their base packages' resolved versions. Without
+		     these, Firebase's transitive graph leaves e.g. Activity.Ktx at 1.7 while
+		     Activity resolves 1.9 — and androidx 1.8+ merged the ktx classes into the base
+		     jar, so the old separate ktx jar defines the same classes twice and D8 fails
+		     ("Type androidx.activity.ActivityViewModelLazyKt$viewModels$1 is defined
+		     multiple times"). At these versions the .Ktx packages are empty pass-throughs. -->
+		<PackageReference Include="Xamarin.AndroidX.Activity.Ktx" Version="1.9.0.3" />
+		<PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.7.0.2" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Ktx" Version="2.7.0.4" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Ktx" Version="2.7.0.4" />
+	</ItemGroup>
+
 	<ItemGroup>
-	  <ProjectReference Include="..\C4iSytemsMobApp.Data\C4iSytemsMobApp.Data.csproj" />	  
+	  <ProjectReference Include="..\C4iSytemsMobApp.Data\C4iSytemsMobApp.Data.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -141,8 +165,14 @@
 	  <Compile Update="Views\AddDevicePopup.xaml.cs">
 	    <DependentUpon>AddDevicePopup.xaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="Views\CameraGalleryPickerPage.xaml.cs">
+	    <DependentUpon>CameraGalleryPickerPage.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="MenuSettingsPage.xaml.cs">
 	    <DependentUpon>MenuSettingsPage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="NotificationsPage.xaml.cs">
+	    <DependentUpon>NotificationsPage.xaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="DownloadsHome.xaml.cs">
 	    <DependentUpon>DownloadsHome.xaml</DependentUpon>
@@ -195,6 +225,9 @@
 	  <MauiXaml Update="Views\AddDevicePopup.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\CameraGalleryPickerPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Audio.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
@@ -202,6 +235,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="MenuSettingsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="NotificationsPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="DownloadsHome.xaml">

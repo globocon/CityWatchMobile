@@ -14,7 +14,25 @@ namespace C4iSytemsMobApp
         // Global event that any page/VM can subscribe to
         public static event Action<bool>? ConnectivityChangedEvent;
         public static string CurrentAppVersion { get; private set; }
-        public static int? PcarInspLastScannedSiteId { get; set; } = null;
+        private const string PrefPcarSiteId = "PcarInspLastScannedSiteId";
+        private const string PrefPcarTime = "PcarInspLastScannedTime";
+        private static int? _pcarInspLastScannedSiteId;
+        public static int? PcarInspLastScannedSiteId
+        {
+            get => _pcarInspLastScannedSiteId;
+            set
+            {
+                if (_pcarInspLastScannedSiteId == value)
+                    return;
+
+                _pcarInspLastScannedSiteId = value;
+                SavePcarPreferences();
+            }
+        }
+        public static int? PcarCallSignId { get; set; } = null;
+        public static int? PcarPostionId { get; set; } = null;
+        public static string? DeviceId { get; set; } = null;
+        public static string? DeviceName { get; set; } = null;
 
         private static DateTime? _pcarInspLastScannedTime;
         public static DateTime? PcarInspLastScannedTime
@@ -22,8 +40,15 @@ namespace C4iSytemsMobApp
             get => _pcarInspLastScannedTime;
             set
             {
-                var previous = _pcarInspLastScannedTime;
+                //var previous = _pcarInspLastScannedTime;
+                //_pcarInspLastScannedTime = value;
+
+                if (_pcarInspLastScannedTime == value)
+                    return;
+
                 _pcarInspLastScannedTime = value;
+
+                SavePcarPreferences();
 
                 // If changed from null → value OR value changed → reset timer
                 if (value != null)
@@ -82,6 +107,73 @@ namespace C4iSytemsMobApp
             });
         }
 
+        /// Call this once after TourMode has been determined.
+        /// </summary>
+        public static void LoadPcarPreferences()
+        {
+            if (TourMode != PatrolTouringMode.PCAR && TourMode != PatrolTouringMode.INSP)
+                return;
+
+            if (Preferences.ContainsKey(PrefPcarSiteId))
+            {
+                _pcarInspLastScannedSiteId = Preferences.Get(PrefPcarSiteId, 0);
+            }
+
+            if (Preferences.ContainsKey(PrefPcarTime))
+            {
+                var text = Preferences.Get(PrefPcarTime, "");
+
+                if (DateTime.TryParse(text, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime dt))
+                {
+                    _pcarInspLastScannedTime = dt;
+                    StartOrResetPcarExpiryTimer();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Saves current values to Preferences.
+        /// </summary>
+        private static void SavePcarPreferences()
+        {
+            if (TourMode != PatrolTouringMode.PCAR && TourMode != PatrolTouringMode.INSP)
+            {
+                Preferences.Remove(PrefPcarSiteId);
+                Preferences.Remove(PrefPcarTime);
+                return;
+            }
+
+            if (PcarInspLastScannedSiteId.HasValue)
+                Preferences.Set(PrefPcarSiteId, PcarInspLastScannedSiteId.Value);
+            else
+                Preferences.Remove(PrefPcarSiteId);
+
+            if (PcarInspLastScannedTime.HasValue)
+            {
+                Preferences.Set(PrefPcarTime, PcarInspLastScannedTime.Value.ToString("O"));
+            }
+            else
+            {
+                Preferences.Remove(PrefPcarTime);
+            }
+        }
+
+        /// <summary>
+        /// Preferred method to update both values together.
+        /// </summary>
+        public static void SetPcarLastScanned(int? siteId, DateTime? scannedTime)
+        {
+            _pcarInspLastScannedSiteId = siteId;
+            _pcarInspLastScannedTime = scannedTime;
+
+            SavePcarPreferences();
+
+            if (scannedTime != null)
+                StartOrResetPcarExpiryTimer();
+            else
+                StopPcarExpiryTimer();
+        }
+
         private static void StartOrResetPcarExpiryTimer()
         {
             StopPcarExpiryTimer();
@@ -104,10 +196,7 @@ namespace C4iSytemsMobApp
             _pcarExpiryTimer = new System.Threading.Timer(_ =>
             {
                 TriggerPcarExpiry();
-            },
-            null,
-            remaining,
-            Timeout.InfiniteTimeSpan);
+            }, null, remaining, Timeout.InfiniteTimeSpan);
         }
 
         private static void StopPcarExpiryTimer()
@@ -123,10 +212,12 @@ namespace C4iSytemsMobApp
             if (_pcarInspLastScannedTime == null)
                 return;
 
-            PcarInspLastScannedSiteId = null;
-            _pcarInspLastScannedTime = null;
+            //PcarInspLastScannedSiteId = null;
+            //_pcarInspLastScannedTime = null;
 
-            StopPcarExpiryTimer();
+            SetPcarLastScanned(null, null);
+
+            //StopPcarExpiryTimer();
 
             MainThread.BeginInvokeOnMainThread(() =>
             {

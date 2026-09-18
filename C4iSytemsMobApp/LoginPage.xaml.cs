@@ -46,7 +46,12 @@ public partial class LoginPage : ContentPage
 
     private async void OnPageLoaded(object sender, EventArgs e)
     {
+#if ANDROID
         await GetAndShowLocationAsync();
+#elif IOS
+
+#endif
+
     }
     private async void LoadSavedCredentials()
     {
@@ -181,6 +186,7 @@ public partial class LoginPage : ContentPage
 
             if (isConfirmed)
             {
+                await Services.Tracking.TrackingService.Instance.StopAsync(); // tracking hard stop before the process dies
                 Preferences.Clear(); // Clear preferences (logout)
                 System.Diagnostics.Process.GetCurrentProcess().Kill(); // Close the app
             }

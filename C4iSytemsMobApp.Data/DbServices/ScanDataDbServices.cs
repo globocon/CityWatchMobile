@@ -21,7 +21,7 @@ namespace C4iSytemsMobApp.Data.DbServices
         public Task<ClientSiteSmartWandTagsLocal> GetSmartWandTagDetailOfTagAsync(string tagUid);
         public Task RefreshPrePopulatedActivitesButtonList(List<ActivityModel> activites);
         public Task ClearPrePopulatedActivitesButtonList();
-        public Task<List<ActivityModel>> GetPrePopulatedActivitesButtonList();
+        public Task<List<ActivityModel>> GetPrePopulatedActivitesButtonList(int _SiteId);
         public Task<bool> SaveLogActivityCacheData(PostActivityRequestLocalCache record);
         public Task<bool> SaveLogActivityDocumentsCacheData(OfflineFilesRecords record);
 
@@ -53,6 +53,7 @@ namespace C4iSytemsMobApp.Data.DbServices
         public Task<ClientSitesLocal> GetIrClientSitesLocalListByName(string sitename);
 
         public Task<string> GetClientSitesNameLocalById(int clientSiteId);
+        public string GetClientSitesNameLocalByIdNonAsync(int clientSiteId);
 
         public Task ClearIrFeedbackTemplateLocalList();
         public Task RefreshIrFeedbackTemplateLocalList(List<IrFeedbackTemplateViewModelLocal> irFeedbackTemplates);
@@ -160,10 +161,10 @@ namespace C4iSytemsMobApp.Data.DbServices
             _db.ActivityModel.RemoveRange(r);
             await _db.SaveChangesAsync();
         }
-        public async Task<List<ActivityModel>> GetPrePopulatedActivitesButtonList()
+        public async Task<List<ActivityModel>> GetPrePopulatedActivitesButtonList(int _SiteId)
         {
             using var _db = _dbFactory();
-            var r = await _db.ActivityModel.AsNoTracking().ToListAsync();
+            var r = await _db.ActivityModel.AsNoTracking().Where(x=> x.ClienSiteId == _SiteId).ToListAsync();
             return r;
         }
 
@@ -474,6 +475,16 @@ namespace C4iSytemsMobApp.Data.DbServices
         {
             using var _db = _dbFactory();
             var r = await _db.ClientSitesLocal.Where(x => x.Id == clientSiteId).AsNoTracking().FirstOrDefaultAsync();
+            if (r != null)
+                return r.Name;
+            else
+                return string.Empty;
+        }
+
+        public string GetClientSitesNameLocalByIdNonAsync(int clientSiteId)
+        {
+            using var _db = _dbFactory();
+            var r = _db.ClientSitesLocal.Where(x => x.Id == clientSiteId).AsNoTracking().FirstOrDefault();
             if (r != null)
                 return r.Name;
             else

@@ -8,6 +8,7 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
 using System;
 using System.Net.Http.Json;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.Json;
 
@@ -15,19 +16,13 @@ using System.Text.Json;
 namespace C4iSytemsMobApp.Services
 {
     public class ScannerControlServices : IScannerControlServices
-    {
-        private readonly IDeviceInfoService infoService;
+    {        
         private readonly IScanDataDbServices _scanDataDbServices;
-        private string devicename;
-        private string deviceid;
         private string deviceType = "Unknown";
         public ScannerControlServices()
         {
             // Constructor logic if needed
-            infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
             _scanDataDbServices = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
-            devicename = infoService?.GetDeviceName();
-            deviceid = infoService?.GetDeviceId();
 
 #if ANDROID
             deviceType = "Android";
@@ -82,7 +77,7 @@ namespace C4iSytemsMobApp.Services
             await CheckIfSmartWandIsDeRegisteredAsync(_clientSiteId); // Check if smartwand is deregistered before fetching tag info
             string savedSmartWandIdKeyName = $"{_clientSiteId}_SavedSmartWandId";
             var savedSmartWandId = Preferences.Get(savedSmartWandIdKeyName, 0);
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = await PermissionService.GetGpsLocationWithOutCheckingPermissionAsync();
             string gpsCoordinatesEncoded = Uri.EscapeDataString(gpsCoordinates);
             string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetScannerTagInfoData?siteId={_clientSiteId}&TagUid={_tagUid}&GuardId={_guardId}&UserId={_userId}&TagsTypeId={(int)_scannerType}&SmartWandId={savedSmartWandId}&gpsCoordinates={gpsCoordinatesEncoded}";
             // Here you would typically make an HTTP request to the API endpoint
@@ -224,6 +219,36 @@ namespace C4iSytemsMobApp.Services
             }
         }
 
+        public async Task<int> GetSmartWandByDeviceIdAsync()
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetSmartWandByDeviceId";
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+            try
+            {
+                HttpResponseMessage response = await client.PostAsJsonAsync(apiUrl, App.DeviceId);
+                if (response.IsSuccessStatusCode)
+                {
+                    var taginfo = await response.Content.ReadFromJsonAsync<int>();
+                    return taginfo;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Optionally log error or handle it
+                Console.WriteLine($"Error: {ex.Message}");
+                return 0;
+            }
+            finally
+            {
+                client.Dispose();
+            }
+        }
+
         public async Task CheckIfSmartWandIsDeRegisteredAsync(string _clientSiteId)
         {
             string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/CheckIfSmartWandIsDeRegisteredAsync";
@@ -233,7 +258,7 @@ namespace C4iSytemsMobApp.Services
             {
                 //var json = JsonSerializer.Serialize(deviceid);
                 //var content = new StringContent(json, Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await client.PostAsJsonAsync(apiUrl, deviceid);  //client.PostAsync(apiUrl, content);
+                HttpResponseMessage response = await client.PostAsJsonAsync(apiUrl, App.DeviceId);  //client.PostAsync(apiUrl, content);
                 if (response.IsSuccessStatusCode)
                 {
                     var taginfo = await response.Content.ReadFromJsonAsync<bool>();
@@ -295,14 +320,25 @@ namespace C4iSytemsMobApp.Services
             if (!LoggedInUserId.HasValue) return (false, "Invalid User Id !!!", _ChaceCount);
 
             if (!LoggedInGuardId.HasValue) return (false, "Invalid Guard Id !!!", _ChaceCount);
-
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+                        
             string savedSmartWandIdKeyName = $"{LoggedInClientSiteId.Value}_SavedSmartWandId";
             var savedSmartWandId = Preferences.Get(savedSmartWandIdKeyName, 0);
-            if (string.IsNullOrWhiteSpace(gpsCoordinates))
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
             {
-                return (false, "GPS coordinates not available. Please ensure location services are enabled", _ChaceCount);
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
             }
+            else
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return (false, "GPS coordinates not available. Please ensure location services are enabled", _ChaceCount);
+                else
+                    gpsCoordinates = _gpsLocation;
+            }
+
 
             var _lastTagScannedRecord = _scanDataDbServices.GetLastScannedTagDateTime(LoggedInClientSiteId.Value, _TagUid);
             //Check if scanned tag recently with in a minute from the same site          
@@ -379,8 +415,8 @@ namespace C4iSytemsMobApp.Services
                 EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
                 EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
                 EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
-                DeviceId = deviceid,
-                DeviceName = devicename,
+                DeviceId = App.DeviceId,
+                DeviceName = App.DeviceName,
                 IsScanFromLinkedSite = _scannedfromlinkedSite
             };
 
@@ -434,6 +470,11 @@ namespace C4iSytemsMobApp.Services
         public async Task<string> GetClientSiteNameFromLocalDb(int clientSiteId)
         {
             return await _scanDataDbServices.GetClientSitesNameLocalById(clientSiteId);
+        }
+
+        public string GetClientSiteNameFromLocalDbNonAsync(int clientSiteId)
+        {
+            return _scanDataDbServices.GetClientSitesNameLocalByIdNonAsync(clientSiteId);
         }
 
     }

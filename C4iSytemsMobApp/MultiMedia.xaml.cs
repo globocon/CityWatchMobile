@@ -1,6 +1,11 @@
 using AutoMapper;
 using C4iSytemsMobApp.Data.DbServices;
+using C4iSytemsMobApp.Enums;
+using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
+using C4iSytemsMobApp.Services;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Maui.Views;
 using Plugin.Maui.Audio;
 using System.Collections.ObjectModel;
@@ -79,6 +84,9 @@ public partial class MultiMedia : ContentPage
 
             // Start playing the video
             VideoPlayer.Play();
+
+            // Logged after Play() so a logbook or GPS problem cannot stop the guard watching.
+            _ = LogPlayedFileAsync(video.Label, video.Url);
         }
     }
 
@@ -127,8 +135,173 @@ public partial class MultiMedia : ContentPage
             VideoPlayer.Source = MediaSource.FromFile(videoFile.Url);
 
             VideoPlayer.Play();
+
+            // Logged after Play() so a logbook or GPS problem cannot stop the guard watching.
+            _ = LogPlayedFileAsync(videoFile.Label, videoFile.Url);
         }
     }
+
+    #region "Played file" logbook entries
+
+    /* One logbook entry per video, written as it starts playing, matching what the Activity
+       buttons on the logbook page do: posted to the API when online, cached for SyncService
+       when not, with IsSystemEntry set.
+
+       Both playback paths on this page drive the MediaElement directly - there is no queue
+       and no playback service - so each one calls this itself. */
+
+    private async Task LogPlayedFileAsync(string label, string filePath)
+    {
+        try
+        {
+            var activity = BuildPlayedFileActivity(label, filePath);
+
+            /* Same branch as OnActivityClicked on the logbook page: live when there is a
+               connection, local cache otherwise, and SyncService pushes the cache later. */
+            if (App.IsOnline)
+            {
+                var logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
+                if (logBookServices == null)
+                    return;
+
+                var (isSuccess, message) = await logBookServices.LogActivityTask(
+                    activity, ResolveLogbookClientSiteId(), 0, "NA", IsSystemEntry: true);
+
+                if (!isSuccess)
+                    await ShowPlayedFileLogFailureAsync(message);
+            }
+            else
+            {
+                var (isSuccess, message) = await LogPlayedFileToCacheAsync(activity);
+                if (!isSuccess)
+                    await ShowPlayedFileLogFailureAsync(message);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Never allowed to escape: this runs unawaited, so an exception here would be
+            // unhandled on a pool thread rather than caught anywhere.
+            await ShowPlayedFileLogFailureAsync(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// The logbook the entry belongs to. On a standard tour that is the guard's own site; on
+    /// a patrol car or inspection tour it is the site whose tag was last scanned, because the
+    /// car moves between sites within one login. Same rule as GetLocalSiteForPCAR on the
+    /// logbook page.
+    /// </summary>
+    private static int? ResolveLogbookClientSiteId()
+    {
+        int.TryParse(Preferences.Get("SelectedClientSiteId", "0"), out int clientSiteId);
+
+        if (App.TourMode != PatrolTouringMode.PCAR && App.TourMode != PatrolTouringMode.INSP)
+            return clientSiteId;
+
+        return App.PcarInspLastScannedSiteId.HasValue && App.PcarInspLastScannedSiteId.Value > 0
+            ? App.PcarInspLastScannedSiteId.Value
+            : clientSiteId;
+    }
+
+    /// <summary>
+    /// Offline path, mirroring LogActivityToCache on the logbook page: build the cache row and
+    /// hand it to the existing SaveLogActivityCacheData for SyncService to push later.
+    /// </summary>
+    private async Task<(bool isSuccess, string message)> LogPlayedFileToCacheAsync(string activity)
+    {
+        if (_scanDataDbService == null)
+            return (false, "Local cache is unavailable on this device.");
+
+        /* An entry with no position is worth little to an investigation, so a missing fix
+           fails the write rather than storing a blank - same rule as the online path. */
+        string gpsCoordinates;
+        if (await PermissionService.CheckIfHasLocationPermission())
+            gpsCoordinates = await PermissionService.CheckAndGetGpsLocationAsync();
+        else
+            gpsCoordinates = await PermissionService.CheckAndGetGpsLocationAsync();
+
+        if (string.IsNullOrWhiteSpace(gpsCoordinates))
+            return (false, "GPS coordinates not available. Please ensure location services are enabled.");
+
+        int.TryParse(Preferences.Get("GuardId", "0"), out int guardId);
+        int.TryParse(Preferences.Get("SelectedClientSiteId", "0"), out int clientSiteId);
+        int.TryParse(Preferences.Get("UserId", "0"), out int userId);
+
+        if (guardId <= 0 || clientSiteId <= 0 || userId <= 0)
+            return (false, "Guard, site or user is not set. Please log in again.");
+
+        var infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
+
+        var request = new Data.Entity.PostActivityRequestLocalCache()
+        {
+            guardId = guardId,
+            clientsiteId = clientSiteId,
+            userId = userId,
+            activityString = activity,
+            gps = gpsCoordinates,
+            systemEntry = true,
+            scanningType = 0,
+            tagUID = "NA",
+            EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
+            EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
+            EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
+            EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
+            EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
+            EventMobileUtcDateTime = TimeZoneHelper.GetCurrentUtcDateTime(),
+            IsNewGuard = false,
+            IsSynced = false,
+            UniqueRecordId = Guid.NewGuid(),
+            DeviceId = infoService?.GetDeviceId(),
+            DeviceName = infoService?.GetDeviceName(),
+            IsEntryByPCAR = App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP,
+            CallSignId = App.PcarCallSignId,
+            PositionId = App.PcarPostionId,
+            LogbookclientsiteId = ResolveLogbookClientSiteId()
+        };
+
+        var saved = await _scanDataDbService.SaveLogActivityCacheData(request);
+
+        return saved
+            ? (true, "Log entry added successfully to cache.")
+            : (false, "Failed to add the log entry to cache.");
+    }
+
+    /// <summary>
+    /// "Played file &lt;name&gt;". Prefers the label the guard saw in the list, because that is
+    /// what they would describe if asked about the entry later; falls back to the file name.
+    /// Never throws - an unnamed file must still produce an entry.
+    /// </summary>
+    private static string BuildPlayedFileActivity(string label, string filePath)
+    {
+        var name = label?.Trim();
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            try { name = Path.GetFileName(filePath); }
+            catch { name = null; }
+        }
+
+        return $"Played file {(string.IsNullOrWhiteSpace(name) ? "Unknown file" : name)}";
+    }
+
+    private static async Task ShowPlayedFileLogFailureAsync(string message)
+    {
+        Console.WriteLine($"Failed to log played file: {message}");
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                await Toast.Make($"Played-file log entry not saved. {message}", ToastDuration.Long).Show();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to show played-file log toast: {ex.Message}");
+            }
+        });
+    }
+
+    #endregion
 
 
     private void OnStopVideoClicked(object sender, EventArgs e)
@@ -247,7 +420,22 @@ public partial class MultiMedia : ContentPage
         try
         {
             var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return;
+                else
+                    gpsCoordinates = _gpsLocation;
+            }
 
             using var client = new HttpClient();
             var content = new MultipartFormDataContent();
@@ -268,11 +456,27 @@ public partial class MultiMedia : ContentPage
                 content.Add(new StringContent(fileModel.FileType), "types");
             }
 
+            //If PCAR then change local client site to latest scanned site
+            var _localClientSiteId = clientSiteId;
+            if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+            {
+                _localClientSiteId = App.PcarInspLastScannedSiteId.HasValue ? (App.PcarInspLastScannedSiteId.Value > 0 ? App.PcarInspLastScannedSiteId.Value : clientSiteId) : clientSiteId;
+            }
+
             // Add other form data
             content.Add(new StringContent(guardId.ToString()), "guardId");
             content.Add(new StringContent(clientSiteId.ToString()), "clientsiteId");
             content.Add(new StringContent(userId.ToString()), "userId");
             content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTime().ToString("o")), "eventDateTimeLocal");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset().ToString("o")), "eventDateTimeLocalWithOffset");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZone()), "eventDateTimeZone");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneShortName()), "eventDateTimeZoneShort");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneOffsetMinute().ToString()), "eventDateTimeUtcOffsetMinute");
+            content.Add(new StringContent(_localClientSiteId.ToString()), "logbookclientsiteId");
+            content.Add(new StringContent((App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP).ToString()), "isEntryByPCAR");
+            content.Add(new StringContent((App.PcarCallSignId.HasValue ? App.PcarCallSignId.ToString() : "")), "callSignId");
+            content.Add(new StringContent((App.PcarPostionId.HasValue ? App.PcarPostionId.ToString() : "")), "positionId");
 
             // Send request
             var uploadResponse = await client.PostAsync(
@@ -386,7 +590,22 @@ public partial class MultiMedia : ContentPage
         try
         {
             var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-            string gpsCoordinates = Preferences.Get("GpsCoordinates", "");
+            string gpsCoordinates = "";
+            var _hasGpsLocationPermission = await PermissionService.CheckIfHasLocationPermission();
+            if (_hasGpsLocationPermission)
+            {
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                gpsCoordinates = _gpsLocation;
+            }
+            else
+            {
+                await DisplayAlert("Location Error", "GPS coordinates not available. Please ensure location services are enabled.", "OK");
+                var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
+                if (string.IsNullOrEmpty(_gpsLocation))
+                    return;
+                else
+                    gpsCoordinates = _gpsLocation;
+            }
 
             using var client = new HttpClient();
             var content = new MultipartFormDataContent();
@@ -418,11 +637,27 @@ public partial class MultiMedia : ContentPage
                 content.Add(new StringContent(fileModel.FileType), "types");
             }
 
+            //If PCAR then change local client site to latest scanned site
+            var _localClientSiteId = clientSiteId;
+            if (App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP)
+            {
+                _localClientSiteId = App.PcarInspLastScannedSiteId.HasValue ? (App.PcarInspLastScannedSiteId.Value > 0 ? App.PcarInspLastScannedSiteId.Value : clientSiteId) : clientSiteId;
+            }
+
             // Add other form data
             content.Add(new StringContent(guardId.ToString()), "guardId");
             content.Add(new StringContent(clientSiteId.ToString()), "clientsiteId");
             content.Add(new StringContent(userId.ToString()), "userId");
             content.Add(new StringContent(gpsCoordinates ?? ""), "gps");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTime().ToString("o")), "eventDateTimeLocal");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset().ToString("o")), "eventDateTimeLocalWithOffset");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZone()), "eventDateTimeZone");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneShortName()), "eventDateTimeZoneShort");
+            content.Add(new StringContent(TimeZoneHelper.GetCurrentTimeZoneOffsetMinute().ToString()), "eventDateTimeUtcOffsetMinute");
+            content.Add(new StringContent(_localClientSiteId.ToString()), "logbookclientsiteId");
+            content.Add(new StringContent((App.TourMode == PatrolTouringMode.PCAR || App.TourMode == PatrolTouringMode.INSP).ToString()), "isEntryByPCAR");
+            content.Add(new StringContent((App.PcarCallSignId.HasValue ? App.PcarCallSignId.ToString() : "")), "callSignId");
+            content.Add(new StringContent((App.PcarPostionId.HasValue ? App.PcarPostionId.ToString() : "")), "positionId");
 
             // Send request
             var uploadResponse = await client.PostAsync(
