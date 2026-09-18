@@ -4,21 +4,21 @@ namespace C4iSytemsMobApp
     class AppConfig
     {
         //live url and test url ,test only work in localhost ,need https for api
-        public static string ApiBaseUrl { get; set; } = "https://cws-ir.com/api/";
-        public static string MobileSignalRBaseUrl { get; set; } = "https://cws-ir.com";
-        public static string MobileSignalRRCBaseUrl { get; set; } = "https://rc.cws-ir.com";
+        //public static string ApiBaseUrl { get; set; } = "https://cws-ir.com/api/";
+        //public static string MobileSignalRBaseUrl { get; set; } = "https://cws-ir.com";
+        //public static string MobileSignalRRCBaseUrl { get; set; } = "https://rc.cws-ir.com";
 
         // ### Test Url ####
-        public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.40:92";
-        public static string MobileSignalRBaseUrl { get; set; } = "http://test.c4i-system.com";
-        public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
+        //public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.40:92";
+        //public static string MobileSignalRBaseUrl { get; set; } = "http://test.c4i-system.com";
+        //public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
 
 
 
         /* Make "applicationUrl": "http://0.0.0.0:5000", in launchSettings.json */
-        //public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.42:92";
-        //public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.42:5000";
-        //public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
+        public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.42:92";
+        public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.42:5000";
+        public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
 
         //#### Added for local testing by Binoy
         //
