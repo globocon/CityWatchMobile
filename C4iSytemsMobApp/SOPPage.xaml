@@ -42,6 +42,18 @@
                          Grid.Column="2" />
         </Grid>
 
+        <!-- Which site these SOPs belong to. Only shown on a patrol car or inspection tour,
+             where the site changes as the guard scans - on a standard tour it is always the
+             site they logged in at and saying so adds nothing. Mirrors the "LogBook: <site>"
+             line on the log activity page. -->
+        <Label x:Name="SopSiteName"
+               IsVisible="False"
+               FontSize="13"
+               FontAttributes="Bold"
+               HorizontalOptions="Center"
+               Margin="0,0,0,5"
+               TextColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}" />
+
         <!-- File List -->
         <CollectionView ItemsSource="{Binding StaffDocuments}"
                         Margin="10"
