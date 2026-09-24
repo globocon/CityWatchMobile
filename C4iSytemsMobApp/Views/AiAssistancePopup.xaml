@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    AI Assistance for the Incident Report description. The same steps as the web modal on
+    /Incident/Register: pick an option, review, then Use. Nothing is written to the description
+    until the guard presses a Use button - the popup only returns the text to the page.
+
+    Deliberately says nothing about Claude, Anthropic, LanguageTool or models - a guard picks
+    what they want done, not which provider does it.
+-->
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               x:Class="C4iSytemsMobApp.Views.AiAssistancePopup"
+               CanBeDismissedByTappingOutsideOfPopup="False"
+               Color="Transparent">
+
+    <toolkit:Popup.Resources>
+        <!-- Explicit colours on the text panels: on the web, inherited theme styling rendered them
+             near-white on white. Kept readable in both light and dark themes here. -->
+        <Style x:Key="AiTextPanel" TargetType="Border">
+            <Setter Property="Stroke" Value="#CED4DA" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 6" />
+            <Setter Property="BackgroundColor" Value="#F8F9FA" />
+            <Setter Property="Padding" Value="8" />
+        </Style>
+        <Style x:Key="AiTextPanelLabel" TargetType="Label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="TextColor" Value="#212529" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+        </Style>
+        <Style x:Key="AiHeading" TargetType="Label">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />
+        </Style>
+        <Style x:Key="AiFooterButton" TargetType="Button">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="HeightRequest" Value="40" />
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="BackgroundColor" Value="#007AFF" />
+        </Style>
+    </toolkit:Popup.Resources>
+
+    <Border x:Name="PopupRoot"
+            StrokeThickness="0"
+            StrokeShape="RoundRectangle 10"
+            BackgroundColor="{AppThemeBinding Light=White, Dark=#333}"
+            Padding="12">
+
+        <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+
+            <!-- Header -->
+            <Label Grid.Row="0"
+                   Text="✨ AI Assistance"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+            <!-- Failures only ever land here; the Incident Report itself keeps working. -->
+            <Border Grid.Row="1"
+                    x:Name="AlertPanel"
+                    IsVisible="False"
+                    Stroke="#FFE69C"
+                    StrokeShape="RoundRectangle 6"
+                    BackgroundColor="#FFF3CD"
+                    Padding="8">
+                <Label x:Name="AlertLabel"
+                       FontSize="13"
+                       TextColor="#664D03" />
+            </Border>
+
+            <ScrollView Grid.Row="2">
+                <VerticalStackLayout Spacing="8">
+
+                    <!-- Step 1 - pick what to do -->
+                    <VerticalStackLayout x:Name="ChoicesStep" Spacing="8">
+                        <Button x:Name="ChoiceGrammarButton"
+                                Text="☑  Grammar &amp; Scenario Check"
+                                Clicked="OnChoiceGrammarClicked"
+                                FontAttributes="Bold"
+                                BackgroundColor="Transparent"
+                                BorderColor="#007AFF"
+                                BorderWidth="1"
+                                TextColor="#007AFF" />
+                        <Button x:Name="ChoiceTranslateButton"
+                                Text="🌐  Language Converter"
+                                Clicked="OnChoiceTranslateClicked"
+                                FontAttributes="Bold"
+                                BackgroundColor="Transparent"
+                                BorderColor="#007AFF"
+                                BorderWidth="1"
+                                TextColor="#007AFF" />
+                    </VerticalStackLayout>
+
+                    <!-- Step 2a - language picker. The source language is detected, never chosen. -->
+                    <VerticalStackLayout x:Name="LanguageStep" IsVisible="False" Spacing="6">
+                        <HorizontalStackLayout Spacing="4">
+                            <Label Text="Detected:" FontAttributes="Bold" TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                            <Label x:Name="DetectedLanguageLabel" Text="detecting..." TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                        </HorizontalStackLayout>
+                        <Label Text="Convert to:" Style="{StaticResource AiHeading}" />
+                        <Picker x:Name="TargetLanguagePicker"
+                                Title="Select language"
+                                ItemDisplayBinding="{Binding Name}"
+                                TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    </VerticalStackLayout>
+
+                    <!-- Step 2b - grammar suggestions beside the text they change. Applying the
+                         ticked corrections closes the popup, with no second review screen. -->
+                    <VerticalStackLayout x:Name="GrammarStep" IsVisible="False" Spacing="6">
+                        <HorizontalStackLayout Spacing="4">
+                            <Label Text="Detected:" FontAttributes="Bold" TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                            <Label x:Name="GrammarLanguageLabel" Text="-" TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                        </HorizontalStackLayout>
+
+                        <Label Text="Original Text" Style="{StaticResource AiHeading}" />
+                        <Border Style="{StaticResource AiTextPanel}">
+                            <Label x:Name="GrammarOriginalLabel" Style="{StaticResource AiTextPanelLabel}" />
+                        </Border>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Grammar Suggestions" Style="{StaticResource AiHeading}" VerticalOptions="Center" />
+                            <Label Grid.Column="1"
+                                   Text="Tap to apply / ignore"
+                                   FontSize="11"
+                                   TextColor="Gray"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                        <VerticalStackLayout x:Name="GrammarSuggestionsList" Spacing="4" />
+
+                        <Label Text="Corrected Text" Style="{StaticResource AiHeading}" />
+                        <Border Style="{StaticResource AiTextPanel}">
+                            <Label x:Name="GrammarCorrectedLabel" Style="{StaticResource AiTextPanelLabel}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Step 3 - review for the rewrite and the conversion, which replace the whole
+                         text, so they are always shown side by side first. -->
+                    <VerticalStackLayout x:Name="ResultStep" IsVisible="False" Spacing="6">
+                        <Label Text="Original" Style="{StaticResource AiHeading}" />
+                        <Border Style="{StaticResource AiTextPanel}">
+                            <Label x:Name="ResultOriginalLabel" Style="{StaticResource AiTextPanelLabel}" />
+                        </Border>
+
+                        <Label Text="AI Result" Style="{StaticResource AiHeading}" />
+                        <Border Style="{StaticResource AiTextPanel}">
+                            <Label x:Name="ResultTextLabel" Style="{StaticResource AiTextPanelLabel}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Shown during a request; every action button except Cancel is disabled. -->
+                    <VerticalStackLayout x:Name="BusyPanel" IsVisible="False" Spacing="6" Padding="0,12">
+                        <ActivityIndicator IsRunning="True" Color="#007AFF" HorizontalOptions="Center" />
+                        <Label x:Name="BusyLabel"
+                               Text="Processing with AI..."
+                               HorizontalOptions="Center"
+                               TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- Every action lives in the footer, so the popup has one place to act from. -->
+            <FlexLayout Grid.Row="3"
+                        Wrap="Wrap"
+                        JustifyContent="End"
+                        AlignItems="Center">
+                <Button x:Name="BackButton" Text="Back" Clicked="OnBackClicked" IsVisible="False"
+                        Style="{StaticResource AiFooterButton}"
+                        BackgroundColor="Transparent" TextColor="#007AFF" />
+                <Button x:Name="UseGrammarButton" Text="Use Corrected Text" Clicked="OnUseGrammarClicked" IsVisible="False"
+                        Style="{StaticResource AiFooterButton}" BackgroundColor="#28A745" />
+                <Button x:Name="ImproveButton" Text="Improve &amp; Expand" Clicked="OnImproveClicked" IsVisible="False"
+                        Style="{StaticResource AiFooterButton}" />
+                <Button x:Name="TranslateButton" Text="Convert" Clicked="OnTranslateClicked" IsVisible="False"
+                        Style="{StaticResource AiFooterButton}" />
+                <Button x:Name="UseResultButton" Text="Use Result" Clicked="OnUseResultClicked" IsVisible="False"
+                        Style="{StaticResource AiFooterButton}" BackgroundColor="#28A745" />
+                <Button x:Name="CancelButton" Text="Cancel" Clicked="OnCancelClicked"
+                        Style="{StaticResource AiFooterButton}"
+                        BackgroundColor="Transparent" BorderColor="#007AFF" BorderWidth="1" TextColor="#007AFF" />
+            </FlexLayout>
+        </Grid>
+    </Border>
+</toolkit:Popup>

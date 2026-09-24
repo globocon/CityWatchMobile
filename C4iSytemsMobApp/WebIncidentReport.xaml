@@ -641,10 +641,31 @@
                             </ScrollView>
                         </Frame>
 
-                        <!-- Integrity Declaration -->
-                        <Label Text="Integrity Declaration"
-                               FontSize="14"
-                               HorizontalOptions="Start" />
+                        <!-- Integrity Declaration, with the AI Assistance button on its right.
+                             AI works on the Description above; nothing changes until the guard
+                             presses a Use button in the popup. -->
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="10">
+                            <Label Grid.Column="0"
+                                   Text="Integrity Declaration"
+                                   FontSize="14"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Start" />
+                            <Button Grid.Column="1"
+                                    x:Name="aiAssistanceButton"
+                                    Text="✨ AI"
+                                    Clicked="OnAiAssistanceClicked"
+                                    FontSize="13"
+                                    FontAttributes="Bold"
+                                    Padding="12,0"
+                                    HeightRequest="34"
+                                    CornerRadius="6"
+                                    BackgroundColor="#007AFF"
+                                    TextColor="White"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="End"
+                                    SemanticProperties.Description="AI Assistance" />
+                        </Grid>
                         <Frame BorderColor="Gray"
                                CornerRadius="6"
                                Padding="0"
