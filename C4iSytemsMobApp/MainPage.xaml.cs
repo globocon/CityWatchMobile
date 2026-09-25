@@ -157,14 +157,6 @@ namespace C4iSytemsMobApp
         public MainPage(IVolumeButtonService volumeButtonService, bool? showDrawerOnStart = null)
         {
             InitializeComponent();
-            try
-            {
-                scanner = new();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error initializing scanner: {ex.Message}");
-            }
 
             infoService = IPlatformApplication.Current.Services.GetService<IDeviceInfoService>();
             App.DeviceName = infoService?.GetDeviceName();
@@ -1948,7 +1940,7 @@ namespace C4iSytemsMobApp
 
 
        
-        private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0)
+        private async Task LogActivityTask(string activityDescription, int scanningType = 0, string _taguid = "NA", bool IsSystemEntry = false, int NFCScannedFromSiteId = -1, int RowIdInServer = 0, ScanFeedbackPopup scanPopup = null)
         {
             var (isSuccess, msg) = await _logBookServices.LogActivityTask(activityDescription, null, scanningType, _taguid, IsSystemEntry, NFCScannedFromSiteId, RowIdInServer);
             if (isSuccess)

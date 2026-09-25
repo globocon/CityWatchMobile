@@ -1702,42 +1702,6 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
     private async void OnUploadAttachmentClicked(object sender, EventArgs e)
     {
-        try
-        {
-            IEnumerable<FileResult> results = null;
-            bool customPickerShown = false;
-
-            // Android: WhatsApp-style picker (in-app camera + recent gallery strip).
-            // Browse button offers all file types; the allowedExtensions filter below still applies.
-            if (DeviceInfo.Platform == DevicePlatform.Android)
-            {
-                var camStatus = await Permissions.CheckStatusAsync<Permissions.Camera>();
-                if (camStatus != PermissionStatus.Granted)
-                    camStatus = await Permissions.RequestAsync<Permissions.Camera>();
-
-                if (camStatus == PermissionStatus.Granted)
-                {
-                    customPickerShown = true;
-                    var picked = await Views.CameraGalleryPickerPage.ShowAsync(Navigation, imagesOnly: false);
-                    if (picked == null) return; // user cancelled — do not fall back to gallery
-                    results = picked;
-                }
-            }
-
-            if (!customPickerShown)
-                results = await FilePicker.PickMultipleAsync(); // unchanged fallback
-
-            if (results == null) return;
-
-            var filesToSave = results
-                .Where(f => allowedExtensions.Contains(Path.GetExtension(f.FileName).ToLower()))
-                .ToList();
-
-            if (!filesToSave.Any())
-            {
-                await DisplayAlert("No Valid Files", "Please select supported file types.", "OK");
-                return;
-            }
         FileTypeSelectorPopUp.IsVisible = true;
     }
 
@@ -1745,34 +1709,6 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     {
         string fileName = null;
 
-                //using (var fileStream = File.Create(localFilePath))
-                //{
-                //    await stream.CopyToAsync(fileStream);
-                //}
-
-                var safeFileName = Path.GetFileName(file.FileName);
-                var localFilePath = Path.Combine(FileSystem.CacheDirectory, safeFileName);
-
-                // Files from the camera/gallery picker already live in the cache directory;
-                // copying a file onto itself throws IO_SharingViolation, so only copy
-                // when the source is a different location.
-                if (!string.Equals(file.FullPath, localFilePath, StringComparison.OrdinalIgnoreCase))
-                {
-                    await using var sourceStream = await file.OpenReadAsync();
-                    await using var destinationStream = File.Create(localFilePath);
-                    await sourceStream.CopyToAsync(destinationStream);
-                }
-
-                string reportReference = IrSession.ReportReference;
-                if (App.IsOnline)
-                {
-                    var uploadedFileName = await UploadFileToServer(localFilePath, reportReference);
-
-                    if (!string.IsNullOrWhiteSpace(uploadedFileName) && !UploadedFiles.Contains(uploadedFileName))
-                    {
-                        UploadedFiles.Add(uploadedFileName);
-                        uploadedServerFileNames.Add(uploadedFileName);
-                    }
         // Handle TapGestureRecognizer (sender is Image, no CommandParameter directly)
         if (sender is Image image && image.BindingContext is string fileNameFromBinding)
         {
@@ -1784,68 +1720,6 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             fileName = fileNameFromButton;
         }
 
-                    uploadedCount++;
-                    uploadProgressBar.Progress = (double)uploadedCount / totalFiles;
-                }
-                else
-                {
-                    Directory.CreateDirectory(offlinelocalFilePath); // Safe even if exists
-                    var offlinelocalFile = Path.Combine(offlinelocalFilePath, file.FileName);
-                    await using var offlinestream = await file.OpenReadAsync();
-                    await using var offlineFilestream = File.Create(offlinelocalFile);
-                    await offlinestream.CopyToAsync(offlineFilestream);
-
-                    var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
-                    string gpsCoordinates = await PermissionService.GetGpsLocationWithOutCheckingPermissionAsync();
-                    // Store in local list to upload later
-                    var _fileName = Path.GetFileName(file.FileName);
-                    irOfflineFilesAttachmentsCache _irOfflineFilesAttachmentsCache = new irOfflineFilesAttachmentsCache()
-                    {
-                        IrId = reportReference,
-                        FileNameActual = _fileName,
-                        FileNameCache = _fileName,
-                        FileNameWithPathCache = offlinelocalFile,
-                        EventDateTimeLocal = TimeZoneHelper.GetCurrentTimeZoneCurrentTime(),
-                        EventDateTimeLocalWithOffset = TimeZoneHelper.GetCurrentTimeZoneCurrentTimeWithOffset(),
-                        EventDateTimeZone = TimeZoneHelper.GetCurrentTimeZone(),
-                        EventDateTimeZoneShort = TimeZoneHelper.GetCurrentTimeZoneShortName(),
-                        EventDateTimeUtcOffsetMinute = TimeZoneHelper.GetCurrentTimeZoneOffsetMinute(),
-                        IsSynced = false,
-                        guardId = guardId,
-                        clientsiteId = clientSiteId,
-                        userId = userId,
-                        gps = gpsCoordinates ?? "",
-                        DeviceId = deviceid,
-                        DeviceName = devicename,
-                    };
-
-                    await _scanDataDbService.SaveIrReportAttachmentsToLocalCache(_irOfflineFilesAttachmentsCache);
-
-                    if (!string.IsNullOrWhiteSpace(_fileName) && !UploadedFiles.Contains(_fileName))
-                    {
-                        UploadedFiles.Add(_fileName);
-                        uploadedServerFileNames.Add(_fileName);
-                    }
-
-                }
-            }
-
-            uploadProgressBar.IsVisible = false;
-
-            // Show uploaded list
-            uploadDisplaySection.IsVisible = UploadedFiles.Any();
-        }
-        catch (Exception ex)
-        {
-            uploadProgressBar.IsVisible = false;
-            await DisplayAlert("Error", $"File selection failed: {ex.Message}", "OK");
-        }
-    }
-
-    private async void OnRemoveFileClicked(object sender, EventArgs e)
-    {
-        var button = sender as ImageButton;
-        var fileName = button?.CommandParameter as string;
         if (!string.IsNullOrEmpty(fileName))
         {
             await MainThread.InvokeOnMainThreadAsync(() =>
