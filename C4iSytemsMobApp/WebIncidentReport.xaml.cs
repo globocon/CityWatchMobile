@@ -6,6 +6,8 @@ using C4iSytemsMobApp.Helpers;
 using C4iSytemsMobApp.Interface;
 using C4iSytemsMobApp.Models;
 using C4iSytemsMobApp.Services;
+using C4iSytemsMobApp.Views;
+using CommunityToolkit.Maui.Views;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO.Pipelines;
@@ -351,6 +353,10 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
     private bool _appearingInitialized;
 
+    /* AI Assistance. Every operation runs on the CityWatch API, which calls the AI providers
+       server-side - no provider key or setting is ever on the device. */
+    private readonly AiAssistanceService _aiAssistance = new();
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -398,6 +404,57 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
             await DisplayAlert("Error", $"Failed to load client site info.\n\n{ex.Message}", "OK");
         }
     }
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        // Stop any AI request still running once the guard has left the page.
+        _aiAssistance.CancelPending();
+    }
+
+    /// <summary>
+    /// AI Assistance for the Description. The popup only returns text; the Description is written
+    /// here, and only when the guard pressed a Use button.
+    /// </summary>
+    private async void OnAiAssistanceClicked(object sender, EventArgs e)
+    {
+        // Same offline test the page uses for submitting and attachments. AI runs on the server,
+        // so there is nothing it can do offline.
+        if (!App.IsOnline)
+        {
+            await DisplayAlert("AI Assistance", AiAssistanceService.OfflineMessage, "OK");
+            return;
+        }
+
+        var text = descriptionEditor.Text ?? string.Empty;
+
+        // Whitespace-only counts as empty, and no request is made for it.
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            await DisplayAlert("AI Assistance", AiAssistanceService.EmptyTextMessage, "OK");
+            return;
+        }
+
+        aiAssistanceButton.IsEnabled = false;
+        try
+        {
+            // Length and the rest are validated by the server, which answers with the web's wording.
+            var result = await this.ShowPopupAsync(new AiAssistancePopup(_aiAssistance, text));
+
+            if (result is string chosen && !string.IsNullOrEmpty(chosen))
+                descriptionEditor.Text = chosen;
+        }
+        catch (Exception)
+        {
+            // AI must never break the Incident Report.
+            await DisplayAlert("AI Assistance", AiAssistanceService.UnavailableMessage, "OK");
+        }
+        finally
+        {
+            aiAssistanceButton.IsEnabled = true;
+        }
+    }
+
     IncidentRequest _reusedReport;
 
     public WebIncidentReport(IncidentRequest reusedReport = null)
