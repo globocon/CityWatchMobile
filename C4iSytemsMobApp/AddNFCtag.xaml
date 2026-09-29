@@ -36,12 +36,28 @@
                    BorderColor="Transparent"
                    Padding="2"
                    HasShadow="False">
-                <Label x:Name="LabelInfo"
-                       Text="."
-                       FontSize="12"
-                       VerticalOptions="Center"
-                       HorizontalOptions="Center"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                <VerticalStackLayout Spacing="4"
+                                     VerticalOptions="Center">
+
+                    <Label x:Name="LabelInfo"
+                           Text="."
+                           FontSize="12"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+                    <!-- Which site the tag will be registered against. Shown only on a patrol
+                         car or inspection tour, where it is the last scanned site rather than
+                         the site the guard logged in at - registering a tag is permanent, so
+                         the guard has to be able to see this before pressing Save. -->
+                    <Label x:Name="LabelSiteName"
+                           IsVisible="False"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           TextColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}" />
+                </VerticalStackLayout>
 
             </Frame>
 
