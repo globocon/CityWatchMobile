@@ -55,16 +55,99 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        /* The scanned site expires after 30 minutes (App.StartOrResetPcarExpiryTimer). A guard
+           can easily still be on this page when that happens - scan a tag, get interrupted,
+           come back and press Save - so the site line has to keep up, otherwise it would be
+           telling them the tag goes somewhere it no longer would. Released in OnDisappearing;
+           the home page leaks this subscription, not copying that. */
+        App.PcarInspTagResetEvent -= OnPcarInspTagReset;
+        App.PcarInspTagResetEvent += OnPcarInspTagReset;
+
+        ShowLocalSiteName();
+
         await StartNFC();
     }
 
     protected override async void OnDisappearing()
     {
         base.OnDisappearing();
+
+        App.PcarInspTagResetEvent -= OnPcarInspTagReset;
+
         _scannedTagUid = string.Empty;
         if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
         {
             await StopListening();
+        }
+    }
+
+    private void OnPcarInspTagReset()
+    {
+        // Raised from a timer callback in App, so hop to the UI thread before touching labels.
+        MainThread.BeginInvokeOnMainThread(ShowLocalSiteName);
+    }
+
+    /// <summary>
+    /// The site a tag registered here belongs to.
+    ///
+    /// On a standard tour that is the site the guard logged in at. On a patrol car or
+    /// inspection tour the guard logs in against the car's base site and then moves between
+    /// sites, so the login site is not where they are - the site they last scanned is. Same
+    /// rule as GetLocalSiteForPCAR on the log activity page, the tag-status lookups on the
+    /// home page, and the SOP page.
+    ///
+    /// Returns null on a PCAR/INSP tour with no live scanned site, where the other pages fall
+    /// back to the login site. That fallback is right for reading and wrong here: this writes,
+    /// and the row it writes is permanent. Silently registering a tag against the patrol car's
+    /// base site would put it on a site it does not belong to, and the guard would have no way
+    /// of knowing. The caller refuses to save instead.
+    /// </summary>
+    private static int? GetLocalSiteForPCAR(int loginClientSiteId)
+    {
+        //If PCAR then change local client site to latest scanned site
+        if (App.TourMode != PatrolTouringMode.PCAR && App.TourMode != PatrolTouringMode.INSP)
+            return loginClientSiteId;
+
+        return App.PcarInspLastScannedSiteId.HasValue && App.PcarInspLastScannedSiteId.Value > 0
+            ? App.PcarInspLastScannedSiteId.Value
+            : (int?)null;
+    }
+
+    /// <summary>
+    /// Names the site a tag saved now would be registered against. Silent on a standard tour,
+    /// where it is always the login site and saying so adds nothing.
+    /// </summary>
+    private void ShowLocalSiteName()
+    {
+        if (App.TourMode != PatrolTouringMode.PCAR && App.TourMode != PatrolTouringMode.INSP)
+            return;
+
+        try
+        {
+            int.TryParse(Preferences.Get("SelectedClientSiteId", "0"), out int loginClientSiteId);
+            var siteId = GetLocalSiteForPCAR(loginClientSiteId);
+
+            if (!siteId.HasValue)
+            {
+                LabelSiteName.Text = "No site scanned - scan a site tag before saving";
+                LabelSiteName.TextColor = Colors.Red;
+                LabelSiteName.IsVisible = true;
+                return;
+            }
+
+            var siteName = _scannerControlServices?.GetClientSiteNameFromLocalDbNonAsync(siteId.Value);
+
+            LabelSiteName.Text = string.IsNullOrWhiteSpace(siteName)
+                ? $"Registering to site {siteId.Value}"
+                : $"Registering to: {siteName}";
+            LabelSiteName.TextColor = Color.FromArgb("#512bd4");
+            LabelSiteName.IsVisible = true;
+        }
+        catch (Exception ex)
+        {
+            // A missing site name must not stop the page working.
+            Debug.WriteLine($"Failed to resolve NFC tag site name: {ex.Message}");
         }
     }
 
@@ -252,6 +335,15 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
 
     private async void OnSaveTagClicked(object sender, EventArgs e)
     {
+        /* Checked before anything else: registering a tag goes straight to the API and has no
+           offline cache behind it, unlike scans and logbook entries. There is nothing to be
+           gained by validating the rest first and then telling the guard it was never going to
+           save. */
+        if (!App.IsOnline)
+        {
+            await DisplayAlert(ALERT_TITLE, "Tag cannot be registered in offline mode.", "OK");
+            return;
+        }
 
         if (string.IsNullOrEmpty(_scannedTagUid))
         {
@@ -268,7 +360,24 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
         var (guardId, clientSiteId, userId) = await GetSecureStorageValues();
         if (guardId <= 0 || clientSiteId <= 0 || userId <= 0) return;
 
-        var scannerSettings = await _scannerControlServices.SaveNFCTagInfoDetailsAsync(clientSiteId.ToString(), _scannedTagUid, guardId.ToString(), userId.ToString(), txtTagLabel.Text);
+        /* Register the tag against the site the guard is actually at, not the one they logged
+           in at - on a patrol car or inspection tour those are different. Re-resolved here
+           rather than reused from OnAppearing, because the 30-minute expiry may have fired
+           while the guard was filling in the label. */
+        var tagClientSiteId = GetLocalSiteForPCAR(clientSiteId);
+        if (!tagClientSiteId.HasValue)
+        {
+            /* PCAR/INSP with no live scanned site. Saving anyway would register the tag to the
+               patrol car's base site permanently, and nothing downstream would flag it as
+               wrong, so refuse rather than guess. */
+            ShowLocalSiteName();
+            await DisplayAlert(ALERT_TITLE,
+                "No site scanned. On a patrol car or inspection tour a tag is registered to the site you last scanned - scan the site tag first, then save.",
+                "OK");
+            return;
+        }
+
+        var scannerSettings = await _scannerControlServices.SaveNFCTagInfoDetailsAsync(tagClientSiteId.Value.ToString(), _scannedTagUid, guardId.ToString(), userId.ToString(), txtTagLabel.Text);
         if (scannerSettings != null)
         {
             if (scannerSettings.IsSuccess)
