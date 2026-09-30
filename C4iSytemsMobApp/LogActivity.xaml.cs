@@ -139,6 +139,7 @@ public partial class LogActivity : ContentPage
     protected override async void OnDisappearing()
     {
         base.OnDisappearing();
+        _liveUpdateDebounce?.Cancel();
         if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
         {
             await StopListening();
@@ -222,6 +223,35 @@ public partial class LogActivity : ContentPage
         return int.TryParse(parts[0], out int result) ? result : int.MaxValue;
     }
 
+    // ---- Paged logbook (WhatsApp-style) -------------------------------------------------------
+    // This page used to fetch the whole of today's logbook with every photo and rebuild it on every
+    // GuardLogChanged push. The shared Romeo PCAR logbook (~700 entries, 150+ photos a day since
+    // 29 Sep 2026) ran the phones out of memory and the app crashed. Now it loads like a chat:
+    // the newest LogPageSize entries, the next page as the guard scrolls down, and a
+    // GuardLogChangedV2 push names the changed entries so only those are fetched and redrawn.
+    // A new entry goes straight to the top when the guard is at the top; otherwise it waits behind
+    // the "new entries" pill so the list never jumps under them. The cards themselves are built
+    // exactly as before (BuildLogCard).
+    private const int LogPageSize = 10;
+    private const double LoadMoreThreshold = 400;   // px from the bottom that pulls the next page
+    private const double NearTopThreshold = 60;     // px from the top where new entries go straight in
+    private static readonly JsonSerializerOptions LogJsonOptions = new() { PropertyNameCaseInsensitive = true };
+    private readonly Dictionary<int, View> _logCards = new();
+    private readonly List<(GuardLogDto Log, View Card)> _queuedNewCards = new();   // oldest first
+    private readonly HashSet<int> _pendingChangedIds = new();
+    private readonly HashSet<int> _pendingDeletedIds = new();
+    private CancellationTokenSource _liveUpdateDebounce;
+    private DateTime _lastV2SignalUtc = DateTime.MinValue;
+    private int _listGeneration;    // bumped on every reload; late results for an older list are dropped
+    private int? _listSiteId;       // the site the shown list belongs to
+    private int _oldestLogId;       // paging cursor: the last card in the list
+    private int _newestLogId;       // highest entry id seen: an unknown id above it is a NEW entry
+    private bool _noOlderLogs;
+    private bool _isLoadingOlder;
+    private Label _loadingOlderLabel;
+    private Label _noLogsLabel;
+
+    // Reloads the list from the newest page (first open, hub connect/reconnect, site change).
     private async void LoadLogs()
     {
 
@@ -229,6 +259,8 @@ public partial class LogActivity : ContentPage
             return;
 
         _isLogsLoading = true;
+        var generation = ++_listGeneration;
+        var loaded = false;
 
         try
         {
@@ -237,432 +269,46 @@ public partial class LogActivity : ContentPage
 
             GetLocalSiteForPCAR();
             GetLocalSiteName();
-            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLog?clientsiteId={_localClientSiteId}";
-            var response = await _httpClient.GetAsync(url);
 
-            if (!response.IsSuccessStatusCode)
+            _listSiteId = _localClientSiteId;
+            _oldestLogId = 0;
+            _newestLogId = 0;
+            _noOlderLogs = false;
+            _isLoadingOlder = false;
+            _logCards.Clear();
+            _queuedNewCards.Clear();
+            _pendingChangedIds.Clear();
+            _pendingDeletedIds.Clear();
+            UpdateNewEntriesPill();
+
+            var logs = await FetchLogPageAsync(_listSiteId, 0);
+            if (generation != _listGeneration)
+                return;
+
+            if (logs == null)
             {
                 await DisplayAlert("Error", "Failed to load site logs.", "OK");
                 return;
             }
 
-            var json = await response.Content.ReadAsStringAsync();
-            var logs = JsonSerializer.Deserialize<List<GuardLogDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
             LogDisplayArea.Children.Clear();
 
-            if (logs == null || logs.Count == 0)
+            if (logs.Count == 0)
             {
-                LogDisplayArea.Children.Add(new Label
+                _noOlderLogs = true;
+                _noLogsLabel = new Label
                 {
                     Text = "No logs available for today.",
                     TextColor = Colors.Gray,
                     FontSize = 12
-                });
+                };
+                LogDisplayArea.Children.Add(_noLogsLabel);
                 return;
             }
 
-            var bgColorPaleYellow = Color.FromArgb("#fcf8d1");
-            var bgColorPaleRed = Color.FromArgb("#ffcccc");
-            var bgColorNormal = Color.FromArgb("#F2F2F2"); // default
-
-            LogDisplayArea.Children.Clear(); // Refresh UI
-
-            foreach (var log in logs) // 
-            {
-                bool isAlarm = false;
-                var contentLayout = new VerticalStackLayout
-                {
-                    Spacing = 3,
-                    Children =
-                {
-                    new Label
-                    {
-                        FormattedText = new FormattedString
-                        {
-                            Spans =
-                                        {
-
-                                        new Span
-                                      {
-                                          Text = log.GuardInitials,
-                                          FontAttributes = FontAttributes.Bold,
-                                          TextColor = Colors.Teal,
-                                          FontSize = 13
-                                       },
-                                         new Span
-                                        {
-                                          Text = $"  {log.EventDateTimeLocal:HH:mm}",
-                                          FontSize = 11,
-                                          TextColor = Colors.Gray
-                                        }
-
-
-                                        }
-                        },
-                        Margin = new Thickness(0, 0, 0, 2)
-                    }
-                }
-                };
-
-                // Notes / IR handling
-                Label noteLabel;
-                if (log.IrEntryType == 1)
-                {
-                    var formattedText = new FormattedString();
-                    var noteText = log.Notes?.Trim() ?? "";
-                    formattedText.Spans.Add(new Span
-                    {
-                        Text = noteText + " ",
-                        TextColor = Colors.Black,
-                        FontSize = 12
-                    });
-
-                    string blobUrl = null;
-                    if (!string.IsNullOrWhiteSpace(noteText) && noteText.Length >= 8 && noteText.Contains("IR Report", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var folder = new string(noteText.Take(8).ToArray());
-                        var blobFileName = noteText.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
-                            ? noteText
-                            : noteText + ".pdf";
-
-                        var encodedBlobName = Uri.EscapeDataString(blobFileName);
-                        blobUrl = $"https://c4istorage1.blob.core.windows.net/irfiles/{folder}/{encodedBlobName}";
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(blobUrl))
-                    {
-                        var linkSpan = new Span
-                        {
-                            Text = "Click here",
-                            TextColor = Colors.Blue,
-                            FontSize = 12,
-                            TextDecorations = TextDecorations.Underline
-                        };
-
-                        var tapGesture = new TapGestureRecognizer();
-                        tapGesture.Tapped += async (s, e) =>
-                        {
-                            try
-                            {
-                                await Browser.Default.OpenAsync(blobUrl, BrowserLaunchMode.SystemPreferred);
-                            }
-                            catch
-                            {
-                                await Application.Current.MainPage.DisplayAlert("Error", "Unable to open link.", "OK");
-                            }
-                        };
-
-                        linkSpan.GestureRecognizers.Add(tapGesture);
-                        formattedText.Spans.Add(linkSpan);
-                    }
-
-                    noteLabel = new Label
-                    {
-                        FormattedText = formattedText,
-                        LineBreakMode = LineBreakMode.WordWrap,
-                        Margin = new Thickness(0, 0, 0, 10)
-                    };
-                }
-                else
-                {
-                    var noteText = log.Notes ?? "";
-
-                    if (noteText.Contains("Mob app image upload", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var formattedText = new FormattedString();
-
-                        // Add the main text first
-                        formattedText.Spans.Add(new Span
-                        {
-                            Text = "Mob app image upload\n",
-                            TextColor = Colors.Black,
-                            FontSize = 12
-                        });
-
-                        // Find all links like <a href="url">filename</a>
-                        var regex = new System.Text.RegularExpressions.Regex(
-                            "<a\\s+href=\\\"(?<url>[^\\\"]+)\\\"[^>]*>(?<text>[^<]+)</a>",
-                            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-                        foreach (System.Text.RegularExpressions.Match match in regex.Matches(noteText))
-                        {
-                            var url2 = match.Groups["url"].Value;
-                            var linkText = match.Groups["text"].Value;
-
-                            // Add prefix text
-                            formattedText.Spans.Add(new Span
-                            {
-                                Text = "See attached file ",
-                                TextColor = Colors.Black,
-                                FontSize = 12
-                            });
-
-                            var linkSpan = new Span
-                            {
-                                Text = linkText + "\n",
-                                TextColor = Colors.Blue,
-                                FontSize = 12,
-                                TextDecorations = TextDecorations.Underline
-                            };
-
-                            var tapGesture = new TapGestureRecognizer();
-                            tapGesture.Tapped += async (s, e) =>
-                            {
-                                try
-                                {
-                                    await Browser.Default.OpenAsync(url2, BrowserLaunchMode.SystemPreferred);
-                                }
-                                catch
-                                {
-                                    await Application.Current.MainPage.DisplayAlert("Error", "Unable to open link.", "OK");
-                                }
-                            };
-
-                            linkSpan.GestureRecognizers.Add(tapGesture);
-                            formattedText.Spans.Add(linkSpan);
-                        }
-
-                        noteLabel = new Label
-                        {
-                            FormattedText = formattedText,
-                            LineBreakMode = LineBreakMode.WordWrap,
-                            Margin = new Thickness(0, 0, 0, 10)
-                        };
-                    }
-                    else
-                    {
-                        var noteText2 = (log.Notes ?? "").Replace("<br>", "\n").Replace("<br/>", "\n");
-                        var formattedText = new FormattedString();
-
-                        // Regex to find all anchor tags
-                        var regex = new System.Text.RegularExpressions.Regex(
-                            "(?<textBefore>[^<]*)<a\\s+href=\"(?<url>[^\"]+)\">(?<text>[^<]+)</a>",
-                            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-                        var matches = regex.Matches(noteText2);
-
-                        if (matches.Count > 0)
-                        {
-                            int lastIndex = 0;
-                            foreach (System.Text.RegularExpressions.Match match in matches)
-                            {
-                                // Add text before the link
-                                var textBefore = match.Groups["textBefore"].Value;
-                                if (!string.IsNullOrEmpty(textBefore))
-                                {
-                                    formattedText.Spans.Add(new Span
-                                    {
-                                        Text = textBefore,
-                                        TextColor = Colors.Black,
-                                        FontSize = 12
-                                    });
-                                }
-
-                                // Add clickable link
-                                var url2 = match.Groups["url"].Value;
-                                var linkText = match.Groups["text"].Value;
-
-                                var linkSpan = new Span
-                                {
-                                    Text = linkText,
-                                    TextColor = Colors.Blue,
-                                    TextDecorations = TextDecorations.Underline,
-                                    FontSize = 12
-                                };
-
-                                var tapGesture = new TapGestureRecognizer();
-                                tapGesture.Tapped += async (s, e) =>
-                                {
-                                    try
-                                    {
-                                        await Browser.Default.OpenAsync(url2, BrowserLaunchMode.SystemPreferred);
-                                    }
-                                    catch
-                                    {
-                                        await Application.Current.MainPage.DisplayAlert("Error", "Unable to open link.", "OK");
-                                    }
-                                };
-                                linkSpan.GestureRecognizers.Add(tapGesture);
-
-                                formattedText.Spans.Add(linkSpan);
-
-                                // Move pointer
-                                lastIndex = match.Index + match.Length;
-                            }
-
-                            // Add any text remaining after last link
-                            if (lastIndex < noteText2.Length)
-                            {
-                                formattedText.Spans.Add(new Span
-                                {
-                                    Text = noteText2.Substring(lastIndex),
-                                    TextColor = Colors.Black,
-                                    FontSize = 12
-                                });
-                            }
-
-                            noteLabel = new Label
-                            {
-                                FormattedText = formattedText,
-                                LineBreakMode = LineBreakMode.WordWrap,
-                                Margin = new Thickness(0, 0, 0, 10)
-                            };
-                        }
-                        else
-                        {
-                            // No links ? normal label
-                            noteLabel = new Label
-                            {
-                                Text = noteText2,
-                                LineBreakMode = LineBreakMode.WordWrap,
-                                TextColor = Colors.Black,
-                                FontSize = 12,
-                                Margin = new Thickness(0, 0, 0, 10)
-                            };
-                        }
-                    }
-                }
-
-                // add noteLabel once, outside the if/else
-                contentLayout.Children.Add(noteLabel);
-
-                // Images (unchanged)
-                foreach (var imageUrl in log.ImageUrls ?? Enumerable.Empty<string>())
-                {
-                    if (!string.IsNullOrWhiteSpace(imageUrl))
-                    {
-                        try
-                        {
-                            contentLayout.Children.Add(new Image
-                            {
-                                Source = ImageSource.FromUri(new Uri(imageUrl)),
-                                HeightRequest = 130,
-                                Margin = new Thickness(0, 4, 0, 4)
-                            });
-                        }
-                        catch
-                        {
-                            contentLayout.Children.Add(new Label
-                            {
-                                Text = "(Image could not be loaded)",
-                                TextColor = Colors.Red,
-                                FontSize = 11
-                            });
-                        }
-                    }
-                }
-
-                Color cardBgColor = bgColorNormal;
-                if (log.IrEntryType == 2)
-                {
-                    cardBgColor = bgColorPaleRed;
-                    isAlarm = true;
-                }
-                else if (log.IrEntryType == 1)
-                    cardBgColor = bgColorPaleYellow;
-
-                // Create a Grid to hold content + optional button
-                var cardGrid = new Grid
-                {
-                    ColumnDefinitions =
-    {
-        new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }, // main content
-        new ColumnDefinition { Width = GridLength.Auto } // button
-    }
-                };
-
-                // Add existing contentLayout to the first column
-                cardGrid.Add(contentLayout, 0, 0);
-
-                // Add button only if IrEntryType == 2
-                if (isAlarm)
-                {
-                    var actionButton = new ImageButton
-                    {
-                        Source = "envelope.png", // replace with your image filename in Resources/Images
-                        BackgroundColor = Colors.Transparent,
-                        HeightRequest = 30,
-                        WidthRequest = 30,
-                        HorizontalOptions = LayoutOptions.End,
-                        VerticalOptions = LayoutOptions.Start,
-                        CornerRadius = 6,
-                        Padding = 2
-                    };
-
-                    actionButton.Clicked += (s, e) =>
-                    {
-                        SelectedLogForPush = log; // store the selected log
-                        ShowPushNotificationsPopup();
-                        // Optional: Display alert for testing
-                        // await Application.Current.MainPage.DisplayAlert("Alarm", $"Action triggered for {log.GuardInitials}", "OK");
-                    };
-
-
-                    cardGrid.Add(actionButton, 1, 0);
-                }
-
-
-                bool hasImages = (log.ImageUrls != null && log.ImageUrls.Any()) ||
-                 (log.RearFileUrls != null && log.RearFileUrls.Any());
-
-                bool notesContainUploadText = log.Notes?.Contains(
-                    "Mob app image upload",
-                    StringComparison.OrdinalIgnoreCase) ?? false;
-
-                if (log.GuardId.HasValue
-      && log.GuardId.Value == _guardId
-      && log.IrEntryType != 1
-      && log.IsSystemEntry == false
-      //&& (log.ImageUrls == null || log.ImageUrls.Count == 0)
-      //&& !(log.Notes?.Contains("Mob app image upload", StringComparison.OrdinalIgnoreCase) ?? false)
-
-
-      )
-                {
-                    var editButton = new ImageButton
-                    {
-                        Source = "edit.png", // a pencil or edit icon in Resources/Images
-                        BackgroundColor = Colors.Transparent,
-                        HeightRequest = 30,
-                        WidthRequest = 30,
-                        HorizontalOptions = LayoutOptions.End,
-                        VerticalOptions = LayoutOptions.Start,
-                        CornerRadius = 6,
-                        Padding = 2
-                    };
-
-
-
-
-                    editButton.Clicked += async (s, e) =>
-                    {
-                        // Decide which popup to show based on images
-                        if ((hasImages || notesContainUploadText))
-                            ShowEditLogImagePopup(log);
-                        else
-                            ShowEditLogPopup(log);
-                    };
-
-
-                    // Optionally combine with alarm button
-                    cardGrid.Add(editButton, 1, 0);
-                }
-
-                var logCard = new Frame
-                {
-                    CornerRadius = 8,
-                    Padding = 6,
-                    Margin = new Thickness(2, 4),
-                    BackgroundColor = cardBgColor,
-                    Content = cardGrid
-                };
-
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    LogDisplayArea.Children.Add(logCard);
-                });
-            }
+            AppendOlderCards(logs);
+            await LogScrollView.ScrollToAsync(0, 0, false);
+            loaded = true;
         }
         catch (Exception ex)
         {
@@ -682,6 +328,732 @@ public partial class LogActivity : ContentPage
 
            // throw;
         }
+
+        if (loaded)
+            FillScreenIfShort();
+    }
+
+    // Adds a page of older entries (server order: newest first) under the ones shown.
+    private void AppendOlderCards(List<GuardLogDto> logs)
+    {
+        foreach (var log in logs)
+        {
+            _newestLogId = Math.Max(_newestLogId, log.Id);
+            if (_logCards.ContainsKey(log.Id))
+                continue;   // already shown - it arrived live in the meantime
+
+            var card = BuildLogCard(log);
+            _logCards[log.Id] = card;
+            LogDisplayArea.Children.Add(card);
+        }
+
+        _oldestLogId = logs[^1].Id;
+        if (logs.Count < LogPageSize)
+            _noOlderLogs = true;
+    }
+
+    private async Task LoadOlderLogsAsync()
+    {
+        if (_isLoadingOlder || _noOlderLogs || _isLogsLoading || _oldestLogId <= 0)
+            return;
+
+        _isLoadingOlder = true;
+        var generation = _listGeneration;
+        _loadingOlderLabel ??= new Label
+        {
+            Text = "Loading…",
+            TextColor = Colors.Gray,
+            FontSize = 12,
+            HorizontalOptions = LayoutOptions.Center,
+            Margin = new Thickness(0, 6)
+        };
+        LogDisplayArea.Children.Add(_loadingOlderLabel);
+
+        var appended = false;
+        try
+        {
+            var logs = await FetchLogPageAsync(_listSiteId, _oldestLogId);
+            LogDisplayArea.Children.Remove(_loadingOlderLabel);
+            if (generation != _listGeneration || logs == null)
+                return;     // list was reloaded, or a network hiccup - the next scroll asks again
+
+            if (logs.Count == 0)
+            {
+                _noOlderLogs = true;
+                return;
+            }
+
+            AppendOlderCards(logs);
+            appended = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading older logs: {ex.Message}");
+        }
+        finally
+        {
+            LogDisplayArea.Children.Remove(_loadingOlderLabel);
+            if (generation == _listGeneration)
+                _isLoadingOlder = false;
+        }
+
+        if (appended)
+            FillScreenIfShort();
+    }
+
+    // A short page may not fill the screen, and then there is nothing to scroll: pull the next one.
+    private void FillScreenIfShort()
+    {
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(300), async () =>
+        {
+            if (!_noOlderLogs && LogScrollView.ContentSize.Height <= LogScrollView.Height + LoadMoreThreshold)
+                await LoadOlderLogsAsync();
+        });
+    }
+
+    private async void OnLogScrollViewScrolled(object sender, ScrolledEventArgs e)
+    {
+        if (e.ScrollY <= NearTopThreshold && _queuedNewCards.Count > 0)
+            ShowQueuedNewCards();
+
+        if (e.ScrollY >= LogScrollView.ContentSize.Height - LogScrollView.Height - LoadMoreThreshold)
+            await LoadOlderLogsAsync();
+    }
+
+    private async void OnNewEntriesPillClicked(object sender, EventArgs e)
+    {
+        ShowQueuedNewCards();
+        await LogScrollView.ScrollToAsync(0, 0, true);
+    }
+
+    private void ShowQueuedNewCards()
+    {
+        // Queued oldest first and each goes to the top, so the newest ends up first.
+        foreach (var (log, card) in _queuedNewCards)
+        {
+            if (_logCards.ContainsKey(log.Id))
+                continue;
+            _logCards[log.Id] = card;
+            LogDisplayArea.Children.Insert(0, card);
+        }
+
+        _queuedNewCards.Clear();
+        UpdateNewEntriesPill();
+    }
+
+    private void UpdateNewEntriesPill()
+    {
+        var count = _queuedNewCards.Count;
+        NewEntriesPill.Text = count == 1 ? "↑ 1 new entry" : $"↑ {count} new entries";
+        NewEntriesPill.IsVisible = count > 0;
+    }
+
+    private void RemoveLogCard(int id)
+    {
+        if (_logCards.Remove(id, out var card))
+            LogDisplayArea.Children.Remove(card);
+
+        if (_queuedNewCards.RemoveAll(q => q.Log.Id == id) > 0)
+            UpdateNewEntriesPill();
+
+        if (id == _oldestLogId)
+        {
+            // The cursor entry is gone: page on from the last card still shown.
+            _oldestLogId = 0;
+            for (var i = LogDisplayArea.Children.Count - 1; i >= 0; i--)
+            {
+                if (LogDisplayArea.Children[i] is View v && int.TryParse(v.ClassId, out var cardId))
+                {
+                    _oldestLogId = cardId;
+                    break;
+                }
+            }
+
+            if (_oldestLogId == 0 && !_noOlderLogs)
+                LoadLogs();     // every shown card was deleted - start again from the newest
+        }
+    }
+
+    // GuardLogChangedV2: which entries were added/edited and which were deleted. Several quick
+    // saves (a photo upload is an entry save plus a save per photo) are gathered for a second
+    // and fetched together.
+    private void OnGuardLogChangedV2(int[] changedIds, int[] deletedIds)
+    {
+        _lastV2SignalUtc = DateTime.UtcNow;
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            foreach (var id in changedIds ?? Array.Empty<int>())
+                _pendingChangedIds.Add(id);
+            foreach (var id in deletedIds ?? Array.Empty<int>())
+            {
+                _pendingDeletedIds.Add(id);
+                _pendingChangedIds.Remove(id);
+            }
+            ScheduleLiveUpdate();
+        });
+    }
+
+    // The bare signal. A server with GuardLogChangedV2 sends both, V2 just after this one; only
+    // when no V2 follows (a host not yet updated) is the newest page refreshed instead.
+    private void OnGuardLogChangedLegacy()
+    {
+        var signalledAt = DateTime.UtcNow;
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            Dispatcher.DispatchDelayed(TimeSpan.FromSeconds(3), async () =>
+            {
+                if (_lastV2SignalUtc >= signalledAt || _isLogsLoading)
+                    return;
+
+                var generation = _listGeneration;
+                try
+                {
+                    var logs = await FetchLogPageAsync(_listSiteId, 0);
+                    if (logs != null && generation == _listGeneration)
+                        MergeLiveLogs(logs);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error refreshing logs: {ex.Message}");
+                }
+            });
+        });
+    }
+
+    private void ScheduleLiveUpdate()
+    {
+        _liveUpdateDebounce?.Cancel();
+        var cts = _liveUpdateDebounce = new CancellationTokenSource();
+        Dispatcher.DispatchDelayed(TimeSpan.FromSeconds(1), async () =>
+        {
+            if (!cts.IsCancellationRequested)
+                await ApplyLiveUpdatesAsync();
+        });
+    }
+
+    private async Task ApplyLiveUpdatesAsync()
+    {
+        if (_isLogsLoading)
+        {
+            ScheduleLiveUpdate();   // a reload is in flight; apply once it has finished
+            return;
+        }
+
+        var changed = _pendingChangedIds.ToList();
+        var deleted = _pendingDeletedIds.ToList();
+        _pendingChangedIds.Clear();
+        _pendingDeletedIds.Clear();
+        var generation = _listGeneration;
+
+        foreach (var id in deleted)
+            RemoveLogCard(id);
+
+        if (changed.Count == 0)
+            return;
+
+        List<GuardLogDto> logs = null;
+        try
+        {
+            logs = await FetchLogEntriesAsync(_listSiteId, changed);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading changed logs: {ex.Message}");
+        }
+
+        if (generation != _listGeneration)
+            return;
+
+        if (logs == null)
+        {
+            foreach (var id in changed)
+                _pendingChangedIds.Add(id);     // kept for the next signal to retry
+            return;
+        }
+
+        // Asked for but not returned: no longer in today's logbook for this site.
+        var returned = logs.Select(l => l.Id).ToHashSet();
+        foreach (var id in changed.Where(id => !returned.Contains(id)))
+            RemoveLogCard(id);
+
+        MergeLiveLogs(logs);
+    }
+
+    // Redraws shown entries in place and brings in new ones (server order: newest first).
+    private void MergeLiveLogs(List<GuardLogDto> logs)
+    {
+        var newOnes = new List<GuardLogDto>();
+        foreach (var log in logs)
+        {
+            if (_logCards.TryGetValue(log.Id, out var oldCard))
+            {
+                var index = LogDisplayArea.Children.IndexOf(oldCard);
+                var card = BuildLogCard(log);
+                _logCards[log.Id] = card;
+                if (index >= 0)
+                {
+                    LogDisplayArea.Children.RemoveAt(index);
+                    LogDisplayArea.Children.Insert(index, card);
+                }
+                continue;
+            }
+
+            var queued = _queuedNewCards.FindIndex(q => q.Log.Id == log.Id);
+            if (queued >= 0)
+            {
+                _queuedNewCards[queued] = (log, BuildLogCard(log));
+                continue;
+            }
+
+            // An unknown entry older than anything seen is further down the day, not new: it
+            // appears with its page when the guard scrolls there.
+            if (log.Id > _newestLogId)
+                newOnes.Add(log);
+        }
+
+        if (newOnes.Count == 0)
+            return;
+
+        if (_noLogsLabel != null)
+        {
+            LogDisplayArea.Children.Remove(_noLogsLabel);
+            _noLogsLabel = null;
+        }
+
+        newOnes.Reverse();  // oldest first, so the newest lands on top
+        foreach (var log in newOnes)
+        {
+            _newestLogId = Math.Max(_newestLogId, log.Id);
+            _queuedNewCards.Add((log, BuildLogCard(log)));
+        }
+
+        if (LogScrollView.ScrollY <= NearTopThreshold)
+            ShowQueuedNewCards();
+        else
+            UpdateNewEntriesPill();
+    }
+
+    private async Task<List<GuardLogDto>> FetchLogPageAsync(int? siteId, int beforeLogId)
+    {
+        var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLogPage?clientsiteId={siteId}&beforeLogId={beforeLogId}&pageSize={LogPageSize}";
+        var response = await _httpClient.GetAsync(url);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<GuardLogDto>>(json, LogJsonOptions) ?? new List<GuardLogDto>();
+    }
+
+    private async Task<List<GuardLogDto>> FetchLogEntriesAsync(int? siteId, IEnumerable<int> ids)
+    {
+        var query = string.Join("&", ids.Select(id => $"ids={id}"));
+        var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLogEntries?clientsiteId={siteId}&{query}";
+        var response = await _httpClient.GetAsync(url);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<GuardLogDto>>(json, LogJsonOptions) ?? new List<GuardLogDto>();
+    }
+
+    // One logbook card - the layout, colours, links, photos and buttons exactly as the page has
+    // always drawn them (moved here unchanged from LoadLogs).
+    private View BuildLogCard(GuardLogDto log)
+    {
+        var bgColorPaleYellow = Color.FromArgb("#fcf8d1");
+        var bgColorPaleRed = Color.FromArgb("#ffcccc");
+        var bgColorNormal = Color.FromArgb("#F2F2F2"); // default
+
+        bool isAlarm = false;
+        var contentLayout = new VerticalStackLayout
+        {
+            Spacing = 3,
+            Children =
+        {
+            new Label
+            {
+                FormattedText = new FormattedString
+                {
+                    Spans =
+                                {
+
+                                new Span
+                              {
+                                  Text = log.GuardInitials,
+                                  FontAttributes = FontAttributes.Bold,
+                                  TextColor = Colors.Teal,
+                                  FontSize = 13
+                               },
+                                 new Span
+                                {
+                                  Text = $"  {log.EventDateTimeLocal:HH:mm}",
+                                  FontSize = 11,
+                                  TextColor = Colors.Gray
+                                }
+
+
+                                }
+                },
+                Margin = new Thickness(0, 0, 0, 2)
+            }
+        }
+        };
+
+        // Notes / IR handling
+        Label noteLabel;
+        if (log.IrEntryType == 1)
+        {
+            var formattedText = new FormattedString();
+            var noteText = log.Notes?.Trim() ?? "";
+            formattedText.Spans.Add(new Span
+            {
+                Text = noteText + " ",
+                TextColor = Colors.Black,
+                FontSize = 12
+            });
+
+            string blobUrl = null;
+            if (!string.IsNullOrWhiteSpace(noteText) && noteText.Length >= 8 && noteText.Contains("IR Report", StringComparison.OrdinalIgnoreCase))
+            {
+                var folder = new string(noteText.Take(8).ToArray());
+                var blobFileName = noteText.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+                    ? noteText
+                    : noteText + ".pdf";
+
+                var encodedBlobName = Uri.EscapeDataString(blobFileName);
+                blobUrl = $"https://c4istorage1.blob.core.windows.net/irfiles/{folder}/{encodedBlobName}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(blobUrl))
+            {
+                var linkSpan = new Span
+                {
+                    Text = "Click here",
+                    TextColor = Colors.Blue,
+                    FontSize = 12,
+                    TextDecorations = TextDecorations.Underline
+                };
+
+                var tapGesture = new TapGestureRecognizer();
+                tapGesture.Tapped += async (s, e) =>
+                {
+                    try
+                    {
+                        await Browser.Default.OpenAsync(blobUrl, BrowserLaunchMode.SystemPreferred);
+                    }
+                    catch
+                    {
+                        await Application.Current.MainPage.DisplayAlert("Error", "Unable to open link.", "OK");
+                    }
+                };
+
+                linkSpan.GestureRecognizers.Add(tapGesture);
+                formattedText.Spans.Add(linkSpan);
+            }
+
+            noteLabel = new Label
+            {
+                FormattedText = formattedText,
+                LineBreakMode = LineBreakMode.WordWrap,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+        }
+        else
+        {
+            var noteText = log.Notes ?? "";
+
+            if (noteText.Contains("Mob app image upload", StringComparison.OrdinalIgnoreCase))
+            {
+                var formattedText = new FormattedString();
+
+                // Add the main text first
+                formattedText.Spans.Add(new Span
+                {
+                    Text = "Mob app image upload\n",
+                    TextColor = Colors.Black,
+                    FontSize = 12
+                });
+
+                // Find all links like <a href="url">filename</a>
+                var regex = new System.Text.RegularExpressions.Regex(
+                    "<a\\s+href=\\\"(?<url>[^\\\"]+)\\\"[^>]*>(?<text>[^<]+)</a>",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                foreach (System.Text.RegularExpressions.Match match in regex.Matches(noteText))
+                {
+                    var url2 = match.Groups["url"].Value;
+                    var linkText = match.Groups["text"].Value;
+
+                    // Add prefix text
+                    formattedText.Spans.Add(new Span
+                    {
+                        Text = "See attached file ",
+                        TextColor = Colors.Black,
+                        FontSize = 12
+                    });
+
+                    var linkSpan = new Span
+                    {
+                        Text = linkText + "\n",
+                        TextColor = Colors.Blue,
+                        FontSize = 12,
+                        TextDecorations = TextDecorations.Underline
+                    };
+
+                    var tapGesture = new TapGestureRecognizer();
+                    tapGesture.Tapped += async (s, e) =>
+                    {
+                        try
+                        {
+                            await Browser.Default.OpenAsync(url2, BrowserLaunchMode.SystemPreferred);
+                        }
+                        catch
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Error", "Unable to open link.", "OK");
+                        }
+                    };
+
+                    linkSpan.GestureRecognizers.Add(tapGesture);
+                    formattedText.Spans.Add(linkSpan);
+                }
+
+                noteLabel = new Label
+                {
+                    FormattedText = formattedText,
+                    LineBreakMode = LineBreakMode.WordWrap,
+                    Margin = new Thickness(0, 0, 0, 10)
+                };
+            }
+            else
+            {
+                var noteText2 = (log.Notes ?? "").Replace("<br>", "\n").Replace("<br/>", "\n");
+                var formattedText = new FormattedString();
+
+                // Regex to find all anchor tags
+                var regex = new System.Text.RegularExpressions.Regex(
+                    "(?<textBefore>[^<]*)<a\\s+href=\"(?<url>[^\"]+)\">(?<text>[^<]+)</a>",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                var matches = regex.Matches(noteText2);
+
+                if (matches.Count > 0)
+                {
+                    int lastIndex = 0;
+                    foreach (System.Text.RegularExpressions.Match match in matches)
+                    {
+                        // Add text before the link
+                        var textBefore = match.Groups["textBefore"].Value;
+                        if (!string.IsNullOrEmpty(textBefore))
+                        {
+                            formattedText.Spans.Add(new Span
+                            {
+                                Text = textBefore,
+                                TextColor = Colors.Black,
+                                FontSize = 12
+                            });
+                        }
+
+                        // Add clickable link
+                        var url2 = match.Groups["url"].Value;
+                        var linkText = match.Groups["text"].Value;
+
+                        var linkSpan = new Span
+                        {
+                            Text = linkText,
+                            TextColor = Colors.Blue,
+                            TextDecorations = TextDecorations.Underline,
+                            FontSize = 12
+                        };
+
+                        var tapGesture = new TapGestureRecognizer();
+                        tapGesture.Tapped += async (s, e) =>
+                        {
+                            try
+                            {
+                                await Browser.Default.OpenAsync(url2, BrowserLaunchMode.SystemPreferred);
+                            }
+                            catch
+                            {
+                                await Application.Current.MainPage.DisplayAlert("Error", "Unable to open link.", "OK");
+                            }
+                        };
+                        linkSpan.GestureRecognizers.Add(tapGesture);
+
+                        formattedText.Spans.Add(linkSpan);
+
+                        // Move pointer
+                        lastIndex = match.Index + match.Length;
+                    }
+
+                    // Add any text remaining after last link
+                    if (lastIndex < noteText2.Length)
+                    {
+                        formattedText.Spans.Add(new Span
+                        {
+                            Text = noteText2.Substring(lastIndex),
+                            TextColor = Colors.Black,
+                            FontSize = 12
+                        });
+                    }
+
+                    noteLabel = new Label
+                    {
+                        FormattedText = formattedText,
+                        LineBreakMode = LineBreakMode.WordWrap,
+                        Margin = new Thickness(0, 0, 0, 10)
+                    };
+                }
+                else
+                {
+                    // No links ? normal label
+                    noteLabel = new Label
+                    {
+                        Text = noteText2,
+                        LineBreakMode = LineBreakMode.WordWrap,
+                        TextColor = Colors.Black,
+                        FontSize = 12,
+                        Margin = new Thickness(0, 0, 0, 10)
+                    };
+                }
+            }
+        }
+
+        // add noteLabel once, outside the if/else
+        contentLayout.Children.Add(noteLabel);
+
+        // Images (unchanged)
+        foreach (var imageUrl in log.ImageUrls ?? Enumerable.Empty<string>())
+        {
+            if (!string.IsNullOrWhiteSpace(imageUrl))
+            {
+                try
+                {
+                    contentLayout.Children.Add(new Image
+                    {
+                        Source = ImageSource.FromUri(new Uri(imageUrl)),
+                        HeightRequest = 130,
+                        Margin = new Thickness(0, 4, 0, 4)
+                    });
+                }
+                catch
+                {
+                    contentLayout.Children.Add(new Label
+                    {
+                        Text = "(Image could not be loaded)",
+                        TextColor = Colors.Red,
+                        FontSize = 11
+                    });
+                }
+            }
+        }
+
+        Color cardBgColor = bgColorNormal;
+        if (log.IrEntryType == 2)
+        {
+            cardBgColor = bgColorPaleRed;
+            isAlarm = true;
+        }
+        else if (log.IrEntryType == 1)
+            cardBgColor = bgColorPaleYellow;
+
+        // Create a Grid to hold content + optional button
+        var cardGrid = new Grid
+        {
+            ColumnDefinitions =
+{
+new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }, // main content
+new ColumnDefinition { Width = GridLength.Auto } // button
+}
+        };
+
+        // Add existing contentLayout to the first column
+        cardGrid.Add(contentLayout, 0, 0);
+
+        // Add button only if IrEntryType == 2
+        if (isAlarm)
+        {
+            var actionButton = new ImageButton
+            {
+                Source = "envelope.png", // replace with your image filename in Resources/Images
+                BackgroundColor = Colors.Transparent,
+                HeightRequest = 30,
+                WidthRequest = 30,
+                HorizontalOptions = LayoutOptions.End,
+                VerticalOptions = LayoutOptions.Start,
+                CornerRadius = 6,
+                Padding = 2
+            };
+
+            actionButton.Clicked += (s, e) =>
+            {
+                SelectedLogForPush = log; // store the selected log
+                ShowPushNotificationsPopup();
+                // Optional: Display alert for testing
+                // await Application.Current.MainPage.DisplayAlert("Alarm", $"Action triggered for {log.GuardInitials}", "OK");
+            };
+
+
+            cardGrid.Add(actionButton, 1, 0);
+        }
+
+
+        bool hasImages = (log.ImageUrls != null && log.ImageUrls.Any()) ||
+         (log.RearFileUrls != null && log.RearFileUrls.Any());
+
+        bool notesContainUploadText = log.Notes?.Contains(
+            "Mob app image upload",
+            StringComparison.OrdinalIgnoreCase) ?? false;
+
+        if (log.GuardId.HasValue
+&& log.GuardId.Value == _guardId
+&& log.IrEntryType != 1
+&& log.IsSystemEntry == false
+//&& (log.ImageUrls == null || log.ImageUrls.Count == 0)
+//&& !(log.Notes?.Contains("Mob app image upload", StringComparison.OrdinalIgnoreCase) ?? false)
+
+
+)
+        {
+            var editButton = new ImageButton
+            {
+                Source = "edit.png", // a pencil or edit icon in Resources/Images
+                BackgroundColor = Colors.Transparent,
+                HeightRequest = 30,
+                WidthRequest = 30,
+                HorizontalOptions = LayoutOptions.End,
+                VerticalOptions = LayoutOptions.Start,
+                CornerRadius = 6,
+                Padding = 2
+            };
+
+
+
+
+            editButton.Clicked += async (s, e) =>
+            {
+                // Decide which popup to show based on images
+                if ((hasImages || notesContainUploadText))
+                    ShowEditLogImagePopup(log);
+                else
+                    ShowEditLogPopup(log);
+            };
+
+
+            // Optionally combine with alarm button
+            cardGrid.Add(editButton, 1, 0);
+        }
+
+        var logCard = new Frame
+        {
+            CornerRadius = 8,
+            Padding = 6,
+            Margin = new Thickness(2, 4),
+            BackgroundColor = cardBgColor,
+            Content = cardGrid
+        };
+
+        logCard.ClassId = log.Id.ToString();
+        return logCard;
     }
 
     private async void OnPickFileClicked(object sender, EventArgs e)
@@ -2089,13 +2461,18 @@ public partial class LogActivity : ContentPage
                 .WithAutomaticReconnect()
                 .Build();
 
-            _hubConnection.Reconnected += connectionId =>
+            _hubConnection.Reconnected += async connectionId =>
             {
                 Debug.WriteLine($"Reconnected with connectionId: {connectionId}");
                 if (_hubConnection.State == HubConnectionState.Connected)
                 {
-                    GetLocalSiteForPCAR();
-                    GetLocalSiteName();
+                    // Reconnected runs on a background thread: the site name is on screen, and
+                    // touching it from here is what Android refuses (PCAR/INSP show it).
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        GetLocalSiteForPCAR();
+                        GetLocalSiteName();
+                    });
                     MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                     {
                         ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
@@ -2103,10 +2480,11 @@ public partial class LogActivity : ContentPage
                         UserId = (int)_userId,
                         BadgeNo = _badgeNo,
                     };
-                    var z = Task.FromResult(_hubConnection.InvokeAsync<string>("JoinGroup", JoinGaurd)).Result;
+                    var z = await _hubConnection.InvokeAsync<string>("JoinGroup", JoinGaurd);
                     Console.WriteLine(z);
 
-                    if (!string.IsNullOrEmpty(z.Result))
+                    // Changes made while disconnected were missed: reload from the newest page.
+                    if (!string.IsNullOrEmpty(z))
                     {
                         MainThread.BeginInvokeOnMainThread(() =>
                         {
@@ -2114,16 +2492,11 @@ public partial class LogActivity : ContentPage
                         });
                     }
                 }
-                return Task.CompletedTask;
             };
 
-            _hubConnection.On("GuardLogChanged", () =>
-            {
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    LoadLogs();
-                });
-            });
+            // Paged logbook: V2 names the changed entries; the bare signal is only a fallback.
+            _hubConnection.On<int[], int[]>("GuardLogChangedV2", OnGuardLogChangedV2);
+            _hubConnection.On("GuardLogChanged", OnGuardLogChangedLegacy);
 
             await _hubConnection.StartAsync();
 
@@ -2173,7 +2546,7 @@ public partial class LogActivity : ContentPage
                 if (_hubConnectionRC.State == HubConnectionState.Connected)
                 {
                     GetLocalSiteForPCAR();
-                    GetLocalSiteName();
+                    MainThread.BeginInvokeOnMainThread(GetLocalSiteName);   // UI: main thread only
                     MobileCrowdControlGuard JoinGaurd = new MobileCrowdControlGuard()
                     {
                         ClientSiteId = (int)_localClientSiteId, //_clientSiteId,
@@ -2187,13 +2560,9 @@ public partial class LogActivity : ContentPage
                 return Task.CompletedTask;
             };
 
-            _hubConnectionRC.On("GuardLogChanged", () =>
-            {
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    LoadLogs();
-                });
-            });
+            // Paged logbook: V2 names the changed entries; the bare signal is only a fallback.
+            _hubConnectionRC.On<int[], int[]>("GuardLogChangedV2", OnGuardLogChangedV2);
+            _hubConnectionRC.On("GuardLogChanged", OnGuardLogChangedLegacy);
 
             await _hubConnectionRC.StartAsync();
 
