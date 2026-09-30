@@ -133,6 +133,165 @@ namespace C4iSytemsMobApp.Services
             return false; // Example return value
         }
 
+        /// <summary>
+        /// The tag type exactly as dbo.SmartWandTagsType stores it - 'Bluetooth' and 'NFC'
+        /// (DbScript/306). SaveClientSiteSmartWandTags looks the type row up with an exact
+        /// string match and dereferences the result, so ScanningType.BLUETOOTH.ToString(),
+        /// which is "BLUETOOTH", would find nothing and throw on the server.
+        /// </summary>
+        private static string ToTagTypeValue(ScanningType scannerType) =>
+            scannerType == ScanningType.BLUETOOTH ? "Bluetooth" : "NFC";
+
+        public async Task<TagInfoApiResponse?> SaveTagInfoDetailsAsync(string _clientSiteId, string _tagUid, string _tagLabel, ScanningType _scannerType)
+        {
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SaveNFCtagInfoData";
+
+            HttpClient client = new HttpClient();
+            try
+            {
+                var csswt = new ClientSiteSmartWandTags()
+                {
+                    // Id 0 makes this an insert; the server rejects a UID that already exists.
+                    Id = 0,
+                    ClientSiteId = Convert.ToInt32(_clientSiteId),
+                    UId = _tagUid,
+                    LabelDescription = _tagLabel,
+                    TagsTypeId = (int)_scannerType,   // overwritten server-side from TagsType
+                    FqBypass = false,
+                    TagsType = ToTagTypeValue(_scannerType),
+                    IsDeleted = false
+                };
+
+                var json = JsonSerializer.Serialize(csswt);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await client.PostAsync(apiUrl, content);
+
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadFromJsonAsync<TagInfoApiResponse>();
+
+                return new TagInfoApiResponse { IsSuccess = false, message = "Unable to reach the server." };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return new TagInfoApiResponse { IsSuccess = false, message = ex.Message };
+            }
+            finally
+            {
+                client.Dispose();
+            }
+        }
+
+        public async Task<GuardNameDetails?> GetGuardNameDetailsAsync()
+        {
+            int.TryParse(Preferences.Get("GuardId", "0"), out int guardId);
+            if (guardId <= 0)
+                return new GuardNameDetails { IsSuccess = false, message = "Guard ID not found. Please log in again." };
+
+            var apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetGuardNameDetails?guardId={guardId}";
+
+            HttpClient client = new HttpClient();
+            try
+            {
+                var response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadFromJsonAsync<GuardNameDetails>();
+
+                return new GuardNameDetails { IsSuccess = false, message = "Unable to reach the server." };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return new GuardNameDetails { IsSuccess = false, message = ex.Message };
+            }
+            finally
+            {
+                client.Dispose();
+            }
+        }
+
+        public async Task<TagEditInfo?> GetTagForEditAsync(string _tagUid, ScanningType _scannerType)
+        {
+            /* "nfc" / "bluetooth" - the values SmartWandTagsType holds. The type is part of the
+               lookup because an NFC tag and a beacon can carry the same UID and are separate
+               records. */
+            var tagType = _scannerType == ScanningType.BLUETOOTH ? "bluetooth" : "nfc";
+
+            /* The LOGGED-IN site, not the PCAR-resolved one: the server decides what this guard
+               may reach from it - own site, plus RC-linked sites when the link has smart wand
+               enabled, or anything at all on a patrol car tour. That is the same call the scan
+               path makes, and the decision belongs there rather than on the handset. */
+            int.TryParse(Preferences.Get("SelectedClientSiteId", "0"), out int loggedInSiteId);
+
+            var apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetTagForEdit" +
+                         $"?tagUid={Uri.EscapeDataString(_tagUid ?? string.Empty)}&tagType={tagType}&siteId={loggedInSiteId}";
+
+            HttpClient client = new HttpClient();
+            try
+            {
+                var response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadFromJsonAsync<TagEditInfo>();
+
+                return new TagEditInfo { IsSuccess = false, tagFound = false, message = "Unable to reach the server." };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return new TagEditInfo { IsSuccess = false, tagFound = false, message = ex.Message };
+            }
+            finally
+            {
+                client.Dispose();
+            }
+        }
+
+        public async Task<TagInfoApiResponse?> UpdateTagDescriptionAsync(TagEditInfo _tag, string _newDescription)
+        {
+            if (_tag == null || _tag.Id <= 0)
+                return new TagInfoApiResponse { IsSuccess = false, message = "Tag to update was not supplied." };
+
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SaveNFCtagInfoData";
+
+            HttpClient client = new HttpClient();
+            try
+            {
+                /* Id carries the update: SaveClientSiteSmartWandTags inserts when Id is 0 and
+                   updates the matching row otherwise. Every other field is echoed back exactly
+                   as it was read, so editing a description cannot move the tag to another site
+                   or change its type as a side effect. */
+                var csswt = new ClientSiteSmartWandTags()
+                {
+                    Id = _tag.Id,
+                    ClientSiteId = _tag.ClientSiteId,
+                    UId = _tag.UId,
+                    LabelDescription = _newDescription,
+                    TagsTypeId = _tag.TagsTypeId,
+                    FqBypass = false,
+                    TagsType = _tag.TagsType,
+                    IsDeleted = false
+                };
+
+                var json = JsonSerializer.Serialize(csswt);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await client.PostAsync(apiUrl, content);
+
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadFromJsonAsync<TagInfoApiResponse>();
+
+                return new TagInfoApiResponse { IsSuccess = false, message = "Unable to reach the server." };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return new TagInfoApiResponse { IsSuccess = false, message = ex.Message };
+            }
+            finally
+            {
+                client.Dispose();
+            }
+        }
+
         public async Task<TagInfoApiResponse?> SaveNFCTagInfoDetailsAsync(string _clientSiteId, string _tagUid, string _guardId, string _userId, string _tagLabel)
         {
             string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SaveNFCtagInfoData";
@@ -475,6 +634,55 @@ namespace C4iSytemsMobApp.Services
         public string GetClientSiteNameFromLocalDbNonAsync(int clientSiteId)
         {
             return _scanDataDbServices.GetClientSitesNameLocalByIdNonAsync(clientSiteId);
+        }
+
+        private class SiteNameResponse
+        {
+            public string siteName { get; set; }
+        }
+
+        public async Task<string> GetClientSiteNameAsync(int clientSiteId)
+        {
+            if (clientSiteId <= 0)
+                return string.Empty;
+
+            /* Local first: instant, and the only option with no signal. ClientSitesLocal is
+               filled once at guard login from the IR site list, so on a patrol car tour the site
+               the guard has just driven to and scanned is often not in it - which is why the
+               label was falling back to the raw id. */
+            try
+            {
+                var cached = _scanDataDbServices.GetClientSitesNameLocalByIdNonAsync(clientSiteId);
+                if (!string.IsNullOrWhiteSpace(cached))
+                    return cached;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Local site name lookup failed: {ex.Message}");
+            }
+
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                return string.Empty;
+
+            try
+            {
+                var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteName?clientsiteId={clientSiteId}";
+
+                using var client = new HttpClient();
+                var response = await client.GetAsync(apiUrl);
+
+                // 404 is the server's "no such site"; nothing to report, just no name.
+                if (!response.IsSuccessStatusCode)
+                    return string.Empty;
+
+                var result = await response.Content.ReadFromJsonAsync<SiteNameResponse>();
+                return result?.siteName ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Site name lookup failed: {ex.Message}");
+                return string.Empty;
+            }
         }
 
     }

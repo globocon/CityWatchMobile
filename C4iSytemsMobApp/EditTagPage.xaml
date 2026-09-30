@@ -2,8 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:services="clr-namespace:C4iSytemsMobApp.Services"
-             x:Class="C4iSytemsMobApp.AddiBeacon"
-             Title="New iBeacon">
+             x:Class="C4iSytemsMobApp.EditTagPage"
+             Title="Edit Tag">
 
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto"
           Padding="20"
@@ -22,7 +22,8 @@
                     HorizontalOptions="Start"
                     Grid.Column="0" />
 
-            <Label Text="Add iBeacon"
+            <Label x:Name="LabelTitle"
+                   Text="Edit Tag"
                    FontSize="18"
                    FontAttributes="Bold"
                    HorizontalOptions="Center"
@@ -40,7 +41,7 @@
                          Grid.Column="2" />
         </Grid>
 
-        <!-- Status, and the site the beacon will be registered against -->
+        <!-- Status line, and which site's logbook the edit will be stamped into -->
         <VerticalStackLayout Grid.Row="1"
                              Spacing="3">
             <Label x:Name="LabelInfo"
@@ -58,8 +59,11 @@
                    TextColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}" />
         </VerticalStackLayout>
 
+        <!-- Bluetooth controls. iBeacon only: an NFC tag announces itself when tapped, a
+             beacon has to be hunted for. -->
         <VerticalStackLayout x:Name="BleControls"
                              Grid.Row="2"
+                             IsVisible="False"
                              Spacing="8">
 
             <Grid ColumnDefinitions="*,*"
@@ -99,12 +103,13 @@
             </HorizontalStackLayout>
         </VerticalStackLayout>
 
-        <!-- Discovered beacons: UID (MAC) and name -->
+        <!-- Discovered beacons. Tapping one is the equivalent of tapping an NFC tag. -->
         <!-- Items are picked with a TapGestureRecognizer on the card, not CollectionView
              selection: the Frame wrapping each item swallows the touch on Android and
              SelectionChanged never fires. This is the pattern RosterPage already uses. -->
         <CollectionView x:Name="BleDeviceList"
                         Grid.Row="3"
+                        IsVisible="False"
                         ItemsSource="{Binding Devices}"
                         SelectionMode="None">
 
@@ -144,42 +149,49 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <!-- Chosen beacon, ready to be described and saved -->
-        <ScrollView x:Name="SelectedDevicePanel"
+        <!-- The tag, once it has been found in the database -->
+        <ScrollView x:Name="TagDetailPanel"
                     Grid.Row="3"
                     IsVisible="False">
             <VerticalStackLayout Spacing="10">
 
-                <Label Text="Device name"
+                <Label Text="Site"
                        FontSize="12"
                        TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
-                <Label x:Name="LabelDeviceName"
+                <Label x:Name="LabelTagSite"
                        FontSize="14"
                        FontAttributes="Bold"
                        TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
-                <Label Text="UID"
+                <Label Text="HEX code"
                        FontSize="12"
                        TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
-                <Label x:Name="LabelDeviceUid"
+                <Label x:Name="LabelTagUid"
                        FontSize="14"
                        FontAttributes="Bold"
                        TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
-                <Label Text="Description"
+                <Label Text="Current description"
                        FontSize="12"
                        TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
-                <Entry x:Name="txtTagLabel"
-                       Placeholder="Enter a description for this beacon"
+                <Label x:Name="LabelCurrentDescription"
+                       FontSize="14"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+                <Label Text="New description"
+                       FontSize="12"
+                       TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
+                <Entry x:Name="txtNewDescription"
+                       Placeholder="Enter the new description"
                        MaxLength="100"
                        FontSize="14" />
 
                 <Button x:Name="ButtonSave"
-                        Text="Save beacon"
+                        Text="Save changes"
                         Clicked="OnSaveClicked" />
 
-                <Button Text="Pick another device"
-                        Clicked="OnPickAnotherClicked"
+                <Button Text="Scan another"
+                        Clicked="OnScanAnotherClicked"
                         BackgroundColor="Transparent"
                         BorderWidth="1"
                         BorderColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}"
