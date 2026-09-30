@@ -505,6 +505,13 @@ public partial class LogActivity : ContentPage
                 if (_lastV2SignalUtc >= signalledAt || _isLogsLoading)
                     return;
 
+                GetLocalSiteForPCAR();
+                if (_localClientSiteId != _listSiteId)
+                {
+                    LoadLogs();     // PCAR moved to another site: follow it, as the page always has
+                    return;
+                }
+
                 var generation = _listGeneration;
                 try
                 {
@@ -536,6 +543,17 @@ public partial class LogActivity : ContentPage
         if (_isLogsLoading)
         {
             ScheduleLiveUpdate();   // a reload is in flight; apply once it has finished
+            return;
+        }
+
+        // PCAR/INSP: the guard may have scanned into another site since the list was loaded. The
+        // page has always followed that site on its next refresh, so reload rather than merge.
+        GetLocalSiteForPCAR();
+        if (_localClientSiteId != _listSiteId)
+        {
+            _pendingChangedIds.Clear();
+            _pendingDeletedIds.Clear();
+            LoadLogs();
             return;
         }
 
@@ -644,16 +662,24 @@ public partial class LogActivity : ContentPage
         return JsonSerializer.Deserialize<List<GuardLogDto>>(json, LogJsonOptions) ?? new List<GuardLogDto>();
     }
 
+    // In batches of 50: the ids ride in the query string (IIS caps it at 2048 characters) and the
+    // server answers at most 100 per call - an id cut off there would read as deleted.
     private async Task<List<GuardLogDto>> FetchLogEntriesAsync(int? siteId, IEnumerable<int> ids)
     {
-        var query = string.Join("&", ids.Select(id => $"ids={id}"));
-        var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLogEntries?clientsiteId={siteId}&{query}";
-        var response = await _httpClient.GetAsync(url);
-        if (!response.IsSuccessStatusCode)
-            return null;
+        var all = new List<GuardLogDto>();
+        foreach (var batch in ids.Distinct().Chunk(50))
+        {
+            var query = string.Join("&", batch.Select(id => $"ids={id}"));
+            var url = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetSiteLogEntries?clientsiteId={siteId}&{query}";
+            var response = await _httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+                return null;
 
-        var json = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<GuardLogDto>>(json, LogJsonOptions) ?? new List<GuardLogDto>();
+            var json = await response.Content.ReadAsStringAsync();
+            all.AddRange(JsonSerializer.Deserialize<List<GuardLogDto>>(json, LogJsonOptions) ?? new List<GuardLogDto>());
+        }
+
+        return all.OrderByDescending(l => l.Id).ToList();   // newest first, as a page is
     }
 
     // One logbook card - the layout, colours, links, photos and buttons exactly as the page has
