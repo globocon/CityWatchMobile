@@ -1,3 +1,4 @@
+using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using CommunityToolkit.Maui.Views;
 using C4iSytemsMobApp.Views;
@@ -97,6 +98,16 @@ public partial class MenuSettingsPage : ContentPage
                     //Application.Current.MainPage = new AddiBeacon();
                     //await Application.Current.MainPage.Navigation.PushAsync(new AddiBeacon());
                     break;
+                case "EditNFC":
+                    Application.Current.MainPage = new EditTagPage(ScanningType.NFC);
+                    break;
+                case "EditIBeacon":
+                    /* Same as the Add case above: Bluetooth is not part of this build, so the
+                       beacon half of EditTagPage has been stripped and there is nothing to
+                       open. The popup already hides both iBeacon options off Android; this is
+                       the backstop. */
+                    await DisplayAlert("Not Supported", "Editing Bluetooth tags is not supported on iOS devices.", "OK");
+                    return;
                 case "Cancel":
                     // Just close silently
                     break;

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="C4iSytemsMobApp.EditTagPage"
+             Title="Edit Tag">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto"
+          Padding="20"
+          RowSpacing="10">
+
+        <!-- Header -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="Auto,*,Auto"
+              VerticalOptions="Center">
+
+            <Button Text="← Back"
+                    Clicked="OnCloseClicked"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Start"
+                    Grid.Column="0" />
+
+            <Label x:Name="LabelTitle"
+                   Text="Edit Tag"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Grid.Column="1"
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+            <ImageButton Source="home.png"
+                         Clicked="OnHomeClicked"
+                         HeightRequest="50"
+                         WidthRequest="50"
+                         BackgroundColor="Transparent"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Grid.Column="2" />
+        </Grid>
+
+        <!-- Status line, and which site's logbook the edit will be stamped into -->
+        <VerticalStackLayout Grid.Row="1"
+                             Spacing="3">
+            <Label x:Name="LabelInfo"
+                   Text=""
+                   FontSize="13"
+                   HorizontalTextAlignment="Center"
+                   HorizontalOptions="Center" />
+
+            <Label x:Name="LabelSiteName"
+                   IsVisible="False"
+                   FontSize="12"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center"
+                   HorizontalOptions="Center"
+                   TextColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}" />
+        </VerticalStackLayout>
+
+        <!-- The tag, once it has been found in the database -->
+        <ScrollView x:Name="TagDetailPanel"
+                    Grid.Row="3"
+                    IsVisible="False">
+            <VerticalStackLayout Spacing="10">
+
+                <Label Text="Site"
+                       FontSize="12"
+                       TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
+                <Label x:Name="LabelTagSite"
+                       FontSize="14"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+                <Label Text="HEX code"
+                       FontSize="12"
+                       TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
+                <Label x:Name="LabelTagUid"
+                       FontSize="14"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+                <Label Text="Current description"
+                       FontSize="12"
+                       TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
+                <Label x:Name="LabelCurrentDescription"
+                       FontSize="14"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+                <Label Text="New description"
+                       FontSize="12"
+                       TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
+                <Entry x:Name="txtNewDescription"
+                       Placeholder="Enter the new description"
+                       MaxLength="100"
+                       FontSize="14" />
+
+                <Button x:Name="ButtonSave"
+                        Text="Save changes"
+                        Clicked="OnSaveClicked" />
+
+                <Button Text="Scan another"
+                        Clicked="OnScanAnotherClicked"
+                        BackgroundColor="Transparent"
+                        BorderWidth="1"
+                        BorderColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}"
+                        TextColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <ActivityIndicator x:Name="LoadingIndicator"
+                           Grid.Row="4"
+                           IsVisible="False"
+                           IsRunning="False"
+                           HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>

@@ -131,12 +131,30 @@
         </Label>-->
 
             <!-- Scrollable Logs -->
-            <ScrollView Grid.Row="2"
-                        Padding="5">
+            <ScrollView x:Name="LogScrollView"
+                        Grid.Row="2"
+                        Padding="5"
+                        Scrolled="OnLogScrollViewScrolled">
                 <VerticalStackLayout x:Name="LogDisplayArea"
                                      Spacing="5">
                 </VerticalStackLayout>
             </ScrollView>
+
+            <!-- New entries arrived while the guard was scrolled down (WhatsApp-style) -->
+            <Button x:Name="NewEntriesPill"
+                    Grid.Row="2"
+                    IsVisible="False"
+                    Text="↑ New entries"
+                    FontSize="12"
+                    Padding="14,4"
+                    HeightRequest="34"
+                    CornerRadius="17"
+                    BackgroundColor="#0D6EFD"
+                    TextColor="White"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Start"
+                    Margin="0,8,0,0"
+                    Clicked="OnNewEntriesPillClicked" />
 
 
         </Grid>
