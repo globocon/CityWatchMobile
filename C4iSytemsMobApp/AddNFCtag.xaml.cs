@@ -64,7 +64,7 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
         App.PcarInspTagResetEvent -= OnPcarInspTagReset;
         App.PcarInspTagResetEvent += OnPcarInspTagReset;
 
-        ShowLocalSiteName();
+        await ShowLocalSiteNameAsync();
 
         await StartNFC();
     }
@@ -85,7 +85,7 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
     private void OnPcarInspTagReset()
     {
         // Raised from a timer callback in App, so hop to the UI thread before touching labels.
-        MainThread.BeginInvokeOnMainThread(ShowLocalSiteName);
+        MainThread.BeginInvokeOnMainThread(async () => await ShowLocalSiteNameAsync());
     }
 
     /// <summary>
@@ -118,7 +118,7 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
     /// Names the site a tag saved now would be registered against. Silent on a standard tour,
     /// where it is always the login site and saying so adds nothing.
     /// </summary>
-    private void ShowLocalSiteName()
+    private async Task ShowLocalSiteNameAsync()
     {
         if (App.TourMode != PatrolTouringMode.PCAR && App.TourMode != PatrolTouringMode.INSP)
             return;
@@ -136,10 +136,17 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
                 return;
             }
 
-            var siteName = _scannerControlServices?.GetClientSiteNameFromLocalDbNonAsync(siteId.Value);
+            /* Resolve through the service, which falls back to the server when the site is not
+               in the local cache. ClientSitesLocal is filled once at guard login, so a site the
+               patrol car has driven to since is usually missing from it - which is what left
+               this line showing a bare id. A number means nothing to a guard checking they are
+               about to register a tag to the right site. */
+            var siteName = _scannerControlServices == null
+                ? string.Empty
+                : await _scannerControlServices.GetClientSiteNameAsync(siteId.Value);
 
             LabelSiteName.Text = string.IsNullOrWhiteSpace(siteName)
-                ? $"Registering to site {siteId.Value}"
+                ? "Registering to: current site"
                 : $"Registering to: {siteName}";
             LabelSiteName.TextColor = Color.FromArgb("#512bd4");
             LabelSiteName.IsVisible = true;
@@ -370,7 +377,7 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
             /* PCAR/INSP with no live scanned site. Saving anyway would register the tag to the
                patrol car's base site permanently, and nothing downstream would flag it as
                wrong, so refuse rather than guess. */
-            ShowLocalSiteName();
+            await ShowLocalSiteNameAsync();
             await DisplayAlert(ALERT_TITLE,
                 "No site scanned. On a patrol car or inspection tour a tag is registered to the site you last scanned - scan the site tag first, then save.",
                 "OK");

@@ -175,6 +175,17 @@ namespace C4iSytemsMobApp.Services
                         OnScanningInProgress?.Invoke(true);
                         await _adapter.StartScanningForDevicesAsync();
                         OnScanningInProgress?.Invoke(false);
+
+                        /* _runScanLoop is re-checked here, not just at the top of the while.
+                           Stop() sets it false AND calls StopScanningForDevicesAsync, which
+                           makes the await above return immediately - and without this check the
+                           loop went on to deliver one last batch to a subscriber that had
+                           already stopped listening. On the home page that meant a scan being
+                           logged, and a scan-feedback popup being shown on a page no longer in
+                           the visual tree, after the guard had moved to another screen. */
+                        if (!_runScanLoop)
+                            break;
+
                         if (OnDeviceFoundAsync != null)
                         {
                             if (_deviceFound.Count > 0)
