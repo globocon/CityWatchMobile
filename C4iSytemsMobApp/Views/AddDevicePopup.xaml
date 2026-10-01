@@ -23,12 +23,33 @@
             <Button Text="Add NFC Tag"
                     Clicked="OnAddNfcClicked" />
 
-            <Button Text="Add IBeacon"
+            <!-- iBeacon work is Android only - see the constructor. -->
+            <Button x:Name="ButtonAddIBeacon"
+                    Text="Add iBeacon"
                     Clicked="OnAddIBeaconClicked" />
 
+            <!-- Cancel sits between the Add and Edit pairs rather than at the bottom: it is the
+                 way out of the menu, not a third thing to do, and putting it in the middle keeps
+                 it away from the two destructive-looking Edit options at thumb height.
+
+                 The arrow is FontAwesome's solid arrow-left (f060) rather than the "←"
+                 character, which is a hairline in the system font and all but disappeared at
+                 this size. ImageSource + ContentLayout keeps the button's normal styling, so
+                 only the arrow changes. -->
             <Button Text="Cancel"
                     TextColor="Red"
+                    FontAttributes="Bold"
+                    ImageSource="{FontImageSource Glyph=&#xf060;, FontFamily=FontAwesome, Size=18, Color=Red}"
+                    ContentLayout="Left,10"
+                    HorizontalOptions="Fill"
                     Clicked="OnCancelClicked" />
+
+            <Button Text="Edit NFC Tag"
+                    Clicked="OnEditNfcClicked" />
+
+            <Button x:Name="ButtonEditIBeacon"
+                    Text="Edit iBeacon"
+                    Clicked="OnEditIBeaconClicked" />
         </VerticalStackLayout>
     </Frame>
 </toolkit:Popup>

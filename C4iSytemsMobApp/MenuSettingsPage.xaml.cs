@@ -1,3 +1,4 @@
+using C4iSytemsMobApp.Enums;
 using C4iSytemsMobApp.Interface;
 using CommunityToolkit.Maui.Views;
 using C4iSytemsMobApp.Views;
@@ -80,6 +81,12 @@ public partial class MenuSettingsPage : ContentPage
                 case "IBeacon":
                     Application.Current.MainPage = new AddiBeacon();
                     //await Application.Current.MainPage.Navigation.PushAsync(new AddiBeacon());
+                    break;
+                case "EditNFC":
+                    Application.Current.MainPage = new EditTagPage(ScanningType.NFC);
+                    break;
+                case "EditIBeacon":
+                    Application.Current.MainPage = new EditTagPage(ScanningType.BLUETOOTH);
                     break;
                 case "Cancel":
                     // Just close silently

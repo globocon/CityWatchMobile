@@ -1663,8 +1663,61 @@ namespace C4iSytemsMobApp
 
         private async void OnDrawerMenuSettingsClicked(object sender, EventArgs e)
         {
+            /* Hand the radios over before leaving. Swapping Application.MainPage does not
+               reliably raise OnDisappearing on the page being replaced, so without this the
+               NFC listener and the BLE scan loop started here keep running behind the settings
+               pages - and this page's handlers are still subscribed, so every tag the guard
+               waves at the Add/Edit screens was ALSO being logged as a patrol scan by a page
+               that is no longer on screen. The add and edit pages do their own scanning. */
+            await ReleaseScannersAsync();
+
             Application.Current.MainPage = new MenuSettingsPage();
             CloseDrawer();
+        }
+
+        /// <summary>
+        /// Stops NFC listening and the BLE scan loop owned by this page, and unsubscribes its
+        /// handlers. Safe to call more than once.
+        ///
+        /// CrossNFC is a process-wide singleton: stopping it is not enough on its own, because
+        /// this page's OnMessageReceived handler would still be attached and would fire again
+        /// the moment another page starts listening. StopListening unsubscribes as well, which
+        /// is why it is used rather than just CrossNFC.Current.StopListening().
+        /// </summary>
+        private async Task ReleaseScannersAsync()
+        {
+            try
+            {
+                if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
+                    await StopListening();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to stop NFC listening: {ex.Message}");
+            }
+
+            try
+            {
+                StopPulse();
+
+                /* Detach before stopping, not after. Stopping is not instant - the scan loop can
+                   be mid-pass - and anything still routed here would run against a page that is
+                   no longer on screen: a scan logged that the guard did not make, and a
+                   ScanFeedback popup shown on a detached page, which crashes. Unsubscribing
+                   first makes that impossible regardless of how the loop unwinds. */
+                if (scanner != null && scanner.IsBluetoothSupported)
+                {
+                    scanner.OnDeviceFoundAsync -= OnDeviceFoundAsync;
+                    scanner.OnScanningInProgress -= OnScanningInProgress;
+                    scanner.OnStateChanged -= BluetoothStateChanged;
+                }
+
+                await StopBLEScanner();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to stop BLE scanning: {ex.Message}");
+            }
         }
 
         private async void OnOffDutyClicked(object sender, EventArgs e)
