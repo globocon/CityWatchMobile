@@ -26,7 +26,8 @@ public partial class EditTagPage : ContentPage
     private readonly IScannerControlServices _scannerControlServices;
     private readonly ILogBookServices _logBookServices;
 
-    private bool _nfcEventsSubscribed;
+    /// <summary>The CrossNFC instance this page's handlers are attached to, or null.</summary>
+    private INFC _subscribedNfc;
     private bool _isDeviceiOS;
 
     private TagEditInfo _tag;
@@ -42,6 +43,9 @@ public partial class EditTagPage : ContentPage
         _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
 
         LabelTitle.Text = "Edit NFC Tag";
+
+        _isDeviceiOS = DeviceInfo.Platform == DevicePlatform.iOS;
+        SetTagPanelVisible(false);
     }
 
     protected override async void OnAppearing()
@@ -65,7 +69,7 @@ public partial class EditTagPage : ContentPage
 
         App.PcarInspTagResetEvent -= OnPcarInspTagReset;
 
-        if (_nfcEventsSubscribed)
+        if (_subscribedNfc != null)
             StopNfc();
     }
 
@@ -214,7 +218,7 @@ public partial class EditTagPage : ContentPage
                 // The warning the spec asks for, and the only outcome for an unregistered tag:
                 // this page edits existing tags, it does not create them.
                 _tag = null;
-                TagDetailPanel.IsVisible = false;
+                SetTagPanelVisible(false);
                 UpdateInfoLabel($"Tag not found in database ({tagUid}).", true);
                 await DisplayAlert(LabelTitle.Text, "Tag not found in database.", "OK");
                 return;
@@ -240,7 +244,7 @@ public partial class EditTagPage : ContentPage
             : _tag.LabelDescription;
         txtNewDescription.Text = _tag.LabelDescription;
 
-        TagDetailPanel.IsVisible = true;
+        SetTagPanelVisible(true);
 
         UpdateInfoLabel("Tag found. Edit the description and save.", false);
     }
@@ -248,7 +252,7 @@ public partial class EditTagPage : ContentPage
     private async void OnScanAnotherClicked(object sender, EventArgs e)
     {
         _tag = null;
-        TagDetailPanel.IsVisible = false;
+        SetTagPanelVisible(false);
         txtNewDescription.Text = string.Empty;
         ShowScanPrompt();
 
@@ -385,26 +389,56 @@ public partial class EditTagPage : ContentPage
             return;
         }
 
-        CrossNFC.Legacy = false;
+        /* Plugin.NFC 0.1.26 rebuilds CrossNFC.Current on EVERY Legacy assignment, even when the
+           value does not change. Setting it on each scan left this page's handlers on the old
+           instance while StartListening ran on a new one: the iPhone read the tag and showed
+           its tick, and the page never heard about it. Only assign when it actually differs. */
+        if (CrossNFC.Legacy)
+            CrossNFC.Legacy = false;
         _isDeviceiOS = DeviceInfo.Platform == DevicePlatform.iOS;
 
         // Same delay as the add-tag page: Android throws "Foreground dispatch can only be
         // enabled when your activity is resumed" without it.
         await Task.Delay(500);
 
-        SubscribeNfc();
-
-        if (!_isDeviceiOS)
-            MainThread.BeginInvokeOnMainThread(() => CrossNFC.Current.StartListening());
+        /* Same as the add-tag page: start listening on iOS too. On iOS StartListening is what
+           opens the system NFC scan sheet - without it nothing can be read. The sheet closes
+           after one tag (or when the guard cancels it), so ButtonScanTag reopens it. */
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SubscribeNfc();
+            CrossNFC.Current.StartListening();
+        });
     }
 
+    /// <summary>
+    /// Attaches the handlers to the CURRENT CrossNFC instance. Another page can still replace
+    /// that instance (MainPage and the add-tag page set CrossNFC.Legacy when they start
+    /// listening), so this follows it rather than trusting an earlier subscription.
+    /// </summary>
     private void SubscribeNfc()
     {
-        if (_nfcEventsSubscribed)
+        var current = CrossNFC.Current;
+        if (ReferenceEquals(_subscribedNfc, current))
             return;
 
-        CrossNFC.Current.OnMessageReceived += Current_OnMessageReceived;
-        _nfcEventsSubscribed = true;
+        UnsubscribeNfc();
+
+        current.OnMessageReceived += Current_OnMessageReceived;
+        if (_isDeviceiOS)
+            current.OniOSReadingSessionCancelled += Current_OniOSReadingSessionCancelled;
+        _subscribedNfc = current;
+    }
+
+    private void UnsubscribeNfc()
+    {
+        if (_subscribedNfc == null)
+            return;
+
+        _subscribedNfc.OnMessageReceived -= Current_OnMessageReceived;
+        if (_isDeviceiOS)
+            _subscribedNfc.OniOSReadingSessionCancelled -= Current_OniOSReadingSessionCancelled;
+        _subscribedNfc = null;
     }
 
     private void StopNfc()
@@ -413,18 +447,13 @@ public partial class EditTagPage : ContentPage
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                CrossNFC.Current.OnMessageReceived -= Current_OnMessageReceived;
-                if (!_isDeviceiOS)
-                    CrossNFC.Current.StopListening();
+                UnsubscribeNfc();
+                CrossNFC.Current.StopListening();
             });
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Failed to stop NFC listening: {ex.Message}");
-        }
-        finally
-        {
-            _nfcEventsSubscribed = false;
         }
     }
 
@@ -446,6 +475,22 @@ public partial class EditTagPage : ContentPage
         await MainThread.InvokeOnMainThreadAsync(async () => await LookupTagAsync(serialNumber));
     }
 
+    private void Current_OniOSReadingSessionCancelled(object sender, EventArgs e)
+    {
+        Debug.WriteLine("iOS NFC Session has been cancelled");
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            if (_tag == null)
+                UpdateInfoLabel("Scan cancelled. Tap 'Scan NFC tag' to try again.", true);
+        });
+    }
+
+    private async void OnScanTagClicked(object sender, EventArgs e)
+    {
+        ShowScanPrompt();
+        await StartNfcAsync();
+    }
+
     #endregion
 
 
@@ -455,6 +500,17 @@ public partial class EditTagPage : ContentPage
     {
         LabelInfo.Text = message;
         LabelInfo.TextColor = isError ? Colors.Red : Colors.Green;
+    }
+
+    /// <summary>
+    /// The tag panel and the iOS scan button take turns: an iOS NFC sheet closes after one tag
+    /// or a cancel, so while no tag is open the guard needs a way to open it again. Android
+    /// keeps listening for as long as the page is open and has no need for the button.
+    /// </summary>
+    private void SetTagPanelVisible(bool visible)
+    {
+        TagDetailPanel.IsVisible = visible;
+        ButtonScanTag.IsVisible = _isDeviceiOS && !visible;
     }
 
     private void SetBusy(bool busy)

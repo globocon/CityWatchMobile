@@ -58,6 +58,14 @@
                    TextColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}" />
         </VerticalStackLayout>
 
+        <!-- iOS only: reopens the NFC scan sheet, which closes after each tag or a cancel.
+             Shown while no tag is open for editing (EditTagPage.SetTagPanelVisible). -->
+        <Button x:Name="ButtonScanTag"
+                Grid.Row="2"
+                Text="Scan NFC tag"
+                IsVisible="False"
+                Clicked="OnScanTagClicked" />
+
         <!-- The tag, once it has been found in the database -->
         <ScrollView x:Name="TagDetailPanel"
                     Grid.Row="3"
