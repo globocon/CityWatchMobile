@@ -16,8 +16,8 @@ namespace C4iSytemsMobApp
 
 
         /* Make "applicationUrl": "http://0.0.0.0:5000", in launchSettings.json */
-        public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.42:92";
-        public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.42:5000";
+        public static string MobileSignalRRCBaseUrl { get; set; } = "http://192.168.1.39:92";
+        public static string MobileSignalRBaseUrl { get; set; } = "http://192.168.1.39:5000";
         public static string ApiBaseUrl { get; set; } = $"{MobileSignalRBaseUrl}/api/";
 
         //#### Added for local testing by Binoy
