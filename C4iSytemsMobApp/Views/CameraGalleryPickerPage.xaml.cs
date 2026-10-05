@@ -108,11 +108,22 @@ public partial class CameraGalleryPickerPage : ContentPage
     {
         try
         {
+#if IOS
+            /* ReadMediaImagesPermission only declares Android permissions - on iOS it would
+               report Granted without asking, and the Photos fetch would come back empty.
+               Limited ("Selected Photos") access is fine: the strip shows that subset. */
+            var status = await Permissions.CheckStatusAsync<Permissions.Photos>();
+            if (status != PermissionStatus.Granted && status != PermissionStatus.Limited)
+                status = await Permissions.RequestAsync<Permissions.Photos>();
+
+            bool mediaGranted = status == PermissionStatus.Granted || status == PermissionStatus.Limited;
+#else
             var status = await Permissions.CheckStatusAsync<ReadMediaImagesPermission>();
             if (status != PermissionStatus.Granted)
                 status = await Permissions.RequestAsync<ReadMediaImagesPermission>();
 
             bool mediaGranted = status == PermissionStatus.Granted;
+#endif
 #if ANDROID
             // Android 14 partial access: READ_MEDIA_IMAGES reports denied but the
             // user-selected subset is readable via READ_MEDIA_VISUAL_USER_SELECTED.
@@ -235,6 +246,8 @@ public partial class CameraGalleryPickerPage : ContentPage
             }
 #if ANDROID
             NormalizeExifRotation(path);
+#elif IOS
+            Platforms.iOS.Services.RecentImagesService.NormalizeOrientation(path);
 #endif
             MainThread.BeginInvokeOnMainThread(() =>
             {

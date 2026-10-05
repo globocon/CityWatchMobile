@@ -1083,14 +1083,33 @@ new ColumnDefinition { Width = GridLength.Auto } // button
         return logCard;
     }
 
+    /// <summary>
+    /// The logbook's image source for all three add-image buttons (main, custom log, edit),
+    /// on Android and iOS alike: the WhatsApp-style picker - in-app camera, recent-photos
+    /// strip and a full-gallery button. Returns null when the guard cancels.
+    ///
+    /// Without camera permission the picker cannot show its preview, so it falls back to
+    /// the system image picker rather than leaving the guard with nothing.
+    /// </summary>
+    private async Task<IEnumerable<FileResult>?> PickImagesAsync()
+    {
+        var camStatus = await Permissions.CheckStatusAsync<Permissions.Camera>();
+        if (camStatus != PermissionStatus.Granted)
+            camStatus = await Permissions.RequestAsync<Permissions.Camera>();
+
+        if (camStatus == PermissionStatus.Granted)
+            return await Views.CameraGalleryPickerPage.ShowAsync(Navigation); // null = cancelled
+
+        return await FilePicker.PickMultipleAsync(new PickOptions { FileTypes = FilePickerFileType.Images });
+    }
+
     private async void OnPickFileClicked(object sender, EventArgs e)
     {
         int FilePickedCount = 0;
         try
         {
-            //var results = await FilePicker.PickMultipleAsync(); // Multiple files
-            var results = await MediaPicker.PickPhotoAsync();
-            if (results != null && !string.IsNullOrEmpty(results.FileName))
+            var results = await PickImagesAsync();
+            if (results != null && results.Any())
             {
                 // Allowed file extensions
                 string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
@@ -1115,20 +1134,23 @@ new ColumnDefinition { Width = GridLength.Auto } // button
                 //     });
                 // }
 
-                var extension = Path.GetExtension(results.FileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(extension))
+                foreach (var file in results)
                 {
-                    await DisplayAlert("Invalid File", $"File '{results.FileName}' is not a supported image type.", "OK");
-                    return; // Exit if file is not valid
-                }
+                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
+                        continue; // Skip this file
+                    }
 
-                FilePickedCount++;
-                SelectedFiles.Add(new MyFileModel
-                {
-                    File = results,
-                    FileType = fileType,
-                    IsNew = true // Mark as new file
-                });
+                    FilePickedCount++;
+                    SelectedFiles.Add(new MyFileModel
+                    {
+                        File = file,
+                        FileType = fileType,
+                        IsNew = true // Mark as new file
+                    });
+                }
             }
 
             // Show the file list only if it has items
@@ -1617,27 +1639,7 @@ new ColumnDefinition { Width = GridLength.Auto } // button
     {
         try
         {
-            IEnumerable<FileResult> results = null;
-            bool customPickerShown = false;
-
-            // Android: WhatsApp-style picker (in-app camera + recent gallery strip), same as the camera button
-            if (DeviceInfo.Platform == DevicePlatform.Android)
-            {
-                var camStatus = await Permissions.CheckStatusAsync<Permissions.Camera>();
-                if (camStatus != PermissionStatus.Granted)
-                    camStatus = await Permissions.RequestAsync<Permissions.Camera>();
-
-                if (camStatus == PermissionStatus.Granted)
-                {
-                    customPickerShown = true;
-                    var picked = await Views.CameraGalleryPickerPage.ShowAsync(Navigation);
-                    if (picked == null) return; // user cancelled — do not fall back to gallery
-                    results = picked;
-                }
-            }
-
-            if (!customPickerShown)
-                results = await FilePicker.PickMultipleAsync(); // Multiple files
+            var results = await PickImagesAsync();
 
             if (results != null && results.Any())
             {
@@ -2002,9 +2004,8 @@ new ColumnDefinition { Width = GridLength.Auto } // button
         int FilePickedCount = 0;
         try
         {
-            //var results = await FilePicker.PickMultipleAsync(); // Allow multiple file selection
-            var results = await MediaPicker.PickPhotoAsync();
-            if (results != null && !string.IsNullOrEmpty(results.FileName))
+            var results = await PickImagesAsync();
+            if (results != null && results.Any())
             {
                 // Allowed image formats
                 string[] allowedExtensions = { ".jpg", ".jpeg", ".bmp", ".gif", ".heic", ".png" };
@@ -2031,21 +2032,24 @@ new ColumnDefinition { Width = GridLength.Auto } // button
                 //     });
                 // }
 
-                var extension = Path.GetExtension(results.FileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(extension))
+                foreach (var file in results)
                 {
-                    await DisplayAlert("Invalid File", $"File '{results.FileName}' is not a supported image type.", "OK");
-                    return; // Exit if file is not valid
-                }
+                    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        await DisplayAlert("Invalid File", $"File '{file.FileName}' is not a supported image type.", "OK");
+                        continue; // Skip this file
+                    }
 
-                FilePickedCount++;
-                SelectedFiles.Add(new MyFileModel
-                {
-                    File = results,
-                    FileType = fileType,
-                    IsNew = true,
-                    LogBookId = _selectedLogForEdit.Id
-                });
+                    FilePickedCount++;
+                    SelectedFiles.Add(new MyFileModel
+                    {
+                        File = file,
+                        FileType = fileType,
+                        IsNew = true,
+                        LogBookId = _selectedLogForEdit.Id
+                    });
+                }
             }
 
             // Show the file list only if it has items

@@ -51,9 +51,9 @@
 		<!-- NFC usage description -->
 		<key>NFCReaderUsageDescription</key>
 		<string>This app uses NFC to scan designated patrol checkpoints during security operations for the purpose of recording and verifying patrol activities, ensuring adherence to assigned patrol schedules, and maintaining audit and compliance records.</string>
-		<!-- Camera usage description -->
-		<!-- <key>NSCameraUsageDescription</key>
-		<string>This app requires camera access to scan QR codes.</string>  -->
+		<!-- Camera usage description (in-app camera of the logbook image picker) -->
+		<key>NSCameraUsageDescription</key>
+		<string>This app uses the camera to take photos that are attached to logbook entries as proof of on-site security patrol activities.</string>
 		<!-- Microphone usage description -->
 		<!-- <key>NSMicrophoneUsageDescription</key>
 		<string>This app requires microphone access for audio and video features.</string> -->

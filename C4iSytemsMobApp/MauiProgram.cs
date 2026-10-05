@@ -81,6 +81,7 @@ public static class MauiProgram
 #elif IOS
         builder.Services.AddSingleton<IVolumeButtonService, Platforms.iOS.Services.VolumeButtonService>();
         builder.Services.AddSingleton<IDeviceInfoService, Platforms.iOS.Services.DeviceInfoService>();
+        builder.Services.AddSingleton<IRecentImagesService, Platforms.iOS.Services.RecentImagesService>();
 #endif
 
 

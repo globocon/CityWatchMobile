@@ -11,7 +11,11 @@ namespace C4iSytemsMobApp.Models
         private bool _isSelected;
         private ImageSource? _thumbnail;
 
+        /// <summary>Android: MediaStore row id.</summary>
         public long MediaStoreId { get; set; }
+
+        /// <summary>iOS: PHAsset.LocalIdentifier.</summary>
+        public string? AssetId { get; set; }
 
         public string DisplayName { get; set; } = string.Empty;
 
