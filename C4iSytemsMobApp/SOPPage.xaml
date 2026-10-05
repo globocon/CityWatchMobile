@@ -3,8 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="C4iSytemsMobApp.SOPPage"
              Title="SOPPage">
-    <VerticalStackLayout Padding="20"
-                         Spacing="10">
+    <!-- A Grid, not a VerticalStackLayout: a stack gives the CollectionView unlimited height, so
+         it grew past the screen and never scrolled. The "*" row bounds it to the space left. -->
+    <Grid Padding="20"
+          RowSpacing="10"
+          RowDefinitions="Auto,Auto,*">
 
 
 
@@ -49,6 +52,7 @@
              site they logged in at and saying so adds nothing. Mirrors the "LogBook: <site>"
              line on the log activity page. -->
         <Label x:Name="SopSiteName"
+               Grid.Row="1"
                IsVisible="False"
                FontSize="13"
                FontAttributes="Bold"
@@ -57,9 +61,9 @@
                TextColor="{AppThemeBinding Light=#512bd4, Dark=#ac99ea}" />
 
         <!-- File List -->
-        <CollectionView ItemsSource="{Binding StaffDocuments}"
-                        Margin="10"
-                        VerticalOptions="FillAndExpand">
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding StaffDocuments}"
+                        Margin="10">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Grid>
@@ -102,11 +106,5 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-
-
-
-
-
-
-    </VerticalStackLayout>
+    </Grid>
 </ContentPage>
