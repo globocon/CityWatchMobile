@@ -142,9 +142,37 @@ namespace C4iSytemsMobApp.Services
         private static string ToTagTypeValue(ScanningType scannerType) =>
             scannerType == ScanningType.BLUETOOTH ? "Bluetooth" : "NFC";
 
+        /// <summary>
+        /// Who is making a tag change and from where, as query parameters for
+        /// Scanner/SaveNFCtagInfoData.
+        ///
+        /// The endpoint takes all four from the QUERY STRING - the body is bound to the tag
+        /// itself - so posting the body alone leaves them at their defaults. Every tag change
+        /// is recorded in ClientSiteSmartWandTagsHist, and without these the row says only that
+        /// something changed, not who changed it or from which build.
+        ///
+        /// AppVersion is the same string the app reports on login (GuardLoginPage's
+        /// ReportAppVersion), so the server's fallback - the version this guard's app last
+        /// reported - agrees with what is sent here rather than contradicting it.
+        /// </summary>
+        private static string TagChangeActorQuery()
+        {
+            int.TryParse(Preferences.Get("GuardId", "0"), out int guardId);
+            int.TryParse(Preferences.Get("UserId", "0"), out int userId);
+
+            /* "Android" / "iOS" as DevicePlatform spells them; the server normalises anything
+               else it is given rather than rejecting it. */
+            var appType = DeviceInfo.Current.Platform.ToString();
+            var appVersion = AppInfo.Current.VersionString;
+
+            return $"?GuardId={guardId}&UserId={userId}" +
+                   $"&AppType={Uri.EscapeDataString(appType ?? string.Empty)}" +
+                   $"&AppVersion={Uri.EscapeDataString(appVersion ?? string.Empty)}";
+        }
+
         public async Task<TagInfoApiResponse?> SaveTagInfoDetailsAsync(string _clientSiteId, string _tagUid, string _tagLabel, ScanningType _scannerType)
         {
-            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SaveNFCtagInfoData";
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SaveNFCtagInfoData{TagChangeActorQuery()}";
 
             HttpClient client = new HttpClient();
             try
@@ -251,7 +279,7 @@ namespace C4iSytemsMobApp.Services
             if (_tag == null || _tag.Id <= 0)
                 return new TagInfoApiResponse { IsSuccess = false, message = "Tag to update was not supplied." };
 
-            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SaveNFCtagInfoData";
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SaveNFCtagInfoData{TagChangeActorQuery()}";
 
             HttpClient client = new HttpClient();
             try
@@ -294,7 +322,7 @@ namespace C4iSytemsMobApp.Services
 
         public async Task<TagInfoApiResponse?> SaveNFCTagInfoDetailsAsync(string _clientSiteId, string _tagUid, string _guardId, string _userId, string _tagLabel)
         {
-            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SaveNFCtagInfoData";
+            string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/SaveNFCtagInfoData{TagChangeActorQuery()}";
             //string apiParameters = $"?siteId={_clientSiteId}&TagUid={_tagUid}&GuardId={_guardId}&UserId={_userId}&_tagLabel=";
             // Here you would typically make an HTTP request to the API endpoint
             HttpClient client = new HttpClient();

@@ -176,6 +176,11 @@ public partial class AddiBeacon : ContentPage
 
     private async void OnStartBleScanClicked(object sender, EventArgs e)
     {
+        await StartBleScanAsync();
+    }
+
+    private async Task StartBleScanAsync()
+    {
         if (!_bleScanner.IsBluetoothSupported)
         {
             await DisplayAlert(ALERT_TITLE, "Bluetooth is not supported on this device.", "OK");
@@ -408,13 +413,21 @@ public partial class AddiBeacon : ContentPage
         ButtonStopScan.IsEnabled = false;
     }
 
-    private void OnPickAnotherClicked(object sender, EventArgs e)
+    /// <summary>
+    /// Back to the device list, and scanning again straight away. Picking a device stops the
+    /// scan, so coming back to a stopped scanner showing beacons found minutes ago looked
+    /// exactly like the button had done nothing - and a beacon the guard has since walked away
+    /// from would still have been in the list, ready to be registered to the wrong place.
+    /// </summary>
+    private async void OnPickAnotherClicked(object sender, EventArgs e)
     {
         _selectedDevice = null;
         SelectedDevicePanel.IsVisible = false;
         BleControls.IsVisible = true;
         BleDeviceList.IsVisible = true;
         UpdateInfoLabel("Scan for devices, then pick the beacon to add.", false);
+
+        await StartBleScanAsync();
     }
 
     #endregion
