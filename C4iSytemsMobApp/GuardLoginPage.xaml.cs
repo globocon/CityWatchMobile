@@ -1799,7 +1799,7 @@ public partial class GuardLoginPage : ContentPage
 
     private async Task<string> DownloadMultimediaFileFromServer(string serverUrl, string localPath)
     {
-        //return "";
+        // return "";
 
         string fileName = CommonHelper.GetSanitizedFileNameFromUrl(serverUrl);
         string localFileNameWithPath = Path.Combine(localPath, fileName);
