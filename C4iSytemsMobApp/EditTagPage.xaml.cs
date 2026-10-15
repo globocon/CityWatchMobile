@@ -38,7 +38,9 @@ public partial class EditTagPage : ContentPage
 
     private readonly IBeaconScanner _bleScanner = new();
     private bool _bleEventsSubscribed;
-    private bool _nfcEventsSubscribed;
+
+    /// <summary>The CrossNFC instance this page's handlers are attached to, or null.</summary>
+    private INFC _subscribedNfc;
     private bool _isDeviceiOS;
 
     private CancellationTokenSource _scanWindowCts;
@@ -60,6 +62,8 @@ public partial class EditTagPage : ContentPage
         _logBookServices = IPlatformApplication.Current.Services.GetService<ILogBookServices>();
 
         LabelTitle.Text = _mode == ScanningType.BLUETOOTH ? "Edit iBeacon" : "Edit NFC Tag";
+
+        _isDeviceiOS = DeviceInfo.Platform == DevicePlatform.iOS;
     }
 
     protected override async void OnAppearing()
@@ -114,7 +118,7 @@ public partial class EditTagPage : ContentPage
 
         try { await _bleScanner.Stop(); } catch (Exception ex) { Debug.WriteLine(ex.Message); }
 
-        if (_nfcEventsSubscribed)
+        if (_subscribedNfc != null)
             StopNfc();
     }
 
@@ -307,6 +311,12 @@ public partial class EditTagPage : ContentPage
         BleDeviceList.IsVisible = visible;
     }
 
+    /// <summary>
+    /// Back to hunting for a tag. Whichever mode the page is in, this restarts the scan rather
+    /// than only putting the search UI back: picking a tag stops the scan, so returning to a
+    /// stopped scanner and a list of beacons found minutes ago looked exactly like the button
+    /// had done nothing.
+    /// </summary>
     private async void OnScanAnotherClicked(object sender, EventArgs e)
     {
         _tag = null;
@@ -317,6 +327,8 @@ public partial class EditTagPage : ContentPage
 
         if (_mode == ScanningType.NFC)
             await StartNfcAsync();
+        else
+            await StartBleScanAsync();
     }
 
     #endregion
@@ -449,26 +461,51 @@ public partial class EditTagPage : ContentPage
             return;
         }
 
-        CrossNFC.Legacy = false;
-        _isDeviceiOS = DeviceInfo.Platform == DevicePlatform.iOS;
+        /* Plugin.NFC 0.1.26 rebuilds CrossNFC.Current on EVERY assignment to Legacy, even when
+           the value does not change. Setting it on each scan left this page's handlers on the
+           old instance while StartListening ran on a new one - so from the second scan on,
+           "Scan another" did nothing: the phone read the tag and the page never heard about it.
+           Only assign when it actually differs. */
+        if (CrossNFC.Legacy)
+            CrossNFC.Legacy = false;
 
         // Same delay as the add-tag page: Android throws "Foreground dispatch can only be
         // enabled when your activity is resumed" without it.
         await Task.Delay(500);
 
-        SubscribeNfc();
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SubscribeNfc();
 
-        if (!_isDeviceiOS)
-            MainThread.BeginInvokeOnMainThread(() => CrossNFC.Current.StartListening());
+            if (!_isDeviceiOS)
+                CrossNFC.Current.StartListening();
+        });
     }
 
+    /// <summary>
+    /// Attaches the handlers to the CURRENT CrossNFC instance. Another page can still replace
+    /// that instance - MainPage and the add-tag page assign CrossNFC.Legacy when they start
+    /// listening - so this follows it rather than trusting an earlier subscription.
+    /// </summary>
     private void SubscribeNfc()
     {
-        if (_nfcEventsSubscribed)
+        var current = CrossNFC.Current;
+        if (ReferenceEquals(_subscribedNfc, current))
             return;
 
-        CrossNFC.Current.OnMessageReceived += Current_OnMessageReceived;
-        _nfcEventsSubscribed = true;
+        UnsubscribeNfc();
+
+        current.OnMessageReceived += Current_OnMessageReceived;
+        _subscribedNfc = current;
+    }
+
+    private void UnsubscribeNfc()
+    {
+        if (_subscribedNfc == null)
+            return;
+
+        _subscribedNfc.OnMessageReceived -= Current_OnMessageReceived;
+        _subscribedNfc = null;
     }
 
     private void StopNfc()
@@ -477,7 +514,7 @@ public partial class EditTagPage : ContentPage
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                CrossNFC.Current.OnMessageReceived -= Current_OnMessageReceived;
+                UnsubscribeNfc();
                 if (!_isDeviceiOS)
                     CrossNFC.Current.StopListening();
             });
@@ -485,10 +522,6 @@ public partial class EditTagPage : ContentPage
         catch (Exception ex)
         {
             Debug.WriteLine($"Failed to stop NFC listening: {ex.Message}");
-        }
-        finally
-        {
-            _nfcEventsSubscribed = false;
         }
     }
 
@@ -515,6 +548,11 @@ public partial class EditTagPage : ContentPage
     #region Bluetooth
 
     private async void OnStartBleScanClicked(object sender, EventArgs e)
+    {
+        await StartBleScanAsync();
+    }
+
+    private async Task StartBleScanAsync()
     {
         if (!_bleScanner.IsBluetoothSupported)
         {
