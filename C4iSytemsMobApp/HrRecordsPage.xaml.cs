@@ -246,6 +246,12 @@ public partial class HrRecordsPage : ContentPage
 
     private async void OnHomeClicked(object sender, EventArgs e)
     {
+        if (Preferences.Get("HrRosterOnlyMode", "false") == "true")
+        {
+            Application.Current.MainPage = new GuardHrRosterMenuPage();
+            return;
+        }
+
         var volumeButtonService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
         Application.Current.MainPage = new MainPage(volumeButtonService);
     }

@@ -12,6 +12,7 @@ namespace C4iSytemsMobApp
         private DateTime _currentWeekStart;
         private ObservableCollection<SiteRoster> _siteRosters;
         private HubConnection _hubConnection;
+        private readonly bool _guardOnlyMode = Preferences.Get("HrRosterOnlyMode", "false") == "true";
 
         public ObservableCollection<SiteRoster> SiteRosters
         {
@@ -78,8 +79,14 @@ namespace C4iSytemsMobApp
 
             try
             {
+                if (_guardOnlyMode)
+                {
+                    await LoadGuardOnlyRoster(startDate);
+                    return;
+                }
+
                 int currentSiteId = int.Parse(Preferences.Get("SelectedClientSiteId", "0"));
-                
+
                 var linkedSitesResp = await _guardApiServices.GetLinkedSitesAsync(currentSiteId);
                 List<SiteInfo> sitesToFetch = new List<SiteInfo>();
                 bool isLinkedGroup = false;
@@ -112,21 +119,10 @@ namespace C4iSytemsMobApp
                         if (!isHeaderUpdated)
                         {
                             isHeaderUpdated = true;
-                            WeekRangeLabel.Text = roster.WeekRange;
-                            StatusLabel.Text = roster.Status;
-                            string status = (roster.Status ?? "").ToLower();
-                            if (status.Contains("paid")) StatusLabel.TextColor = Colors.Red;
-                            else if (status.Contains("live")) StatusLabel.TextColor = Colors.Green;
-                            else if (status.Contains("inv")) StatusLabel.TextColor = Colors.Blue;
-                            else StatusLabel.TextColor = Colors.Gray;
+                            UpdateWeekHeader(roster);
                         }
 
-                        foreach (var day in roster.Days)
-                        {
-                            day.PendingCount = day.Shifts?.Count(s => s.StatusCode == 0) ?? 0;
-                            day.AcceptedCount = day.Shifts?.Count(s => s.StatusCode == 1) ?? 0;
-                            day.OpenCount = day.Shifts?.Count(s => s.StatusCode == 2) ?? 0;
-                        }
+                        ComputeDayCounts(roster);
 
                         bool showSiteBar = isLinkedGroup;
                         bool isExpanded = !isLinkedGroup || (isLinkedGroup && sitesToFetch.Count == 1);
@@ -143,20 +139,7 @@ namespace C4iSytemsMobApp
                     }
                 }
 
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    if (hasAnyRosters)
-                    {
-                        SiteRosters = newSiteRosters;
-                        RosterContainer.IsVisible = true;
-                        NoRosterLabel.IsVisible = false;
-                    }
-                    else
-                    {
-                        NoRosterLabel.IsVisible = true;
-                        RosterContainer.IsVisible = false;
-                    }
-                });
+                ApplyRosterResults(newSiteRosters, hasAnyRosters);
             }
             catch (Exception ex)
             {
@@ -166,6 +149,86 @@ namespace C4iSytemsMobApp
             {
                 GlobalLoading.IsRunning = false;
             }
+        }
+
+        // HR Records & Roster Only mode: shows the license-entered guard's own shifts across all sites
+        private async Task LoadGuardOnlyRoster(DateTime startDate)
+        {
+            var guardSiteRosters = await _guardApiServices.GetGuardRosterAcrossSitesAsync(startDate);
+
+            // Preserve the expanded/collapsed state of each site across reloads (week navigation, SignalR refresh)
+            var expandedSiteIds = SiteRosters?.Where(s => s.IsExpanded).Select(s => s.SiteId).ToHashSet() ?? new HashSet<int>();
+
+            var newSiteRosters = new ObservableCollection<SiteRoster>();
+            bool hasAnyRosters = false;
+            bool isHeaderUpdated = false;
+
+            foreach (var guardSiteRoster in guardSiteRosters ?? new List<GuardSiteRoster>())
+            {
+                var roster = guardSiteRoster.Roster;
+                if (roster == null || roster.Days.Count == 0) continue;
+
+                hasAnyRosters = true;
+
+                if (!isHeaderUpdated)
+                {
+                    isHeaderUpdated = true;
+                    UpdateWeekHeader(roster);
+                }
+
+                ComputeDayCounts(roster);
+
+                newSiteRosters.Add(new SiteRoster
+                {
+                    SiteId = guardSiteRoster.SiteId,
+                    SiteName = guardSiteRoster.SiteName,
+                    ShowSiteBar = true,
+                    // Sites start collapsed (tap the site bar to expand); a single site opens directly
+                    IsExpanded = expandedSiteIds.Contains(guardSiteRoster.SiteId) || guardSiteRosters.Count == 1,
+                    Days = new ObservableCollection<RosterDay>(roster.Days)
+                });
+            }
+
+            ApplyRosterResults(newSiteRosters, hasAnyRosters);
+        }
+
+        private void UpdateWeekHeader(WeeklyRoster roster)
+        {
+            WeekRangeLabel.Text = roster.WeekRange;
+            StatusLabel.Text = roster.Status;
+            string status = (roster.Status ?? "").ToLower();
+            if (status.Contains("paid")) StatusLabel.TextColor = Colors.Red;
+            else if (status.Contains("live")) StatusLabel.TextColor = Colors.Green;
+            else if (status.Contains("inv")) StatusLabel.TextColor = Colors.Blue;
+            else StatusLabel.TextColor = Colors.Gray;
+        }
+
+        private static void ComputeDayCounts(WeeklyRoster roster)
+        {
+            foreach (var day in roster.Days)
+            {
+                day.PendingCount = day.Shifts?.Count(s => s.StatusCode == 0) ?? 0;
+                day.AcceptedCount = day.Shifts?.Count(s => s.StatusCode == 1) ?? 0;
+                day.OpenCount = day.Shifts?.Count(s => s.StatusCode == 2) ?? 0;
+            }
+        }
+
+        private void ApplyRosterResults(ObservableCollection<SiteRoster> newSiteRosters, bool hasAnyRosters)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                if (hasAnyRosters)
+                {
+                    SiteRosters = newSiteRosters;
+                    RosterContainer.IsVisible = true;
+                    NoRosterLabel.IsVisible = false;
+                }
+                else
+                {
+                    NoRosterLabel.IsVisible = true;
+                    RosterContainer.IsVisible = false;
+                }
+            });
         }
 
         private DateTime GetStartOfWeek(DateTime dt)
@@ -230,6 +293,12 @@ namespace C4iSytemsMobApp
 
         private void OnHomeClicked(object sender, EventArgs e)
         {
+            if (_guardOnlyMode)
+            {
+                Application.Current.MainPage = new GuardHrRosterMenuPage();
+                return;
+            }
+
             var volumeService = IPlatformApplication.Current.Services.GetService<IVolumeButtonService>();
             Application.Current.MainPage = new MainPage(volumeService);
         }

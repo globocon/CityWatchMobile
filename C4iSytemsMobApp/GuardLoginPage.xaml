@@ -236,6 +236,14 @@
                     Clicked="OnEnterLogbookClicked"
                     IsVisible="False" />
 
+            <!-- HR Records & Roster Only Button (Initially Hidden) - no logbook entry created -->
+            <Button x:Name="btnHrRosterOnly"
+                    Text="HR Records &amp; Roster Only"
+                    BackgroundColor="#333333"
+                    TextColor="White"
+                    Clicked="OnHrRosterOnlyClicked"
+                    IsVisible="False" />
+
 
             <!-- HR Status Indicators -->
             <HorizontalStackLayout x:Name="hrStatusLayout"

@@ -103,6 +103,7 @@ namespace C4iSytemsMobApp.Services
 
         public async Task<(bool isSuccess, string errorMessage)> ValidateGuardDocumentAccessPin(string pin)
         {
+            GetSecureStorageValues();
             string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ValidateGuardPinForHrRecordAccess?guardId={guardId}&key={pin}";
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
@@ -281,6 +282,7 @@ namespace C4iSytemsMobApp.Services
         }
         public async Task<(bool AccessPermission, string message)> CheckIfPINSetForTheGuard()
         {
+            GetSecureStorageValues();
             string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/CheckIfPINSetForTheGuard?guardId={guardId}";
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
@@ -303,6 +305,7 @@ namespace C4iSytemsMobApp.Services
 
         public async Task<(bool isSuccess, string message)> SaveNewPINSetForTheGuard(string newPin)
         {
+            GetSecureStorageValues();
             var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/SaveNewPINSetForTheGuard";
             using var _httpClient = new HttpClient();
             var payload = new { guardId = guardId, newPin = newPin };
@@ -328,6 +331,7 @@ namespace C4iSytemsMobApp.Services
 
         public async Task<(bool isSuccess, string message)> ResetGaurdHrPin(string siteName)
         {
+            GetSecureStorageValues();
             var apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/ResetGaurdHrPin";
             using var _httpClient = new HttpClient();
             var payload = new { guardId = guardId, siteName = siteName };
@@ -402,6 +406,67 @@ namespace C4iSytemsMobApp.Services
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 
+                return ParseWeeklyRoster(root);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in GetGuardRosterAsync: {ex.Message}");
+                return new WeeklyRoster { WeekRange = "Error occurred" };
+            }
+        }
+
+        public async Task<List<GuardSiteRoster>?> GetGuardRosterAcrossSitesAsync(DateTime startDate)
+        {
+            try
+            {
+                GetSecureStorageValues();
+
+                if (guardId <= 0)
+                {
+                    return null;
+                }
+
+                string dateParam = startDate.ToString("yyyy-MM-dd");
+                string apiUrl = $"{AppConfig.ApiBaseUrl}GuardSecurityNumber/GetGuardRosterAcrossSites?guardId={guardId}&date={dateParam}";
+
+                using HttpClient client = new HttpClient();
+                client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
+
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                var siteRosters = new List<GuardSiteRoster>();
+                if (root.TryGetProperty("sites", out var sitesArray))
+                {
+                    foreach (var siteElement in sitesArray.EnumerateArray())
+                    {
+                        siteRosters.Add(new GuardSiteRoster
+                        {
+                            SiteId = siteElement.GetProperty("siteId").GetInt32(),
+                            SiteName = siteElement.GetProperty("siteName").GetString(),
+                            Roster = ParseWeeklyRoster(siteElement)
+                        });
+                    }
+                }
+
+                return siteRosters;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in GetGuardRosterAcrossSitesAsync: {ex.Message}");
+                return null;
+            }
+        }
+
+        private WeeklyRoster ParseWeeklyRoster(JsonElement root)
+        {
                 var result = new WeeklyRoster
                 {
                     StartDate = DateTime.Parse(root.GetProperty("startDate").GetString()),
@@ -502,12 +567,6 @@ namespace C4iSytemsMobApp.Services
                 }
 
                 return result;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception in GetGuardRosterAsync: {ex.Message}");
-                return new WeeklyRoster { WeekRange = "Error occurred" };
-            }
         }
 
         public async Task<(bool isSuccess, string message)> UpdateShiftStatusAsync(RosterStatusUpdateModel model)
