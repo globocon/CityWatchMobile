@@ -12,9 +12,10 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
 {
     //public event PropertyChangedEventHandler PropertyChanged;
     public const string ALERT_TITLE = "NFC";
-    bool _eventsAlreadySubscribed = false;
+
+    /// <summary>The CrossNFC instance this page's handlers are attached to, or null.</summary>
+    INFC _subscribedNfc;
     private readonly IScannerControlServices _scannerControlServices;
-    private bool _isNfcEnabledForSite = false;
     bool _isDeviceiOS = false;
     string _scannedTagUid = string.Empty;
     public bool DeviceIsListening
@@ -50,6 +51,9 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
         BindingContext = this;
         NavigationPage.SetHasNavigationBar(this, false);
         _scannerControlServices = IPlatformApplication.Current.Services.GetService<IScannerControlServices>();
+
+        // Needed before the first subscribe, which decides whether to take the iOS-only event.
+        _isDeviceiOS = DeviceInfo.Platform == DevicePlatform.iOS;
     }
 
     protected override async void OnAppearing()
@@ -76,7 +80,12 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
         App.PcarInspTagResetEvent -= OnPcarInspTagReset;
 
         _scannedTagUid = string.Empty;
-        if (_isNfcEnabledForSite && CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
+
+        /* Was guarded on a field only ever assigned in the onboarding check below, which is
+           commented out - so it was always false and this page never stopped listening or
+           detached its handlers. Leaving them attached meant a tag tapped on another page
+           could still reach this one, which pops alerts from a page the guard has left. */
+        if (CrossNFC.IsSupported && CrossNFC.Current.IsAvailable)
         {
             await StopListening();
         }
@@ -165,10 +174,13 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
         // Check NFC status
         ////string isNfcEnabledForSiteLocalStored = Preferences.Get("NfcOnboarded", "");
 
-        //if (!string.IsNullOrEmpty(isNfcEnabledForSiteLocalStored) && bool.TryParse(isNfcEnabledForSiteLocalStored, out _isNfcEnabledForSite))
+        //if (!string.IsNullOrEmpty(isNfcEnabledForSiteLocalStored) && bool.TryParse(isNfcEnabledForSiteLocalStored, out var isNfcEnabledForSite))
         //{
         // In order to support Mifare Classic 1K tags (read/write), you must set legacy mode to true.
-        CrossNFC.Legacy = false;
+        // Only assigned when it differs: Plugin.NFC 0.1.26 rebuilds CrossNFC.Current on every
+        // assignment, which detaches the handlers of any page already listening.
+        if (CrossNFC.Legacy)
+            CrossNFC.Legacy = false;
 
         if (CrossNFC.IsSupported)
         {
@@ -222,31 +234,43 @@ public partial class AddNFCtag : ContentPage, INotifyPropertyChanged
         await StartListeningIfNotiOS();
     }
 
+    /// <summary>
+    /// Attaches the handlers to the CURRENT CrossNFC instance, detaching from whichever one
+    /// they were on. Assigning CrossNFC.Legacy anywhere in the app replaces that instance, so
+    /// the handlers have to follow it - unsubscribing from CrossNFC.Current when it is no
+    /// longer the instance we subscribed to removes nothing and leaks the old one.
+    /// </summary>
     void SubscribeEvents()
     {
-        if (_eventsAlreadySubscribed)
-            UnsubscribeEvents();
+        var current = CrossNFC.Current;
+        if (ReferenceEquals(_subscribedNfc, current))
+            return;
 
-        _eventsAlreadySubscribed = true;
+        UnsubscribeEvents();
 
-        CrossNFC.Current.OnMessageReceived += Current_OnMessageReceived;
-        CrossNFC.Current.OnNfcStatusChanged += Current_OnNfcStatusChanged;
-        CrossNFC.Current.OnTagListeningStatusChanged += Current_OnTagListeningStatusChanged;
+        current.OnMessageReceived += Current_OnMessageReceived;
+        current.OnNfcStatusChanged += Current_OnNfcStatusChanged;
+        current.OnTagListeningStatusChanged += Current_OnTagListeningStatusChanged;
 
         if (_isDeviceiOS)
-            CrossNFC.Current.OniOSReadingSessionCancelled += Current_OniOSReadingSessionCancelled;
+            current.OniOSReadingSessionCancelled += Current_OniOSReadingSessionCancelled;
+
+        _subscribedNfc = current;
     }
 
     void UnsubscribeEvents()
     {
-        CrossNFC.Current.OnMessageReceived -= Current_OnMessageReceived;
-        CrossNFC.Current.OnNfcStatusChanged -= Current_OnNfcStatusChanged;
-        CrossNFC.Current.OnTagListeningStatusChanged -= Current_OnTagListeningStatusChanged;
+        if (_subscribedNfc == null)
+            return;
+
+        _subscribedNfc.OnMessageReceived -= Current_OnMessageReceived;
+        _subscribedNfc.OnNfcStatusChanged -= Current_OnNfcStatusChanged;
+        _subscribedNfc.OnTagListeningStatusChanged -= Current_OnTagListeningStatusChanged;
 
         if (_isDeviceiOS)
-            CrossNFC.Current.OniOSReadingSessionCancelled -= Current_OniOSReadingSessionCancelled;
+            _subscribedNfc.OniOSReadingSessionCancelled -= Current_OniOSReadingSessionCancelled;
 
-        _eventsAlreadySubscribed = false;
+        _subscribedNfc = null;
     }
     void Current_OnTagListeningStatusChanged(bool isListening) => DeviceIsListening = isListening;
 
