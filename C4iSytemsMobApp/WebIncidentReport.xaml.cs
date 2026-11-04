@@ -47,6 +47,11 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
     private string deviceid;
     private string selectedGPS;
 
+    // The web form's job time is an optional <input type="time">; a MAUI TimePicker always
+    // holds a value, so track whether it was actually set to tell "entered" from "untouched".
+    private TimeSpan _jobTimeInitial;
+    private bool _jobTimeEntered;
+
 
     private ClientSite _currentClientSite;
 
@@ -473,6 +478,9 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
         reportDatePickerOffsite.Date = DateTime.Today;
         reportTimePickerOffsite.Time = DateTime.Now.TimeOfDay;
 
+        _jobTimeInitial = JobTimePicker.Time;
+        JobTimePicker.PropertyChanged += OnJobTimePickerPropertyChanged;
+
         var tapGesture = new TapGestureRecognizer();
         tapGesture.Tapped += (s, e) => ToggleDropdown();
         DropdownBorder.GestureRecognizers.Add(tapGesture);
@@ -485,6 +493,66 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
 
         // store for later use
         _reusedReport = reusedReport;
+    }
+
+    private void OnJobTimePickerPropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == TimePicker.TimeProperty.PropertyName &&
+            JobTimePicker.Time != _jobTimeInitial)
+        {
+            _jobTimeEntered = true;
+        }
+    }
+
+    /// <summary>
+    /// Job time as the web form posts it ("HH:mm"), or null when it was never entered.
+    /// </summary>
+    private string GetJobTime()
+    {
+        return _jobTimeEntered ? JobTimePicker.Time.ToString(@"hh\:mm") : null;
+    }
+
+    /// <summary>
+    /// Minutes between the incident and the report, matching onReportDateTimeChange() in
+    /// CityWatch.Web Pages/Incident/Register.cshtml:
+    ///     mins = Math.abs((Date.parse(reportdate) - Date.parse(incidentdate)) / 1000 / 60)
+    /// Null when there is no incident date, which is the web's "incidentdate == ''" case.
+    /// </summary>
+    private static int? CalculateDuration(DateTime? incidentDate, DateTime reportDate)
+    {
+        if (!incidentDate.HasValue)
+            return null;
+
+        return (int)Math.Abs((reportDate - incidentDate.Value).TotalMinutes);
+    }
+
+    /// <summary>
+    /// Travel minutes, matching onJobTimeChange() in CityWatch.Web Pages/Incident/Register.cshtml:
+    /// the job time is placed on the incident's own date, rolled back a day when it falls after
+    /// the incident, and the gap to the incident is returned in minutes. Null when either the
+    /// incident date or the job time is missing, matching the web's empty-input case.
+    /// </summary>
+    private static int? CalculateTravel(DateTime? incidentDate, string jobTime)
+    {
+        if (!incidentDate.HasValue || string.IsNullOrWhiteSpace(jobTime))
+            return null;
+
+        if (!TimeSpan.TryParse(jobTime, out var parsedJobTime))
+            return null;
+
+        var incidentDateTime = incidentDate.Value;
+        var jobDateTime = new DateTime(
+            incidentDateTime.Year,
+            incidentDateTime.Month,
+            incidentDateTime.Day,
+            parsedJobTime.Hours,
+            parsedJobTime.Minutes,
+            0);
+
+        if (jobDateTime > incidentDateTime)
+            jobDateTime = jobDateTime.AddDays(-1);
+
+        return (int)(incidentDateTime - jobDateTime).TotalMinutes;
     }
 
 
@@ -582,6 +650,9 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 if (TimeSpan.TryParse(reusedReport.DateLocation.JobTime, out var parsedTime))
                 {
                     JobTimePicker.Time = parsedTime;
+                    // The reused report carried a job time, so it counts as entered even when it
+                    // happens to equal the picker's starting value.
+                    _jobTimeEntered = true;
                 }
                 else
                 {
@@ -1035,6 +1106,22 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 0
             );
 
+            DateTime? incidentDateTime = enableDateTimeCheckBox?.IsChecked == true
+                ? new DateTime(
+                    incidentDatePicker.Date.Year,
+                    incidentDatePicker.Date.Month,
+                    incidentDatePicker.Date.Day,
+                    incidentTimePicker.Time.Hours,
+                    incidentTimePicker.Time.Minutes,
+                    0)
+                : (DateTime?)null;
+
+            // Duration and Travel are read-only, derived fields on the web form; the PDF prints
+            // whatever the client posts, so derive them here the same way before submitting.
+            var jobTime = GetJobTime();
+            var duration = CalculateDuration(incidentDateTime, reportDateTime);
+            var travel = CalculateTravel(incidentDateTime, jobTime);
+
 
             if (_currentClientSite == null)
             {
@@ -1132,15 +1219,7 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 DateLocation = new DateLocation
                 {
 
-                    IncidentDate = enableDateTimeCheckBox?.IsChecked == true
-    ? new DateTime(
-        incidentDatePicker.Date.Year,
-        incidentDatePicker.Date.Month,
-        incidentDatePicker.Date.Day,
-        incidentTimePicker.Time.Hours,
-        incidentTimePicker.Time.Minutes,
-        0)
-    : (DateTime?)null,
+                    IncidentDate = incidentDateTime,
                     //IncidentDate = new DateTime(
                     //    incidentDatePicker.Date.Year,
                     //    incidentDatePicker.Date.Month,
@@ -1153,9 +1232,9 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     ReimbursementNo = reimbursementNoCheckBox?.IsChecked ?? false,
                     ReimbursementYes = reimbursementYesCheckBox?.IsChecked ?? false,
                     JobNumber = JobNumberEntry?.Text ?? string.Empty,
-                    JobTime = null,
-                    Duration = null,
-                    Travel = 0,
+                    JobTime = jobTime,
+                    Duration = duration,
+                    Travel = travel,
                     PatrolExternal = PatrolExternalCheckBox?.IsChecked ?? false,
                     PatrolInternal = PatrolInternalCheckBox?.IsChecked ?? false,
                     ClientType = clientTypeNew ?? string.Empty,
