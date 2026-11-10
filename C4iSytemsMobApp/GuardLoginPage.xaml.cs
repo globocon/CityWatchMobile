@@ -709,30 +709,28 @@ public partial class GuardLoginPage : ContentPage
     
     private bool CheckForPCAR()
     {
-        if(_selectedClientSite != null)
+        /* Position is the guard's own position and every incident report posts it, PCAR site
+           or not, so the picker follows the client site picker rather than the touring mode -
+           the Register page offers Position on every report the same way, switching only which
+           list it shows. The Patrol Car toggle and the Callsign stay PCAR/INSP only. */
+        pickerPosition.IsVisible = pickerClientSite.IsVisible;
+
+        if (_selectedClientSite != null)
         {
             var cs = clientSiteLoginDtos.Where(x => x.Id == _selectedClientSite.Id).FirstOrDefault();
 
-            if(cs!= null && cs.PatrolTourMode == PatrolTouringMode.PCAR || cs.PatrolTourMode == PatrolTouringMode.INSP)
+            // Parenthesised: without it a site missing from clientSiteLoginDtos reached
+            // cs.PatrolTourMode on the right of the || and threw.
+            if (cs != null && (cs.PatrolTourMode == PatrolTouringMode.PCAR || cs.PatrolTourMode == PatrolTouringMode.INSP))
             {
                 slPatrolCarToggle.IsVisible = true;
-                pickerPosition.IsVisible = true;
                 pickerCallsign.IsVisible = true;
                 return true;
             }
-            else
-            {
-                slPatrolCarToggle.IsVisible = false;
-                pickerPosition.IsVisible = false;
-                pickerCallsign.IsVisible = false;
-            }
         }
-        else
-        {
-            slPatrolCarToggle.IsVisible = false;
-            pickerPosition.IsVisible = false;
-            pickerCallsign.IsVisible = false;
-        }
+
+        slPatrolCarToggle.IsVisible = false;
+        pickerCallsign.IsVisible = false;
         return false;
     }
 
@@ -1073,6 +1071,25 @@ public partial class GuardLoginPage : ContentPage
                 return;
             }
 
+            /* Every incident report carries a Position, on any site, and both the Register page
+               and ProcessIrSubmit refuse a report without one. Asked for here because this is
+               where the guard can still answer: the IR page has no Position field of its own,
+               it only reads what this login stored.
+
+               On a patrol car the Position is also the tracked unit's identity, so that case
+               keeps its own wording - see the note below on the six Romeo cars. */
+            var selectedPositionItem = SelectedPosition;
+            if (selectedPositionItem == null || selectedPositionItem.Id <= 0
+                || selectedPositionItem.Name == "Select" || selectedPositionItem.Name == "- Select -")
+            {
+                await DisplayAlert("Validation Error",
+                    switchPatrolCar.IsToggled
+                        ? "Mobile Patrol Car is ON: please select your car under Position."
+                        : "Please select your Position.",
+                    "OK");
+                return;
+            }
+
             if (CheckForPCAR())
             {
                 /* A patrol-car login MUST say which car it is. The Position is the tracked
@@ -1081,12 +1098,6 @@ public partial class GuardLoginPage : ContentPage
                    collapsed to three on the live map (24 Aug 2026). */
                 if (switchPatrolCar.IsToggled)
                 {
-                    if (SelectedPosition == null || SelectedPosition.Id <= 0
-                        || SelectedPosition.Name == "Select" || SelectedPosition.Name == "- Select -")
-                    {
-                        await DisplayAlert("Validation Error", "Mobile Patrol Car is ON: please select your car under Position.", "OK");
-                        return;
-                    }
                     if (string.IsNullOrEmpty(SelectedCallsign) || SelectedCallsign == "- Select -" || SelectedCallsignObj == null)
                     {
                         await DisplayAlert("Validation Error", "Mobile Patrol Car is ON: please select your Callsign.", "OK");
@@ -1094,20 +1105,13 @@ public partial class GuardLoginPage : ContentPage
                     }
                 }
 
-                // Save Position and Callsign for later use in IR
                 Preferences.Set("IsPatrolCar", switchPatrolCar.IsToggled);
 
-                if (SelectedPosition != null && SelectedPosition.Name != "Select" && SelectedPosition.Name != "- Select -")
-                {
-                    Preferences.Set("SelectedPosition", SelectedPosition.Name);
-                    App.PcarPostionId = SelectedPosition.Id;
-
-                }
-                else
-                {
-                    Preferences.Set("SelectedPosition", "");
-                    App.PcarPostionId = null;
-                }
+                /* App.PcarPostionId stays the patrol-car identity that log entries and tracking
+                   send as PositionId, so it is still only set on a PCAR/INSP site. The
+                   SelectedPosition preference below is the separate thing the IR posts, and it
+                   is stored for every site. */
+                App.PcarPostionId = selectedPositionItem.Id;
 
                 if (!string.IsNullOrEmpty(SelectedCallsign) && SelectedCallsign != "- Select -")
                 {
@@ -1123,11 +1127,13 @@ public partial class GuardLoginPage : ContentPage
             else
             {
                 Preferences.Set("IsPatrolCar", false);
-                Preferences.Set("SelectedPosition", "");
                 App.PcarPostionId = null;
                 Preferences.Set("SelectedCallsign", "");
                 App.PcarCallSignId = null;
             }
+
+            // Saved for the IR on every site, PCAR or not.
+            Preferences.Set("SelectedPosition", selectedPositionItem.Name);
                 // Retrieve and validate User ID
                 string userIdString = Preferences.Get("UserId", "");
             if (string.IsNullOrWhiteSpace(userIdString) || !int.TryParse(userIdString, out int userId) || userId <= 0)
