@@ -2719,12 +2719,18 @@ new ColumnDefinition { Width = GridLength.Auto } // button
     private async Task LogScannedDataToCache(string _TagUid, ScanningType _scannerType)
     {
         await ShowToastMessage($"[{ALERT_TITLE}] Tag scanned. Logging activity to Cache...");
-        var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
+        var (isSuccess, msg, _ChaceCount, isDuplicate) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
         if (isSuccess)
         {
             UpdateCacheRecordCount(_ChaceCount);
             //await ShowToastMessage(msg);
             await ShowToastMessage($"[{ALERT_TITLE}] {msg}");
+        }
+        else if (isDuplicate)
+        {
+            /* P1#375: a repeat inside the 5 minute window is expected, not an error - a toast
+               tells the guard why nothing was logged without a modal alert to dismiss. */
+            await ShowToastMessage($"[{ALERT_TITLE}] {msg ?? "Tag already scanned !!!"}");
         }
         else
         {
@@ -2878,6 +2884,13 @@ new ColumnDefinition { Width = GridLength.Auto } // button
                     if (!scannerSettings.tagFound) { _taguid = "NA"; }
                     int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
                     await LogActivityTask(scannerSettings.tagInfoLabel, null, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer);
+                }
+                else if (scannerSettings.IsDuplicateScan)
+                {
+                    /* P1#375: refused by the 5 minute window before anything was sent. A toast
+                       says so - no modal alert for a repeat the guard did on purpose. */
+                    await ShowToastMessage($"[{ALERT_TITLE}] {scannerSettings.message}");
+                    return;
                 }
                 else
                 {

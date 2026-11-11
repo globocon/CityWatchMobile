@@ -1750,7 +1750,7 @@ namespace C4iSytemsMobApp
             /* P4#153: offline scan gets the same popup, amber - no server reply means no
                site name, so the guard is told it saved and will sync. */
             var offlinePopup = ScanFeedback.Show(this, "Saved to phone", null, "No connection - will sync when online", ScanFeedbackKind.Offline);
-            var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
+            var (isSuccess, msg, _ChaceCount, isDuplicate) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
             if (isSuccess)
             {
                 MainThread.BeginInvokeOnMainThread(() =>
@@ -1758,6 +1758,12 @@ namespace C4iSytemsMobApp
                     SyncState.SyncedCount = _ChaceCount;
                 });
                 offlinePopup.Complete(true, msg ?? "Saved - will sync when online");
+            }
+            else if (isDuplicate)
+            {
+                /* P1#375: refused by the 5 minute window. Nothing failed - say so plainly
+                   rather than telling the guard the scan could not be saved. */
+                offlinePopup.Complete(false, msg ?? "Tag already scanned !!!", 3000);
             }
             else
             {
@@ -1896,6 +1902,13 @@ namespace C4iSytemsMobApp
                         if (!scannerSettings.tagFound) { _taguid = "NA"; }
                         int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
                         await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer, scanPopup);
+                    }
+                    else if (scannerSettings.IsDuplicateScan)
+                    {
+                        /* P1#375: a repeat inside the 5 minute window is not a failure - the
+                           guard is told plainly that this tag is already logged. */
+                        ScanFeedback.Show(this, "Already scanned", scannerSettings.message, "This tag is already logged", ScanFeedbackKind.Error, 3000);
+                        return;
                     }
                     else
                     {

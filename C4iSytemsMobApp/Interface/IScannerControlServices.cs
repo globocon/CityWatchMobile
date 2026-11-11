@@ -38,7 +38,9 @@ namespace C4iSytemsMobApp.Interface
         Task<bool> CheckIfGuardHasTagAddAccess(string _guardId);
         Task<SmartWandDeviceRegister> CheckAndRegisterSmartWandAsync(int _selectedSmartWandId, string deviceid, string devicename, string deviceType);
         Task<List<ClientSiteSmartWandTagsLocal>> GetSmartWandTagsForSite(string siteId);
-        Task<(bool isSuccess, string errorMessage, int cachecount)> SaveScanDataToLocalCache(string _TagUid, ScanningType _scannerType, int? LoggedInClientSiteId, int? LoggedInUserId, int? LoggedInGuardId);
+        /* P1#375: isDuplicate separates a scan refused by the 5 minute window from a scan
+           that genuinely failed to save, so callers can stay quiet about the former. */
+        Task<(bool isSuccess, string errorMessage, int cachecount, bool isDuplicate)> SaveScanDataToLocalCache(string _TagUid, ScanningType _scannerType, int? LoggedInClientSiteId, int? LoggedInUserId, int? LoggedInGuardId);
         Task<bool> CheckIfTagExistsForSiteInLocalDb(string _TagUid);
         Task<ClientSiteSmartWandTagsLocal> GetTagDetailsFromLocalDbAsync(string _TagUid);
         Task<string> GetClientSiteNameFromLocalDb(int clientSiteId);

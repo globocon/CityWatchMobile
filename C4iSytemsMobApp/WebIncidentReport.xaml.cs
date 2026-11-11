@@ -1145,6 +1145,33 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 return;
             }
 
+            /* Position is required on every incident report, and the callsign too once the
+               report is for a Patrol Car - the same two rules positionIsValid() and
+               callSignIsValid() apply on the Register page, and that ProcessIrSubmit refuses
+               a report for.
+
+               Checked here, before the report is built, so it covers the offline save as well:
+               that path serializes this same object and the sync posts it back unchanged, and
+               ProcessIrSubmit deliberately skips these rules for synced records. Catching it
+               now is the guard's only chance to fix it - hours later nobody can. */
+            var isPatrolCar = Preferences.Get("IsPatrolCar", false);
+            var officerPosition = Preferences.Get("SelectedPosition", "");
+            var officerCallSign = isPatrolCar ? Preferences.Get("SelectedCallsign", "") : string.Empty;
+
+            if (string.IsNullOrWhiteSpace(officerPosition))
+            {
+                await DisplayAlert("Validation Error",
+                    "Please select \"position\". Log in again and choose your Position before submitting an IR.", "OK");
+                return;
+            }
+
+            if (isPatrolCar && string.IsNullOrWhiteSpace(officerCallSign))
+            {
+                await DisplayAlert("Validation Error",
+                    "Please select \"your callsign\" - it is required for a Patrol Car.", "OK");
+                return;
+            }
+
             if (uploadedServerFileNames == null || uploadedServerFileNames.Count == 0)
             {
                 bool confirm = await DisplayAlert(
@@ -1172,8 +1199,6 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                 clientArea = selectedArea.Value;
             }
 
-
-            var isPatrolCar = Preferences.Get("IsPatrolCar", false);
 
             var Report = new IncidentRequest
             {
@@ -1209,11 +1234,11 @@ public partial class WebIncidentReport : ContentPage, INotifyPropertyChanged
                     LastName = string.Empty,
                     Gender = string.Empty,
                     Phone = string.Empty,
-                    Position = Preferences.Get("SelectedPosition", ""),
+                    Position = officerPosition,
                     Email = "username@example.com",
                     LicenseNumber = string.Empty,
                     LicenseState = string.Empty,
-                    CallSign = isPatrolCar ? Preferences.Get("SelectedCallsign", "") : string.Empty,
+                    CallSign = officerCallSign,
                     GuardMonth = selectedGuardMonth,
                     NotifiedBy = selectedNotifiedBy,
                     Billing = string.Empty,
