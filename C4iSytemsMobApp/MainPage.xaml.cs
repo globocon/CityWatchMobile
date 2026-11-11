@@ -1774,7 +1774,7 @@ namespace C4iSytemsMobApp
             /* P4#153: offline scan gets the same popup, amber - no server reply means no
                site name, so the guard is told it saved and will sync. */
             var offlinePopup = ScanFeedback.Show(this, "Saved to phone", null, "No connection - will sync when online", ScanFeedbackKind.Offline);
-            var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
+            var (isSuccess, msg, _ChaceCount, isDuplicate) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
             if (isSuccess)
             {
                 MainThread.BeginInvokeOnMainThread(() =>
@@ -1782,6 +1782,12 @@ namespace C4iSytemsMobApp
                     SyncState.SyncedCount = _ChaceCount;
                 });
                 offlinePopup.Complete(true, msg ?? "Saved - will sync when online");
+            }
+            else if (isDuplicate)
+            {
+                /* P1#375: refused by the 5 minute window. Nothing failed - say so plainly
+                   rather than telling the guard the scan could not be saved. */
+                offlinePopup.Complete(false, msg ?? "Tag already scanned !!!", 3000);
             }
             else
             {
@@ -1920,6 +1926,13 @@ namespace C4iSytemsMobApp
                         if (!scannerSettings.tagFound) { _taguid = "NA"; }
                         int NFCScannedFromSiteId = scannerSettings.ScannedFromLinkedSite;
                         await LogActivityTask(scannerSettings.tagInfoLabel, _scannerType, _taguid, true, NFCScannedFromSiteId, scannerSettings.RowIdInServer, scanPopup);
+                    }
+                    else if (scannerSettings.IsDuplicateScan)
+                    {
+                        /* P1#375: a repeat inside the 5 minute window is not a failure - the
+                           guard is told plainly that this tag is already logged. */
+                        ScanFeedback.Show(this, "Already scanned", scannerSettings.message, "This tag is already logged", ScanFeedbackKind.Error, 3000);
+                        return;
                     }
                     else
                     {
@@ -2186,6 +2199,14 @@ namespace C4iSytemsMobApp
                         }
 
                     }
+                    else if (scannerSettings.IsDuplicateScan)
+                    {
+                        /* P1#375: BLE scans continuously, so an iBeacon in range trips the
+                           5 minute window on every pass of the scan loop. Those repeats are
+                           expected and are dropped silently - a toast each time would bury
+                           the real messages. */
+                        return;
+                    }
                     else
                     {
                         var newmsg = $"[{BLE_ALERT_TITLE}] Error: {scannerSettings?.message ?? "Unknown error"}";
@@ -2206,8 +2227,15 @@ namespace C4iSytemsMobApp
 
         private async Task LogBLEScannedDataToCache(string _TagUid, string _deviceName, ScanningType _scannerType)
         {
+            /* P1#375: BLE keeps re-finding a beacon that is simply in range, so most calls
+               here during the 5 minute window are known repeats. Checking before the popup
+               is shown keeps the screen quiet - otherwise the guard gets a popup every pass
+               of the scan loop for five minutes. */
+            if (ScanDuplicateGuard.IsBlocked(_clientSiteId.Value, _TagUid))
+                return;
+
             var offlinePopup = ScanFeedback.Show(this, "Saved to phone", $"Device: {_deviceName}", "No connection - will sync when online", ScanFeedbackKind.Offline);
-            var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
+            var (isSuccess, msg, _ChaceCount, isDuplicate) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
             if (isSuccess)
             {
                 MainThread.BeginInvokeOnMainThread(() =>
@@ -2215,6 +2243,11 @@ namespace C4iSytemsMobApp
                     SyncState.SyncedCount = _ChaceCount;
                 });
                 offlinePopup.Complete(true, msg ?? "Saved - will sync when online");
+            }
+            else if (isDuplicate)
+            {
+                // Window was only discovered once the save ran (first repeat after a restart) - close quietly.
+                offlinePopup.AutoCloseAfter(0);
             }
             else
             {
