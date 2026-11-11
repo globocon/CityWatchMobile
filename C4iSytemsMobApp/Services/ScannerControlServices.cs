@@ -74,6 +74,44 @@ namespace C4iSytemsMobApp.Services
 
         public async Task<TagInfoApiResponse?> FetchTagInfoDetailsAsync(string _clientSiteId, string _tagUid, string _guardId, string _userId, ScanningType _scannerType)
         {
+            /* P1#375: the gate is taken here, before anything slow runs (deregistration check,
+               GPS fix, the round trip itself). A single tap can raise several reader events a
+               few milliseconds apart; without an in-flight claim they all reach the server and
+               each writes its own hit row. Only the first one gets through now, and the 5
+               minute window keeps the rest out afterwards. */
+            int.TryParse(_clientSiteId, out var _gateClientSiteId);
+            var _scanGate = ScanDuplicateGuard.TryBeginScan(_gateClientSiteId, _tagUid);
+            if (_scanGate != ScanDuplicateGuard.ScanGateResult.Allowed)
+            {
+                return new TagInfoApiResponse
+                {
+                    IsSuccess = false,
+                    tagFound = false,
+                    IsDuplicateScan = true,
+                    message = ScanDuplicateGuard.BuildRejectionMessage(_scanGate, _scannerType)
+                };
+            }
+
+            /* The claim is released on every path out of here except an accepted scan, so a
+               failed send never locks the tag out - the guard can simply scan it again. */
+            bool _scanAccepted = false;
+            try
+            {
+                var taginfo = await FetchTagInfoDetailsFromServerAsync(_clientSiteId, _tagUid, _guardId, _userId, _scannerType);
+                _scanAccepted = taginfo != null && taginfo.IsSuccess;
+                return taginfo;
+            }
+            finally
+            {
+                if (_scanAccepted)
+                    ScanDuplicateGuard.Commit(_gateClientSiteId, _tagUid);
+                else
+                    ScanDuplicateGuard.Abandon(_gateClientSiteId, _tagUid);
+            }
+        }
+
+        private async Task<TagInfoApiResponse?> FetchTagInfoDetailsFromServerAsync(string _clientSiteId, string _tagUid, string _guardId, string _userId, ScanningType _scannerType)
+        {
             await CheckIfSmartWandIsDeRegisteredAsync(_clientSiteId); // Check if smartwand is deregistered before fetching tag info
             string savedSmartWandIdKeyName = $"{_clientSiteId}_SavedSmartWandId";
             var savedSmartWandId = Preferences.Get(savedSmartWandIdKeyName, 0);
@@ -496,18 +534,47 @@ namespace C4iSytemsMobApp.Services
             return new List<ClientSiteSmartWandTagsLocal>(); // Example return value
         }
 
-        public async Task<(bool isSuccess, string errorMessage, int cachecount)> SaveScanDataToLocalCache(string _TagUid, ScanningType _scannerType,
+        public async Task<(bool isSuccess, string errorMessage, int cachecount, bool isDuplicate)> SaveScanDataToLocalCache(string _TagUid, ScanningType _scannerType,
+            int? LoggedInClientSiteId, int? LoggedInUserId, int? LoggedInGuardId)
+        {
+            /* P1#375: offline scanning is gated exactly like the online path. The cache check
+               further down reads the database, and reading takes long enough for a burst of
+               reader events to all read the same "no recent hit" answer and all insert a row -
+               which then sync as duplicates. The in-flight claim taken here is what serialises
+               them; the database check stays as the guard that survives an app restart. */
+            var _gateClientSiteId = LoggedInClientSiteId ?? 0;
+            var _scanGate = ScanDuplicateGuard.TryBeginScan(_gateClientSiteId, _TagUid);
+            if (_scanGate != ScanDuplicateGuard.ScanGateResult.Allowed)
+                return (false, ScanDuplicateGuard.BuildRejectionMessage(_scanGate, _scannerType), 0, true);
+
+            bool _scanRecorded = false;
+            try
+            {
+                var result = await SaveScanDataToLocalCacheCoreAsync(_TagUid, _scannerType, LoggedInClientSiteId, LoggedInUserId, LoggedInGuardId);
+                _scanRecorded = result.isSuccess;
+                return result;
+            }
+            finally
+            {
+                if (_scanRecorded)
+                    ScanDuplicateGuard.Commit(_gateClientSiteId, _TagUid);
+                else
+                    ScanDuplicateGuard.Abandon(_gateClientSiteId, _TagUid);
+            }
+        }
+
+        private async Task<(bool isSuccess, string errorMessage, int cachecount, bool isDuplicate)> SaveScanDataToLocalCacheCoreAsync(string _TagUid, ScanningType _scannerType,
             int? LoggedInClientSiteId, int? LoggedInUserId, int? LoggedInGuardId)
         {
             int _ChaceCount = 0;
             var message = "";
 
-            if (!LoggedInClientSiteId.HasValue) return (false, "Invalid ClientSite !!!", _ChaceCount);
+            if (!LoggedInClientSiteId.HasValue) return (false, "Invalid ClientSite !!!", _ChaceCount, false);
 
-            if (!LoggedInUserId.HasValue) return (false, "Invalid User Id !!!", _ChaceCount);
+            if (!LoggedInUserId.HasValue) return (false, "Invalid User Id !!!", _ChaceCount, false);
 
-            if (!LoggedInGuardId.HasValue) return (false, "Invalid Guard Id !!!", _ChaceCount);
-                        
+            if (!LoggedInGuardId.HasValue) return (false, "Invalid Guard Id !!!", _ChaceCount, false);
+
             string savedSmartWandIdKeyName = $"{LoggedInClientSiteId.Value}_SavedSmartWandId";
             var savedSmartWandId = Preferences.Get(savedSmartWandIdKeyName, 0);
             string gpsCoordinates = "";
@@ -521,22 +588,30 @@ namespace C4iSytemsMobApp.Services
             {
                 var _gpsLocation = await PermissionService.CheckAndGetGpsLocationAsync();
                 if (string.IsNullOrEmpty(_gpsLocation))
-                    return (false, "GPS coordinates not available. Please ensure location services are enabled", _ChaceCount);
+                    return (false, "GPS coordinates not available. Please ensure location services are enabled", _ChaceCount, false);
                 else
                     gpsCoordinates = _gpsLocation;
             }
 
 
             var _lastTagScannedRecord = _scanDataDbServices.GetLastScannedTagDateTime(LoggedInClientSiteId.Value, _TagUid);
-            //Check if scanned tag recently with in a minute from the same site          
-            if (_lastTagScannedRecord != null && _lastTagScannedRecord.LoggedInClientSiteId == LoggedInClientSiteId && (DateTime.UtcNow - _lastTagScannedRecord.HitUtcDateTime).TotalSeconds < 60)
+            /* P1#375: the same tag may only be logged once every ScanDuplicateGuard.DuplicateWindow
+               (5 minutes, was 1). The window lives on the guard so the online and offline paths
+               can never drift apart. Note this only sees hits still waiting to sync - synced rows
+               are deleted from the cache - which is why the in-memory window above matters. */
+            if (_lastTagScannedRecord != null && _lastTagScannedRecord.LoggedInClientSiteId == LoggedInClientSiteId && (DateTime.UtcNow - _lastTagScannedRecord.HitUtcDateTime) < ScanDuplicateGuard.DuplicateWindow)
             {
+                /* Carry the stored hit time into the in-memory window too: after an app restart
+                   this is the first the guard hears of it, and the next scan should be refused
+                   without going back to the database. */
+                ScanDuplicateGuard.RememberAcceptedScan(LoggedInClientSiteId.Value, _TagUid, _lastTagScannedRecord.HitUtcDateTime);
+
                 if (_scannerType == ScanningType.NFC)
                     message = "Tag already scanned !!!";
                 else if (_scannerType == ScanningType.BLUETOOTH)
                     message = "iBeacon already scanned !!!";
 
-                return (false, message, _ChaceCount);
+                return (false, message, _ChaceCount, true);
             }
 
 
@@ -558,7 +633,7 @@ namespace C4iSytemsMobApp.Services
                                 message = "Tag does not belong to logged in site. Please check.";
                             else if (_scannerType == ScanningType.BLUETOOTH)
                                 message = "iBeacon does not belong to logged in site. Please check.";
-                            return (false, message, _ChaceCount);
+                            return (false, message, _ChaceCount, false);
                         }
                         else
                         {
@@ -571,14 +646,14 @@ namespace C4iSytemsMobApp.Services
                             message = "Tag does not belong to logged in site. Please check.";
                         else if (_scannerType == ScanningType.BLUETOOTH)
                             message = "iBeacon does not belong to logged in site. Please check.";
-                        return (false, message, _ChaceCount);
+                        return (false, message, _ChaceCount, false);
                     }
                 }
             }
 
             if (TagInfoDetails == null && _scannerType == ScanningType.BLUETOOTH)
             {
-                return (false, "iBeacon not found.", _ChaceCount);
+                return (false, "iBeacon not found.", _ChaceCount, false);
             }
 
 
@@ -634,7 +709,7 @@ namespace C4iSytemsMobApp.Services
                 }
             }
 
-            return (true, message, _ChaceCount);
+            return (true, message, _ChaceCount, false);
         }
 
 

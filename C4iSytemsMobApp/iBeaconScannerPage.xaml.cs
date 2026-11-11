@@ -114,6 +114,12 @@ public partial class iBeaconScannerPage : ContentPage
                     }
 
                 }
+                else if (scannerSettings.IsDuplicateScan)
+                {
+                    // P1#375: refused by the 5 minute window before any request was sent.
+                    DisplayLog($"Skipped: {deviceName}/{scannerSettings.message}");
+                    return;
+                }
                 else
                 {
                     var newmsg = scannerSettings?.message ?? "Unknown error";
@@ -137,7 +143,7 @@ public partial class iBeaconScannerPage : ContentPage
     private async Task LogScannedDataToCache(string _TagUid, string _deviceName, ScanningType _scannerType)
     {
         DisplayLog($"Device Found:{_deviceName}. Logging activity to Cache...\n");
-        var (isSuccess, msg, _ChaceCount) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
+        var (isSuccess, msg, _ChaceCount, isDuplicate) = await _scannerControlServices.SaveScanDataToLocalCache(_TagUid, _scannerType, _clientSiteId.Value, _userId.Value, _guardId.Value);
         if (isSuccess)
         {
             MainThread.BeginInvokeOnMainThread(() =>
@@ -145,6 +151,11 @@ public partial class iBeaconScannerPage : ContentPage
                 SyncState.SyncedCount = _ChaceCount;
             });
             DisplayLog($"{msg}");
+        }
+        else if (isDuplicate)
+        {
+            // P1#375: refused by the 5 minute window - logged as such, not as an error.
+            DisplayLog($"Skipped: {msg ?? "iBeacon already scanned !!!"}");
         }
         else
         {
