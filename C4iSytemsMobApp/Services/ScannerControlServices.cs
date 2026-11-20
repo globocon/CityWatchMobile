@@ -118,6 +118,14 @@ namespace C4iSytemsMobApp.Services
             string gpsCoordinates = await PermissionService.GetGpsLocationWithOutCheckingPermissionAsync();
             string gpsCoordinatesEncoded = Uri.EscapeDataString(gpsCoordinates);
             string apiUrl = $"{AppConfig.ApiBaseUrl}Scanner/GetScannerTagInfoData?siteId={_clientSiteId}&TagUid={_tagUid}&GuardId={_guardId}&UserId={_userId}&TagsTypeId={(int)_scannerType}&SmartWandId={savedSmartWandId}&gpsCoordinates={gpsCoordinatesEncoded}";
+
+            /* Patrol Randomisation: the GoTo on screen, so the server judges this strike against
+               what the guard was actually shown. Only added during a window; otherwise the request
+               is exactly as before. */
+            int.TryParse(_clientSiteId, out var _rndmSiteId);
+            var _rndmExpected = PatrolRandomisationClient.ExpectedTagUId(_rndmSiteId);
+            if (!string.IsNullOrEmpty(_rndmExpected))
+                apiUrl += $"&rndmExpectedTagUId={Uri.EscapeDataString(_rndmExpected)}";
             // Here you would typically make an HTTP request to the API endpoint
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(AppConfig.ApiBaseUrl);
@@ -127,6 +135,13 @@ namespace C4iSytemsMobApp.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var taginfo = await response.Content.ReadFromJsonAsync<TagInfoApiResponse>();
+
+                    // Patrol Randomisation: acknowledge the strike and show the next checkpoint. Never affects the scan itself.
+                    if (taginfo?.PatrolRandomisation != null)
+                    {
+                        try { PatrolRandomisationClient.ApplyServerInstruction(taginfo.PatrolRandomisation); }
+                        catch (Exception rndmEx) { Console.WriteLine($"Patrol randomisation: {rndmEx.Message}"); }
+                    }
                     return taginfo;
                 }
             }
@@ -684,6 +699,19 @@ namespace C4iSytemsMobApp.Services
 
             await _scanDataDbServices.SaveScanData(newrecord);
             _ChaceCount = _scanDataDbServices.GetCacheRecordsCount();
+
+            /* Patrol Randomisation offline: acknowledge against the GoTo on screen and pick the next
+               checkpoint here. Only for the logged-in site's own tags, and never affects the cached
+               strike or the message below. */
+            try
+            {
+                PatrolRandomisationClient.OnOfflineScan(LoggedInClientSiteId.Value, LoggedInGuardId.Value, _TagUid,
+                    newrecord.HitUtcDateTime, newrecord.UniqueRecordId, _scanDataDbServices);
+            }
+            catch (Exception rndmEx)
+            {
+                Console.WriteLine($"Patrol randomisation (offline): {rndmEx.Message}");
+            }
 
 
             if (_scannerType == ScanningType.NFC)

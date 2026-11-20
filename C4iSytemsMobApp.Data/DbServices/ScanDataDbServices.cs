@@ -18,6 +18,8 @@ namespace C4iSytemsMobApp.Data.DbServices
         public Task RefreshSmartWandTagsList(List<ClientSiteSmartWandTagsLocal> swtags);
         public ClientSiteSmartWandTagsHitLogCache GetLastScannedTagDateTime(int siteId, string tagUid);
         public ClientSiteSmartWandTagsLocal GetSmartWandTagDetailOfTag(string tagUid);
+        /// <summary>Patrol Randomisation offline: the site's checkpoints from the local tag list.</summary>
+        public List<ClientSiteSmartWandTagsLocal> GetSmartWandTagsOfSite(int clientSiteId);
         public Task<ClientSiteSmartWandTagsLocal> GetSmartWandTagDetailOfTagAsync(string tagUid);
         public Task RefreshPrePopulatedActivitesButtonList(List<ActivityModel> activites);
         public Task ClearPrePopulatedActivitesButtonList();
@@ -136,6 +138,12 @@ namespace C4iSytemsMobApp.Data.DbServices
         {
             using var _db = _dbFactory();
             return _db.ClientSiteSmartWandTagsLocal.Where(x => x.UId == tagUid).FirstOrDefault();
+        }
+
+        public List<ClientSiteSmartWandTagsLocal> GetSmartWandTagsOfSite(int clientSiteId)
+        {
+            using var _db = _dbFactory();
+            return _db.ClientSiteSmartWandTagsLocal.Where(x => x.ClientSiteId == clientSiteId).ToList();
         }
 
         public async Task<ClientSiteSmartWandTagsLocal> GetSmartWandTagDetailOfTagAsync(string tagUid)
