@@ -19,5 +19,11 @@ namespace C4iSytemsMobApp.Models
         /// failure, so continuous BLE scanning does not spend the window shouting at the guard.
         /// </summary>
         public bool IsDuplicateScan { get; set; }
+
+        /// <summary>
+        /// Patrol Randomisation: the next checkpoint and the acknowledgement of this strike. Null
+        /// unless the site has randomisation set up (older servers never send it).
+        /// </summary>
+        public PatrolRandomisationInstruction PatrolRandomisation { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace C4iSytemsMobApp.Data.Entity
 {
@@ -27,6 +28,14 @@ namespace C4iSytemsMobApp.Data.Entity
         public string DeviceId { get; set; }
         public string DeviceName { get; set; }
         public bool IsScanFromLinkedSite { get; set; } = false;
+
+        /* Patrol Randomisation. Not stored in the cache table (no migration): filled from
+           PatrolRandomisationClient just before the row is synced, so the server can judge an
+           offline strike against the GoTo the guard was shown. */
+        [NotMapped] public string RndmExpectedTagUId { get; set; }
+        [NotMapped] public DateTime? RndmExpectedAssignedUtc { get; set; }
+        [NotMapped] public string RndmNextTagUId { get; set; }
+        [NotMapped] public DateTime? RndmNextAssignedUtc { get; set; }
     }
 }
 
