@@ -48,6 +48,10 @@ namespace C4iSytemsMobApp
         private int? _clientSiteId;
         private int? _userId;
         private int? _guardId;
+
+        // Patrol Randomisation header (GoTo / Tour: RNDM)
+        private IDispatcherTimer _rndmTimer;
+        private bool _rndmBypassBusy;
         private int _badgeNo = 0;
         private bool _guardCounterReset = false;
         private int selectedIncrement = 1;
@@ -321,12 +325,15 @@ namespace C4iSytemsMobApp
             // Fire-and-forget: the badge must not delay the scanners coming up.
             _ = LoadNotificationCountAsync();
 
+            StartPatrolRandomisation();
+
             MainLayout.IsVisible = true;
         }
 
         protected override async void OnDisappearing()
         {
             base.OnDisappearing();
+            StopPatrolRandomisation();
             duressCheckTimer.Stop();
             App.IsVolumeControlEnabledForCounter = false; // Disable custom volume handling
 
@@ -2303,6 +2310,99 @@ namespace C4iSytemsMobApp
                 await ShowAlert(alertHead, $"{(msg ?? "Failed to log activity")}");
             }
         }
+
+        #region Patrol Randomisation
+
+        /* While a programmed window is open the second header line reads "GoTo: <checkpoint>   Tour: RNDM"
+           instead of the tag counters; outside it the normal STND line is back. The state lives in
+           PatrolRandomisationClient (shared with every scan page); this page only shows it, checks
+           the window every 15 seconds, and turns a tap on "Tour: RNDM" into a bypass. */
+
+        private void StartPatrolRandomisation()
+        {
+            PatrolRandomisationClient.StateChanged -= OnPatrolRandomisationChanged;
+            PatrolRandomisationClient.StateChanged += OnPatrolRandomisationChanged;
+
+            if (_rndmTimer == null)
+            {
+                _rndmTimer = Dispatcher.CreateTimer();
+                _rndmTimer.Interval = TimeSpan.FromSeconds(15);
+                _rndmTimer.Tick += async (s, e) => await TickPatrolRandomisationAsync();
+            }
+            _rndmTimer.Start();
+
+            UpdatePatrolRandomisationBar();
+            _ = TickPatrolRandomisationAsync();
+        }
+
+        private void StopPatrolRandomisation()
+        {
+            PatrolRandomisationClient.StateChanged -= OnPatrolRandomisationChanged;
+            _rndmTimer?.Stop();
+        }
+
+        private async Task TickPatrolRandomisationAsync()
+        {
+            try
+            {
+                if (_clientSiteId == null || _guardId == null) return;
+                var db = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
+                await PatrolRandomisationClient.TickAsync(_clientSiteId.Value, _guardId.Value, db);
+                UpdatePatrolRandomisationBar();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Patrol randomisation tick failed: {ex.Message}");
+            }
+        }
+
+        private void OnPatrolRandomisationChanged() => UpdatePatrolRandomisationBar();
+
+        private void UpdatePatrolRandomisationBar()
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                var siteId = _clientSiteId ?? 0;
+                var active = siteId > 0 && PatrolRandomisationClient.IsActive(siteId);
+                RandomisationBar.IsVisible = active;
+                TagStatusLabel.IsVisible = !active;
+                if (active)
+                    lblRndmGoTo.Text = PatrolRandomisationClient.GoToLabel(siteId) ?? "Strike any checkpoint";
+            });
+        }
+
+        /// <summary>"Tour: RNDM" tapped: the GoTo point is missing, faulty or blocked - bypass it and get another.</summary>
+        private async void OnRndmTourTapped(object sender, TappedEventArgs e)
+        {
+            if (_rndmBypassBusy || _clientSiteId == null || _guardId == null) return;
+            var label = PatrolRandomisationClient.GoToLabel(_clientSiteId.Value);
+            if (string.IsNullOrEmpty(label)) return;
+
+            var confirm = await DisplayAlert("Bypass checkpoint",
+                $"Bypass \"{label}\"?" + Environment.NewLine + Environment.NewLine +
+                "Use this when the point is missing, faulty or blocked. It is recorded in the logbook.",
+                "Bypass", "Cancel");
+            if (!confirm) return;
+
+            _rndmBypassBusy = true;
+            try
+            {
+                var db = IPlatformApplication.Current.Services.GetService<IScanDataDbServices>();
+                var message = await PatrolRandomisationClient.BypassAsync(_clientSiteId.Value, _guardId.Value, _userId ?? 0, db);
+                UpdatePatrolRandomisationBar();
+                await ShowToastMessage(message);
+            }
+            catch (Exception ex)
+            {
+                await ShowToastMessage($"Bypass failed: {ex.Message}");
+            }
+            finally
+            {
+                _rndmBypassBusy = false;
+            }
+        }
+
+        #endregion
 
         private Task ShowToastMessage(string message)
         {

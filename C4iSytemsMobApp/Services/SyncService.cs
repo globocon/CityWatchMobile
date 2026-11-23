@@ -34,6 +34,9 @@ namespace C4iSytemsMobApp.Services
                     return;
 
                 await SyncSmartWandTagsHitLogCache();
+                // Patrol Randomisation: bypasses made offline go after the strikes, so the server sees them in order.
+                try { await PatrolRandomisationClient.FlushOfflineBypassesAsync(); }
+                catch (Exception ex) { Console.WriteLine(ex.ToString()); }
                 await SyncLogbookCache();
                 await SyncLogbookDocumentsCache();
                 await SyncPatrolCarLogsCache();
@@ -74,6 +77,10 @@ namespace C4iSytemsMobApp.Services
                 var unsynced = await db.ClientSiteSmartWandTagsHitLogCache.Where(o => !o.IsSynced).ToListAsync();
                 if (unsynced.Count == 0) return;
 
+                // Patrol Randomisation: what the guard was shown at each offline strike (not stored in the table).
+                try { PatrolRandomisationClient.EnrichForSync(unsynced); }
+                catch (Exception ex) { Console.WriteLine(ex.ToString()); }
+
                 while (_currentRetry <= _retryCount)
                 {
                     _currentRetry += 1;
@@ -103,6 +110,7 @@ namespace C4iSytemsMobApp.Services
                             }
                         }
                         await db.SaveChangesAsync();
+                        PatrolRandomisationClient.ForgetSynced(ok.Where(x => x.IsSynced).Select(x => x.UniqueRecordId));
                         _currentRetry = _retryCount + 1; // exit retry loop 
                     }
                     catch (Exception ex)
